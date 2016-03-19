@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{13fd63b0-76ac-4c82-bbac-c16311812adb}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>PMCA_dialogs.py</StartupFile>
+    <StartupFile>PMCA_pymain.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -167,7 +167,19 @@
     <Compile Include="converter\converter.py" />
     <Compile Include="PMCA_dialogs.py" />
     <Compile Include="PMCA_pymain.py" />
-    <Compile Include="PyPMCA.py" />
+    <Compile Include="PyPMCA\material.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="PyPMCA\parts.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="PyPMCA\pmd.py" />
+    <Compile Include="PyPMCA\transform.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="PyPMCA\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="scripts\nomarge.py" />
     <Compile Include="scripts\parts_move.py" />
     <Compile Include="scripts\setchildof.py" />
@@ -179,6 +191,7 @@
     <Folder Include="model\sample1" />
     <Folder Include="model\sample2" />
     <Folder Include="model\sample3" />
+    <Folder Include="PyPMCA\" />
     <Folder Include="parts" />
     <Folder Include="parts\tex_sources" />
     <Folder Include="scripts" />
