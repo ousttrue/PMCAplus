@@ -1,0 +1,192 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{13fd63b0-76ac-4c82-bbac-c16311812adb}</ProjectGuid>
+    <ProjectHome />
+    <StartupFile>PMCA_dialogs.py</StartupFile>
+    <SearchPath />
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <InterpreterId>{2af0f10d-7135-4994-9156-5d01c9c11b7e}</InterpreterId>
+    <InterpreterVersion>3.2</InterpreterVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
+  <PropertyGroup>
+    <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
+    <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="converter\使い方.txt" />
+    <Content Include="list.txt" />
+    <Content Include="list_materials_basic.txt" />
+    <Content Include="list_parts_basic.txt" />
+    <Content Include="list_transforms_basic.txt" />
+    <Content Include="model\sample1\mt_eye_bl01.png" />
+    <Content Include="model\sample1\mt_hada.png" />
+    <Content Include="model\sample1\mt_hair_bl01.png" />
+    <Content Include="model\sample1\mt_p01.png" />
+    <Content Include="model\sample1\mt_ribbon1_01.png" />
+    <Content Include="model\sample1\mt_shoes1_01.png" />
+    <Content Include="model\sample1\mt_skirt1_01.png" />
+    <Content Include="model\sample1\mt_slr1_s_01.png" />
+    <Content Include="model\sample1\mt_sock1_01.png" />
+    <Content Include="model\sample1\mt_uv01.png" />
+    <Content Include="model\sample1\toon_mt_hair_bl01.bmp" />
+    <Content Include="model\sample2\mt_blz1_l_01.png" />
+    <Content Include="model\sample2\mt_eye_br01.png" />
+    <Content Include="model\sample2\mt_hada.png" />
+    <Content Include="model\sample2\mt_hair_br01.png" />
+    <Content Include="model\sample2\mt_p03.png" />
+    <Content Include="model\sample2\mt_ribbon2_02.png" />
+    <Content Include="model\sample2\mt_scbag1_01.png" />
+    <Content Include="model\sample2\mt_shoes1_01.png" />
+    <Content Include="model\sample2\mt_skirt1_04.png" />
+    <Content Include="model\sample2\mt_sock1_02.png" />
+    <Content Include="model\sample2\mt_srt2_01.png" />
+    <Content Include="model\sample2\mt_uv01.png" />
+    <Content Include="model\sample2\toon_mt_hair_br01.bmp" />
+    <Content Include="model\sample3\mt_eye_bl01.png" />
+    <Content Include="model\sample3\mt_hada.png" />
+    <Content Include="model\sample3\mt_hair_bl01.png" />
+    <Content Include="model\sample3\mt_p03.png" />
+    <Content Include="model\sample3\mt_ribbon1_01.png" />
+    <Content Include="model\sample3\mt_shoes1_01.png" />
+    <Content Include="model\sample3\mt_skirt1_02.png" />
+    <Content Include="model\sample3\mt_slr1_l_03.png" />
+    <Content Include="model\sample3\mt_sock1_02.png" />
+    <Content Include="model\sample3\mt_uv01.png" />
+    <Content Include="model\sample3\toon_mt_hair_bl01.bmp" />
+    <Content Include="parts\mt_apron1.png" />
+    <Content Include="parts\mt_armband1_01.png" />
+    <Content Include="parts\mt_armband1_02.png" />
+    <Content Include="parts\mt_armband1_03.png" />
+    <Content Include="parts\mt_blz1_l_01.png" />
+    <Content Include="parts\mt_blz1_l_02.png" />
+    <Content Include="parts\mt_cami1_01.png" />
+    <Content Include="parts\mt_cami1_02.png" />
+    <Content Include="parts\mt_cami1_03.png" />
+    <Content Include="parts\mt_cat1_01.png" />
+    <Content Include="parts\mt_cat1_02.png" />
+    <Content Include="parts\mt_cateye1_01.png" />
+    <Content Include="parts\mt_cateye1_02.png" />
+    <Content Include="parts\mt_cateye1_03.png" />
+    <Content Include="parts\mt_eye_bl01.png" />
+    <Content Include="parts\mt_eye_bl02.png" />
+    <Content Include="parts\mt_eye_bl03.png" />
+    <Content Include="parts\mt_eye_bl04.png" />
+    <Content Include="parts\mt_eye_br01.png" />
+    <Content Include="parts\mt_eye_br02.png" />
+    <Content Include="parts\mt_eye_br03.png" />
+    <Content Include="parts\mt_eye_gr01.png" />
+    <Content Include="parts\mt_eye_gr02.png" />
+    <Content Include="parts\mt_gkr1_l_01.png" />
+    <Content Include="parts\mt_hada.png" />
+    <Content Include="parts\mt_hada_obs1.png" />
+    <Content Include="parts\mt_hada_obs2.png" />
+    <Content Include="parts\mt_hair_bl01.png" />
+    <Content Include="parts\mt_hair_br01.png" />
+    <Content Include="parts\mt_hair_br02.png" />
+    <Content Include="parts\mt_hair_gr01.png" />
+    <Content Include="parts\mt_hair_m_bl01.png" />
+    <Content Include="parts\mt_hair_m_br01.png" />
+    <Content Include="parts\mt_hair_m_gr01.png" />
+    <Content Include="parts\mt_jumper1_01.png" />
+    <Content Include="parts\mt_jumper1_02.png" />
+    <Content Include="parts\mt_knapsack1_01.png" />
+    <Content Include="parts\mt_knapsack1_02.png" />
+    <Content Include="parts\mt_mng_sym_01.png" />
+    <Content Include="parts\mt_mr01_01.png" />
+    <Content Include="parts\mt_mr01_02.png" />
+    <Content Include="parts\mt_mr01_03.png" />
+    <Content Include="parts\mt_muffler1_01.png" />
+    <Content Include="parts\mt_muffler1_02.png" />
+    <Content Include="parts\mt_p01.png" />
+    <Content Include="parts\mt_p02.png" />
+    <Content Include="parts\mt_p03.png" />
+    <Content Include="parts\mt_ribbon1_01.png" />
+    <Content Include="parts\mt_ribbon1_02.png" />
+    <Content Include="parts\mt_ribbon2_01.png" />
+    <Content Include="parts\mt_ribbon2_02.png" />
+    <Content Include="parts\mt_scbag1_01.png" />
+    <Content Include="parts\mt_shoes1_01.png" />
+    <Content Include="parts\mt_shoes1_02.png" />
+    <Content Include="parts\mt_sima1_01.png" />
+    <Content Include="parts\mt_sima1_02.png" />
+    <Content Include="parts\mt_skirt1_01.png" />
+    <Content Include="parts\mt_skirt1_02.png" />
+    <Content Include="parts\mt_skirt1_03.png" />
+    <Content Include="parts\mt_skirt1_04.png" />
+    <Content Include="parts\mt_skirt1_05.png" />
+    <Content Include="parts\mt_skirt1_06.png" />
+    <Content Include="parts\mt_skirt1_07.png" />
+    <Content Include="parts\mt_slacks1_01.png" />
+    <Content Include="parts\mt_slacks1_02.png" />
+    <Content Include="parts\mt_slr1_l_01.png" />
+    <Content Include="parts\mt_slr1_l_02.png" />
+    <Content Include="parts\mt_slr1_l_03.png" />
+    <Content Include="parts\mt_slr1_s_01.png" />
+    <Content Include="parts\mt_slr1_s_02.png" />
+    <Content Include="parts\mt_slr1_s_03.png" />
+    <Content Include="parts\mt_sock1_01.png" />
+    <Content Include="parts\mt_sock1_02.png" />
+    <Content Include="parts\mt_sock1_03.png" />
+    <Content Include="parts\mt_sock1_04.png" />
+    <Content Include="parts\mt_sock1_05.png" />
+    <Content Include="parts\mt_sock1_06.png" />
+    <Content Include="parts\mt_sock2_00.png" />
+    <Content Include="parts\mt_sock2_01.png" />
+    <Content Include="parts\mt_sock2_02.png" />
+    <Content Include="parts\mt_spns1_01.png" />
+    <Content Include="parts\mt_spns1_a1.png" />
+    <Content Include="parts\mt_spns1_a2.png" />
+    <Content Include="parts\mt_spns1_a3.png" />
+    <Content Include="parts\mt_srt1_01.png" />
+    <Content Include="parts\mt_srt2_01.png" />
+    <Content Include="parts\mt_srt2_02.png" />
+    <Content Include="parts\mt_srt2_03.png" />
+    <Content Include="parts\mt_srt2_04.png" />
+    <Content Include="parts\mt_Ushanka1.png" />
+    <Content Include="parts\mt_Ushanka2.png" />
+    <Content Include="parts\mt_uv01.png" />
+    <Content Include="parts\mt_wood01.png" />
+    <Content Include="parts\parts_01-01.png" />
+    <Content Include="parts\tex_sources\emblem01.svg" />
+    <Content Include="parts\tex_sources\emblem02.svg" />
+    <Content Include="parts\tex_sources\mark1.png" />
+    <Content Include="PMCA.pyd" />
+    <Content Include="toon\toon_mt_hair_bl01.bmp" />
+    <Content Include="toon\toon_mt_hair_br01.bmp" />
+    <Content Include="りどみ.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="converter\converter.py" />
+    <Compile Include="PMCA_dialogs.py" />
+    <Compile Include="PMCA_pymain.py" />
+    <Compile Include="PyPMCA.py" />
+    <Compile Include="scripts\nomarge.py" />
+    <Compile Include="scripts\parts_move.py" />
+    <Compile Include="scripts\setchildof.py" />
+    <Compile Include="scripts\set_basebone.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="converter" />
+    <Folder Include="model\" />
+    <Folder Include="model\sample1" />
+    <Folder Include="model\sample2" />
+    <Folder Include="model\sample3" />
+    <Folder Include="parts" />
+    <Folder Include="parts\tex_sources" />
+    <Folder Include="scripts" />
+    <Folder Include="toon" />
+  </ItemGroup>
+  <ItemGroup>
+    <InterpreterReference Include="{2af0f10d-7135-4994-9156-5d01c9c11b7e}\3.2" />
+  </ItemGroup>
+  <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />
+</Project>
