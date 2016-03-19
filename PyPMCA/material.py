@@ -254,3 +254,51 @@ class MATS_ENTRY:
 	def __init__(self, name='', props={}):
 		self.name=name
 		self.props=props
+
+
+class MaterialSelector:
+    def __init__(self, app):
+        self.mats_list=[]    #list of class MATS
+        self.mat_rep = MAT_REP(app=app)
+        self.cur_mat = 0
+
+    def load_materiallist(self, fp):
+        self.mats_list = load_matslist(fp, self.mats_list)
+
+    def load_CNL_lines(self, lines):
+        self.mat_rep.text_to_list(lines, self.mats_list)
+
+    def replace(self):
+        print("材質置換")
+        self.mat_rep.Get(self.mats_list)
+        #print("1")
+        self.mat_entry = [[],[]]
+        for v in self.mat_rep.mat.values():
+            if v.num >= 0:
+                self.mat_entry[0].append(v.mat.name + '  ' + v.sel.name)
+                self.mat_entry[1].append(v.mat.name)
+        #print("3")
+        self.mat_rep.Set()
+        #print("4")
+        PMCA.Copy_PMD(0,2)
+
+        return self.mat_entry, self.cur_mat
+
+    def select_material(self, sel_t):
+        print(sel_t)
+        self.cur_mat = sel_t
+        print(self.mat_rep.mat[self.mat_entry[1][sel_t]])       
+        tmp_list = []
+        for x in self.mat_rep.mat[self.mat_entry[1][sel_t]].mat.entries:
+            tmp_list.append(x.name)
+        return tmp_list
+
+    def select_color(self, sel_t):
+        self.mat_rep.mat[self.mat_entry[1][self.cur_mat]].sel = self.mat_rep.mat[self.mat_entry[1][self.cur_mat]].mat.entries[sel_t]
+
+    def random(self):
+        for x in self.mat_rep.mat.items():
+            random.seed()
+            #print(x)
+            #print(x[1].mat)
+            x[1].sel = x[1].mat.entries[random.randint(0, len(x[1].mat.entries)-1)]

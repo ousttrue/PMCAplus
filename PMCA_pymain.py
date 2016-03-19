@@ -40,19 +40,14 @@ class QUIT:
 class MainFrame(Frame):
     def __init__(self, master=None):
         Frame.__init__(self, master)
-        self.master = master
         self.master.title(softwarename)
-
-        self.mats_list=[]    #list of class MATS
-        self.mat_rep = None
+        self.materials=PyPMCA.MaterialSelector(self)
         self.transform_data = []
         self.transform_list = []
         self.licenses = []
         self.authors = []
         self.modelinfo = PyPMCA.MODELINFO()
         self.target_dir = './model/'
-        self.cur_parts=0
-        self.cur_mat = 0
         self.pack()
         self.createWidgets()
         self.settings = SETTINGS()
@@ -208,23 +203,15 @@ class MainFrame(Frame):
     #functions tab1
     def mats_click(self,event):
         sel_t = int(self.tab[1].l_tree.listbox.curselection()[0])
-        print(sel_t)
-        print(self.mat_rep.mat[self.mat_entry[1][sel_t]])
-        
-        tmp_list = []
-        for x in self.mat_rep.mat[self.mat_entry[1][sel_t]].mat.entries:
-            tmp_list.append(x.name)
-        
+        tmp_list=self.materials.select_material(sel_t)
         self.tab[1].l_sel.set_entry(tmp_list)
-        self.tab[0].l_sel.set_entry(self.parts_tree.parts_entry_k, sel=self.parts_tree.tree_list[sel_t].node.list_num)
-        self.cur_mat = sel_t
-        
-        self.tab[1].comment.set("comment:%s"%(self.mat_rep.mat[self.mat_entry[1][sel_t]].mat.comment))
+        self.tab[0].l_sel.set_entry(self.parts_tree.parts_entry_k, sel=self.parts_tree.tree_list[sel_t].node.list_num)       
+        self.tab[1].comment.set("comment:%s"%(self.materials.mat_rep.mat[self.mat_entry[1][sel_t]].mat.comment))
     
     def mats_sel_click(self,event):
-        print(self.mat_rep.mat[self.mat_entry[1][self.cur_mat]].sel)
+        #print(self.mat_rep.mat[self.mat_entry[1][self.cur_mat]].sel)
         sel_t = int(self.tab[1].l_sel.listbox.curselection()[0])
-        self.mat_rep.mat[self.mat_entry[1][self.cur_mat]].sel = self.mat_rep.mat[self.mat_entry[1][self.cur_mat]].mat.entries[sel_t]
+        self.materials.select_color(sel_t)
         self.refresh(level=1)
     ########################################################################################
     #functions tab2
@@ -282,20 +269,10 @@ class MainFrame(Frame):
         
         if level < 2:
             #材質関連
-            print("材質置換")
-            self.mat_rep.Get(self.mats_list)
-            #print("1")
-            self.mat_entry = [[],[]]
-            for v in self.mat_rep.mat.values():
-                if v.num >= 0:
-                    self.mat_entry[0].append(v.mat.name + '  ' + v.sel.name)
-                    self.mat_entry[1].append(v.mat.name)
+            entry, sel=self.materials.replace()
             #print("2")
-            self.tab[1].l_tree.set_entry(self.mat_entry[0], sel = self.cur_mat)
-            #print("3")
-            self.mat_rep.Set()
-            #print("4")
-            PMCA.Copy_PMD(0,2)
+            self.tab[1].l_tree.set_entry(entry, sel = sel)
+
         else:
             PMCA.Copy_PMD(2,0)
         
@@ -613,11 +590,7 @@ class MainFrame(Frame):
         self.refresh()
     
     def rand_mat(self):
-        for x in self.mat_rep.mat.items():
-            random.seed()
-            #print(x)
-            #print(x[1].mat)
-            x[1].sel = x[1].mat.entries[random.randint(0, len(x[1].mat.entries)-1)]
+        self.materials.random()
         self.refresh()
     
     def save_node(self):
@@ -732,7 +705,7 @@ class MainFrame(Frame):
             self.tab[3].frame.comment.delete('1.0',END)
     
         self.parts_tree.load_CNL_lines(lines)
-        self.mat_rep.text_to_list(lines, self.mats_list)
+        self.materials.load_CNL_lines(lines)
         self.transform_data[0].text_to_list(lines)
         return True
         
@@ -746,9 +719,9 @@ class MainFrame(Frame):
         lines.append(self.modelinfo.comment)
     
         lines.append('PARTS')
-        lines.extend(self.tree_list[0].node.child[0].node_to_text())
+        lines.extend(self.parts_tree.tree_list[0].node.child[0].node_to_text())
         lines.append('MATERIAL')
-        lines.extend(self.mat_rep.list_to_text())
+        lines.extend(self.materials.mat_rep.list_to_text())
         lines.append('TRANSFORM')
         lines.extend(self.transform_data[0].list_to_text())
         
@@ -820,8 +793,6 @@ class LISTBOX:
 
 def init(app):
     
-    app.parts_list=[]
-    app.mats_list =[]
     print('登録データ読み込み')
     for x in os.listdir('./'):
         if os.path.isfile(x):
@@ -863,7 +834,7 @@ def init(app):
                 if line=='PMCA Parts list v2.0\n' :
                     app.parts_tree.load_partslist(fp)
                 elif line=='PMCA Materials list v2.0\n' :
-                    app.mats_list = PyPMCA.load_matslist(fp, app.mats_list)
+                    app.materials.load_materiallist(fp)
                 elif line=='PMCA Transform list v2.0\n' :
                     app.transform_list = PyPMCA.load_translist(fp, app.transform_list)
                 
@@ -880,12 +851,10 @@ def init(app):
     
     fp.close()
 
-    app.parts_tree.init_parts_tree()
+    #app.parts_tree.init_parts_tree()
     app.tab[0].l_tree.set_entry(app.parts_tree.tree_entry, sel=0)
     app.tab[0].l_sel.set_entry(app.parts_tree.parts_entry_k)
     
-    print('材質置換設定初期化')
-    app.mat_rep = PyPMCA.MAT_REP(app=app)
     
     app.tab[3].frame.name.set('PMCAモデル')
     app.tab[3].frame.name_l.set('PMCAモデル')
