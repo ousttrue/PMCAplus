@@ -40,14 +40,10 @@ class QUIT:
 class MainFrame(Frame):
     def __init__(self, master=None):
         Frame.__init__(self, master)
-        self.root = master
-        self.root.title(softwarename)
-        self.parts_list=[]
+        self.master = master
+        self.master.title(softwarename)
+
         self.mats_list=[]    #list of class MATS
-        self.tree_list = []
-        self.tree_entry = []
-        self.parts_entry_k = []
-        self.parts_entry_p = []
         self.mat_rep = None
         self.transform_data = []
         self.transform_list = []
@@ -61,28 +57,8 @@ class MainFrame(Frame):
         self.createWidgets()
         self.settings = SETTINGS()
 
-        self.init_parts_tree()
-
-    def init_parts_tree(self):
-        print('ツリー初期化')
-        node =PyPMCA.NODE(parts = PyPMCA.PARTS(name = 'ROOT',joint=['root']), depth = -1, child=[None])
-    
-        self.tree_list = node.create_list()
-        self.tree_entry = []
-        for x in self.tree_list:
-            self.tree_entry.append(x.text)
-        self.tree_entry = self.tree_entry[1:]
-        self.tab[0].l_tree.set_entry(self.tree_entry, sel=0)
-    
-        self.parts_entry_k = []
-        self.parts_entry_p = []
-        for x in self.parts_list:
-            for y in x.type:
-                if y == 'root':
-                    self.parts_entry_k.append(x.name)
-                    self.parts_entry_p.append(x)
-                    break
-    
+        self.parts_tree=PyPMCA.PartsTree()
+   
     def createWidgets(self):
         '''
         self.listbox = Listbox(self, height = 6, exportselection = 0, selectmode = SINGLE)
@@ -93,13 +69,13 @@ class MainFrame(Frame):
         '''
         
         #タブを作成
-        notebook = Notebook(self.root)
+        notebook = Notebook(self.master)
         notebook.pack(side = TOP, fill = BOTH, expand=1)
         
         self.tab = []
         ########################################################################################################
         #Tab0
-        self.tab.append(Frame(self.root))
+        self.tab.append(Frame(self.master))
         
         self.tab[0].frame = Frame(self.tab[0])
         self.tab[0].text = "Model"
@@ -124,7 +100,7 @@ class MainFrame(Frame):
         ########################################################################################################
         #Tab1
         
-        self.tab.append(Frame(self.root))
+        self.tab.append(Frame(self.master))
         self.tab[1].frame = Frame(self.tab[1])
         self.tab[1].text = "Color"
         self.tab[1].parts_frame = LabelFrame(self.tab[1].frame, text = 'Material')
@@ -148,7 +124,7 @@ class MainFrame(Frame):
         
         ########################################################################################################
         #Tab2
-        self.tab.append(Frame(self.root))
+        self.tab.append(Frame(self.master))
         self.tab[2].text = "Transform"
         self.tab[2].tfgroup_frame = LabelFrame(self.tab[2], text = 'Groups')
         self.tab[2].tfgroup = LISTBOX(self.tab[2].tfgroup_frame)
@@ -165,7 +141,7 @@ class MainFrame(Frame):
         
         ########################################################################################################
         #Tab3
-        self.tab.append(Frame(self.root))
+        self.tab.append(Frame(self.master))
         self.tab[3].text = "Info"
         self.tab[3].frame = Frame(self.tab[3])
         self.tab[3].frame.comment = Text(self.tab[3].frame, height=10)
@@ -203,10 +179,10 @@ class MainFrame(Frame):
         ########################################################################################################
         #Buttons
         
-        self.frame_button = Frame(self.root)
+        self.frame_button = Frame(self.master)
         self.QUIT = Button(self.frame_button)
         self.QUIT["text"] = "QUIT"
-        self.QUIT["command"] = QUIT(self.root)
+        self.QUIT["command"] = QUIT(self.master)
         self.QUIT.pack(side = RIGHT)
         self.frame_button.pack(padx = 5, pady = 5, side = TOP, fill = 'x')
         
@@ -215,70 +191,13 @@ class MainFrame(Frame):
     def tree_click(self,event):
         self.tab[0].comment.set("comment:")
         sel_t = int(self.tab[0].l_tree.listbox.curselection()[0])+1
-        print(sel_t)
-        joint = self.tree_list[sel_t].node.parts.joint[self.tree_list[sel_t].c_num]
-        print(joint)
-        
-        self.parts_entry_k = []
-        self.parts_entry_p = []
-        for x in self.parts_list:
-            for y in x.type:
-                if y == joint:
-                    self.parts_entry_k.append(x.name)
-                    self.parts_entry_p.append(x)
-                    break
-        self.parts_entry_k.append('#外部モデル読み込み')
-        self.parts_entry_p.append('load')
-        self.parts_entry_k.append('#None')
-        self.parts_entry_p.append(None)
-        self.tab[0].l_sel.set_entry(self.parts_entry_k, sel=self.tree_list[sel_t].node.list_num)
+        entry, sel=self.parts_tree.select_node(sel_t)
+        self.tab[0].l_sel.set_entry(entry, sel=sel)
     
     def parts_sel_click(self,event):
         sel = int(self.tab[0].l_sel.listbox.curselection()[0])
         sel_t = int(self.tab[0].l_tree.listbox.curselection()[0])+1
-        
-        if self.parts_entry_p[sel]==None:    #Noneを選択した場合
-            node = None
-        
-        elif self.parts_entry_p[sel]=='load':    #外部モデル読み込み
-            path = filedialog.askopenfilename(filetypes = [('Plygon Model Deta(for MMD)','.pmd'),('all','.*')], defaultextension='.pmd')
-            if(path != ''):
-                name = path.split('/')[-1]
-                parts = PyPMCA.PARTS(name = name, path = path, props = {})
-                node = PyPMCA.NODE(parts = parts, depth = self.tree_list[sel_t].node.depth+1, child=[])
-                for x in node.parts.joint:
-                    node.child.append(None)
-            else:
-                node = None
-                
-                
-        else:
-            print(self.parts_entry_p[sel].path)
-            print(self.tree_list[sel_t].node.parts.name)
-            
-            node = PyPMCA.NODE(parts = self.parts_entry_p[sel], depth = self.tree_list[sel_t].node.depth+1, child=[])
-            p_node=self.tree_list[sel_t].node.child[self.tree_list[sel_t].c_num]
-            
-            child_appended = []
-            if p_node != None:
-                for x in node.parts.joint:
-                    node.child.append(None)
-                    for j,y in enumerate(p_node.parts.joint):
-                        if x == y:
-                            for z in child_appended:
-                                if z == y:
-                                    break
-                            else:
-                                node.child[-1] = p_node.child[j]
-                                child_appended.append(y)
-                                break
-            else:
-                for x in node.parts.joint:
-                    node.child.append(None)
-            
-            print('>>', node.parts.name, '\n')
-        self.tree_list[sel_t].node.child[self.tree_list[sel_t].c_num] = node
-        #self.tree_list[sel_t].node.list_num = sel
+        node=self.parts_tree.select_part(sel_t, sel)
         if node == None:
             self.tab[0].comment.set("comment:")
         else:
@@ -297,7 +216,7 @@ class MainFrame(Frame):
             tmp_list.append(x.name)
         
         self.tab[1].l_sel.set_entry(tmp_list)
-        self.tab[0].l_sel.set_entry(self.parts_entry_k, sel=self.tree_list[sel_t].node.list_num)
+        self.tab[0].l_sel.set_entry(self.parts_tree.parts_entry_k, sel=self.parts_tree.tree_list[sel_t].node.list_num)
         self.cur_mat = sel_t
         
         self.tab[1].comment.set("comment:%s"%(self.mat_rep.mat[self.mat_entry[1][sel_t]].mat.comment))
@@ -350,29 +269,14 @@ class MainFrame(Frame):
     ######################################################################################
     def refresh(self, level=0):
         sel_t = int(self.tab[0].l_tree.listbox.curselection()[0])
-        self.tree_list = self.tree_list[0].node.create_list()
-        self.tree_entry = []
-        
-        for x in self.tree_list:
-            self.tree_entry.append(x.text)
-        self.tree_entry = self.tree_entry[1:]
-        self.tab[0].l_tree.set_entry(self.tree_entry, sel = sel_t)
+        entry=self.parts_tree.refresh()
+        self.tab[0].l_tree.set_entry(entry, sel = sel_t)
         
         #モデル組み立て
         PMCA.MODEL_LOCK(1)
         
         if level < 1:
-            print("モデル組立て")
-        
-            PMCA.Create_PMD(0)
-        
-            #PMCA.Load_PMD(0, "./testmodels/001.pmd")
-        
-            x = self.tree_list[0].node
-            if x != None:
-                x.assemble(0,self)
-        
-            PMCA.Copy_PMD(0,1)
+            self.parts_tree.build()
         else:
             PMCA.Copy_PMD(1,0)
         
@@ -827,7 +731,7 @@ class MainFrame(Frame):
         else:
             self.tab[3].frame.comment.delete('1.0',END)
     
-        self.tree_list[0].node.text_to_node(self.parts_list, lines)
+        self.parts_tree.load_CNL_lines(lines)
         self.mat_rep.text_to_list(lines, self.mats_list)
         self.transform_data[0].text_to_list(lines)
         return True
@@ -957,7 +861,7 @@ def init(app):
                 print(line)
                 
                 if line=='PMCA Parts list v2.0\n' :
-                    app.parts_list = PyPMCA.load_partslist(fp, app.parts_list)
+                    app.parts_tree.load_partslist(fp)
                 elif line=='PMCA Materials list v2.0\n' :
                     app.mats_list = PyPMCA.load_matslist(fp, app.mats_list)
                 elif line=='PMCA Transform list v2.0\n' :
@@ -976,14 +880,9 @@ def init(app):
     
     fp.close()
 
-    #app.init_parts_tree()
-    
-    app.parts_entry_k.append('#外部モデル読み込み')
-    app.parts_entry_p.append('load')
-    #app.parts_entry_k.append('#None')
-    #app.parts_entry_p.append(None)
-    
-    app.tab[0].l_sel.set_entry(app.parts_entry_k)
+    app.parts_tree.init_parts_tree()
+    app.tab[0].l_tree.set_entry(app.parts_tree.tree_entry, sel=0)
+    app.tab[0].l_sel.set_entry(app.parts_tree.parts_entry_k)
     
     print('材質置換設定初期化')
     app.mat_rep = PyPMCA.MAT_REP(app=app)
@@ -1007,11 +906,14 @@ def main():
         tmp.append(x.name)
         
     app.tab[2].tfgroup.set_entry(tmp)
-    try:
-        app.load_CNL_File('./last.cnl')
+    #try:
+    app.load_CNL_File('./last.cnl')
 
-    except:
+    '''
+    except Exception as ex:
+        print(ex)
         print('前回のデータの読み込みに失敗しました')
+        '''
         
     PMCA.CretateViewerThread()
     
