@@ -367,6 +367,9 @@ class PartsTree:
     def is_empty(self):
         return self.tree_list[0].node.child[0] == None
 
+    def update(self):
+        self.__update_tree_entry()
+
     def __init_parts_tree(self):
         '''
         ツリー初期化

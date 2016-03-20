@@ -1,7 +1,7 @@
 ﻿# coding: utf-8
 import PMCA
 import PMCA_dialogs
-from PyPMCA.pmd import INFO, BONE
+from PyPMCA.pmd import INFO, BONE, Observable
 from tkinter import *
 
 def load_translist(fp, trans_list):
@@ -166,6 +166,7 @@ class BodyTransform:
         self.transform_data = []
         self.transform_list = []
         self.transform_data=[MODEL_TRANS_DATA(scale=1.0, bones=[], props={})]
+        self.transform_observable=Observable()
 
     def load_transformlist(self, fp):
         self.transform_list = load_translist(fp, self.transform_list)
@@ -175,6 +176,7 @@ class BodyTransform:
 
     def clear(self):
         self.transform_data = [MODEL_TRANS_DATA(scale=1.0, pos=[0.0, 0.0, 0.0], rot=[0.0, 0.0, 0.0], bones=[], props={})]
+        self.transform_observable.notify()
 
     def load_CNL_lines(self, lines):
         self.transform_data[0].text_to_list(lines)
