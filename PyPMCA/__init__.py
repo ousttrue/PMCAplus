@@ -21,7 +21,7 @@ def load_list(fp):
 		tmp = line.split(' ')
 		bone[0].append(tmp[0].encode('cp932','replace'))
 		bone[1].append(tmp[1].encode('cp932','replace'))
-		print(tmp)
+		#print(tmp)
 	
 	while line:
 		line = fp.readline()[:-1]
@@ -30,7 +30,7 @@ def load_list(fp):
 		tmp = line.split(' ')
 		skin[0].append(tmp[0].encode('cp932','replace'))
 		skin[1].append(tmp[1].encode('cp932','replace'))
-		print(tmp)
+		#print(tmp)
 	
 	while line:
 		line = fp.readline()[:-1]
@@ -39,7 +39,7 @@ def load_list(fp):
 		tmp = line.split(' ')
 		group[0].append(tmp[0].encode('cp932','replace'))
 		group[1].append(tmp[1].encode('cp932','replace'))
-		print(tmp)
+		#print(tmp)
 	
 	LIST={'b':bone, 's':skin, 'g':group}
 	

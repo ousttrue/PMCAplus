@@ -248,7 +248,8 @@ class MainFrame(Frame):
         self.tab[2].info_frame.strvar.set('height     = %f\nwidth      = %f\nthickness = %f\n'%(wht[1],wht[0],wht[2]))
         self.tab[3].frame.text.set('Author : %s\nLicense : %s'%(str1, str2))
         
-        print("Done")
+
+
     ########################################################################################
     #functions menu
     def clear(self):
@@ -284,7 +285,7 @@ class MainFrame(Frame):
             while count < bone_count:
                 if i >= bone_count:
                     break
-                print(i)
+                #print(i)
                 i=model.bone[i].parent
                 count += 1
             else:
@@ -560,7 +561,7 @@ class MainFrame(Frame):
         names = filedialog.askopenfilename(filetypes = [('キャラクタノードリスト','.cnl'),('all','.*')], initialdir = self.target_dir, defaultextension='.cnl',  multiple=True)
         
         self.save_CNL_File('./last.cnl')
-        print(type(names))
+        #print(type(names))
         if type(names) is str:
             names = names.split(' ')
         for name in names:
@@ -686,17 +687,17 @@ class LISTBOX:
 
 def init(app):
     
-    print('登録データ読み込み')
+    #print('登録データ読み込み')
     for x in os.listdir('./'):
         if os.path.isfile(x):
-            print(x)
+            #print(x)
             
             fp = open(x, 'r', encoding = 'cp932')
             try:
                 lines = fp.read()
                 line = lines.split('\n')
                 line = line[0].replace('\n', '')
-                print('"%s"'%(line))
+                #print('"%s"'%(line))
                 if line == "PMCA Parts list v1.0" or line == "PMCA Materials list v1.1" or line == "PMCA Materials list v1.0" or line == "PMCA Textures list v1.0" or line == "PMCA Bone_Group list v1.0":
                     fp.close()
                     
@@ -722,7 +723,7 @@ def init(app):
             fp = open(x, 'r', encoding = 'utf-8-sig')
             try:
                 line = fp.readline()
-                print(line)
+                #print(line)
                 
                 if line=='PMCA Parts list v2.0\n' :
                     app.parts_tree.load_partslist(fp)
@@ -737,7 +738,7 @@ def init(app):
             except UnicodeEncodeError:
                 fp.close()
             
-    print('list.txt読み込み')
+    #print('list.txt読み込み')
     with open('list.txt', 'r', encoding = 'utf-8-sig') as fp:
         LIST = PyPMCA.load_list(fp)
         PMCA.Set_List(len(LIST['b'][0]), LIST['b'][0], LIST['b'][1], len(LIST['s'][0]), LIST['s'][0], LIST['s'][1], len(LIST['g'][0]), LIST['g'][0], LIST['g'][1])   
@@ -762,7 +763,7 @@ def main():
     try:
         app.load_CNL_File('./last.cnl')
     except Exception as ex:
-        print(ex)
+        #print(ex)
         print('前回のデータの読み込みに失敗しました')
         
     PMCA.CretateViewerThread()

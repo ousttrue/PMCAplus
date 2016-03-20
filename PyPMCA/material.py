@@ -66,10 +66,6 @@ def load_matslist(fp, mats_list):
 	if mats_list[-1].entries[-1].__class__.__name__ == 'MATS_ENTRY':
 		mats_list[-1].entries.append(mats_list[-1].entries[-1])
 	'''
-	for x in mats_list:
-		print(x.name, x.comment, len(x.entries), x.props)
-		for y in x.entries:
-			print(y.name, y.props)
 	
 	return mats_list
 
@@ -106,8 +102,6 @@ class MAT_REP:	#材質置換
 					
 					if self.mat[mat[i].tex].sel == None:
 						self.mat[mat[i].tex].sel = self.mat[mat[i].tex].mat.entries[0]
-						for y in self.mat[mat[i].tex].mat.entries:
-							print(y.props)
 		
 	def Set(self, model=None, info=None, num = 0):
 		if model == None:
@@ -127,7 +121,7 @@ class MAT_REP:	#材質置換
 				rep = self.mat[x.tex].sel
 				for k,v in rep.props.items():
 					if k == 'tex':
-						print("replace texture", x.tex, "to" ,v, "num =", i)
+						#print("replace texture", x.tex, "to" ,v, "num =", i)
 						x.tex = v
 					elif k == 'tex_path':
 						x.tex_path  = v
@@ -207,29 +201,29 @@ class MAT_REP:	#材質置換
 			#print(lines[i])
 			i+=1
 		i+=1
-		print('材質読み込み')
+		#print('材質読み込み')
 		for x in lines[i:]:
 			x = x.split(' ')
-			print(x)
+			#print(x)
 			if x[0] == '[Name]':
 				tmp[0] = x[1]
 			elif x[0] == '[Sel]':
 				tmp[1] = x[1]
 			elif x[0] == 'NEXT':
-				print(tmp[0])
+				#print(tmp[0])
 				for y in mat_list:
 					if y.name == tmp[0]:
 						tmp[2] = y
 						break
 				else:
 					tmp[2] = None
-					print('Not found')
+					#print('Not found')
 					continue
 				
 				for y in tmp[2].entries:
-					print(y.name)
+					#print(y.name)
 					if y.name == tmp[1]:
-						print(tmp[0])
+						#print(tmp[0])
 						self.mat[tmp[0]] = MAT_REP_DATA(num = -1, mat=tmp[2], sel=y)
 						break
 		

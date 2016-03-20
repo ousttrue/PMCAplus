@@ -109,10 +109,10 @@ class MODEL_TRANS_DATA:
 			return None
 		
 		i+=1
-		print('体型調整読み込み')
+		#print('体型調整読み込み')
 		for j,x in enumerate(lines[i:]):
 			x = x.split(' ')
-			print(x)
+			#print(x)
 			if x[0] == '[Name]':
 				self.name = x[1]
 			elif x[0] == '[Scale]':
@@ -131,7 +131,7 @@ class MODEL_TRANS_DATA:
 		self.bones.append(BONE_TRANS_DATA())
 		for x in lines[i+j:]:
 			x = x.split(' ')
-			print(x)
+			#print(x)
 			if x[0] == '[Name]':
 				self.bones[-1].name = x[1]
 			elif x[0] == '[Length]':
@@ -182,13 +182,10 @@ class BodyTransform:
     def select_body(self, frame, sel):
         self.refresh=lambda level: frame.refresh(level)
         buff=''
-        print(sel)
-        for x in self.transform_list:
-            print(x.name, len(x.bones))
         
         for x in self.transform_list[sel].bones:
             buff += '%s %f %f\n'%(x.name,x.length,x.thick)
-        print(buff)
+        #print(buff)
         
         t = self.transform_list[sel]
         
@@ -222,7 +219,7 @@ class BodyTransform:
         root.mainloop()
 
     def update(self):
-        print("体型調整")
+        #print("体型調整")
         info_data = PMCA.getInfo(0)
         info = INFO(info_data)
             
