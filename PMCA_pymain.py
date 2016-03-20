@@ -37,31 +37,20 @@ class QUIT:
         self.root.winfo_toplevel().destroy()
         self.root.quit()
 
+
 class MainFrame(Frame):
     def __init__(self, master=None):
         Frame.__init__(self, master)
         self.master.title(softwarename)
-        self.materials=PyPMCA.MaterialSelector(self)
+        self.pack()
+
+        self.materials=PyPMCA.MaterialSelector()
         self.transform=PyPMCA.BodyTransform()
-        self.licenses = []
-        self.authors = []
         self.modelinfo = PyPMCA.MODELINFO()
         self.target_dir = './model/'
-        self.pack()
-        self.createWidgets()
         self.settings = SETTINGS()
-
         self.parts_tree=PyPMCA.PartsTree()
-   
-    def createWidgets(self):
-        '''
-        self.listbox = Listbox(self, height = 6, exportselection = 0, selectmode = SINGLE)
-        self.listbox.yscroll = Scrollbar(self, orient = VERTICAL, command = self.listbox.yview)
-        self.listbox.yscroll.pack(side = RIGHT, fill = Y, expand = 0)
-        self.listbox["yscrollcommand"] = self.listbox.yscroll.set
-        self.listbox.pack(expand = 1, fill = BOTH)
-        '''
-        
+
         #タブを作成
         notebook = Notebook(self.master)
         notebook.pack(side = TOP, fill = BOTH, expand=1)
@@ -153,15 +142,9 @@ class MainFrame(Frame):
         self.tab[3].frame.name_l.set(self.modelinfo.name)
         self.tab[3].frame.name_l_entry = Entry(self.tab[3], textvariable = self.tab[3].frame.name_l)
         self.tab[3].frame.name_l_entry.pack(fill = X)
-        
-        str1=''
-        str2=''
-        for x in self.authors:
-            str1 += '%s '%(x)
-        for x in self.licenses:
-            str2 += '%s '%(x)
-        
+               
         self.tab[3].frame.text = StringVar()
+        str1, str2=self.materials.license.get_entry()
         self.tab[3].frame.text.set('Author : %s\nLicense : %s'%(str1, str2))
         self.tab[3].frame.text_label = Label(self.tab[3], textvariable=self.tab[3].frame.text)
         self.tab[3].frame.text_label.pack(fill = X)
@@ -245,12 +228,7 @@ class MainFrame(Frame):
             PMCA.Copy_PMD(3,0)
         
         if level < 4:
-            str1=''
-            str2=''
-            for x in self.authors:
-                str1 += '%s '%(x)
-            for x in self.licenses:
-                str2 += '%s '%(x)
+            str1, str2=self.materials.license.get_entry()
             self.modelinfo.name = self.tab[3].frame.name.get()
             self.modelinfo.name_l = self.tab[3].frame.name_l.get()
             self.modelinfo.comment = self.tab[3].frame.comment.get('1.0',END)

@@ -256,10 +256,27 @@ class MATS_ENTRY:
 		self.props=props
 
 
+class LicenseInfo:
+    def __init__(self):
+        self.licenses = []
+        self.authors = []
+
+    def get_entry(self):
+        str1=''
+        str2=''
+        for x in self.authors:
+            str1 += '%s '%(x)
+        for x in self.licenses:
+            str2 += '%s '%(x)
+        #print('authors and license: %s/%s' % (str1, str2))
+        return str1, str2
+
+
 class MaterialSelector:
-    def __init__(self, app):
+    def __init__(self):
         self.mats_list=[]    #list of class MATS
-        self.mat_rep = MAT_REP(app=app)
+        self.license=LicenseInfo()       
+        self.mat_rep = MAT_REP(app=self.license)
         self.cur_mat = 0
 
     def load_materiallist(self, fp):
