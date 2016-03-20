@@ -484,8 +484,9 @@ class PartsTree:
 
     def __build(self):
         '''
-        "モデル組立て"
+        モデル組立て
         '''
+        print('Parts.Build')
         x = self.tree_list[0].node
         if x == None:
             return

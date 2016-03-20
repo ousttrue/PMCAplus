@@ -2,7 +2,7 @@
 from tkinter import *
 from tkinter.ttk import Notebook
 import pmca_tkinter
-
+import PMCA
 
 APP_NAME = 'PMCA v0.0.6r10'
 
@@ -97,6 +97,14 @@ class MainFrame(Frame):
         self.info_tab.set_materials(pmca.materials)
         self.info_tab.set_modelinfo(pmca.modelinfo)
 
+        def on_model_update():
+            wht = PMCA.getWHT(0)
+            self.transform_tab.info_frame.strvar.set('height     = %f\nwidth      = %f\nthickness = %f\n'%(wht[1],wht[0],wht[2]))
+
+            str1, str2=self.pmca.get_license()
+            self.info_tab.frame.text.set('Author : %s\nLicense : %s'%(str1, str2))
+        pmca.model_update_observable.add(on_model_update)
+
         pmca.update()
         '''
         if level < 1:
@@ -115,13 +123,9 @@ class MainFrame(Frame):
             PMCA.Copy_PMD(3,0)
         
         if level < 4:
-            self.pmca.name_update()
-        
-        wht = PMCA.getWHT(0)
-        self.transform_tab.info_frame.strvar.set('height     = %f\nwidth      = %f\nthickness = %f\n'%(wht[1],wht[0],wht[2]))
-        str1, str2=self.pmca.get_license()
-        self.info_tab.frame.text.set('Author : %s\nLicense : %s'%(str1, str2))
+            self.pmca.name_update()       
         '''
+
     #functions tab0
     def tree_click(self,event):
         self.parts_tab.comment.set("comment:")

@@ -78,6 +78,16 @@ class PyPMCA:
         self.target_dir = './model/'
         self.init()
 
+        def notify(*args):
+            self.model_update_observable.notify()
+        self.parts_tree.tree_entry_observable.add(notify)
+        self.materials.color_select_observable.add(notify)
+        self.update()
+
+    def update(self, *args):
+        self.parts_tree.update()
+        self.materials.update()
+
     def init(self):
         #print('登録データ読み込み')
         for x in os.listdir('./'):
@@ -134,10 +144,6 @@ class PyPMCA:
         with open('list.txt', 'r', encoding = 'utf-8-sig') as fp:
             LIST = load_list(fp)
             PMCA.Set_List(len(LIST['b'][0]), LIST['b'][0], LIST['b'][1], len(LIST['s'][0]), LIST['s'][0], LIST['s'][1], len(LIST['g'][0]), LIST['g'][0], LIST['g'][1])   
-
-    def update(self):
-        self.parts_tree.update()
-        self.materials.update()
 
     def get_license(self):
         return self.materials.license.get_entry()

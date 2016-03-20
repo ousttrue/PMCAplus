@@ -288,6 +288,9 @@ class MaterialSelector:
         self.mat_rep = MAT_REP(app=self.license)
         self.cur_mat = 0
 
+    def is_empty(self):
+        return len(self.mat_rep.mat)==0
+
     def update(self):
         self.__update_material_entry()
 
@@ -297,9 +300,6 @@ class MaterialSelector:
         '''
         self.mats_list = load_matslist(fp, self.mats_list)
         self.__update_material_entry()
-
-    def is_empty(self):
-        return len(self.mat_rep.mat)==0
 
     def load_CNL_lines(self, lines):
         '''
@@ -329,6 +329,7 @@ class MaterialSelector:
         マテリアルカラーリストを更新する(左リストの選択が変った時など)
         '''
         if self.is_empty(): return
+        if len(self.mat_entry[0])==0: return
 
         self.cur_mat = sel_t
         self.color_entry = []
@@ -363,6 +364,7 @@ class MaterialSelector:
         '''
         マテリアル置き換えを実行する        
         '''
+        print("Material.Replace")
         self.mat_rep.UpdateMaterial(self.mats_list, num=0)
         self.mat_rep.ApplyToPmd(num=0)
         PMCA.Copy_PMD(0, 2)
