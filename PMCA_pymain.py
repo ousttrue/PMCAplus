@@ -38,9 +38,106 @@ class QUIT:
         self.root.quit()
 
 
+class PartsFrame(Frame):
+    def __init__(self, master, tree_click, parts_sel_click):
+        super().__init__(master)
+        self.frame = Frame(self)
+        self.text = "Model"
+        self.parts_frame = LabelFrame(self.frame, text = 'Model')
+        self.l_tree = LISTBOX(self.parts_frame)
+        self.parts_frame.pack(padx = 3, pady = 3, side = LEFT, fill = BOTH, expand=1)
+        self.l_tree.listbox.bind("<ButtonRelease-1>", tree_click)
+        
+        self.parts_frame = LabelFrame(self.frame, text = 'Parts')
+        self.l_sel = LISTBOX(self.parts_frame)
+        self.parts_frame.pack(padx = 3, pady = 3, side = LEFT, fill = BOTH, expand=1)
+        self.l_sel.listbox.bind("<ButtonRelease-1>", parts_sel_click)
+        
+        self.frame.pack(padx = 3, pady = 3, side = TOP, fill = BOTH, expand=1)
+        
+        self.comment = StringVar()
+        self.comment.set("comment:")
+        self.text_label = Label(self, textvariable=self.comment)
+        self.text_label.pack(padx = 3, pady = 3, side = BOTTOM, fill = X)
+
+
+class MaterialFrame(Frame):
+    def __init__(self, master, mats_click, mats_sel_click):
+        super().__init__(master)
+        self.frame = Frame(self)
+        self.text = "Color"
+        self.parts_frame = LabelFrame(self.frame, text = 'Material')
+        self.l_tree = LISTBOX(self.parts_frame)
+        self.parts_frame.pack(padx = 3, pady = 3, side = LEFT, fill = BOTH, expand=1)
+        self.l_tree.listbox.bind("<ButtonRelease-1>", mats_click)
+        
+        self.parts_frame = LabelFrame(self.frame, text = 'Select')
+        self.l_sel = LISTBOX(self.parts_frame)
+        self.parts_frame.pack(padx = 3, pady = 3, side = LEFT, fill = BOTH, expand=1)
+        self.l_sel.listbox.bind("<ButtonRelease-1>", mats_sel_click)
+        
+        self.frame.pack(padx = 3, pady = 3, side = TOP, fill = BOTH, expand=1)
+        
+        self.comment = StringVar()
+        self.comment.set("comment:")
+        self.text_label = Label(self, textvariable=self.comment)
+        self.text_label.pack(padx = 3, pady = 3, side = BOTTOM, fill = X)
+
+
+class TransformFrame(Frame):
+    def __init__(self, master, tf_click):
+        super().__init__(master)
+        self.text = "Transform"
+        self.tfgroup_frame = LabelFrame(self, text = 'Groups')
+        self.tfgroup = LISTBOX(self.tfgroup_frame)
+        self.tfgroup_frame.pack(padx = 3, pady = 3, side = LEFT, fill = BOTH, expand=1)
+        self.tfgroup.listbox.bind("<ButtonRelease-1>", tf_click)
+        
+        self.info_frame = LabelFrame(self, text = 'Info')
+        self.info_frame.strvar = StringVar()
+        self.info_frame.strvar.set('x=\ny=\nz=\n')
+        self.info_frame.label = Label(self.info_frame, textvariable=self.info_frame.strvar).pack(side = LEFT, anchor = N)
+        self.info_frame.pack(padx = 3, pady = 3, side = LEFT, fill = BOTH, expand=1)
+
+
+class InfoFrame(Frame):
+    def __init__(self, master):
+        super().__init__(master)
+        self.text = "Info"
+        self.frame = Frame(self)
+        self.frame.comment = Text(self.frame, height=10)
+        self.frame.comment['state'] = 'normal'
+        self.frame.yscroll = Scrollbar(self.frame, orient = VERTICAL, command = self.frame.comment.yview)
+        self.frame.yscroll.pack(side = RIGHT, fill = Y, expand = 0, anchor=E)
+        self.frame.comment["yscrollcommand"] = self.frame.yscroll.set
+        self.frame.comment.pack(side = RIGHT, fill = BOTH, expand=1)
+        
+        self.frame.name = StringVar()
+        self.frame.name_entry = Entry(self, textvariable = self.frame.name)
+        self.frame.name_entry.pack(fill = X)
+        
+        self.frame.name_l = StringVar()
+        self.frame.name_l_entry = Entry(self, textvariable = self.frame.name_l)
+        self.frame.name_l_entry.pack(fill = X)
+               
+        self.frame.text = StringVar()
+        self.frame.text_label = Label(self, textvariable=self.frame.text)
+        self.frame.text_label.pack(fill = X)
+        
+        self.frame.pack(fill = BOTH, expand=1)
+
+    def set_materials(self, materials):
+        str1, str2=materials.license.get_entry()
+        self.frame.text.set('Author : %s\nLicense : %s'%(str1, str2))
+
+    def set_modelinfo(self, modelinfo):
+        self.frame.name.set(modelinfo.name)
+        self.frame.name_l.set(modelinfo.name)
+
+
 class MainFrame(Frame):
     def __init__(self, master=None):
-        Frame.__init__(self, master)
+        super().__init__(master)
         self.master.title(softwarename)
         self.pack()
 
@@ -51,113 +148,33 @@ class MainFrame(Frame):
         self.settings = SETTINGS()
         self.parts_tree=PyPMCA.PartsTree()
 
-        #タブを作成
+        #タブを作成       
         notebook = Notebook(self.master)
         notebook.pack(side = TOP, fill = BOTH, expand=1)
-        
-        self.tab = []
-        ########################################################################################################
-        #Tab0
-        self.tab.append(Frame(self.master))
-        
-        self.tab[0].frame = Frame(self.tab[0])
-        self.tab[0].text = "Model"
-        self.tab[0].parts_frame = LabelFrame(self.tab[0].frame, text = 'Model')
-        self.tab[0].l_tree = LISTBOX(self.tab[0].parts_frame)
-        self.tab[0].parts_frame.pack(padx = 3, pady = 3, side = LEFT, fill = BOTH, expand=1)
-        self.tab[0].l_tree.listbox.bind("<ButtonRelease-1>",self.tree_click)
-        
-        self.tab[0].parts_frame = LabelFrame(self.tab[0].frame, text = 'Parts')
-        self.tab[0].l_sel = LISTBOX(self.tab[0].parts_frame)
-        self.tab[0].parts_frame.pack(padx = 3, pady = 3, side = LEFT, fill = BOTH, expand=1)
-        self.tab[0].l_sel.listbox.bind("<ButtonRelease-1>",self.parts_sel_click)
-        
-        self.tab[0].frame.pack(padx = 3, pady = 3, side = TOP, fill = BOTH, expand=1)
-        
-        self.tab[0].comment = StringVar()
-        self.tab[0].comment.set("comment:")
-        self.tab[0].text_label = Label(self.tab[0], textvariable=self.tab[0].comment)
-        self.tab[0].text_label.pack(padx = 3, pady = 3, side = BOTTOM, fill = X)
 
-        self.parts_tree.tree_entry_observable.add(lambda entry, sel: self.tab[0].l_tree.set_entry(entry, sel=sel))
-        self.parts_tree.parts_entry_observable.add(lambda entry, sel: self.tab[0].l_sel.set_entry(entry, sel=sel))        
+        #Tab0
+        self.parts_tab=PartsFrame(self.master, self.tree_click, self.parts_sel_click)
+        self.parts_tree.tree_entry_observable.add(lambda entry, sel: self.parts_tab.l_tree.set_entry(entry, sel=sel))
+        self.parts_tree.parts_entry_observable.add(lambda entry, sel: self.parts_tab.l_sel.set_entry(entry, sel=sel))        
         self.parts_tree.parts_entry_observable.add(lambda entry, sel: self.refresh())
-        
-        ########################################################################################################
+        notebook.insert(END, self.parts_tab, text = self.parts_tab.text)
+
         #Tab1
+        self.material_tab=MaterialFrame(self.master, self.mats_click, self.mats_sel_click)
+        notebook.insert(END, self.material_tab, text = self.material_tab.text)
         
-        self.tab.append(Frame(self.master))
-        self.tab[1].frame = Frame(self.tab[1])
-        self.tab[1].text = "Color"
-        self.tab[1].parts_frame = LabelFrame(self.tab[1].frame, text = 'Material')
-        self.tab[1].l_tree = LISTBOX(self.tab[1].parts_frame)
-        self.tab[1].parts_frame.pack(padx = 3, pady = 3, side = LEFT, fill = BOTH, expand=1)
-        self.tab[1].l_tree.listbox.bind("<ButtonRelease-1>",self.mats_click)
-        
-        self.tab[1].parts_frame = LabelFrame(self.tab[1].frame, text = 'Select')
-        self.tab[1].l_sel = LISTBOX(self.tab[1].parts_frame)
-        self.tab[1].parts_frame.pack(padx = 3, pady = 3, side = LEFT, fill = BOTH, expand=1)
-        self.tab[1].l_sel.listbox.bind("<ButtonRelease-1>",self.mats_sel_click)
-        
-        self.tab[1].frame.pack(padx = 3, pady = 3, side = TOP, fill = BOTH, expand=1)
-        
-        self.tab[1].comment = StringVar()
-        self.tab[1].comment.set("comment:")
-        self.tab[1].text_label = Label(self.tab[1], textvariable=self.tab[1].comment)
-        self.tab[1].text_label.pack(padx = 3, pady = 3, side = BOTTOM, fill = X)
-        
-        
-        
-        ########################################################################################################
         #Tab2
-        self.tab.append(Frame(self.master))
-        self.tab[2].text = "Transform"
-        self.tab[2].tfgroup_frame = LabelFrame(self.tab[2], text = 'Groups')
-        self.tab[2].tfgroup = LISTBOX(self.tab[2].tfgroup_frame)
-        self.tab[2].tfgroup_frame.pack(padx = 3, pady = 3, side = LEFT, fill = BOTH, expand=1)
-        self.tab[2].tfgroup.listbox.bind("<ButtonRelease-1>",self.tf_click)
-        
-        self.tab[2].info_frame = LabelFrame(self.tab[2], text = 'Info')
-        self.tab[2].info_frame.strvar = StringVar()
-        self.tab[2].info_frame.strvar.set('x=\ny=\nz=\n')
-        self.tab[2].info_frame.label = Label(self.tab[2].info_frame, textvariable=self.tab[2].info_frame.strvar).pack(side = LEFT, anchor = N)
-        self.tab[2].info_frame.pack(padx = 3, pady = 3, side = LEFT, fill = BOTH, expand=1)
-        
-        
-        ########################################################################################################
-        #Tab3
-        self.tab.append(Frame(self.master))
-        self.tab[3].text = "Info"
-        self.tab[3].frame = Frame(self.tab[3])
-        self.tab[3].frame.comment = Text(self.tab[3].frame, height=10)
-        self.tab[3].frame.comment['state'] = 'normal'
-        self.tab[3].frame.yscroll = Scrollbar(self.tab[3].frame, orient = VERTICAL, command = self.tab[3].frame.comment.yview)
-        self.tab[3].frame.yscroll.pack(side = RIGHT, fill = Y, expand = 0, anchor=E)
-        self.tab[3].frame.comment["yscrollcommand"] = self.tab[3].frame.yscroll.set
-        self.tab[3].frame.comment.pack(side = RIGHT, fill = BOTH, expand=1)
-        
-        self.tab[3].frame.name = StringVar()
-        self.tab[3].frame.name.set(self.modelinfo.name)
-        self.tab[3].frame.name_entry = Entry(self.tab[3], textvariable = self.tab[3].frame.name)
-        self.tab[3].frame.name_entry.pack(fill = X)
-        
-        self.tab[3].frame.name_l = StringVar()
-        self.tab[3].frame.name_l.set(self.modelinfo.name)
-        self.tab[3].frame.name_l_entry = Entry(self.tab[3], textvariable = self.tab[3].frame.name_l)
-        self.tab[3].frame.name_l_entry.pack(fill = X)
+        self.transform_tab=TransformFrame(self.master, self.tf_click)
+        notebook.insert(END, self.transform_tab, text = self.transform_tab.text)
                
-        self.tab[3].frame.text = StringVar()
-        str1, str2=self.materials.license.get_entry()
-        self.tab[3].frame.text.set('Author : %s\nLicense : %s'%(str1, str2))
-        self.tab[3].frame.text_label = Label(self.tab[3], textvariable=self.tab[3].frame.text)
-        self.tab[3].frame.text_label.pack(fill = X)
-        
-        self.tab[3].frame.pack(fill = BOTH, expand=1)
-        for x in self.tab:
-            notebook.insert(END, x, text = x.text)
-        ########################################################################################################
-        #Buttons
-        
+        #Tab3
+        self.info_tab=InfoFrame(self.master)
+        self.info_tab.set_materials(self.materials)
+        self.info_tab.set_modelinfo(self.modelinfo)
+        notebook.insert(END, self.info_tab, text = self.info_tab.text)
+           
+
+        #Buttons        
         self.frame_button = Frame(self.master)
         self.QUIT = Button(self.frame_button)
         self.QUIT["text"] = "QUIT"
@@ -168,36 +185,36 @@ class MainFrame(Frame):
     ###########################################################################################
     #functions tab0
     def tree_click(self,event):
-        self.tab[0].comment.set("comment:")
-        sel_t = int(self.tab[0].l_tree.listbox.curselection()[0])
+        self.parts_tab.comment.set("comment:")
+        sel_t = int(self.parts_tab.l_tree.listbox.curselection()[0])
         self.parts_tree.select_node(sel_t)
     
     def parts_sel_click(self,event):
-        sel = int(self.tab[0].l_sel.listbox.curselection()[0])
-        sel_t = int(self.tab[0].l_tree.listbox.curselection()[0])
+        sel = int(self.parts_tab.l_sel.listbox.curselection()[0])
+        sel_t = int(self.parts_tab.l_tree.listbox.curselection()[0])
         node=self.parts_tree.select_part(sel_t, sel)
         if node == None:
-            self.tab[0].comment.set("comment:")
+            self.parts_tab.comment.set("comment:")
         else:
-            self.tab[0].comment.set("comment:%s"%(node.parts.comment))
+            self.parts_tab.comment.set("comment:%s"%(node.parts.comment))
     
     ########################################################################################
     #functions tab1
     def mats_click(self,event):
-        sel_t = int(self.tab[1].l_tree.listbox.curselection()[0])
+        sel_t = int(self.material_tab.l_tree.listbox.curselection()[0])
         tmp_list=self.materials.select_material(sel_t)
-        self.tab[1].l_sel.set_entry(tmp_list)
-        #self.tab[0].l_sel.set_entry(self.parts_tree.parts_entry_k, sel=self.parts_tree.tree_list[sel_t].node.list_num)       
-        self.tab[1].comment.set("comment:%s"%(self.materials.mat_rep.mat[self.materials.mat_entry[1][sel_t]].mat.comment))
+        self.material_tab.l_sel.set_entry(tmp_list)
+        #self.parts_tab.l_sel.set_entry(self.parts_tree.parts_entry_k, sel=self.parts_tree.tree_list[sel_t].node.list_num)       
+        self.material_tab.comment.set("comment:%s"%(self.materials.mat_rep.mat[self.materials.mat_entry[1][sel_t]].mat.comment))
     
     def mats_sel_click(self,event):
-        sel_t = int(self.tab[1].l_sel.listbox.curselection()[0])
+        sel_t = int(self.material_tab.l_sel.listbox.curselection()[0])
         self.materials.select_color(sel_t)
         self.refresh(level=1)
     ########################################################################################
     #functions tab2
     def tf_click(self,event):
-        sel = int(self.tab[2].tfgroup.listbox.curselection()[0])
+        sel = int(self.transform_tab.tfgroup.listbox.curselection()[0])
         self.transform.select_body(self, sel)
     
     ######################################################################################
@@ -207,7 +224,7 @@ class MainFrame(Frame):
             #材質関連
             entry, sel=self.materials.replace()
             #print("2")
-            self.tab[1].l_tree.set_entry(entry, sel = sel)
+            self.material_tab.l_tree.set_entry(entry, sel = sel)
 
         else:
             PMCA.Copy_PMD(2,0)
@@ -219,17 +236,17 @@ class MainFrame(Frame):
         
         if level < 4:
             str1, str2=self.materials.license.get_entry()
-            self.modelinfo.name = self.tab[3].frame.name.get()
-            self.modelinfo.name_l = self.tab[3].frame.name_l.get()
-            self.modelinfo.comment = self.tab[3].frame.comment.get('1.0',END)
+            self.modelinfo.name = self.info_tab.frame.name.get()
+            self.modelinfo.name_l = self.info_tab.frame.name_l.get()
+            self.modelinfo.comment = self.info_tab.frame.comment.get('1.0',END)
             PyPMCA.Set_Name_Comment(name=self.modelinfo.name,
                 comment='%s\nAuthor:%s\nLicense:%s\n%s'%(self.modelinfo.name_l,str1,str2,self.modelinfo.comment), 
                 name_eng=self.modelinfo.name_eng,
                 comment_eng='%s\nAuthor:%s\nLicense:%s\n%s'%(self.modelinfo.name_l_eng,str1,str2,self.modelinfo.comment_eng))
         
         wht = PMCA.getWHT(0)
-        self.tab[2].info_frame.strvar.set('height     = %f\nwidth      = %f\nthickness = %f\n'%(wht[1],wht[0],wht[2]))
-        self.tab[3].frame.text.set('Author : %s\nLicense : %s'%(str1, str2))
+        self.transform_tab.info_frame.strvar.set('height     = %f\nwidth      = %f\nthickness = %f\n'%(wht[1],wht[0],wht[2]))
+        self.info_tab.frame.text.set('Author : %s\nLicense : %s'%(str1, str2))
 
         PMCA.MODEL_LOCK(1)
         PMCA.PMD_view_set(0, 'replace')       
@@ -570,19 +587,19 @@ class MainFrame(Frame):
         f.close
         lines = lines.split('\n')
         
-        self.tab[3].frame.name.set(lines[0])
-        self.tab[3].frame.name_l.set(lines[1])
+        self.info_tab.frame.name.set(lines[0])
+        self.info_tab.frame.name_l.set(lines[1])
         for line in lines[2:]:
             if line == 'PARTS':
                 break
             elif line == '':
                 pass
             else:
-                self.tab[3].frame.comment.insert(END, line)
-                self.tab[3].frame.comment.insert(END, '\n')
+                self.info_tab.frame.comment.insert(END, line)
+                self.info_tab.frame.comment.insert(END, '\n')
         
         else:
-            self.tab[3].frame.comment.delete('1.0',END)
+            self.info_tab.frame.comment.delete('1.0',END)
     
         self.parts_tree.load_CNL_lines(lines)
         self.materials.load_CNL_lines(lines)
@@ -729,10 +746,10 @@ def init(app):
         LIST = PyPMCA.load_list(fp)
         PMCA.Set_List(len(LIST['b'][0]), LIST['b'][0], LIST['b'][1], len(LIST['s'][0]), LIST['s'][0], LIST['s'][1], len(LIST['g'][0]), LIST['g'][0], LIST['g'][1])   
 
-    app.tab[2].tfgroup.set_entry(app.transform.tmp)     
-    app.tab[3].frame.name.set('PMCAモデル')
-    app.tab[3].frame.name_l.set('PMCAモデル')
-    app.tab[3].frame.comment.delete('1.0',END)
+    app.transform_tab.tfgroup.set_entry(app.transform.tmp)     
+    app.info_tab.frame.name.set('PMCAモデル')
+    app.info_tab.frame.name_l.set('PMCAモデル')
+    app.info_tab.frame.comment.delete('1.0',END)
     
 
 def main():

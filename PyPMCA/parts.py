@@ -487,9 +487,7 @@ class PartsTree:
         if x == None:
             return
 
-        # 0を作り
-        PMCA.Create_PMD(0)
         # 0を組み立てて
-        x.assemble(0,self)
+        x.assemble(0, self)
         # 0を1にコピーする
         PMCA.Copy_PMD(0,1)
