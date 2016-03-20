@@ -232,6 +232,9 @@ class NODE:    #モデルのパーツツリー
                 x.recalc_depth(depth)
         
     def node_to_text(self):
+        '''
+        CNLに出力
+        '''
         lines=[]
         lines.append('[Name] %s'%(self.parts.name))
         lines.append('[Path] %s'%(self.parts.path))
@@ -246,6 +249,9 @@ class NODE:    #モデルのパーツツリー
         return lines
     
     def text_to_node(self, parts_list, lines):
+        '''
+        CNLを読み込み
+        '''
         tmp = [None,None]
         curnode = self
         parents = [self]
@@ -347,79 +353,93 @@ class TREE_LIST:
 
 class PartsTree:
     def __init__(self):
-        self.load_observable=Observable()
-        self.load_observable.add(self.update_entry)
         self.tree_entry_observable=Observable()
+        self.tree_entry_observable.add(lambda entry, sel_t: self.__update_parts_entry(sel_t))
         self.parts_entry_observable=Observable()
 
         self.parts_list=[]
+        self.parts_entry = []
         self.tree_list = []
         self.tree_entry = []
-        self.parts_entry_k = []
-        self.parts_entry_p = []
-        self.init_parts_tree()
+
+        self.__init_parts_tree()
 
     def is_empty(self):
         return self.tree_list[0].node.child[0] == None
 
-    def update_entry(self, sel_t=0):
-        #print(sel_t)
-        joint = self.tree_list[sel_t].node.parts.joint[self.tree_list[sel_t].c_num]
-        #print(joint)
-        self.parts_entry_k = []
-        self.parts_entry_p = []
+    def __init_parts_tree(self):
+        '''
+        ツリー初期化
+        '''
+        node =NODE(parts = PARTS(name = 'ROOT',joint=['root']), depth = -1, child=[None])   
+        self.tree_list = node.create_list()
+        self.__update_tree_entry()
+
+    def load_CNL_lines(self, lines):
+        '''
+        CharacterNodeListの読み込み
+        '''
+        self.tree_list[0].node.text_to_node(self.parts_list, lines)
+        self.__update_tree_entry()
+
+    def __update_tree_entry(self, sel_t=0):
+        '''
+        ツリーリスト更新
+        '''
+        self.tree_entry=[x for x in self.tree_list[0].node.create_list()][1:]
+        def get_name(x):
+            i=x.c_num
+            joint=x.node.parts.joint[i]
+            node=x.node.child[i]
+            if node:
+                return "%s#%s => %s" %('  '*x.depth, joint, node.parts.name)
+            else:
+                return "%s#%s" % ('  '*x.depth, joint) 
+        self.tree_entry_observable.notify([get_name(x) for x in self.tree_entry], sel_t)
+
+    def __update_parts_entry(self, sel_t=0):
+        '''
+        パーツリスト更新
+        '''
+        joint = self.tree_entry[sel_t].node.parts.joint[self.tree_entry[sel_t].c_num]
+        self.parts_entry = []
         for x in self.parts_list:
             for y in x.type:
                 if y == joint:
-                    self.parts_entry_k.append(x.name)
-                    self.parts_entry_p.append(x)
+                    self.parts_entry.append(x)
                     break
-        self.parts_entry_k.append('#外部モデル読み込み')
-        self.parts_entry_p.append('load')
-        self.parts_entry_k.append('#None')
-        self.parts_entry_p.append(None)
-
-    def init_parts_tree(self):
-        #print('ツリー初期化')
-        node =NODE(parts = PARTS(name = 'ROOT',joint=['root']), depth = -1, child=[None])
-    
-        self.tree_list = node.create_list()
-        self.tree_entry = []
-        for x in self.tree_list:
-            self.tree_entry.append(x.text)
-        self.tree_entry = self.tree_entry[1:]
-    
-        self.parts_entry_k = []
-        self.parts_entry_p = []
-        for x in self.parts_list:
-            for y in x.type:
-                if y == 'root':
-                    self.parts_entry_k.append(x.name)
-                    self.parts_entry_p.append(x)
-                    break
-        self.parts_entry_k.append('#外部モデル読み込み')
-        self.parts_entry_p.append('load')
-        #self.parts_entry_k.append('#None')
-        #self.parts_entry_p.append(None)
-        self.load_observable.notify()
-
-    def clear(self):
-        self.tree_list[0].node=NODE(parts = PARTS(name = 'ROOT',joint=['root']), depth = -1, child=[None])
-        self.load_observable.notify()
+        self.parts_entry.append('load')
+        self.parts_entry.append(None)
+        def get_name(x):
+            if isinstance(x, PARTS):
+                return x.name
+            if x=="load":
+                return "#外部モデル"
+            else:
+                return "#NONE"
+        self.parts_entry_observable.notify([get_name(x) for x in self.parts_entry], self.tree_entry[sel_t].node.list_num)
 
     def load_partslist(self, fp):
+        '''
+        パーツリスト読み込み
+        '''
         self.parts_list = load_partslist(fp, self.parts_list)
-        self.load_observable.notify()
+        self.__update_parts_entry()
 
     def select_node(self, sel_t):
-        self.update_entry(sel_t)
-        return self.parts_entry_k, self.tree_list[sel_t].node.list_num
+        '''
+        ツリーノード選択
+        '''
+        self.__update_parts_entry(sel_t)
 
     def select_part(self, sel_t, sel):
-        if self.parts_entry_p[sel]==None:    #Noneを選択した場合
+        '''
+        パーツ選択
+        '''
+        if self.parts_entry[sel]==None:    #Noneを選択した場合
             node = None
         
-        elif self.parts_entry_p[sel]=='load':    #外部モデル読み込み
+        elif self.parts_entry[sel]=='load':    #外部モデル読み込み
             path = filedialog.askopenfilename(filetypes = [('Plygon Model Deta(for MMD)','.pmd'),('all','.*')], defaultextension='.pmd')
             if(path != ''):
                 name = path.split('/')[-1]
@@ -428,15 +448,11 @@ class PartsTree:
                 for x in node.parts.joint:
                     node.child.append(None)
             else:
-                node = None
+                node = None               
                 
-                
-        else:
-            #print(self.parts_entry_p[sel].path)
-            #print(self.tree_list[sel_t].node.parts.name)
-            
-            node = NODE(parts = self.parts_entry_p[sel], depth = self.tree_list[sel_t].node.depth+1, child=[])
-            p_node=self.tree_list[sel_t].node.child[self.tree_list[sel_t].c_num]
+        else:          
+            node = NODE(parts = self.parts_entry[sel], depth = self.tree_entry[sel_t].node.depth+1, child=[])
+            p_node=self.tree_entry[sel_t].node.child[self.tree_entry[sel_t].c_num]
             
             child_appended = []
             if p_node != None:
@@ -456,27 +472,20 @@ class PartsTree:
                     node.child.append(None)
             
             #print('>>', node.parts.name, '\n')
-        self.tree_list[sel_t].node.child[self.tree_list[sel_t].c_num] = node
+        self.tree_entry[sel_t].node.child[self.tree_entry[sel_t].c_num] = node
         #self.tree_list[sel_t].node.list_num = sel
+
+        self.__update_tree_entry(sel_t)
 
         return node
 
-    def refresh(self):
-        self.tree_list = self.tree_list[0].node.create_list()
-        self.tree_entry = []
-        
-        for x in self.tree_list:
-            self.tree_entry.append(x.text)
-        self.tree_entry = self.tree_entry[1:]
-        return self.tree_entry
-
     def build(self):
-        #print("モデル組立て")
-        PMCA.Create_PMD(0)
+        '''
+        "モデル組立て"
+        '''
         x = self.tree_list[0].node
-        if x != None:
-            x.assemble(0,self)
+        if x == None:
+            return
+        PMCA.Create_PMD(0)
+        x.assemble(0,self)
         PMCA.Copy_PMD(0,1)
-
-    def load_CNL_lines(self, lines):
-        self.tree_list[0].node.text_to_node(self.parts_list, lines)

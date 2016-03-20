@@ -78,7 +78,10 @@ class MainFrame(Frame):
         self.tab[0].comment.set("comment:")
         self.tab[0].text_label = Label(self.tab[0], textvariable=self.tab[0].comment)
         self.tab[0].text_label.pack(padx = 3, pady = 3, side = BOTTOM, fill = X)
-        
+
+        self.parts_tree.tree_entry_observable.add(lambda entry, sel: self.tab[0].l_tree.set_entry(entry, sel=sel))
+        self.parts_tree.parts_entry_observable.add(lambda entry, sel: self.tab[0].l_sel.set_entry(entry, sel=sel))        
+        self.parts_tree.parts_entry_observable.add(lambda entry, sel: self.refresh())
         
         ########################################################################################################
         #Tab1
@@ -166,19 +169,17 @@ class MainFrame(Frame):
     #functions tab0
     def tree_click(self,event):
         self.tab[0].comment.set("comment:")
-        sel_t = int(self.tab[0].l_tree.listbox.curselection()[0])+1
-        entry, sel=self.parts_tree.select_node(sel_t)
-        self.tab[0].l_sel.set_entry(entry, sel=sel)
+        sel_t = int(self.tab[0].l_tree.listbox.curselection()[0])
+        self.parts_tree.select_node(sel_t)
     
     def parts_sel_click(self,event):
         sel = int(self.tab[0].l_sel.listbox.curselection()[0])
-        sel_t = int(self.tab[0].l_tree.listbox.curselection()[0])+1
+        sel_t = int(self.tab[0].l_tree.listbox.curselection()[0])
         node=self.parts_tree.select_part(sel_t, sel)
         if node == None:
             self.tab[0].comment.set("comment:")
         else:
             self.tab[0].comment.set("comment:%s"%(node.parts.comment))
-        self.refresh()
     
     ########################################################################################
     #functions tab1
@@ -201,10 +202,7 @@ class MainFrame(Frame):
     
     ######################################################################################
     def refresh(self, level=0):
-        sel_t = int(self.tab[0].l_tree.listbox.curselection()[0])
-        entry=self.parts_tree.refresh()
-        self.tab[0].l_tree.set_entry(entry, sel = sel_t)
-        
+       
         #モデル組み立て
         PMCA.MODEL_LOCK(1)
         
@@ -507,7 +505,7 @@ class MainFrame(Frame):
         if name == None:
             showinfo(text='Error!')
             return None
-        self.parts_tree.clear()
+        #self.parts_tree.clear()
         self.load_CNL_File(name)
         self.target_dir = name.rsplit('/',1)[0]
         self.refresh()
@@ -743,8 +741,8 @@ def init(app):
         LIST = PyPMCA.load_list(fp)
         PMCA.Set_List(len(LIST['b'][0]), LIST['b'][0], LIST['b'][1], len(LIST['s'][0]), LIST['s'][0], LIST['s'][1], len(LIST['g'][0]), LIST['g'][0], LIST['g'][1])   
 
-    app.tab[0].l_tree.set_entry(app.parts_tree.tree_entry, sel=0)
-    app.tab[0].l_sel.set_entry(app.parts_tree.parts_entry_k)
+    #app.tab[0].l_tree.set_entry(app.parts_tree.tree_entry, sel=0)
+    #pp.tab[0].l_sel.set_entry(app.parts_tree.parts_entry_k)
     app.tab[2].tfgroup.set_entry(app.transform.tmp)     
     app.tab[3].frame.name.set('PMCAモデル')
     app.tab[3].frame.name_l.set('PMCAモデル')
