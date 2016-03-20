@@ -1,5 +1,6 @@
 ﻿import re
 import math
+import ctypes
 from glglue.sample import *
 from OpenGL.GL import *
 
@@ -19,10 +20,25 @@ class Model:
     def draw(self):
         glEnableClientState(GL_VERTEX_ARRAY);
         glVertexPointer(3, GL_FLOAT, 0, self.vertices);
-        #glEnableClientState(GL_COLOR_ARRAY);
-        #glColorPointer(3, GL_FLOAT, 0, self.colors);
         glDrawElements(GL_TRIANGLES, len(self.indices), GL_UNSIGNED_INT, self.indices);
-        #glDisableClientState(GL_COLOR_ARRAY);
+        glDisableClientState(GL_VERTEX_ARRAY);
+
+
+class ModelVBO:
+    def __init__(self, vertices, uvs, indices, colors, paths, indexCounts):
+        self.indices=indices
+        self.buffers = glGenBuffers(2)
+        glBindBuffer(GL_ARRAY_BUFFER, self.buffers[0])
+        glBufferData(GL_ARRAY_BUFFER, len(vertices)*4, (ctypes.c_float*len(vertices))(*vertices), GL_STATIC_DRAW)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.buffers[1])
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(indices)*4, (ctypes.c_uint*len(indices))(*indices), GL_STATIC_DRAW)
+
+    def draw(self):
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glBindBuffer(GL_ARRAY_BUFFER, self.buffers[0]);
+        glVertexPointer(3, GL_FLOAT, 0, None);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.buffers[1]);
+        glDrawElements(GL_TRIANGLES, len(self.indices), GL_UNSIGNED_INT, None);
         glDisableClientState(GL_VERTEX_ARRAY);
 
 

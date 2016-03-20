@@ -149,7 +149,7 @@ class MainFrame(Frame):
         #
         def update_gl():
             self.scene.clear()
-            model=PMCA_GL.Model(*pmca.get_model())
+            model=PMCA_GL.ModelVBO(*pmca.get_model())
             self.scene.add_item(model, model.draw)
             self.glframe.glwidget.event_generate("<Expose>")
         pmca.model_update_observable.add(update_gl)
