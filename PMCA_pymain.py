@@ -206,10 +206,9 @@ class MainFrame(Frame):
         tmp_list=self.materials.select_material(sel_t)
         self.tab[1].l_sel.set_entry(tmp_list)
         self.tab[0].l_sel.set_entry(self.parts_tree.parts_entry_k, sel=self.parts_tree.tree_list[sel_t].node.list_num)       
-        self.tab[1].comment.set("comment:%s"%(self.materials.mat_rep.mat[self.mat_entry[1][sel_t]].mat.comment))
+        self.tab[1].comment.set("comment:%s"%(self.materials.mat_rep.mat[self.materials.mat_entry[1][sel_t]].mat.comment))
     
     def mats_sel_click(self,event):
-        #print(self.mat_rep.mat[self.mat_entry[1][self.cur_mat]].sel)
         sel_t = int(self.tab[1].l_sel.listbox.curselection()[0])
         self.materials.select_color(sel_t)
         self.refresh(level=1)

@@ -419,7 +419,7 @@ class PartsTree:
             print(self.parts_entry_p[sel].path)
             print(self.tree_list[sel_t].node.parts.name)
             
-            node = PyPMCA.NODE(parts = self.parts_entry_p[sel], depth = self.tree_list[sel_t].node.depth+1, child=[])
+            node = NODE(parts = self.parts_entry_p[sel], depth = self.tree_list[sel_t].node.depth+1, child=[])
             p_node=self.tree_list[sel_t].node.child[self.tree_list[sel_t].c_num]
             
             child_appended = []

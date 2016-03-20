@@ -282,7 +282,7 @@ class MaterialSelector:
         #print("4")
         PMCA.Copy_PMD(0,2)
 
-        return self.mat_entry, self.cur_mat
+        return self.mat_entry[1], self.cur_mat
 
     def select_material(self, sel_t):
         print(sel_t)
