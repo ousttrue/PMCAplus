@@ -1,4 +1,5 @@
 ﻿# coding: utf-8
+import random
 import PMCA
 from PyPMCA.pmd import TOON, INFO, MATERIAL
 

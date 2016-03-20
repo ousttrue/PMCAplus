@@ -8,7 +8,7 @@ import os
 import shutil
 
 import time
-import random
+
 
 #インポートパスにカレントディレクトリを加える
 sys.path.append(os.getcwd())
@@ -488,26 +488,25 @@ class MainFrame(Frame):
         self.refresh()
     
     def save_node(self):
-        x = self.tree_list[0].node.child[0]
-        if x != None:
-            name = filedialog.asksaveasfilename(filetypes = [('キャラクタノードリスト','.cnl'),('all','.*')], initialdir = self.target_dir, defaultextension='.cnl')
-            if name == '':
-                #showinfo(text='Error!')
-                return None
-            self.refresh(level = 3)
-            self.save_CNL_File(name)
-            self.target_dir = name.rsplit('/',1)[0]
-
-        else:
+        if self.parts_tree.is_empty():
             showinfo(lavel='ノードが空です')
+            return
+
+        name = filedialog.asksaveasfilename(filetypes = [('キャラクタノードリスト','.cnl'),('all','.*')], initialdir = self.target_dir, defaultextension='.cnl')
+        if name == '':
+            #showinfo(text='Error!')
+            return None
+
+        self.refresh(level = 3)
+        self.save_CNL_File(name)
+        self.target_dir = name.rsplit('/',1)[0]
     
     def load_node(self):
         name = filedialog.askopenfilename(filetypes = [('キャラクタノードリスト','.cnl'),('all','.*')], initialdir = self.target_dir, defaultextension='.cnl')
         if name == None:
             showinfo(text='Error!')
             return None
-        pastnode = self.tree_list[0]
-        self.tree_list[0].node=PyPMCA.NODE(parts = PyPMCA.PARTS(name = 'ROOT',joint=['root']), depth = -1, child=[None])
+        self.parts_tree.clear()
         self.load_CNL_File(name)
         self.target_dir = name.rsplit('/',1)[0]
         self.refresh()

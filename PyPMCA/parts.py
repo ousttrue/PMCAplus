@@ -1,7 +1,7 @@
 ﻿# coding: utf-8
 import PMCA
 import sys
-from PyPMCA.pmd import INFO
+from PyPMCA.pmd import *
 
 sysenc = sys.getfilesystemencoding()
 
@@ -377,6 +377,12 @@ class PartsTree:
         self.parts_entry_p.append('load')
         #self.parts_entry_k.append('#None')
         #self.parts_entry_p.append(None)
+
+    def clear(self):
+        self.tree_list[0].node=NODE(parts = PARTS(name = 'ROOT',joint=['root']), depth = -1, child=[None])
+
+    def is_empty(self):
+        return self.tree_list[0].node.child[0] == None
 
     def load_partslist(self, fp):
         self.parts_list = load_partslist(fp, self.parts_list)
