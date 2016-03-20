@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 sys.path.append(os.getcwd()+'/glglue')
 import tkinter
