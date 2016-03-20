@@ -42,8 +42,7 @@ class MainFrame(Frame):
         Frame.__init__(self, master)
         self.master.title(softwarename)
         self.materials=PyPMCA.MaterialSelector(self)
-        self.transform_data = []
-        self.transform_list = []
+        self.transform=PyPMCA.BodyTransform()
         self.licenses = []
         self.authors = []
         self.modelinfo = PyPMCA.MODELINFO()
@@ -123,7 +122,6 @@ class MainFrame(Frame):
         self.tab[2].text = "Transform"
         self.tab[2].tfgroup_frame = LabelFrame(self.tab[2], text = 'Groups')
         self.tab[2].tfgroup = LISTBOX(self.tab[2].tfgroup_frame)
-        #self.tab[2].tfgroup.set_entry(tmp)
         self.tab[2].tfgroup_frame.pack(padx = 3, pady = 3, side = LEFT, fill = BOTH, expand=1)
         self.tab[2].tfgroup.listbox.bind("<ButtonRelease-1>",self.tf_click)
         
@@ -216,41 +214,7 @@ class MainFrame(Frame):
     #functions tab2
     def tf_click(self,event):
         sel = int(self.tab[2].tfgroup.listbox.curselection()[0])
-        buff=''
-        print(sel)
-        for x in self.transform_list:
-            print(x.name, len(x.bones))
-        
-        for x in self.transform_list[sel].bones:
-            buff += '%s %f %f\n'%(x.name,x.length,x.thick)
-        print(buff)
-        
-        t = self.transform_list[sel]
-        
-        root = Toplevel()
-        root.fancs = PMCA_dialogs.SCALE_DIALOG_FANC(self,root, sel)
-        
-        root.fancs.var = DoubleVar()
-        root.fancs.var.set(t.default)
-        root.fancs.tvar.set('%.3f'%t.default)
-        
-        root.transient(self)
-        root.frame1 = Frame(root)
-        root.frame2 = Frame(root)
-        
-        Label(root, text = buff).grid(row=0, padx=10, pady=5)
-        
-        root.frame1.spinbox = Spinbox(root.frame1, from_=-100, to=100, increment=0.02, format = '%.3f', textvariable=root.fancs.tvar, width=5, command=root.fancs.change_spinbox)
-        root.frame1.spinbox.pack(side="right", padx=5)
-        root.frame1.spinbox.bind('<Return>', root.fancs.enter_spinbox)
-        
-        Scale(root.frame1, orient = 'h',from_ = t.limit[0], to = t.limit[1], variable = root.fancs.var , length = 256, command=root.fancs.change_scale).pack(side="left", padx=5)
-        root.frame1.grid(row=1, padx=10, pady=5)
-        
-        Button(root.frame2, text = 'OK', command = root.fancs.OK).pack(side="right", padx=5)
-        Button(root.frame2, text = 'Cancel', command = root.fancs.CANCEL).pack(side="left", padx=5)
-        root.frame2.grid(row=2, sticky="e", padx=10, pady=5)
-        root.mainloop()
+        self.transform.select_body(sel)
     
     ######################################################################################
     def refresh(self, level=0):
@@ -276,54 +240,7 @@ class MainFrame(Frame):
             PMCA.Copy_PMD(2,0)
         
         if level < 3:
-            print("体型調整")
-            info_data = PMCA.getInfo(0)
-            info = PyPMCA.INFO(info_data)
-            
-            tmpbone = []
-            for i in range(info_data["bone_count"]):
-                tmp = PMCA.getBone(0, i)
-                tmpbone.append(PyPMCA.BONE(tmp['name'], tmp['name_eng'], tmp['parent'], tmp['tail'], tmp['type'], tmp['IK'], tmp['loc']))
-            refbone = None
-            refbone_index = None
-            for i,x in enumerate(tmpbone):
-                if x.name == "右足首":
-                    refbone = x
-                    refbone_index = i
-                    break
-            
-            for y in self.transform_data:
-                PMCA.Resize_Model(0,y.scale)
-                for x in y.bones:
-                    PMCA.Resize_Bone(0, x.name.encode('cp932','replace'), x.length, x.thick)
-                    PMCA.Move_Bone(0, x.name.encode('cp932','replace'),x.pos[0], x.pos[1], x.pos[2])
-                    #print("resize_bone %f %f"%(x.length, x.thick))
-            
-            if refbone!=None:
-                newbone=None
-                tmp = PMCA.getBone(0, refbone_index)
-                newbone = PyPMCA.BONE(tmp['name'], tmp['name_eng'], tmp['parent'], tmp['tail'], tmp['type'], tmp['IK'], tmp['loc'])
-                
-                dy = refbone.loc[1] - newbone.loc[1]
-                for x in tmpbone:
-                    i = x.parent
-                    count = 0
-                    while i < info_data["bone_count"] and count < info_data["bone_count"]:
-                        if tmpbone[i].name == 'センター':
-                            PMCA.Move_Bone(0, x.name.encode('cp932','replace'), 0, dy, 0)
-                            break
-                        i=tmpbone[i].parent
-                        count += 1
-                
-                PMCA.Move_Bone(0, 'センター'.encode('cp932','replace'), 0, dy, 0)
-                PMCA.Move_Bone(0, '+センター'.encode('cp932','replace'), 0, -dy, 0)
-            
-            for y in self.transform_data:
-                PMCA.Move_Model(0,y.pos[0],y.pos[1],y.pos[2])
-            
-            PMCA.Update_Skin(0)
-            PMCA.Adjust_Joints(0)
-            PMCA.Copy_PMD(0,3)
+            self.transform.update()
         else:
             PMCA.Copy_PMD(3,0)
         
@@ -585,7 +502,7 @@ class MainFrame(Frame):
         root.mainloop()
     
     def init_tf(self):
-        self.transform_data = [PyPMCA.MODEL_TRANS_DATA(scale=1.0, pos=[0.0, 0.0, 0.0], rot=[0.0, 0.0, 0.0], bones=[], props={})]
+        self.transform.clear()
         self.refresh()
     
     def rand_mat(self):
@@ -705,7 +622,7 @@ class MainFrame(Frame):
     
         self.parts_tree.load_CNL_lines(lines)
         self.materials.load_CNL_lines(lines)
-        self.transform_data[0].text_to_list(lines)
+        self.transform.load_CNL_lines(lines)
         return True
         
     def save_CNL_File(self, name):
@@ -722,7 +639,7 @@ class MainFrame(Frame):
         lines.append('MATERIAL')
         lines.extend(self.materials.mat_rep.list_to_text())
         lines.append('TRANSFORM')
-        lines.extend(self.transform_data[0].list_to_text())
+        lines.extend(self.transform.transform_data[0].list_to_text())
         
         fp = open(name, 'w', encoding = 'utf-8')
         for x in lines:
@@ -835,7 +752,7 @@ def init(app):
                 elif line=='PMCA Materials list v2.0\n' :
                     app.materials.load_materiallist(fp)
                 elif line=='PMCA Transform list v2.0\n' :
-                    app.transform_list = PyPMCA.load_translist(fp, app.transform_list)
+                    app.transform.load_transformlist(fp)
                 
                 fp.close()
             except UnicodeDecodeError:
@@ -844,17 +761,13 @@ def init(app):
                 fp.close()
             
     print('list.txt読み込み')
-    fp = open('list.txt', 'r', encoding = 'utf-8-sig')
-    LIST = PyPMCA.load_list(fp)
-    PMCA.Set_List(len(LIST['b'][0]), LIST['b'][0], LIST['b'][1], len(LIST['s'][0]), LIST['s'][0], LIST['s'][1], len(LIST['g'][0]), LIST['g'][0], LIST['g'][1])
-    
-    fp.close()
+    with open('list.txt', 'r', encoding = 'utf-8-sig') as fp:
+        LIST = PyPMCA.load_list(fp)
+        PMCA.Set_List(len(LIST['b'][0]), LIST['b'][0], LIST['b'][1], len(LIST['s'][0]), LIST['s'][0], LIST['s'][1], len(LIST['g'][0]), LIST['g'][0], LIST['g'][1])   
 
-    #app.parts_tree.init_parts_tree()
     app.tab[0].l_tree.set_entry(app.parts_tree.tree_entry, sel=0)
     app.tab[0].l_sel.set_entry(app.parts_tree.parts_entry_k)
-    
-    
+    app.tab[2].tfgroup.set_entry(app.transform.tmp)     
     app.tab[3].frame.name.set('PMCAモデル')
     app.tab[3].frame.name_l.set('PMCAモデル')
     app.tab[3].frame.comment.delete('1.0',END)
@@ -868,20 +781,12 @@ def main():
     PMCA.Init_PMD()
     init(app)
     
-    app.transform_data=[PyPMCA.MODEL_TRANS_DATA(scale=1.0, bones=[], props={})]
-    tmp = []
-    for x in app.transform_list:
-        tmp.append(x.name)
         
-    app.tab[2].tfgroup.set_entry(tmp)
-    #try:
-    app.load_CNL_File('./last.cnl')
-
-    '''
+    try:
+        app.load_CNL_File('./last.cnl')
     except Exception as ex:
         print(ex)
         print('前回のデータの読み込みに失敗しました')
-        '''
         
     PMCA.CretateViewerThread()
     
