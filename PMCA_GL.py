@@ -11,12 +11,33 @@ def to_radian(degree):
     return degree/180.0*math.pi
 
 
+class Model:
+    def __init__(self, vertices, uvs, indices, colors, paths, indexCounts):
+        self.vertices=vertices
+        self.indices=indices
+
+    def draw(self):
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, 0, self.vertices);
+        #glEnableClientState(GL_COLOR_ARRAY);
+        #glColorPointer(3, GL_FLOAT, 0, self.colors);
+        glDrawElements(GL_TRIANGLES, len(self.indices), GL_UNSIGNED_INT, self.indices);
+        #glDisableClientState(GL_COLOR_ARRAY);
+        glDisableClientState(GL_VERTEX_ARRAY);
+
+
 class Scene(object):
     def __init__(self):
-        self.coord=coord.Coord(1.0)
-        self.cube=cube.Cube(0.3)
+        self.coord=coord.Coord(30.0)
         self.xrot=0
         self.yrot=0
+        self.clear()
+
+    def clear(self):
+        self.drawable_map={}
+
+    def add_item(self, key, method):
+        self.drawable_map[key]=method
 
     def onUpdate(self, ms):
         self.yrot+=ms * VELOCITY
@@ -30,12 +51,13 @@ class Scene(object):
         self.coord.draw()
         glRotate(math.sin(to_radian(self.yrot))*180, 0, 1, 0)
         glRotate(math.sin(to_radian(self.xrot))*180, 1, 0, 0)
-        self.cube.draw()
+        for drawable in self.drawable_map.values():
+            drawable()
 
 
 class GLController(object):
     def __init__(self, view=None, root=None):
-        view=view or targetview.TargetView()
+        view=view or targetview.TargetView(40)
         self.view=view
         self.root=root or Scene()
         self.isInitialized=False

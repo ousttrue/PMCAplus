@@ -12,9 +12,10 @@ class MainFrame(Frame):
         super().__init__(master)
         self.master.title(APP_NAME)
 
-        self.glcontroller=PMCA_GL.GLController()
+        self.scene=PMCA_GL.Scene()
+        glcontroller=PMCA_GL.GLController(root=self.scene)
 
-        glframe=pmca_tkinter.GLFrame(self, self.glcontroller, width=640, height=480)
+        glframe=pmca_tkinter.GLFrame(self, glcontroller, width=640, height=480)
         glframe.pack(side = TOP, fill=BOTH, expand=True)
         notebook=self.create_notebook(self)
         notebook.pack(side = TOP, fill = BOTH, expand=True)
@@ -143,6 +144,14 @@ class MainFrame(Frame):
             self.info_tab.frame.text.set('Author : %s\nLicense : %s'%(str1, str2))
         pmca.model_update_observable.add(on_model_update)
 
+        #
+        # OpenGL
+        #
+        def update_gl():
+            self.scene.clear()
+            model=PMCA_GL.Model(*pmca.get_model())
+            self.scene.add_item(model, model.draw)
+        pmca.model_update_observable.add(update_gl)
 
         #
         # 更新タイマー
@@ -153,7 +162,8 @@ class MainFrame(Frame):
         pmca.update()
         pmca.force_update_entry()
         timer_update()
-    
+   
+
     #menu
     def setting_dialog(self):
         root = Toplevel()

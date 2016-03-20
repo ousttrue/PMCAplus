@@ -1,4 +1,5 @@
 ﻿# coding: utf-8
+from itertools import chain
 import sys
 import os
 sys.path.append('%s/converter'%(os.getcwd()))
@@ -554,3 +555,34 @@ class PyPMCA:
         frame.pack(fill = BOTH, expand=1)
         Button(root, text = 'OK', command = close).pack()
         root.mainloop()
+
+    def get_model(self):
+        info=PMCA.getInfo(0)
+
+        # vertices
+        vertices=[]
+        uvs=[]
+        for v in (PMCA.getVt(0, i) for i in range(info['vt_count'])):
+            loc=v['loc']
+            vertices.append(loc[0])
+            vertices.append(loc[1])
+            vertices.append(-loc[2])
+            uvs+=v['uv']
+        # indices
+        indices=list(chain.from_iterable((PMCA.getFace(0, i) for i in range(info['face_count']))))
+        # materials
+        colors=[]
+        paths=[]
+        indexCounts=[]
+        for m in (PMCA.getMat(0, i) for i in range(info['mat_count'])):
+            #print(m)
+            colors.append((m['diff_col'][0] * 2 + m['mirr_col'][0]) / 2.5 + m['spec_col'][0] / 4)
+            colors.append((m['diff_col'][1] * 2 + m['mirr_col'][1]) / 2.5 + m['spec_col'][1] / 4)
+            colors.append((m['diff_col'][2] * 2 + m['mirr_col'][2]) / 2.5 + m['spec_col'][2] / 4)
+            #colors.append(m['alpha'])
+            colors.append(1.0)
+            paths.append(m['tex_path'])
+            indexCounts.append(m['face_count']*3)
+
+        assert(sum(indexCounts)==len(indices))
+        return vertices, uvs, indices, colors, paths, indexCounts
