@@ -187,7 +187,7 @@ class MainFrame(Frame):
         sel_t = int(self.tab[1].l_tree.listbox.curselection()[0])
         tmp_list=self.materials.select_material(sel_t)
         self.tab[1].l_sel.set_entry(tmp_list)
-        self.tab[0].l_sel.set_entry(self.parts_tree.parts_entry_k, sel=self.parts_tree.tree_list[sel_t].node.list_num)       
+        #self.tab[0].l_sel.set_entry(self.parts_tree.parts_entry_k, sel=self.parts_tree.tree_list[sel_t].node.list_num)       
         self.tab[1].comment.set("comment:%s"%(self.materials.mat_rep.mat[self.materials.mat_entry[1][sel_t]].mat.comment))
     
     def mats_sel_click(self,event):
@@ -202,15 +202,7 @@ class MainFrame(Frame):
     
     ######################################################################################
     def refresh(self, level=0):
-       
-        #モデル組み立て
-        PMCA.MODEL_LOCK(1)
-        
-        if level < 1:
-            self.parts_tree.build()
-        else:
-            PMCA.Copy_PMD(1,0)
-        
+              
         if level < 2:
             #材質関連
             entry, sel=self.materials.replace()
@@ -235,17 +227,13 @@ class MainFrame(Frame):
                 name_eng=self.modelinfo.name_eng,
                 comment_eng='%s\nAuthor:%s\nLicense:%s\n%s'%(self.modelinfo.name_l_eng,str1,str2,self.modelinfo.comment_eng))
         
-        if level < 3:
-            PMCA.PMD_view_set(0, 'replace')    #テクスチャを変更しない
-        else:
-            PMCA.PMD_view_set(0, 'replace')
-        
-        PMCA.MODEL_LOCK(0)
-        
         wht = PMCA.getWHT(0)
         self.tab[2].info_frame.strvar.set('height     = %f\nwidth      = %f\nthickness = %f\n'%(wht[1],wht[0],wht[2]))
         self.tab[3].frame.text.set('Author : %s\nLicense : %s'%(str1, str2))
-        
+
+        PMCA.MODEL_LOCK(1)
+        PMCA.PMD_view_set(0, 'replace')       
+        PMCA.MODEL_LOCK(0)
 
 
     ########################################################################################
@@ -602,7 +590,7 @@ class MainFrame(Frame):
         return True
         
     def save_CNL_File(self, name):
-        if self.parts_tree.tree_list[0].node.child[0] == None:
+        if self.parts_tree.is_empty():
             return False
         
         lines = []
@@ -741,8 +729,6 @@ def init(app):
         LIST = PyPMCA.load_list(fp)
         PMCA.Set_List(len(LIST['b'][0]), LIST['b'][0], LIST['b'][1], len(LIST['s'][0]), LIST['s'][0], LIST['s'][1], len(LIST['g'][0]), LIST['g'][0], LIST['g'][1])   
 
-    #app.tab[0].l_tree.set_entry(app.parts_tree.tree_entry, sel=0)
-    #pp.tab[0].l_sel.set_entry(app.parts_tree.parts_entry_k)
     app.tab[2].tfgroup.set_entry(app.transform.tmp)     
     app.tab[3].frame.name.set('PMCAモデル')
     app.tab[3].frame.name_l.set('PMCAモデル')

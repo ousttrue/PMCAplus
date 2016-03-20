@@ -356,7 +356,7 @@ class PartsTree:
         self.tree_entry_observable=Observable()
         self.tree_entry_observable.add(lambda entry, sel_t: self.__update_parts_entry(sel_t))
         self.parts_entry_observable=Observable()
-
+        self.parts_entry_observable.add(lambda entry, sel_t: self.__build())
         self.parts_list=[]
         self.parts_entry = []
         self.tree_list = []
@@ -479,13 +479,17 @@ class PartsTree:
 
         return node
 
-    def build(self):
+    def __build(self):
         '''
         "モデル組立て"
         '''
         x = self.tree_list[0].node
         if x == None:
             return
+
+        # 0を作り
         PMCA.Create_PMD(0)
+        # 0を組み立てて
         x.assemble(0,self)
+        # 0を1にコピーする
         PMCA.Copy_PMD(0,1)
