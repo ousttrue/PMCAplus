@@ -1,0 +1,3 @@
+[submodule "glglue"]
+	path = glglue
+	url = https://github.com/ousttrue/glglue.git

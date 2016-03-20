@@ -2,7 +2,7 @@
 from tkinter import *
 from tkinter.ttk import Notebook
 import pmca_tkinter
-
+import PMCA_GL
 
 APP_NAME = 'PMCA v0.0.6r10'
 
@@ -11,38 +11,50 @@ class MainFrame(Frame):
     def __init__(self, master=None):
         super().__init__(master)
         self.master.title(APP_NAME)
-        self.pack()
 
+        self.glcontroller=PMCA_GL.GLController()
+
+        glframe=pmca_tkinter.GLFrame(self, self.glcontroller, width=640, height=480)
+        glframe.pack(side = TOP, fill=BOTH, expand=True)
+        notebook=self.create_notebook(self)
+        notebook.pack(side = TOP, fill = BOTH, expand=True)
+        button=self.create_quitbutton(self)
+        button.pack(side = TOP, padx = 5, pady = 5, fill = 'x')
+        self.pack(fill=BOTH, expand=True)
+
+    def create_notebook(self, master):
         #Tab      
-        notebook = Notebook(self.master)
-        notebook.pack(side = TOP, fill = BOTH, expand=1)
+        notebook = Notebook(master)
 
         #Tab0
-        self.parts_tab=pmca_tkinter.PartsFrame(self.master)
+        self.parts_tab=pmca_tkinter.PartsFrame(notebook)
         notebook.insert(END, self.parts_tab, text = self.parts_tab.text)
 
         #Tab1
-        self.material_tab=pmca_tkinter.MaterialFrame(self.master)
+        self.material_tab=pmca_tkinter.MaterialFrame(notebook)
         notebook.insert(END, self.material_tab, text = self.material_tab.text)
         
         #Tab2
-        self.transform_tab=pmca_tkinter.TransformFrame(self.master)
+        self.transform_tab=pmca_tkinter.TransformFrame(notebook)
         notebook.insert(END, self.transform_tab, text = self.transform_tab.text)              
 
         #Tab3
-        self.info_tab=pmca_tkinter.InfoFrame(self.master)
+        self.info_tab=pmca_tkinter.InfoFrame(notebook)
         self.info_tab.frame.name.set('PMCAモデル')
         self.info_tab.frame.name_l.set('PMCAモデル')
         self.info_tab.frame.comment.delete('1.0',END)
         notebook.insert(END, self.info_tab, text = self.info_tab.text)
-           
+
+        return notebook
+
+    def create_quitbutton(self, master):          
         #Buttons        
-        self.frame_button = Frame(self.master)
-        self.QUIT = Button(self.frame_button)
+        frame_button = Frame(master)
+        self.QUIT = Button(frame_button)
         self.QUIT["text"] = "QUIT"
         self.QUIT["command"] = pmca_tkinter.QUIT(self.master)
         self.QUIT.pack(side = RIGHT)
-        self.frame_button.pack(padx = 5, pady = 5, side = TOP, fill = 'x')
+        return frame_button
         
     def bind_pmca(self, pmca):
         #Menu
