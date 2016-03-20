@@ -1,7 +1,8 @@
 ﻿# coding: utf-8
 import PMCA
+import PMCA_dialogs
 from PyPMCA.pmd import INFO, BONE
-
+from tkinter import *
 
 def load_translist(fp, trans_list):
 	trans_list.append(MODEL_TRANS_DATA(bones=[]))
@@ -178,7 +179,8 @@ class BodyTransform:
     def load_CNL_lines(self, lines):
         self.transform_data[0].text_to_list(lines)
 
-    def select_body(self, sel):
+    def select_body(self, frame, sel):
+        self.refresh=lambda level: frame.refresh(level)
         buff=''
         print(sel)
         for x in self.transform_list:
@@ -197,7 +199,7 @@ class BodyTransform:
         root.fancs.var.set(t.default)
         root.fancs.tvar.set('%.3f'%t.default)
         
-        root.transient(self)
+        root.transient(frame)
         root.frame1 = Frame(root)
         root.frame2 = Frame(root)
         
@@ -207,7 +209,11 @@ class BodyTransform:
         root.frame1.spinbox.pack(side="right", padx=5)
         root.frame1.spinbox.bind('<Return>', root.fancs.enter_spinbox)
         
-        Scale(root.frame1, orient = 'h',from_ = t.limit[0], to = t.limit[1], variable = root.fancs.var , length = 256, command=root.fancs.change_scale).pack(side="left", padx=5)
+        Scale(root.frame1, orient = 'h',from_ = t.limit[0], to = t.limit[1], 
+              variable = root.fancs.var , 
+              resolution = -1,
+              length = 256, 
+              command=root.fancs.change_scale).pack(side="left", padx=5)
         root.frame1.grid(row=1, padx=10, pady=5)
         
         Button(root.frame2, text = 'OK', command = root.fancs.OK).pack(side="right", padx=5)

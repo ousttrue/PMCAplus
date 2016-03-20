@@ -197,7 +197,7 @@ class MainFrame(Frame):
     #functions tab2
     def tf_click(self,event):
         sel = int(self.tab[2].tfgroup.listbox.curselection()[0])
-        self.transform.select_body(sel)
+        self.transform.select_body(self, sel)
     
     ######################################################################################
     def refresh(self, level=0):
@@ -604,7 +604,7 @@ class MainFrame(Frame):
         return True
         
     def save_CNL_File(self, name):
-        if self.tree_list[0].node.child[0] == None:
+        if self.parts_tree.tree_list[0].node.child[0] == None:
             return False
         
         lines = []
