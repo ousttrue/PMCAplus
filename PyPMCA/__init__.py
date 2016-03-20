@@ -69,6 +69,7 @@ class SETTINGS:
 class PyPMCA:
     def __init__(self):
         self.model_update_observable=Observable()
+        self.model_bb_observable=Observable()
 
         self.parts_tree=PartsTree()
         self.materials=MaterialSelector()
@@ -78,15 +79,45 @@ class PyPMCA:
         self.target_dir = './model/'
         self.init()
 
-        def notify(*args):
-            self.model_update_observable.notify()
-        self.parts_tree.tree_entry_observable.add(notify)
-        self.materials.color_select_observable.add(notify)
-        self.update()
+        def on_update(level):
+            def __internal(*args):
+                self.update_level=level
+            return __internal
 
-    def update(self, *args):
+        self.parts_tree.tree_entry_observable.add(on_update(0))
+        self.materials.color_select_observable.add(on_update(1))
+
+    def force_update_entry(self):
         self.parts_tree.update()
-        self.materials.update()
+        self.materials.force_update()
+
+    def update(self):
+        if self.update_level<0:
+            # モデルの更新なし
+            return
+
+        if self.update_level < 1:
+            self.parts_tree.build()
+        else:
+            PMCA.Copy_PMD(1,0)
+
+        if self.update_level < 2:
+            self.materials.replace()
+        else:
+            PMCA.Copy_PMD(2,0)
+        
+        if self.update_level < 3:
+            self.transform.update()
+        else:
+            PMCA.Copy_PMD(3,0)
+        
+        if self.update_level < 4:
+            self.name_update()       
+
+        self.update_level=-1
+        self.model_update_observable.notify()
+        wht = PMCA.getWHT(0)
+        self.model_bb_observable.notify(wht)
 
     def init(self):
         #print('登録データ読み込み')

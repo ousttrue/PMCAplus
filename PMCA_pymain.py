@@ -18,8 +18,9 @@ if __name__ == "__main__":
     except:
         print('前回のデータの読み込みに失敗しました')
 
-    app = pmca_tkinter.MainFrame(pmca)
+    app = pmca_tkinter.MainFrame()
     with PMCA_View.PMCA_View() as v:
         pmca.model_update_observable.add(v.refresh)
+        app.bind_pmca(pmca)
         app.mainloop()
         pmca.save_CNL_File('./last.cnl')

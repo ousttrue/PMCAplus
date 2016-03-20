@@ -3,20 +3,51 @@
 from tkinter import *
 from pmca_tkinter.utils import LISTBOX
 
+
+class Observable:
+    def __init__(self):
+        self.observers = set()
+
+    def add(self, callback):
+        self.observers.add(callback)
+        return lambda : self.observers.remove(callback)
+
+    def notify(self, *args):
+        for callback in self.observers:
+            callback(*args)
+
+
+def list_on_click(listbox: Listbox, observable: Observable):
+    try:
+        selection=listbox.curselection()
+        if selection:
+            sel_t = int(selection[0])
+            observable.notify(sel_t)
+    except:
+        pass           
+
+
 class PartsFrame(Frame):
-    def __init__(self, master, tree_click, parts_sel_click):
+    def __init__(self, master):
         super().__init__(master)
+
+        self.tree_select_observable=Observable()
+        self.parts_select_observable=Observable()
+
         self.frame = Frame(self)
         self.text = "Model"
+
         self.parts_frame = LabelFrame(self.frame, text = 'Model')
         self.l_tree = LISTBOX(self.parts_frame)
         self.parts_frame.pack(padx = 3, pady = 3, side = LEFT, fill = BOTH, expand=1)
-        self.l_tree.listbox.bind("<ButtonRelease-1>", tree_click)
-        
+        self.l_tree.listbox.bind("<ButtonRelease-1>", 
+                                 lambda event: list_on_click(self.l_tree.listbox, self.tree_select_observable))       
+
         self.parts_frame = LabelFrame(self.frame, text = 'Parts')
         self.l_sel = LISTBOX(self.parts_frame)
         self.parts_frame.pack(padx = 3, pady = 3, side = LEFT, fill = BOTH, expand=1)
-        self.l_sel.listbox.bind("<ButtonRelease-1>", parts_sel_click)
+        self.l_sel.listbox.bind("<ButtonRelease-1>", 
+                                lambda event: list_on_click(self.l_sel.listbox, self.parts_select_observable))
         
         self.frame.pack(padx = 3, pady = 3, side = TOP, fill = BOTH, expand=1)
         
@@ -27,19 +58,26 @@ class PartsFrame(Frame):
 
 
 class MaterialFrame(Frame):
-    def __init__(self, master, mats_click, mats_sel_click):
+    def __init__(self, master):
         super().__init__(master)
+
+        self.material_select_observable=Observable()
+        self.color_select_observable=Observable()
+
         self.frame = Frame(self)
         self.text = "Color"
+
         self.parts_frame = LabelFrame(self.frame, text = 'Material')
         self.l_tree = LISTBOX(self.parts_frame)
         self.parts_frame.pack(padx = 3, pady = 3, side = LEFT, fill = BOTH, expand=1)
-        self.l_tree.listbox.bind("<ButtonRelease-1>", mats_click)
+        self.l_tree.listbox.bind("<ButtonRelease-1>", 
+                                 lambda event: list_on_click(self.l_tree.listbox, self.material_select_observable))
         
         self.parts_frame = LabelFrame(self.frame, text = 'Select')
         self.l_sel = LISTBOX(self.parts_frame)
         self.parts_frame.pack(padx = 3, pady = 3, side = LEFT, fill = BOTH, expand=1)
-        self.l_sel.listbox.bind("<ButtonRelease-1>", mats_sel_click)
+        self.l_sel.listbox.bind("<ButtonRelease-1>", 
+                                lambda event: list_on_click(self.l_sel.listbox, self.color_select_observable))
         
         self.frame.pack(padx = 3, pady = 3, side = TOP, fill = BOTH, expand=1)
         
@@ -50,13 +88,17 @@ class MaterialFrame(Frame):
 
 
 class TransformFrame(Frame):
-    def __init__(self, master, tf_click):
+    def __init__(self, master):
         super().__init__(master)
+
+        self.tf_select_observable=Observable()
+
         self.text = "Transform"
         self.tfgroup_frame = LabelFrame(self, text = 'Groups')
         self.tfgroup = LISTBOX(self.tfgroup_frame)
         self.tfgroup_frame.pack(padx = 3, pady = 3, side = LEFT, fill = BOTH, expand=1)
-        self.tfgroup.listbox.bind("<ButtonRelease-1>", tf_click)
+        self.tfgroup.listbox.bind("<ButtonRelease-1>", 
+                                  lambda event: list_on_click(self.tfgroup.listbox, self.tf_select_observable))
         
         self.info_frame = LabelFrame(self, text = 'Info')
         self.info_frame.strvar = StringVar()

@@ -354,14 +354,12 @@ class TREE_LIST:
 class PartsTree:
     def __init__(self):
         self.tree_entry_observable=Observable()
-        self.tree_entry_observable.add(lambda entry, sel_t: self.__update_parts_entry(sel_t))
         self.parts_entry_observable=Observable()
-        self.parts_entry_observable.add(lambda entry, sel_t: self.__build())
         self.parts_list=[]
         self.parts_entry = []
         self.tree_list = []
         self.tree_entry = []
-
+        self.tree_current=0
         self.__init_parts_tree()
 
     def is_empty(self):
@@ -385,7 +383,7 @@ class PartsTree:
         self.tree_list[0].node.text_to_node(self.parts_list, lines)
         self.__update_tree_entry()
 
-    def __update_tree_entry(self, sel_t=0):
+    def __update_tree_entry(self):
         '''
         ツリーリスト更新
         '''
@@ -398,13 +396,16 @@ class PartsTree:
                 return "%s#%s => %s" %('  '*x.depth, joint, node.parts.name)
             else:
                 return "%s#%s" % ('  '*x.depth, joint) 
-        self.tree_entry_observable.notify([get_name(x) for x in self.tree_entry], sel_t)
+        self.tree_entry_observable.notify([get_name(x) for x in self.tree_entry], 0)
+        self.select_node(0)
 
-    def __update_parts_entry(self, sel_t=0):
+    def __update_parts_entry(self):
         '''
         パーツリスト更新
         '''
-        joint = self.tree_entry[sel_t].node.parts.joint[self.tree_entry[sel_t].c_num]
+        if len(self.tree_entry)==0: return
+
+        joint = self.tree_entry[self.tree_current].node.parts.joint[self.tree_entry[self.tree_current].c_num]
         self.parts_entry = []
         for x in self.parts_list:
             for y in x.type:
@@ -420,22 +421,23 @@ class PartsTree:
                 return "#外部モデル"
             else:
                 return "#NONE"
-        self.parts_entry_observable.notify([get_name(x) for x in self.parts_entry], self.tree_entry[sel_t].node.list_num)
+        self.parts_entry_observable.notify([get_name(x) for x in self.parts_entry], self.tree_entry[self.tree_current].node.list_num)
 
     def load_partslist(self, fp):
         '''
         パーツリスト読み込み
         '''
         self.parts_list = load_partslist(fp, self.parts_list)
-        self.__update_parts_entry()
+        self.select_node(0)
 
     def select_node(self, sel_t):
         '''
         ツリーノード選択
         '''
-        self.__update_parts_entry(sel_t)
+        self.tree_current=sel_t
+        self.__update_parts_entry()
 
-    def select_part(self, sel_t, sel):
+    def select_part(self, sel):
         '''
         パーツ選択
         '''
@@ -447,15 +449,15 @@ class PartsTree:
             if(path != ''):
                 name = path.split('/')[-1]
                 parts = PyPMCA.PARTS(name = name, path = path, props = {})
-                node = PyPMCA.NODE(parts = parts, depth = self.tree_list[sel_t].node.depth+1, child=[])
+                node = PyPMCA.NODE(parts = parts, depth = self.tree_list[self.tree_current].node.depth+1, child=[])
                 for x in node.parts.joint:
                     node.child.append(None)
             else:
                 node = None               
                 
         else:          
-            node = NODE(parts = self.parts_entry[sel], depth = self.tree_entry[sel_t].node.depth+1, child=[])
-            p_node=self.tree_entry[sel_t].node.child[self.tree_entry[sel_t].c_num]
+            node = NODE(parts = self.parts_entry[sel], depth = self.tree_entry[self.tree_current].node.depth+1, child=[])
+            p_node=self.tree_entry[self.tree_current].node.child[self.tree_entry[self.tree_current].c_num]
             
             child_appended = []
             if p_node != None:
@@ -475,14 +477,12 @@ class PartsTree:
                     node.child.append(None)
             
             #print('>>', node.parts.name, '\n')
-        self.tree_entry[sel_t].node.child[self.tree_entry[sel_t].c_num] = node
+        self.tree_entry[self.tree_current].node.child[self.tree_entry[self.tree_current].c_num] = node
         #self.tree_list[sel_t].node.list_num = sel
 
-        self.__update_tree_entry(sel_t)
+        self.__update_tree_entry()
 
-        return node
-
-    def __build(self):
+    def build(self):
         '''
         モデル組立て
         '''

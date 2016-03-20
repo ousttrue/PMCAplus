@@ -95,16 +95,18 @@ class MAT_REP:    #材質置換
         for x in self.mat.values():
             x.num = -1
         
-        for i in range(info.data["mat_count"]):
+        print([m.tex for m in mat])
+        print([x.name for x in mats_list])
+        for i, m in enumerate(mat):
             for x in mats_list:
-                if mat[i].tex == x.name and x.name != '':
-                    if self.mat.get(mat[i].tex) == None:
-                        self.mat[mat[i].tex] = MAT_REP_DATA(mat=x, num=i)
+                if m.tex == x.name and x.name != '':
+                    if self.mat.get(m.tex) == None:
+                        self.mat[m.tex] = MAT_REP_DATA(mat=x, num=i)
                     else:
-                        self.mat[mat[i].tex].num = i
+                        self.mat[m.tex].num = i
                     
-                    if self.mat[mat[i].tex].sel == None:
-                        self.mat[mat[i].tex].sel = self.mat[mat[i].tex].mat.entries[0]
+                    if self.mat[m.tex].sel == None:
+                        self.mat[m.tex].sel = self.mat[m.tex].mat.entries[0]
         
     def ApplyToPmd(self, model=None, info=None, num = 0):
         '''
@@ -278,7 +280,7 @@ class MaterialSelector:
         self.material_entry_observable=Observable()
         self.material_entry_observable.add(lambda entry, sel_t: self.__update_color_entry())
         self.color_entry_observable=Observable()
-        self.color_entry_observable.add(lambda entry, sel_t: self.__replace())
+        #self.color_entry_observable.add(lambda entry, sel_t: self.replace())
         self.color_select_observable=Observable()
 
         self.mats_list=[]    #list of class MATS
@@ -291,7 +293,7 @@ class MaterialSelector:
     def is_empty(self):
         return len(self.mat_rep.mat)==0
 
-    def update(self):
+    def force_update(self):
         self.__update_material_entry()
 
     def load_materiallist(self, fp):
@@ -315,7 +317,7 @@ class MaterialSelector:
         if self.is_empty(): return
 
         #self.__replace()
-        self.mat_rep.UpdateMaterial(self.mats_list, num=0)
+        #self.mat_rep.UpdateMaterial(self.mats_list, num=0)
         self.cur_mat=sel_t
         self.mat_entry = [[],[]]
         for v in self.mat_rep.mat.values():
@@ -360,7 +362,7 @@ class MaterialSelector:
             x[1].sel = x[1].mat.entries[random.randint(0, len(x[1].mat.entries)-1)]
         self.color_select_observable.notify()
 
-    def __replace(self):
+    def replace(self):
         '''
         マテリアル置き換えを実行する        
         '''
