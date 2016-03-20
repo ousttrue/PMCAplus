@@ -68,6 +68,8 @@ class SETTINGS:
 
 class PyPMCA:
     def __init__(self):
+        self.model_update_observable=Observable()
+
         self.parts_tree=PartsTree()
         self.materials=MaterialSelector()
         self.transform=BodyTransform()

@@ -1,9 +1,7 @@
 ﻿# coding: utf-8
 from tkinter import *
-from tkinter.ttk import *
+from tkinter.ttk import Notebook
 import pmca_tkinter
-import PMCA
-import PyPMCA
 
 
 APP_NAME = 'PMCA v0.0.6r10'
@@ -77,7 +75,6 @@ class MainFrame(Frame):
         # tree
         def on_tree_entry(entry, sel):
             self.parts_tab.l_tree.set_entry(entry, sel=sel)
-            self.refresh()
         pmca.parts_tree.tree_entry_observable.add(on_tree_entry)
 
         def on_parts_entry(entry, sel):
@@ -93,10 +90,6 @@ class MainFrame(Frame):
             self.material_tab.l_sel.set_entry(entry, sel=sel)
         pmca.materials.color_entry_observable.add(on_color_entry)
 
-        def on_color_select():
-            self.refresh(level=1)
-        pmca.materials.color_select_observable.add(on_color_select)
-
         # tranform
         self.transform_tab.tfgroup.set_entry(pmca.transform.tmp)
 
@@ -105,42 +98,6 @@ class MainFrame(Frame):
         self.info_tab.set_modelinfo(pmca.modelinfo)
 
         pmca.update()
-
-    ###########################################################################################
-    #functions tab0
-    def tree_click(self,event):
-        self.parts_tab.comment.set("comment:")
-        sel_t = int(self.parts_tab.l_tree.listbox.curselection()[0])
-        self.pmca.parts_tree.select_node(sel_t)
-    
-    def parts_sel_click(self,event):
-        sel = int(self.parts_tab.l_sel.listbox.curselection()[0])
-        sel_t = int(self.parts_tab.l_tree.listbox.curselection()[0])
-        node=self.pmca.parts_tree.select_part(sel_t, sel)
-        if node == None:
-            self.parts_tab.comment.set("comment:")
-        else:
-            self.parts_tab.comment.set("comment:%s"%(node.parts.comment))
-    
-    ########################################################################################
-    #functions tab1
-    def mats_click(self,event):
-        sel_t = int(self.material_tab.l_tree.listbox.curselection()[0])
-        comment=self.pmca.materials.select_material(sel_t)
-        self.material_tab.comment.set("comment:%s"%(comment))
-    
-    def mats_sel_click(self,event):
-        sel_t = int(self.material_tab.l_sel.listbox.curselection()[0])
-        self.pmca.materials.select_color(sel_t)
-
-    ########################################################################################
-    #functions tab2
-    def tf_click(self,event):
-        sel = int(self.transform_tab.tfgroup.listbox.curselection()[0])
-        self.transform.select_body(self, sel)
-    
-    def refresh(self, level=0):
-              
         '''
         if level < 1:
             pass
@@ -165,12 +122,37 @@ class MainFrame(Frame):
         str1, str2=self.pmca.get_license()
         self.info_tab.frame.text.set('Author : %s\nLicense : %s'%(str1, str2))
         '''
+    #functions tab0
+    def tree_click(self,event):
+        self.parts_tab.comment.set("comment:")
+        sel_t = int(self.parts_tab.l_tree.listbox.curselection()[0])
+        self.pmca.parts_tree.select_node(sel_t)
+    
+    def parts_sel_click(self,event):
+        sel = int(self.parts_tab.l_sel.listbox.curselection()[0])
+        sel_t = int(self.parts_tab.l_tree.listbox.curselection()[0])
+        node=self.pmca.parts_tree.select_part(sel_t, sel)
+        if node == None:
+            self.parts_tab.comment.set("comment:")
+        else:
+            self.parts_tab.comment.set("comment:%s"%(node.parts.comment))
+    
+    #functions tab1
+    def mats_click(self,event):
+        sel_t = int(self.material_tab.l_tree.listbox.curselection()[0])
+        comment=self.pmca.materials.select_material(sel_t)
+        self.material_tab.comment.set("comment:%s"%(comment))
+    
+    def mats_sel_click(self,event):
+        sel_t = int(self.material_tab.l_sel.listbox.curselection()[0])
+        self.pmca.materials.select_color(sel_t)
 
-        PMCA.MODEL_LOCK(1)
-        PMCA.PMD_view_set(0, 'replace')       
-        PMCA.MODEL_LOCK(0)
-
-    ######################################################################################
+    #functions tab2
+    def tf_click(self,event):
+        sel = int(self.transform_tab.tfgroup.listbox.curselection()[0])
+        self.pmca.transform.select_body(self, sel)
+    
+    #menu
     def setting_dialog(self):
         root = Toplevel()
         root.transient(self)
