@@ -167,6 +167,16 @@
     <Compile Include="converter\converter.py" />
     <Compile Include="PMCA_dialogs.py" />
     <Compile Include="PMCA_pymain.py" />
+    <Compile Include="pmca_tkinter\mainframe.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="pmca_tkinter\tabs.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="pmca_tkinter\utils.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="pmca_tkinter\__init__.py" />
     <Compile Include="PyPMCA\material.py">
       <SubType>Code</SubType>
     </Compile>
@@ -191,6 +201,7 @@
     <Folder Include="model\sample1" />
     <Folder Include="model\sample2" />
     <Folder Include="model\sample3" />
+    <Folder Include="pmca_tkinter\" />
     <Folder Include="PyPMCA\" />
     <Folder Include="parts" />
     <Folder Include="parts\tex_sources" />
