@@ -3,6 +3,7 @@ import math
 import ctypes
 from glglue.sample import *
 from OpenGL.GL import *
+from PIL import Image
 
 DELEGATE_PATTERN=re.compile('^on[A-Z]')
 VELOCITY=0.1
@@ -10,6 +11,83 @@ VELOCITY=0.1
 
 def to_radian(degree):
     return degree/180.0*math.pi
+
+
+class Texture(object):
+
+    def __init__(self, path):
+        self.path=path
+        self.image=None
+        self.id=0
+        self.isInitialized=False
+
+    def onInitialize(self):
+        self.isInitialized=False
+
+    def createTexture(self):
+        self.id=glGenTextures(1)
+        if self.id==0:
+            print("fail to glGenTextures")
+            return False
+        print("createTexture: %d" % self.id)
+
+        channels=len(self.image.getbands())
+        w, h=self.image.size
+        glBindTexture(GL_TEXTURE_2D, self.id)
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP)
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP)
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        if channels==4:
+            print("RGBA")
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 4)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 
+                    0, GL_RGBA, GL_UNSIGNED_BYTE, self.image.tobytes())
+        elif channels==3:
+            print("RGB")
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 
+                    0, GL_RGB, GL_UNSIGNED_BYTE, self.image.tobytes())
+
+    def begin(self):
+        if not self.isInitialized:
+            try:
+                # load image
+                if not self.image:
+                    self.image=Image.open(self.path)
+                    if self.image:
+                        print("load image:", self.path)
+                    else:
+                        print("failt to load image:", self.path)
+                        return
+                # createTexture
+                if self.image:
+                    self.createTexture()
+            except Exception as e:
+                print(e)
+                return
+            finally:
+                self.isInitialized=True
+        if self.id!=0:
+            glEnable(GL_TEXTURE_2D)
+            glBindTexture(GL_TEXTURE_2D, self.id)
+
+    def end(self):
+        glDisable(GL_TEXTURE_2D)
+
+
+class Material:
+    def __init__(self, color, texture_path, index_count):
+        self.color=color
+        self.texture=Texture(texture_path)
+        self.index_count=index_count
+
+    def begin(self):
+        glColor4f(*self.color)
+        self.texture.begin()
+
+    def end(self):
+        self.texture.end()
 
 
 class Model:
@@ -26,19 +104,42 @@ class Model:
 
 class ModelVBO:
     def __init__(self, vertices, uvs, indices, colors, paths, indexCounts):
-        self.indices=indices
-        self.buffers = glGenBuffers(2)
+        self.buffers = glGenBuffers(3)
+        # vertices
         glBindBuffer(GL_ARRAY_BUFFER, self.buffers[0])
         glBufferData(GL_ARRAY_BUFFER, len(vertices)*4, (ctypes.c_float*len(vertices))(*vertices), GL_STATIC_DRAW)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.buffers[1])
+        # uv
+        glBindBuffer(GL_ARRAY_BUFFER, self.buffers[1])
+        glBufferData(GL_ARRAY_BUFFER, len(uvs)*4, (ctypes.c_float*len(uvs))(*uvs), GL_STATIC_DRAW)
+        # indices
+        self.index_len=len(indices)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.buffers[2])
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(indices)*4, (ctypes.c_uint*len(indices))(*indices), GL_STATIC_DRAW)
 
+        self.materials=[Material(colors[i*4:i*4+4], path, indexCounts[i]) for i, path in enumerate(paths)]
+
     def draw(self):
+        # vertices
         glEnableClientState(GL_VERTEX_ARRAY);
         glBindBuffer(GL_ARRAY_BUFFER, self.buffers[0]);
         glVertexPointer(3, GL_FLOAT, 0, None);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.buffers[1]);
-        glDrawElements(GL_TRIANGLES, len(self.indices), GL_UNSIGNED_INT, None);
+        # uv
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glBindBuffer(GL_ARRAY_BUFFER, self.buffers[1]);
+        glTexCoordPointer(2, GL_FLOAT, 0, None);
+
+        # indices
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.buffers[2]);
+        index_offset=0
+        for i, m in enumerate(self.materials):
+            # submesh
+            m.begin()
+            glDrawElements(GL_TRIANGLES, m.index_count, GL_UNSIGNED_INT, ctypes.c_void_p(index_offset));
+            index_offset+=m.index_count * 4 # byte size
+            m.end()
+
+        # disable
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
 
 
