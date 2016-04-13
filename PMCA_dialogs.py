@@ -43,7 +43,7 @@ class SCALE_DIALOG_FANC:
     
     def CANCEL(self):
         self.app.transform_data.remove(self.data)
-        self.app.refresh(level=2)
+        self.app.refresh()
         self.root.winfo_toplevel().destroy()
         self.root.quit()
     
@@ -70,7 +70,7 @@ class SCALE_DIALOG_FANC:
             for i,y in enumerate(tmp.rot):
                 y += x.rot[i]
         self.app.transform_data.remove(self.data)
-        self.app.refresh(level=2)
+        self.app.refresh()
         for x in self.app.transform_data[0].bones:
             print(x.name)
         
@@ -125,7 +125,7 @@ class SCALE_DIALOG_FANC:
                 self.data.bones[i].pos[j] = y * var
             for j,y in enumerate(x.rot):
                 self.data.bones[i].rot[j] = y * var
-        self.app.refresh(level=2)
+        self.app.refresh()
         
 class SETTING_DIALOG_FANC:
     def __init__(self, app, root):

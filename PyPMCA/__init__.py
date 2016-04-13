@@ -87,6 +87,7 @@ class PyPMCA:
 
         self.parts_tree.tree_entry_observable.add(on_update(0))
         self.materials.color_select_observable.add(on_update(1))
+        self.transform.transform_observable.add(on_update(2))
 
     def force_update_entry(self):
         self.parts_tree.update()

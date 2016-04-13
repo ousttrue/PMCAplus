@@ -168,6 +168,9 @@ class BodyTransform:
         self.transform_data=[MODEL_TRANS_DATA(scale=1.0, bones=[], props={})]
         self.transform_observable=Observable()
 
+    def refresh(self):
+        self.transform_observable.notify()
+
     def load_transformlist(self, fp):
         self.transform_list = load_translist(fp, self.transform_list)
         self.tmp = []
@@ -182,7 +185,6 @@ class BodyTransform:
         self.transform_data[0].text_to_list(lines)
 
     def select_body(self, frame, sel):
-        self.refresh=lambda level: frame.refresh(level)
         buff=''
         
         for x in self.transform_list[sel].bones:
