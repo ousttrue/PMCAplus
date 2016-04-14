@@ -5,8 +5,10 @@ import os
 sys.path.append(os.getcwd())
 import PMCA
 import PyPMCA
+import PMCA_GL
 import pmca_tkinter
-       
+import pmca_qt
+
         
 if __name__ == "__main__":
     PMCA.Init_PMD()
@@ -17,7 +19,19 @@ if __name__ == "__main__":
     except:
         print('前回のデータの読み込みに失敗しました')
 
-    app = pmca_tkinter.MainFrame()
-    app.bind_pmca(pmca)
-    app.mainloop()
+    scene=PMCA_GL.Scene()
+
+    # tkinter
+    tkinter_app = pmca_tkinter.App(pmca, scene)
+
+    # qt
+    qt_app = pmca_qt.App(pmca, scene)
+
+    while True:
+        try:
+            qt_app.processEvents()
+            tkinter_app.update()
+        except:
+            break
+
     pmca.save_CNL_File('./last.cnl')

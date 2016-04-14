@@ -170,6 +170,15 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="PMCA_pymain.py" />
+    <Compile Include="pmca_qt\glframe.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="pmca_qt\mainframe.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="pmca_qt\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="pmca_tkinter\glframe.py">
       <SubType>Code</SubType>
     </Compile>
@@ -207,6 +216,7 @@
     <Folder Include="model\sample1" />
     <Folder Include="model\sample2" />
     <Folder Include="model\sample3" />
+    <Folder Include="pmca_qt\" />
     <Folder Include="pmca_tkinter\" />
     <Folder Include="PyPMCA\" />
     <Folder Include="parts" />

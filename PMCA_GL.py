@@ -104,21 +104,35 @@ class Model:
 
 class ModelVBO:
     def __init__(self, vertices, uvs, indices, colors, paths, indexCounts):
+        self.is_initialized=False
+        self.vertices=vertices
+        self.uvs=uvs
+        self.indices=indices
+        self.colors=colors
+        self.paths=paths
+        self.indexCounts=indexCounts
+
+    def initilaize(self):
+        if(self.is_initialized):return
+        self.is_initialized=True
+
         self.buffers = glGenBuffers(3)
         # vertices
         glBindBuffer(GL_ARRAY_BUFFER, self.buffers[0])
-        glBufferData(GL_ARRAY_BUFFER, len(vertices)*4, (ctypes.c_float*len(vertices))(*vertices), GL_STATIC_DRAW)
+        glBufferData(GL_ARRAY_BUFFER, len(self.vertices)*4, (ctypes.c_float*len(self.vertices))(*self.vertices), GL_STATIC_DRAW)
         # uv
         glBindBuffer(GL_ARRAY_BUFFER, self.buffers[1])
-        glBufferData(GL_ARRAY_BUFFER, len(uvs)*4, (ctypes.c_float*len(uvs))(*uvs), GL_STATIC_DRAW)
+        glBufferData(GL_ARRAY_BUFFER, len(self.uvs)*4, (ctypes.c_float*len(self.uvs))(*self.uvs), GL_STATIC_DRAW)
         # indices
-        self.index_len=len(indices)
+        self.index_len=len(self.indices)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.buffers[2])
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(indices)*4, (ctypes.c_uint*len(indices))(*indices), GL_STATIC_DRAW)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(self.indices)*4, (ctypes.c_uint*len(self.indices))(*self.indices), GL_STATIC_DRAW)
 
-        self.materials=[Material(colors[i*4:i*4+4], path, indexCounts[i]) for i, path in enumerate(paths)]
+        self.materials=[Material(self.colors[i*4:i*4+4], path, self.indexCounts[i]) for i, path in enumerate(self.paths)]
 
     def draw(self):
+        self.initilaize()
+
         # vertices
         glEnableClientState(GL_VERTEX_ARRAY);
         glBindBuffer(GL_ARRAY_BUFFER, self.buffers[0]);

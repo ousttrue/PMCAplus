@@ -11,6 +11,9 @@ from PyPMCA.transform import *
 from PyPMCA.pmd import *
 
 
+APP_NAME = 'PMCA v0.0.6r10'
+
+
 def load_list(fp):
 	
 	bone=[[],[]]

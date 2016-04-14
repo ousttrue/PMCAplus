@@ -3,18 +3,13 @@ from tkinter import *
 from tkinter.ttk import Notebook
 import pmca_tkinter
 import PMCA_GL
-
-APP_NAME = 'PMCA v0.0.6r10'
+import PyPMCA
 
 
 class MainFrame(Frame):
-    def __init__(self, master=None):
-        super().__init__(master)
-        self.master.title(APP_NAME)
-
-        self.scene=PMCA_GL.Scene()
-        glcontroller=PMCA_GL.GLController(root=self.scene)
-
+    def __init__(self, glcontroller):
+        super().__init__(None)
+        self.master.title(PyPMCA.APP_NAME)
         self.glframe=pmca_tkinter.GLFrame(self, glcontroller, width=640, height=480)
         self.glframe.pack(side = TOP, fill=BOTH, expand=True)
         notebook=self.create_notebook(self)
@@ -148,9 +143,6 @@ class MainFrame(Frame):
         # OpenGL
         #
         def update_gl():
-            self.scene.clear()
-            model=PMCA_GL.ModelVBO(*pmca.get_model())
-            self.scene.add_item(model, model.draw)
             self.glframe.glwidget.event_generate("<Expose>")
         pmca.model_update_observable.add(update_gl)
 
