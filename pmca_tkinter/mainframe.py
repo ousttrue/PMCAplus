@@ -152,8 +152,6 @@ class MainFrame(Frame):
         def timer_update():
             pmca.update()
             self.after(33, timer_update)
-        pmca.update()
-        pmca.force_update_entry()
         timer_update()
    
 

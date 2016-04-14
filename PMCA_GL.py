@@ -133,28 +133,31 @@ class ModelVBO:
     def draw(self):
         self.initilaize()
 
-        # vertices
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glBindBuffer(GL_ARRAY_BUFFER, self.buffers[0]);
-        glVertexPointer(3, GL_FLOAT, 0, None);
-        # uv
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        glBindBuffer(GL_ARRAY_BUFFER, self.buffers[1]);
-        glTexCoordPointer(2, GL_FLOAT, 0, None);
+        try:
+            # vertices
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glBindBuffer(GL_ARRAY_BUFFER, self.buffers[0]);
+            glVertexPointer(3, GL_FLOAT, 0, None);
+            # uv
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            glBindBuffer(GL_ARRAY_BUFFER, self.buffers[1]);
+            glTexCoordPointer(2, GL_FLOAT, 0, None);
 
-        # indices
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.buffers[2]);
-        index_offset=0
-        for i, m in enumerate(self.materials):
-            # submesh
-            m.begin()
-            glDrawElements(GL_TRIANGLES, m.index_count, GL_UNSIGNED_INT, ctypes.c_void_p(index_offset));
-            index_offset+=m.index_count * 4 # byte size
-            m.end()
+            # indices
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.buffers[2]);
+            index_offset=0
+            for i, m in enumerate(self.materials):
+                # submesh
+                m.begin()
+                glDrawElements(GL_TRIANGLES, m.index_count, GL_UNSIGNED_INT, ctypes.c_void_p(index_offset));
+                index_offset+=m.index_count * 4 # byte size
+                m.end()
 
-        # disable
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-        glDisableClientState(GL_VERTEX_ARRAY);
+            # disable
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+            glDisableClientState(GL_VERTEX_ARRAY);
+        except GLError:
+            pass
 
 
 class Scene(object):

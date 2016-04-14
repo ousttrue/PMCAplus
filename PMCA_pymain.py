@@ -27,6 +27,9 @@ if __name__ == "__main__":
     # qt
     qt_app = pmca_qt.App(pmca, scene)
 
+    pmca.update()
+    pmca.force_update_entry()
+
     while True:
         try:
             qt_app.processEvents()
