@@ -1,16 +1,24 @@
 ﻿from pmca_qt.mainframe import *
-from pmca_qt.glframe import *
 import sys
 from PyQt4 import Qt
 import PMCA_GL
+import logging
 
 
-w=None
+class QPlainTextEditLogger(logging.Handler):
+    def __init__(self, widget):
+        super().__init__()
+        self.widget = widget
+
+    def emit(self, record):
+        msg = self.format(record)
+        self.widget.appendPlainText(msg) 
 
 
 class MainLoop:
-    def __init__(self, app):
+    def __init__(self, app, window):
         self.app=app
+        self.window=window
 
     def mainloop(self):
         sys.exit(self.app.exec_())
@@ -21,7 +29,6 @@ class MainLoop:
             except:
                 break
                 '''
-
 
 def App(pmca, scene):
     global w
@@ -38,9 +45,9 @@ def App(pmca, scene):
     pmca.model_update_observable.add(update_gl)
 
     w=MainFrame(controller)
-    w.resize(640, 480)
+    w.resize(800, 600)
     #w.setGeometry(300, 300, 250, 150)
     w.show()
     w.bind_pmca(pmca)
 
-    return MainLoop(app)
+    return MainLoop(app, w)

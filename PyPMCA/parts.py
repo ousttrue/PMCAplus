@@ -350,7 +350,7 @@ class PartsTree:
         self.parts_entry = []
         self.tree_list = []
         self.tree_entry = []
-        self.tree_current=0
+        self.tree_current=-1
         self.parts_current=-1
         self.__init_parts_tree()
 
@@ -380,6 +380,9 @@ class PartsTree:
         ツリーリスト更新
         '''
         self.tree_entry=[x for x in self.tree_list[0].node.create_list()][1:]
+        self.tree_current=-1
+        self.parts_entry=[]
+        self.parts_current=-1
         def get_name(x):
             i=x.c_num
             joint=x.node.parts.joint[i]
@@ -429,7 +432,6 @@ class PartsTree:
         logger.debug('select_node %d', sel_t)
         if(self.tree_current==sel_t):return
         self.tree_current=sel_t
-        self.parts_current=-1
         self.__update_parts_entry()
 
     def select_part(self, sel):

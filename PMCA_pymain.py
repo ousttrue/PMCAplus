@@ -32,11 +32,6 @@ if __name__ == "__main__":
     PMCA.Init_PMD()
 
     pmca=PyPMCA.PyPMCA()
-    try:
-        pmca.load_CNL_File('./last.cnl')
-    except:
-        logger.info('前回のデータの読み込みに失敗しました')
-
     scene=PMCA_GL.Scene()
 
     if mode=='tkinter':
@@ -45,7 +40,18 @@ if __name__ == "__main__":
     else:
         # qt
         app = pmca_qt.App(pmca, scene)
+        while len(logger.root.handlers)>0:
+            logger.root.handlers.pop()
+        qt_handler=pmca_qt.QPlainTextEditLogger(app.window.logger)
+        qt_handler.setLevel(logging.DEBUG)
+        qt_handler.setFormatter(logging.Formatter('%(levelname)s:%(name)s:%(message)s'))
+        qt_handler.addFilter(filter)
+        logging.root.handlers.append(qt_handler)
 
+    try:
+        pmca.load_CNL_File('./last.cnl')
+    except:
+        logger.info('前回のデータの読み込みに失敗しました')
     pmca.update()
     pmca.force_update_entry()
 

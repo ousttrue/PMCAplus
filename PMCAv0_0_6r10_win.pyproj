@@ -176,9 +176,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="PMCA_pymain.py" />
-    <Compile Include="pmca_qt\glframe.py">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="pmca_qt\mainframe.py">
       <SubType>Code</SubType>
     </Compile>

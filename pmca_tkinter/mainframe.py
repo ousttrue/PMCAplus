@@ -159,7 +159,6 @@ class MainFrame(Frame):
             pmca.update()
             self.after(33, timer_update)
         timer_update()
-   
 
     #menu
     def setting_dialog(self):

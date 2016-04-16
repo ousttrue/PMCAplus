@@ -1,8 +1,12 @@
 ﻿import sys
+import os
+sys.path.append(os.getcwd()+'/glglue')
+import glglue.sample
+import glglue.qgl
+
 from PyQt4 import QtGui, QtCore
 import PyPMCA
 import pmca_qt
-
 
 from logging import getLogger
 logger = getLogger(__name__)
@@ -33,7 +37,9 @@ class ListModel(QtCore.QAbstractListModel):
         self.dataChanged.emit(self.get(0), self.get(-1))
 
     def get(self, index):
-        if index<0:
+        if len(self.rows)==0:
+            return self.createIndex(0, 0, None)
+        elif index<0:
             return self.createIndex(len(self.rows)+index, 0, self.rows[index])
         else:
             return self.createIndex(index, 0, self.rows[index])
@@ -78,7 +84,6 @@ class PartsTab(QtGui.QWidget):
 
         # gui to pmca
         def tree_selected(selected, deselected):
-            logger.debug('tree_selected')
             if(len(selected)==0):return
             range=selected[0]
             index=range.top()
@@ -87,7 +92,6 @@ class PartsTab(QtGui.QWidget):
         self.tree_list.selectionModel().selectionChanged.connect(tree_selected)
 
         def parts_selected(selected, deselected):
-            logger.debug('parts_selected')
             if(len(selected)==0):return
             range=selected[0]
             index=range.top()
@@ -135,7 +139,6 @@ class MaterialTab(QtGui.QWidget):
 
         # gui to pmca
         def material_selected(selected, deselected):
-            logger.debug('material_selected')
             if(len(selected)==0):return
             range=selected[0]
             index=range.top()
@@ -144,7 +147,6 @@ class MaterialTab(QtGui.QWidget):
         self.material_list.selectionModel().selectionChanged.connect(material_selected)
 
         def color_selected(selected, deselected):
-            logger.debug('color_selected')
             if(len(selected)==0):return
             range=selected[0]
             index=range.top()
@@ -169,9 +171,9 @@ class MainFrame(QtGui.QMainWindow):
         self.statusBar().showMessage('Ready')
         self.setWindowTitle(PyPMCA.APP_NAME)
 
-        # centeral
-        self.main=pmca_qt.GLFrame(glcontroller)
-        self.setCentralWidget(self.main)
+        # OpenGL
+        self.glframe=glglue.qgl.Widget(self, glcontroller)
+        self.setCentralWidget(self.glframe)
 
         # parts
         self.parts_tab=PartsTab()
@@ -186,12 +188,33 @@ class MainFrame(QtGui.QMainWindow):
         self.info_tab=InfoTab()
         self.add_widget('Info', self.info_tab)
 
-    def add_widget(self, name: str, widget):
+        # logger
+        self.logger = QtGui.QPlainTextEdit()
+        self.logger.setReadOnly(True)    
+        self.add_widget('Logger', self.logger, QtCore.Qt.BottomDockWidgetArea)
+
+    def add_widget(self, name: str, widget, area=QtCore.Qt.RightDockWidgetArea):
         dock = QtGui.QDockWidget(name, self)
         dock.setWidget(widget)
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, dock)
+        self.addDockWidget(area, dock)
 
     def bind_pmca(self, pmca):
         logger.info('bind_pmca')
         self.parts_tab.bind_pmca(pmca.parts_tree)
         self.material_tab.bind_pmca(pmca.materials)
+
+        #
+        # OpenGL
+        #
+        def update_gl():
+            self.glframe.repaint()
+        pmca.model_update_observable.add(update_gl)
+
+        #
+        # 更新タイマー
+        #
+        self.timer = QtCore.QTimer()
+        def timer_update():
+            pmca.update()
+        self.timer.timeout.connect(timer_update)
+        self.timer.start(33)
