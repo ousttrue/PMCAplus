@@ -8,6 +8,21 @@ import PMCA_GL
 w=None
 
 
+class MainLoop:
+    def __init__(self, app):
+        self.app=app
+
+    def mainloop(self):
+        sys.exit(self.app.exec_())
+        '''
+        while True:
+            try:
+                self.app.processEvents()
+            except:
+                break
+                '''
+
+
 def App(pmca, scene):
     global w
     app = Qt.QApplication(sys.argv)
@@ -28,4 +43,4 @@ def App(pmca, scene):
     w.show()
     w.bind_pmca(pmca)
 
-    return app
+    return MainLoop(app)

@@ -288,7 +288,8 @@ class MaterialSelector:
         self.color_entry = []
         self.license=LicenseInfo()       
         self.mat_rep = MAT_REP(app=self.license)
-        self.cur_mat = 0
+        self.cur_mat = -1
+        self.cur_color= -1
 
     def is_empty(self):
         return len(self.mat_rep.mat)==0
@@ -319,6 +320,7 @@ class MaterialSelector:
         #self.__replace()
         #self.mat_rep.UpdateMaterial(self.mats_list, num=0)
         self.cur_mat=sel_t
+        self.cur_color=0
         self.mat_entry = [[],[]]
         for v in self.mat_rep.mat.values():
             if v.num >= 0:
@@ -334,15 +336,18 @@ class MaterialSelector:
         if len(self.mat_entry[0])==0: return
 
         self.cur_mat = sel_t
+        self.cur_color=0
         self.color_entry = []
         for x in self.mat_rep.mat[self.mat_entry[1][sel_t]].mat.entries:
             self.color_entry.append(x.name)
-        self.color_entry_observable.notify(self.color_entry, sel_t)
+        self.color_entry_observable.notify(self.color_entry, self.cur_color)
 
     def select_material(self, sel_t):
         '''
         マテリアルリストが選択された
         '''
+        if self.cur_mat==sel_t:return
+
         self.__update_color_entry(sel_t)
         return self.mat_rep.mat[self.mat_entry[1][sel_t]].mat.comment
 
@@ -350,6 +355,9 @@ class MaterialSelector:
         '''
         マテリアルカラーが選択された
         '''
+        if self.cur_color==sel_t:return
+        self.cur_color=sel_t
+
         self.mat_rep.mat[self.mat_entry[1][self.cur_mat]].sel = self.mat_rep.mat[self.mat_entry[1][self.cur_mat]].mat.entries[sel_t]
         self.color_select_observable.notify()
 

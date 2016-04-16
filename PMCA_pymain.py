@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 import sys
+mode='tkinter' if len(sys.argv)>1 and sys.argv[1]=='tkinter' else 'qt'
 import os
 sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(), 'glglue'))
@@ -22,21 +23,16 @@ if __name__ == "__main__":
 
     scene=PMCA_GL.Scene()
 
-    # qt
-    qt_app = pmca_qt.App(pmca, scene)
-
-    # tkinter
-    tkinter_app = pmca_tkinter.App(pmca, scene)
+    if mode=='tkinter':
+        # tkinter
+        app = pmca_tkinter.App(pmca, scene)
+    else:
+        # qt
+        app = pmca_qt.App(pmca, scene)
 
     pmca.update()
     pmca.force_update_entry()
 
-    while True:
-        try:
-            qt_app.processEvents()
-            tkinter_app.update()
-        except:
-            break
+    app.mainloop()
 
     pmca.save_CNL_File('./last.cnl')
-
