@@ -10,6 +10,22 @@ import PyPMCA
 import PMCA_GL
 import pmca_tkinter
 import pmca_qt
+import logging
+logger = logging.getLogger(__name__)
+
+
+logging.basicConfig(
+    format='%(levelname)s:%(name)s:%(message)s'
+    , level=logging.DEBUG
+    )
+
+
+def filter(r: logging.LogRecord):
+    if r.name.startswith('PIL.'):
+        return False
+    return True
+for h in logging.getLogger().handlers:
+    h.addFilter(filter)
 
 
 if __name__ == "__main__":
@@ -19,7 +35,7 @@ if __name__ == "__main__":
     try:
         pmca.load_CNL_File('./last.cnl')
     except:
-        print('前回のデータの読み込みに失敗しました')
+        logger.info('前回のデータの読み込みに失敗しました')
 
     scene=PMCA_GL.Scene()
 

@@ -2,3 +2,6 @@ __pycache__
 *.pyc
 .vs
 last.cnl
+*.sdf
+*.opensdf
+
