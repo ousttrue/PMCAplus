@@ -2,6 +2,8 @@
 import random
 import PMCA
 from PyPMCA.pmd import TOON, INFO, MATERIAL, Observable
+from logging import getLogger
+logger = getLogger(__name__)
 
 
 def load_matslist(fp, mats_list):
@@ -14,7 +16,6 @@ def load_matslist(fp, mats_list):
     active = mats_list[-1]
     while line:
         line = line.rstrip('\n').replace('\t',' ').split(' ', 1)
-        #print(line)
         if line[0]=='':
             pass
         if line[0][:1]=='#':
@@ -95,8 +96,8 @@ class MAT_REP:    #材質置換
         for x in self.mat.values():
             x.num = -1
         
-        print([m.tex for m in mat])
-        print([x.name for x in mats_list])
+        #logger.debug([m.tex for m in mat])
+        #logger.debug([x.name for x in mats_list])
         for i, m in enumerate(mat):
             for x in mats_list:
                 if m.tex == x.name and x.name != '':
@@ -129,7 +130,6 @@ class MAT_REP:    #材質置換
                 rep = self.mat[x.tex].sel
                 for k,v in rep.props.items():
                     if k == 'tex':
-                        #print("replace texture", x.tex, "to" ,v, "num =", i)
                         x.tex = v
                     elif k == 'tex_path':
                         x.tex_path  = v
@@ -144,7 +144,6 @@ class MAT_REP:    #材質置換
                     elif k == 'alpha':
                         x.alpha = float(v)
                     elif k == 'spec_rgb':
-                        #print(x.spec_col)
                         x.spec_col = v
                         for j,y in enumerate(x.spec_col):
                             x.spec_col[j] = float(y)
@@ -157,21 +156,15 @@ class MAT_REP:    #材質置換
                         toon = TOON()
                         toon.path = PMCA.getToonPath(num)
                         toon.name = PMCA.getToon(num)
-                        #print("toon")
-                        #print(toon.name)
-                        #print(toon.path)
                         tmp = v[-1].split(' ')
                         tmp[0] = int(tmp[0])
                         toon.path[tmp[0]] = ('toon/' + tmp[1]).encode('cp932','replace')
                         toon.name[tmp[0]] = tmp[1].encode('cp932','replace')
-                        
-                        #print(toon.name)
-                        #print(toon.path)
-                        
+                                               
                         PMCA.setToon(num, toon.name)
                         PMCA.setToonPath(num, toon.path)
                         x.toon = tmp[0]
-                        #print(tmp)
+
                     elif k == 'author':
                         for y in v[-1].split(' '):
                             for z in self.app.authors:
@@ -187,8 +180,6 @@ class MAT_REP:    #材質置換
                             else:
                                 self.app.licenses.append(y)
                     
-                #print(x.diff_col)
-                #print(x.spec_col)
                 PMCA.setMat(num, i, x.diff_col, x.alpha, x.spec, x.spec_col, x.mirr_col, x.toon, x.edge, x.face_count, bytes(x.tex.encode('cp932','replace')), bytes(x.sph.encode('cp932','replace')), bytes(x.tex_path.encode('cp932','replace')), bytes(x.sph_path.encode('cp932','replace')))
     
     def list_to_text(self):
@@ -206,32 +197,26 @@ class MAT_REP:    #材質置換
         tmp = ['','',None]
         i=0
         while lines[i] != 'MATERIAL':
-            #print(lines[i])
             i+=1
         i+=1
-        #print('材質読み込み')
+
         for x in lines[i:]:
             x = x.split(' ')
-            #print(x)
             if x[0] == '[Name]':
                 tmp[0] = x[1]
             elif x[0] == '[Sel]':
                 tmp[1] = x[1]
             elif x[0] == 'NEXT':
-                #print(tmp[0])
                 for y in mat_list:
                     if y.name == tmp[0]:
                         tmp[2] = y
                         break
                 else:
                     tmp[2] = None
-                    #print('Not found')
                     continue
                 
                 for y in tmp[2].entries:
-                    #print(y.name)
                     if y.name == tmp[1]:
-                        #print(tmp[0])
                         self.mat[tmp[0]] = MAT_REP_DATA(num = -1, mat=tmp[2], sel=y)
                         break
         
@@ -271,7 +256,7 @@ class LicenseInfo:
             str1 += '%s '%(x)
         for x in self.licenses:
             str2 += '%s '%(x)
-        #print('authors and license: %s/%s' % (str1, str2))
+        logger.info('authors and license: %s/%s' , str1, str2)
         return str1, str2
 
 
@@ -374,7 +359,7 @@ class MaterialSelector:
         '''
         マテリアル置き換えを実行する        
         '''
-        print("Material.Replace")
+        logger.info("Material.Replace")
         self.mat_rep.UpdateMaterial(self.mats_list, num=0)
         self.mat_rep.ApplyToPmd(num=0)
         PMCA.Copy_PMD(0, 2)

@@ -3,6 +3,9 @@ import PMCA
 import PMCA_dialogs
 from PyPMCA.pmd import INFO, BONE, Observable
 from tkinter import *
+from logging import getLogger
+logger = getLogger(__name__)
+
 
 def load_translist(fp, trans_list):
 	trans_list.append(MODEL_TRANS_DATA(bones=[]))
@@ -12,7 +15,6 @@ def load_translist(fp, trans_list):
 	
 	while line:
 		line = line.rstrip('\n').replace('\t',' ').split(' ', 1)
-		#print(line)
 		if line[0]=='':
 			pass
 		if line[0][:1]=='#':
@@ -103,16 +105,13 @@ class MODEL_TRANS_DATA:
 		i=0
 		try:
 			while lines[i] != 'TRANSFORM':
-				#print(lines[i])
 				i+=1
 		except:
 			return None
 		
 		i+=1
-		#print('体型調整読み込み')
 		for j,x in enumerate(lines[i:]):
 			x = x.split(' ')
-			#print(x)
 			if x[0] == '[Name]':
 				self.name = x[1]
 			elif x[0] == '[Scale]':
@@ -131,7 +130,6 @@ class MODEL_TRANS_DATA:
 		self.bones.append(BONE_TRANS_DATA())
 		for x in lines[i+j:]:
 			x = x.split(' ')
-			#print(x)
 			if x[0] == '[Name]':
 				self.bones[-1].name = x[1]
 			elif x[0] == '[Length]':
@@ -189,7 +187,6 @@ class BodyTransform:
         
         for x in self.transform_list[sel].bones:
             buff += '%s %f %f\n'%(x.name,x.length,x.thick)
-        #print(buff)
         
         t = self.transform_list[sel]
         
@@ -223,7 +220,6 @@ class BodyTransform:
         root.mainloop()
 
     def update(self):
-        #print("体型調整")
         info_data = PMCA.getInfo(0)
         info = INFO(info_data)
             
@@ -244,7 +240,6 @@ class BodyTransform:
             for x in y.bones:
                 PMCA.Resize_Bone(0, x.name.encode('cp932','replace'), x.length, x.thick)
                 PMCA.Move_Bone(0, x.name.encode('cp932','replace'),x.pos[0], x.pos[1], x.pos[2])
-                #print("resize_bone %f %f"%(x.length, x.thick))
             
         if refbone!=None:
             newbone=None

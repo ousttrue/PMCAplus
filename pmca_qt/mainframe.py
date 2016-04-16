@@ -61,7 +61,7 @@ class PartsTab(QtGui.QWidget):
     def bind_pmca(self, parts_tree: PyPMCA.PartsTree):
         # pmca to gui
         def on_tree_entry(entry, sel):
-            logger.debug('qt:on_tree_entry %s, %d', entry, sel)
+            logger.debug('on_tree_entry %s, %d', entry, sel)
             self.tree_model.setEntries(entry)
             if sel>=0:
                 self.tree_list.selectionModel().select(
@@ -69,7 +69,7 @@ class PartsTab(QtGui.QWidget):
         parts_tree.tree_entry_observable.add(on_tree_entry)
 
         def on_parts_entry(entry, sel):
-            logger.debug('qt:on_parts_entry %s, %d', entry, sel)
+            logger.debug('on_parts_entry %s, %d', entry, sel)
             self.parts_model.setEntries(entry)
             if sel>=0:
                 self.parts_list.selectionModel().select(
@@ -78,20 +78,20 @@ class PartsTab(QtGui.QWidget):
 
         # gui to pmca
         def tree_selected(selected, deselected):
-            logger.debug('qt:tree_selected')
+            logger.debug('tree_selected')
             if(len(selected)==0):return
             range=selected[0]
             index=range.top()
-            logger.debug('qt:tree_selected %d', index)
+            logger.debug('tree_selected %d', index)
             parts_tree.select_node(index)
         self.tree_list.selectionModel().selectionChanged.connect(tree_selected)
 
         def parts_selected(selected, deselected):
-            logger.debug('qt:parts_selected')
+            logger.debug('parts_selected')
             if(len(selected)==0):return
             range=selected[0]
             index=range.top()
-            logger.debug('qt:parts_selected %d', index)
+            logger.debug('parts_selected %d', index)
             parts_tree.select_part(index)
         self.parts_list.selectionModel().selectionChanged.connect(parts_selected)
 
@@ -118,7 +118,7 @@ class MaterialTab(QtGui.QWidget):
     def bind_pmca(self, materials: PyPMCA.MaterialSelector):
         # pmca to gui
         def on_material_entry(entry, sel):
-            logger.debug('qt:on_material_entry %s, %d', entry, sel)
+            logger.debug('on_material_entry %s, %d', entry, sel)
             self.material_model.setEntries(entry)
             if sel>=0:
                 self.material_list.selectionModel().select(
@@ -126,7 +126,7 @@ class MaterialTab(QtGui.QWidget):
         materials.material_entry_observable.add(on_material_entry)
 
         def on_color_entry(entry, sel):
-            logger.debug('qt:on_color_entry %s, %d', entry, sel)
+            logger.debug('on_color_entry %s, %d', entry, sel)
             self.color_model.setEntries(entry)
             if sel>=0:
                 self.color_list.selectionModel().select(
@@ -135,20 +135,20 @@ class MaterialTab(QtGui.QWidget):
 
         # gui to pmca
         def material_selected(selected, deselected):
-            logger.debug('qt:material_selected')
+            logger.debug('material_selected')
             if(len(selected)==0):return
             range=selected[0]
             index=range.top()
-            logger.debug('qt:material_selected %d', index)
+            logger.debug('material_selected %d', index)
             materials.select_material(index)
         self.material_list.selectionModel().selectionChanged.connect(material_selected)
 
         def color_selected(selected, deselected):
-            logger.debug('qt:color_selected')
+            logger.debug('color_selected')
             if(len(selected)==0):return
             range=selected[0]
             index=range.top()
-            logger.debug('qt:color_selected %d', index)
+            logger.debug('color_selected %d', index)
             materials.select_color(index)
         self.color_list.selectionModel().selectionChanged.connect(color_selected)
 

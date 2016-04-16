@@ -1,6 +1,8 @@
 ﻿# coding: utf-8
 
 from tkinter import *
+from logging import getLogger
+logger = getLogger(__name__)
 
 
 class QUIT:
@@ -21,16 +23,11 @@ class LISTBOX:
         self.listbox.pack(fill = BOTH, expand=1)
     
     def set_entry(self, entry, sel = -1):
-        print('tk:set_entry', self.listbox.size())
+        logger.debug('set_entry %d', self.listbox.size())
         if self.listbox.size()>0:
             self.listbox.delete(0, END)
-        try:
-            for i, x in enumerate(entry):
-                print('tk:insert', i)
-                self.listbox.insert('end', x)
-            if sel >= 0:
-                self.listbox.selection_set(sel)
-        except Exception as ex:
-            print(ex)
-        finally:
-            print('tk:set_entry done')
+        for i, x in enumerate(entry):
+            logger.debug('insert %d', i)
+            self.listbox.insert(END, x)
+        if sel >= 0:
+            self.listbox.selection_set(sel)

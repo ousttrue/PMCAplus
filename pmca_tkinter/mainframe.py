@@ -4,6 +4,8 @@ from tkinter.ttk import Notebook
 import pmca_tkinter
 import PMCA_GL
 import PyPMCA
+from logging import getLogger
+logger = getLogger(__name__)
 
 
 class MainFrame(Frame):
@@ -83,22 +85,22 @@ class MainFrame(Frame):
         # tree
         #
         def on_tree_entry(entry, sel):
-            print('tk:on_tree_entry', entry, sel)
+            logger.debug('on_tree_entry %s, %d', entry, sel)
             self.parts_tab.l_tree.set_entry(entry, sel=sel)
         pmca.parts_tree.tree_entry_observable.add(on_tree_entry)
 
         def on_parts_entry(entry, sel):
-            print('tk:on_parts_entry', entry, sel)
+            logger.debug('on_parts_entry %s, %d', entry, sel)
             self.parts_tab.l_sel.set_entry(entry, sel=sel)
         pmca.parts_tree.parts_entry_observable.add(on_parts_entry)
 
         def on_tree_select(sel):
-            print('tk:on_tree_select', sel)
+            logger.debug('on_tree_select %d', sel)
             pmca.parts_tree.select_node(sel)
         self.parts_tab.tree_select_observable.add(on_tree_select)
 
         def on_parts_select(sel):
-            print('tk:on_parts_select', sel)
+            logger.debug('on_parts_select %d', sel)
             pmca.parts_tree.select_part(sel)
         self.parts_tab.parts_select_observable.add(on_parts_select)            
 

@@ -4,6 +4,9 @@ sys.path.append(os.getcwd()+'/glglue')
 import tkinter
 import glglue.togl
 import glglue.sample
+from logging import getLogger
+logger = getLogger(__name__)
+
 
 class GLFrame(tkinter.Frame):
     def __init__(self, master, controller, width=None, height=None, **kw):
@@ -27,4 +30,4 @@ class GLFrame(tkinter.Frame):
             # q
             sys.exit()
         else:
-            print("keycode: %d" % key)
+            logger.debug("keycode: %d", key)

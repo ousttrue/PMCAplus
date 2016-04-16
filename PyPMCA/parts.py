@@ -2,6 +2,8 @@
 import PMCA
 import sys
 from PyPMCA.pmd import *
+from logging import getLogger
+logger = getLogger(__name__)
 
 
 sysenc = sys.getfilesystemencoding()
@@ -13,7 +15,6 @@ def load_partslist(fp, parts_list):
     line = fp.readline()
     while line:
         line = line.rstrip('\n').replace('\t',' ').split(' ', 1)
-        #print(line)
         if line[0]=='':
             pass
         if line[0][:1]=='#':
@@ -105,14 +106,12 @@ class NODE:    #モデルのパーツツリー
             if len(tmp)==1:
                 tmp = x.split('：', 1)
             if tmp[0] == 'Author' or tmp[0] == 'author' or tmp[0] == 'Creator' or tmp[0] == 'creator' or tmp[0] == 'モデル制作':
-                #print(tmp[1])
                 tmp[1] = tmp[1].replace('　', ' ')
                 app.authors = tmp[1].split(' ')
                 
             elif tmp[0] == 'License' or tmp[0] == 'license' or tmp[0] == 'ライセンス':
                 tmp[1] = tmp[1].replace('　', ' ')
                 app.licenses = tmp[1].split(' ')
-        #print('パーツのパス:%s'%(self.parts.path))
         for x in self.child:
             if x != None:
                 x.assemble_child(num, app)
@@ -129,7 +128,6 @@ class NODE:    #モデルのパーツツリー
             
     def assemble_child(self, num, app):
         pmpy = app
-        #print('パーツのパス:%s'%(self.parts.path))
         
         PMCA.Create_PMD(4)
         PMCA.Load_PMD(4, self.parts.path.encode(sysenc,'replace'))
@@ -181,7 +179,6 @@ class NODE:    #モデルのパーツツリー
         
         if 'script_pre' in self.parts.props:
             for x in self.parts.props['script_pre']:
-                #print('プレスクリプト実行')
                 argv = x.split()
                 fp = open(argv[0], 'r', encoding = 'utf-8-sig')
                 script = fp.read()
@@ -239,7 +236,6 @@ class NODE:    #モデルのパーツツリー
         lines.append('[Name] %s'%(self.parts.name))
         lines.append('[Path] %s'%(self.parts.path))
         lines.append('[Child]')
-        #print(self.parts.path)
         for x in self.child:
             if x != None:
                 lines.extend(x.node_to_text())
@@ -258,14 +254,11 @@ class NODE:    #モデルのパーツツリー
         child_nums = [0]
         count=0
         while lines[count] != 'PARTS':
-            #print(lines[i])
             count+=1
         count+=1
         
         while count < len(lines):
-            #print('count = %d'%(count))
             line = lines[count].split(' ')
-            #print(line)
             if len(parents) == 0:
                 break
             if line[0] == 'None':
@@ -284,7 +277,6 @@ class NODE:    #モデルのパーツツリー
             elif line[0] == '[Child]':
                 
                 tp = None
-                #print(tmp[0], len(parents))
                 if tmp[0] != None:
                     for y in parts_list:
                         if y.name == tmp[0]:
@@ -297,7 +289,6 @@ class NODE:    #モデルのパーツツリー
                                 break
                 
                 if tp != None:
-                    #print(curnode.parts.name ,len(curnode.child), child_nums[-1])
                     curnode.child[child_nums[-1]] = NODE(parts = y, depth = curnode.depth+1, child=[])
                     parents.append(curnode)
                     curnode = curnode.child[child_nums[-1]]
@@ -320,7 +311,6 @@ class NODE:    #モデルのパーツツリー
             elif line[0] == '[Parent]':
                 curnode = parents.pop()
                 child_nums.pop()
-                #print("up", len(parents))
                 if len(child_nums) > 0:
                     child_nums[-1]+=1
             elif line[0] == 'MATERIAL':
@@ -436,7 +426,7 @@ class PartsTree:
         '''
         ツリーノード選択
         '''
-        print('select_node', sel_t)
+        logger.debug('select_node %d', sel_t)
         if(self.tree_current==sel_t):return
         self.tree_current=sel_t
         self.parts_current=-1
@@ -485,7 +475,6 @@ class PartsTree:
                 for x in node.parts.joint:
                     node.child.append(None)
             
-            #print('>>', node.parts.name, '\n')
         self.tree_entry[self.tree_current].node.child[self.tree_entry[self.tree_current].c_num] = node
         #self.tree_list[sel_t].node.list_num = sel
 
@@ -495,7 +484,7 @@ class PartsTree:
         '''
         モデル組立て
         '''
-        print('Parts.Build')
+        logger.info('Parts.Build')
         x = self.tree_list[0].node
         if x == None:
             return

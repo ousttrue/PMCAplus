@@ -11,6 +11,8 @@ import PMCA
 #インポートパスにカレントディレクトリを加える
 sys.path.append(os.getcwd())
 
+from logging import getLogger
+logger = getLogger(__name__)
 
 
 
@@ -219,44 +221,35 @@ def Get_PMD(num, only = None):
 	return PMD(info, vt, face, mat, bone, ik, skin, bone_group, bone_disp, toon, rb, joint)
 
 def Set_PMD(num, model):
-	#print("INIT")
 	PMCA.Create_FromInfo(num, bytes(model.info.name.encode('cp932','replace')), bytes(model.info.comment.encode('cp932','replace')), bytes(model.info.name_eng.encode('cp932','replace')), bytes(model.info.comment_eng.encode('cp932','replace')), len(model.vt), len(model.face), len(model.mat), len(model.bone), len(model.IK_list), len(model.skin), len(model.bone_grp), len(model.bone_dsp), model.info.eng_support, len(model.rb), len(model.joint), len(model.info.skin_index), model.info.skin_index)
 	
-	#print("VT")
 	for (i,x) in enumerate(model.vt):
 		PMCA.setVt(num, i, x.loc, x.nor, x.uv, x.bone_num[0], x.bone_num[1], x.weight, x.edge)
 	
-	#print("FACE")
 	for (i,x) in enumerate(model.face):
 		PMCA.setFace(num, i, x)
 	
-	#print("MAT")
 	for (i,x) in enumerate(model.mat):
 		PMCA.setMat(num, i, x.diff_col, x.alpha, x.spec, x.spec_col, x.mirr_col, x.toon, x.edge, x.face_count, bytes(x.tex.encode('cp932','replace')), bytes(x.sph.encode('cp932','replace')), bytes(x.tex_path.encode('cp932','replace')), bytes(x.sph_path.encode('cp932','replace')))
 	
-	#print("BONE")
 	for (i,x) in enumerate(model.bone):
 		PMCA.setBone(num, i, bytes(x.name.encode('cp932','replace')), bytes(x.name_eng.encode('cp932','replace')), x.parent, x.tail, x.type, x.IK, x.loc)
 	
-	#print("IK")
 	for (i,x) in enumerate(model.IK_list):
 		PMCA.setIK(num, i, x.index, x.tail_index, len(x.child), x.iterations, x.weight, x.child)
 	
-	#print("SKIN")
 	for (i,x) in enumerate(model.skin):
 		PMCA.setSkin(num, i, bytes(x.name.encode('cp932','replace')), bytes(x.name_eng.encode('cp932','replace')), len(x.data), x.type)
 		for(j,y) in enumerate(x.data):
 			PMCA.setSkindata(num, i, j, y["index"], y["loc"])
 	
-	#print("GROUP")
 	for (i,x) in enumerate(model.bone_grp):
 		PMCA.setBone_group(num, i, bytes(x.name.encode('cp932','replace')), bytes(x.name_eng.encode('cp932','replace')))
 	for (i,x) in enumerate(model.bone_dsp):
 		PMCA.setBone_disp(num, i, x.index, x.group)
 	
-	#print("TOON")
 	tmp = []
-	print(model.toon.name)
+	logger.info(model.toon.name)
 	for (i,x) in enumerate(model.toon.name):
 		tmp.append(bytes(x.encode('cp932','replace')))
 	PMCA.setToon(num, tmp)
@@ -265,13 +258,10 @@ def Set_PMD(num, model):
 	PMCA.setToonPath(num, tmp)
 	
 	
-	#print("RBODY")
 	for (i,x) in enumerate(model.rb):
 		PMCA.setRb(num, i, bytes(x.name.encode('cp932','replace')), x.bone, x.group, x.target, x.shape, x.size, x.loc, x.rot, x.mass, x.damp, x.rdamp, x.res, x.fric, x.type)
 	
-	#print("JOINT")
 	for (i,x) in enumerate(model.joint):
-		#print(x.name, x.rb, x.loc, x.rot, x.limit, x.spring)
 		PMCA.setJoint(num, i, bytes(x.name.encode('cp932','replace')), x.rb, x.loc, x.rot, x.limit, x.spring)
 	
 def Set_Name_Comment(num=0,name='',comment='',name_eng='',comment_eng=''):

@@ -10,6 +10,9 @@ from PyPMCA.material import *
 from PyPMCA.transform import *
 from PyPMCA.pmd import *
 
+from logging import getLogger
+logger = getLogger(__name__)
+
 
 APP_NAME = 'PMCA v0.0.6r10'
 
@@ -29,7 +32,6 @@ def load_list(fp):
 		tmp = line.split(' ')
 		bone[0].append(tmp[0].encode('cp932','replace'))
 		bone[1].append(tmp[1].encode('cp932','replace'))
-		#print(tmp)
 	
 	while line:
 		line = fp.readline()[:-1]
@@ -38,7 +40,6 @@ def load_list(fp):
 		tmp = line.split(' ')
 		skin[0].append(tmp[0].encode('cp932','replace'))
 		skin[1].append(tmp[1].encode('cp932','replace'))
-		#print(tmp)
 	
 	while line:
 		line = fp.readline()[:-1]
@@ -47,7 +48,6 @@ def load_list(fp):
 		tmp = line.split(' ')
 		group[0].append(tmp[0].encode('cp932','replace'))
 		group[1].append(tmp[1].encode('cp932','replace'))
-		#print(tmp)
 	
 	LIST={'b':bone, 's':skin, 'g':group}
 	
@@ -125,17 +125,14 @@ class PyPMCA:
         self.model_bb_observable.notify(wht)
 
     def init(self):
-        #print('登録データ読み込み')
         for x in os.listdir('./'):
             if os.path.isfile(x):
-                #print(x)
             
                 fp = open(x, 'r', encoding = 'cp932')
                 try:
                     lines = fp.read()
                     line = lines.split('\n')
                     line = line[0].replace('\n', '')
-                    #print('"%s"'%(line))
                     if line == "PMCA Parts list v1.0" or line == "PMCA Materials list v1.1" or line == "PMCA Materials list v1.0" or line == "PMCA Textures list v1.0" or line == "PMCA Bone_Group list v1.0":
                         fp.close()
                     
@@ -160,9 +157,7 @@ class PyPMCA:
                     fp.close()
                 fp = open(x, 'r', encoding = 'utf-8-sig')
                 try:
-                    line = fp.readline()
-                    #print(line)
-                
+                    line = fp.readline()               
                     if line=='PMCA Parts list v2.0\n' :
                         self.parts_tree.load_partslist(fp)
                     elif line=='PMCA Materials list v2.0\n' :
@@ -176,7 +171,6 @@ class PyPMCA:
                 except UnicodeEncodeError:
                     fp.close()
             
-        #print('list.txt読み込み')
         with open('list.txt', 'r', encoding = 'utf-8-sig') as fp:
             LIST = load_list(fp)
             PMCA.Set_List(len(LIST['b'][0]), LIST['b'][0], LIST['b'][1], len(LIST['s'][0]), LIST['s'][0], LIST['s'][1], len(LIST['g'][0]), LIST['g'][0], LIST['g'][1])   
@@ -289,17 +283,17 @@ class PyPMCA:
                     try:
                         shutil.copy(mat.tex_path, dirc)
                     except IOError:
-                        print('コピー失敗:%s'%(mat.tex_path))
+                        logger.warning('コピー失敗:%s', mat.tex_path)
                 if mat.sph != '':
                     try:
                         shutil.copy(mat.sph_path, dirc)
                     except IOError:
-                        print('コピー失敗:%s'%(mat.sph_path))
+                        logger.warning('コピー失敗:%s', mat.sph_path)
     
             toon = PMCA.getToon(0)
             for i,x in enumerate(PMCA.getToonPath(0)):
                 toon[i] = toon[i].decode('cp932','replace')
-                print(toon[i], x)
+                #logger.debug(toon[i], x)
                 if toon[i] != '':
                     try:
                         shutil.copy('toon/' + toon[i], dirc)
@@ -307,7 +301,7 @@ class PyPMCA:
                         try:
                             shutil.copy('parts/' + toon[i], dirc)
                         except IOError:
-                            print('コピー失敗:%s'%(toon[i]))
+                            logger.warning('コピー失敗:%s', toon[i])
     
     def dialog_save_PMD(self):
         name = filedialog.asksaveasfilename(filetypes = [('Plygon Model Deta(for MMD)','.pmd'),('all','.*')], initialdir = self.target_dir, defaultextension='.pmd')
@@ -319,7 +313,6 @@ class PyPMCA:
         names = filedialog.askopenfilename(filetypes = [('キャラクタノードリスト','.cnl'),('all','.*')], initialdir = self.target_dir, defaultextension='.cnl',  multiple=True)
         
         self.save_CNL_File('./last.cnl')
-        #print(type(names))
         if type(names) is str:
             names = names.split(' ')
         for name in names:
@@ -365,7 +358,6 @@ class PyPMCA:
             while count < bone_count:
                 if i >= bone_count:
                     break
-                #print(i)
                 i=model.bone[i].parent
                 count += 1
             else:
@@ -579,7 +571,6 @@ class PyPMCA:
         paths=[]
         indexCounts=[]
         for m in (PMCA.getMat(0, i) for i in range(info['mat_count'])):
-            #print(m)
             colors.append((m['diff_col'][0] * 2 + m['mirr_col'][0]) / 2.5 + m['spec_col'][0] / 4)
             colors.append((m['diff_col'][1] * 2 + m['mirr_col'][1]) / 2.5 + m['spec_col'][1] / 4)
             colors.append((m['diff_col'][2] * 2 + m['mirr_col'][2]) / 2.5 + m['spec_col'][2] / 4)
