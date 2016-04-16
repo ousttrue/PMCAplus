@@ -341,7 +341,8 @@ class PARTS:    #読み込みパーツデータ
         self.type=t
         self.joint=joint
         self.props=props
-
+        self.tree_current=-1
+        self.parts_current=-1
 
 class TREE_LIST:
     def __init__(self, node=None, depth=0, text='', c_num=-1, list_num=0):
@@ -360,6 +361,7 @@ class PartsTree:
         self.tree_list = []
         self.tree_entry = []
         self.tree_current=0
+        self.parts_current=-1
         self.__init_parts_tree()
 
     def is_empty(self):
@@ -434,13 +436,20 @@ class PartsTree:
         '''
         ツリーノード選択
         '''
+        print('select_node', sel_t)
+        if(self.tree_current==sel_t):return
         self.tree_current=sel_t
+        self.parts_current=-1
         self.__update_parts_entry()
 
     def select_part(self, sel):
         '''
         パーツ選択
         '''
+        if self.parts_current==sel: return
+        if sel>=len(self.parts_entry): return
+        self.parts_current=sel
+
         if self.parts_entry[sel]==None:    #Noneを選択した場合
             node = None
         

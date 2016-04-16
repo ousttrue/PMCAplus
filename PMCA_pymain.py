@@ -3,13 +3,14 @@
 import sys
 import os
 sys.path.append(os.getcwd())
+sys.path.append(os.path.join(os.getcwd(), 'glglue'))
 import PMCA
 import PyPMCA
 import PMCA_GL
 import pmca_tkinter
 import pmca_qt
 
-        
+
 if __name__ == "__main__":
     PMCA.Init_PMD()
 
@@ -21,11 +22,11 @@ if __name__ == "__main__":
 
     scene=PMCA_GL.Scene()
 
-    # tkinter
-    tkinter_app = pmca_tkinter.App(pmca, scene)
-
     # qt
     qt_app = pmca_qt.App(pmca, scene)
+
+    # tkinter
+    tkinter_app = pmca_tkinter.App(pmca, scene)
 
     pmca.update()
     pmca.force_update_entry()
@@ -38,3 +39,4 @@ if __name__ == "__main__":
             break
 
     pmca.save_CNL_File('./last.cnl')
+

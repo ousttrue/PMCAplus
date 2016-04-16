@@ -34,6 +34,7 @@ class ListModel(QtCore.QAbstractListModel):
         else:
             return self.createIndex(index, 0, self.rows[index])
 
+
 class PartsTab(QtGui.QWidget):
     def __init__(self):
         super().__init__()
@@ -53,15 +54,42 @@ class PartsTab(QtGui.QWidget):
         # set
         self.setLayout(hbox)
 
-    def bind_pmca(self, pmca):
+    def bind_pmca(self, pmca: PyPMCA.PyPMCA):
+        # pmca to gui
         def on_tree_entry(entry, sel):
+            print('qt:on_tree_entry', entry, sel)
             self.tree_model.setEntries(entry)
-            self.tree_list.selectionModel().select(self.tree_model.get(sel), QtGui.QItemSelectionModel.Select)
+            if sel>=0:
+                self.tree_list.selectionModel().select(
+                    self.tree_model.get(sel), QtGui.QItemSelectionModel.Select)
         pmca.parts_tree.tree_entry_observable.add(on_tree_entry)
 
         def on_parts_entry(entry, sel):
+            print('qt:on_parts_entry', entry, sel)
             self.parts_model.setEntries(entry)
+            if sel>=0:
+                self.parts_list.selectionModel().select(
+                    self.tree_model.get(sel), QtGui.QItemSelectionModel.Select)
         pmca.parts_tree.parts_entry_observable.add(on_parts_entry)
+
+        # gui to pmca
+        def tree_selected(selected, deselected):
+            print('qt:tree_selected')
+            if(len(selected)==0):return
+            range=selected[0]
+            index=range.top()
+            print('qt:tree_selected', index)
+            pmca.parts_tree.select_node(index)
+        self.tree_list.selectionModel().selectionChanged.connect(tree_selected)
+
+        def parts_selected(selected, deselected):
+            print('qt:parts_selected')
+            if(len(selected)==0):return
+            range=selected[0]
+            index=range.top()
+            print('qt:parts_selected', index)
+            pmca.parts_tree.select_part(index)
+        self.parts_list.selectionModel().selectionChanged.connect(parts_selected)
 
 
 class MaterialTab(QtGui.QWidget):
@@ -120,3 +148,4 @@ class MainFrame(QtGui.QMainWindow):
 
     def bind_pmca(self, pmca):
         self.main.bind_pmca(pmca)
+
