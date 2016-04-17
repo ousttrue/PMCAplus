@@ -13,15 +13,9 @@ int translate(MODEL *model, LIST *list, short mode)
 {
 	int i,j;
 	char str[NAME_LEN], *p;
-	/*
-	モード1 英名追加
-	モード2 日本語名を英語名に(ボーン、スキンのみ)
-	モード3 英語名を日本語名に(ボーン、スキンのみ)
-	*/
-	
-	
 	
 	if(mode == 1){
+		// 	モード1 英名追加
 		
 		if(model->eng_support != 1){
 			model->eng_support = 1;
@@ -34,10 +28,11 @@ int translate(MODEL *model, LIST *list, short mode)
 			strncpy(model->header.comment_eng, model->header.comment, 256);
 		}
 		
+		// bone
 		for(i=0; i<model->bone_count; i++){
-			for(j=0; j<list->bone_count; j++){
-				if(strcmp(model->bone[i].name, list->bone[j]) == 0){
-					strncpy(model->bone[i].name_eng, list->bone_eng[j], NAME_LEN);
+			for(j=0; j<list->bone.size(); j++){
+				if(list->bone[j].name==model->bone[i].name){
+					strncpy(model->bone[i].name_eng, list->bone[j].english.c_str(), list->bone[j].english.size());
 					j = -1;
 					break;
 				}
@@ -49,14 +44,12 @@ int translate(MODEL *model, LIST *list, short mode)
 			
 			}
 		}
-		#ifdef DEBUG
-			printf("bone\n");
-		#endif
 		
+		// skin
 		for(i=1; i<model->skin_count; i++){
-			for(j=1; j<list->skin_count; j++){
-				if(strcmp(model->skin[i].name, list->skin[j]) == 0){
-					strncpy(model->skin[i].name_eng, list->skin_eng[j], NAME_LEN);
+			for(j=1; j<list->skin.size(); j++){
+				if(list->skin[j].name==model->skin[i].name){
+					strncpy(model->skin[i].name_eng, list->skin[j].english.c_str(), list->skin[j].english.size());
 					j = -1;
 					break;
 				}
@@ -65,40 +58,34 @@ int translate(MODEL *model, LIST *list, short mode)
 				strncpy(model->skin[i].name_eng, model->skin[i].name, NAME_LEN);
 			}
 		}
-		
-		#ifdef DEBUG
-			printf("skin\n");
-		#endif
+
+		// disp
 		for(i=0; i<model->bone_group_count; i++){
 			
 			strncpy(str, model->bone_group[i].name, NAME_LEN);
 			p = strchr( str, '\n' );
 			if(p != NULL)*p = '\0';
 			j = 0;
-			for(j=0; j<list->disp_count; j++){
-				if(strcmp(str, list->disp[j]) == 0){
-					strncpy(model->bone_group[i].name_eng, list->disp_eng[j], NAME_LEN);
+			for(j=0; j<list->disp.size(); j++){
+				if(list->disp[j].name==str){
+					strncpy(model->bone_group[i].name_eng, list->disp[j].english.c_str(), list->disp[j].english.size());
 					j = -1;
 					break;
 				}
 			}
-			#ifdef DEBUG
-				printf("%d ",i);
-			#endif
 			if(j != -1){
 				strncpy(model->bone_group[i].name_eng, str, NAME_LEN);
 			}
 		}
 		
-		#ifdef DEBUG
-			printf("\nbone表示枠\n");
-		#endif
-		
-	}else if(mode == 2){
+	}
+	else if(mode == 2){
+		// 	モード2 日本語名を英語名に(ボーン、スキンのみ)
+
 		for(i=0; i<model->bone_count; i++){
-			for(j=0; j<list->bone_count; j++){
-				if(strcmp(model->bone[i].name, list->bone[j]) == 0){
-					strncpy(model->bone[i].name, list->bone_eng[j], NAME_LEN);
+			for(j=0; j<list->bone.size(); j++){
+				if(list->bone[j].name==model->bone[i].name){
+					strncpy(model->bone[i].name, list->bone[j].english.c_str(), list->bone[j].english.size());
 					j = -1;
 					break;
 				}
@@ -108,9 +95,9 @@ int translate(MODEL *model, LIST *list, short mode)
 			}
 		}
 		for(i=0; i<model->skin_count; i++){
-			for(j=0; j<list->skin_count; j++){
-				if(strcmp(model->skin[i].name, list->skin[j]) == 0){
-					strncpy(model->skin[i].name, list->skin_eng[j], NAME_LEN);
+			for(j=0; j<list->skin.size(); j++){
+				if(list->skin[j].name==model->skin[i].name){
+					strncpy(model->skin[i].name, list->skin[j].english.c_str(), list->skin[j].english.size());
 					j = -1;
 					break;
 				}
@@ -119,20 +106,22 @@ int translate(MODEL *model, LIST *list, short mode)
 				strncpy(model->skin[i].name, model->skin[i].name_eng, NAME_LEN);
 			}
 		}
-	}else if(mode == 3){
+	}
+	else if(mode == 3){
+		// 	モード3 英語名を日本語名に(ボーン、スキンのみ)
 		for(i=0; i<model->bone_count; i++){
-			for(j=0; j<list->bone_count; j++){
-				if(strcmp(model->bone[i].name, list->bone_eng[j]) == 0){
-					strncpy(model->bone[i].name, list->bone[j], NAME_LEN);
+			for(j=0; j<list->bone.size(); j++){
+				if(list->bone[j].english==model->bone[i].name){
+					strncpy(model->bone[i].name, list->bone[j].name.c_str(), list->bone[j].name.size());
 					j = -1;
 					break;
 				}
 			}
 		}
 		for(i=0; i<model->skin_count; i++){
-			for(j=0; j<list->skin_count; j++){
-				if(strcmp(model->skin[i].name, list->skin_eng[j]) == 0){
-					strncpy(model->skin[i].name, list->skin[j], NAME_LEN);
+			for(j=0; j<list->skin.size(); j++){
+				if(list->skin[j].english==model->skin[i].name){
+					strncpy(model->skin[i].name, list->skin[j].name.c_str(), list->skin[j].name.size());
 					j = -1;
 					break;
 				}
@@ -160,8 +149,8 @@ int sort_bone(MODEL *model, LIST *list)
 	
 	for(i=0; i<model->bone_count; i++){
 		index[i] = -1;	//リストに無いボーンには-1
-		for(j=0; j<list->bone_count; j++){
-			if(strcmp(list->bone[j], model->bone[i].name) == 0){
+		for(j=0; j<list->bone.size(); j++){
+			if(list->bone[j].name==model->bone[i].name){
 				index[i] = j;	//indexにリスト中の番号を代入
 				break;
 			}
@@ -172,7 +161,7 @@ int sort_bone(MODEL *model, LIST *list)
 	}
 	
 	tmp = 0;
-	for(i=0; i<list->bone_count; i++){
+	for(i=0; i<list->bone.size(); i++){
 		for(j=0; j<model->bone_count; j++){
 			if(index[j] == i){	//indexにiが存在したら
 				//printf("index[%d]に%dが存在します\n", j, i);
@@ -403,8 +392,8 @@ int sort_skin(MODEL *model, LIST *list)
 	
 	for(i=0; i<model->skin_count; i++){
 		index[i] = -1;	//リストに無い表情には-1
-		for(j=0; j<list->skin_count; j++){
-			if(strcmp(list->skin[j], model->skin[i].name) == 0){
+		for(j=0; j<list->skin.size(); j++){
+			if(list->skin[j].name==model->skin[i].name){
 				index[i] = j;	//indexにリスト中の番号を代入
 				break;
 			}
@@ -415,7 +404,7 @@ int sort_skin(MODEL *model, LIST *list)
 	}
 	
 	tmp = 0;
-	for(i=0; i<list->skin_count; i++){
+	for(i=0; i<list->skin.size(); i++){
 		for(j=0; j<model->skin_count; j++){
 			if(index[j] == i){	//indexにiが存在したら
 				//printf("index[%d]に%dが存在します\n", j, i);
@@ -487,11 +476,11 @@ int sort_disp(MODEL *model, LIST *list)
 		tmpg = model->bone_group[i];
 		p = strchr( tmpg.name, '\n' );
 		if(p != NULL)*p = '\0';
-		for(j=0; j<list->disp_count; j++){
+		for(j=0; j<list->disp.size(); j++){
 			#ifdef DEBUG
 				printf("%d %s : %s\n", j, list->disp[j], tmpg.name);
 			#endif
-			if(strcmp(list->disp[j], tmpg.name) == 0){
+			if(list->disp[j].name==tmpg.name){
 				index[i] = j;	//indexにリスト中の番号を代入
 				break;
 			}
@@ -502,7 +491,7 @@ int sort_disp(MODEL *model, LIST *list)
 	}
 	
 	tmp = 0;
-	for(i=0; i<list->disp_count; i++){
+	for(i=0; i<list->disp.size(); i++){
 		for(j=0; j<model->bone_group_count; j++){
 			if(index[j] == i){	//indexにiが存在したら
 				//printf("index[%d]に%dが存在します\n", j, i);

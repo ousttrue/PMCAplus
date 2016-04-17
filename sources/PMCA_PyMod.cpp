@@ -893,65 +893,66 @@ static PyObject* setJoint(PyObject *self, PyObject *args)
 /*******************************************************************************/
 static PyObject* Set_List(PyObject *self, PyObject *args)
 {
-	int i;
 	PyObject *bn, *bne, *sn, *sne, *gn, *gne;
-	PyObject *tmp;
-	char *p;
-	Py_ssize_t len = NAME_LEN;
-	
-	//bone_count, name, name_eng, skin_count, name, name_eng, bone_group_count, name, name_eng
-	if(!PyArg_ParseTuple(args, "iOOiOOiOO",
-							&list.bone_count, &bn, &bne,
-							&list.skin_count, &sn, &sne,
-							&list.disp_count, &gn, &gne))return NULL;
-	
-	list.bone = (char(*)[128])MALLOC(list.bone_count * sizeof(char)*NAME_LEN);
-	list.bone_eng = (char(*)[128])MALLOC(list.bone_count * sizeof(char)*NAME_LEN);
-	list.skin = (char(*)[128])MALLOC(list.skin_count * sizeof(char)*NAME_LEN);
-	list.skin_eng = (char(*)[128])MALLOC(list.skin_count * sizeof(char)*NAME_LEN);
-	list.disp = (char(*)[128])MALLOC(list.disp_count * sizeof(char)*NAME_LEN);
-	list.disp_eng = (char(*)[128])MALLOC(list.disp_count * sizeof(char)*NAME_LEN);
-	
-	p = NULL;
-	
-	/*ボーン*/
-	for(i=0; i<list.bone_count; i++){
+	int bone_count;
+	int skin_count;
+	int disp_count;
+	if (!PyArg_ParseTuple(args, "iOOiOOiOO",
+		&bone_count, &bn, &bne,
+		&skin_count, &sn, &sne,
+		&disp_count, &gn, &gne))return NULL;
+
+	list.clear();
+
+
+	// ボーン
+	for (int i = 0; i < bone_count; i++) {
+		list.bone.push_back(NameWithEnglish());
+		char *p = NULL;
+		PyObject *tmp;
+		Py_ssize_t len = NAME_LEN;
+
 		tmp = PyList_GetItem(bn, i);
 		PyBytes_AsStringAndSize(tmp, &p, &len);
-		strncpy(list.bone[i], p, NAME_LEN);
-		
+		list.bone.back().name = p;
+
 		tmp = PyList_GetItem(bne, i);
 		PyBytes_AsStringAndSize(tmp, &p, &len);
-		strncpy(list.bone_eng[i], p, NAME_LEN);
-		//printf("%d %s\n", i, list.bone[i]);
+		list.bone.back().english = p;
 	}
-	
-	/*表情*/
-	for(i=0; i<list.skin_count; i++){
+
+	// 表情
+	for (int i = 0; i < skin_count; i++) {
+		list.skin.push_back(NameWithEnglish());
+		char *p = NULL;
+		PyObject *tmp;
+		Py_ssize_t len = NAME_LEN;
+
 		tmp = PyList_GetItem(sn, i);
-		//strncpy(list.skin[i], PyBytes_AsString(tmp), NAME_LEN);
 		PyBytes_AsStringAndSize(tmp, &p, &len);
-		strncpy(list.skin[i], p, NAME_LEN);
-		
+		list.skin.back().name = p;
+
 		tmp = PyList_GetItem(sne, i);
-		//strncpy(list.skin_eng[i], PyBytes_AsString(tmp), NAME_LEN);
 		PyBytes_AsStringAndSize(tmp, &p, &len);
-		strncpy(list.skin_eng[i], p, NAME_LEN);
+		list.skin.back().english = p;
 	}
-	
-	/*ボーングループ*/
-	for(i=0; i<list.disp_count; i++){
+
+	// ボーングループ
+	for (int i = 0; i < disp_count; i++) {
+		list.disp.push_back(NameWithEnglish());
+		char *p = NULL;
+		PyObject *tmp;
+		Py_ssize_t len = NAME_LEN;
+
 		tmp = PyList_GetItem(gn, i);
-		//strncpy(list.disp[i], PyBytes_AsString(tmp), NAME_LEN);
 		PyBytes_AsStringAndSize(tmp, &p, &len);
-		strncpy(list.disp[i], p, NAME_LEN);
-		
+		list.disp.back().name = p;
+
 		tmp = PyList_GetItem(gne, i);
-		//strncpy(list.disp_eng[i], PyBytes_AsString(tmp), NAME_LEN);
 		PyBytes_AsStringAndSize(tmp, &p, &len);
-		strncpy(list.disp_eng[i], p, NAME_LEN);
+		list.disp.back().english = p;
 	}
-	
+
 	return Py_BuildValue("i", 0);
 }
 

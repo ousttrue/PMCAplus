@@ -2,8 +2,6 @@
 #include "mPMD.h"
 
 
-int load_list(LIST *list, const char dir[]);
-int delete_list(LIST *list);
 
 int load_PMD(MODEL *model, const char file_name[]);
 int write_PMD(MODEL *model, const char file_name[]);

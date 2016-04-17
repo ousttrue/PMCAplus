@@ -1,6 +1,6 @@
 #pragma once
-
-#define DLL
+#include <string>
+#include <vector>
 
 #define USHORT_MAX 65535
 
@@ -154,15 +154,3 @@ struct MODEL
 };
 
 
-struct LIST 
-{
-	unsigned int bone_count;
-	char(*bone)[NAME_LEN];
-	char(*bone_eng)[NAME_LEN];
-	unsigned int skin_count;
-	char(*skin)[NAME_LEN];
-	char(*skin_eng)[NAME_LEN];
-	unsigned int disp_count;
-	char(*disp)[NAME_LEN];
-	char(*disp_eng)[NAME_LEN];
-};
