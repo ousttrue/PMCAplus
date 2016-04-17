@@ -1,14 +1,8 @@
+#include "PMCA_PyMod.h"
 #include "mPMD_rw.h"
 #include "mPMD_edit.h"
 #include "debug_io.h"
 
-#ifdef _DEBUG
-#undef _DEBUG
-#include <Python.h>
-#define _DEBUG
-#else
-#include <Python.h>
-#endif
 
 #define PMCA_MODULE
 #define MODEL_COUNT 16

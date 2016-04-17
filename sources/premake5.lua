@@ -53,13 +53,13 @@ do
         --"WinMain" 
     }
     files { 
+        "mPMD.h",
         "mPMD_edit.cpp",
         "mPMD_edit.h",
         "mPMD_rw.cpp",
         "mPMD_rw.h",
         "PMCA_PyMod.cpp",
         "PMCA_PyMod.h",
-        "PythonHeader.h",
     }
     includedirs {
         PYTHON_DIR.."/include",

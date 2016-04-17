@@ -13,7 +13,7 @@ extern "C" {
 #define COMMENT_LEN 256
 
 
-	typedef struct {	/*283byte*/
+	struct HEADER {	/*283byte*/
 		char magic[4];
 		float version;
 		char name[NAME_LEN];
@@ -21,18 +21,18 @@ extern "C" {
 		char name_eng[NAME_LEN];
 		char comment_eng[COMMENT_LEN];
 		char path[PATH_LEN];
-	} HEADER;
+	};
 
-	typedef struct {	/*38byte*/
+	struct VERTEX {	/*38byte*/
 		float loc[3];
 		float nor[3];
 		float uv[2];
 		unsigned short bone_num[2];
 		unsigned char bone_weight;
 		unsigned char edge_flag;
-	} VERTEX;
+	};
 
-	typedef struct {	/*70byte*/
+	struct MATERIAL {	/*70byte*/
 		float diffuse[3];
 		float alpha;
 		float spec;
@@ -45,9 +45,9 @@ extern "C" {
 		char sph[NAME_LEN];
 		char tex_path[PATH_LEN];
 		char sph_path[PATH_LEN];
-	} MATERIAL;
+	};
 
-	typedef struct {	/*39byte*/
+	struct BONE {	/*39byte*/
 		char name[NAME_LEN];
 		char name_eng[NAME_LEN];
 		unsigned short PBone_index;
@@ -55,51 +55,42 @@ extern "C" {
 		unsigned char type;
 		unsigned short IKBone_index;
 		float loc[3];
-	} BONE;
+	};
 
-	typedef struct {	/*11+2*IK_chain_len byte*/
+	struct IK_LIST {	/*11+2*IK_chain_len byte*/
 		unsigned short IKBone_index;
 		unsigned short IKTBone_index;
 		unsigned char IK_chain_len;
 		unsigned short iterations;
 		float weight;
 		unsigned short *IKCBone_index;
-	} IK_LIST;
+	};
 
 
-	typedef struct {	/*16byte*/
+	struct SKIN_DATA {	/*16byte*/
 		unsigned int index;
 		float loc[3];
-	}SKIN_DATA;
+	};
 
-	typedef struct {	/*25+16*skin_vt_count byte*/
+	struct SKIN {	/*25+16*skin_vt_count byte*/
 		char name[NAME_LEN];
 		char name_eng[NAME_LEN];
 		unsigned int skin_vt_count;
 		unsigned char type;
 		SKIN_DATA *data;
-	}SKIN;
+	};
 
-	typedef struct {	/*3 byte*/
+	struct BONE_GROUP {	/*3 byte*/
 		char name[NAME_LEN];
 		char name_eng[NAME_LEN];
-	}BONE_GROUP;
+	};
 
-	typedef struct {	/*3 byte*/
+	struct BONE_DISP {	/*3 byte*/
 		unsigned short index;
 		unsigned char bone_group;
-	}BONE_DISP;
+	};
 
-	/*
-	typedef struct{
-		//char name[20];
-		//char comment[256];
-		//char (*bone_name)[20];
-		//char (*skin_name)[20];
-		//char (*bone_group)[50];
-	}ENGLISH;
-	*/
-	typedef struct {	//83byte
+	struct RIGID_BODY {	//83byte
 		char name[NAME_LEN];
 		unsigned short bone;
 		unsigned char group;
@@ -110,18 +101,18 @@ extern "C" {
 		float rot[3];	//radian
 		float property[5];	//mass damp rotdamp restitution friction
 		unsigned char type;
-	}RIGID_BODY;
+	};
 
-	typedef struct {	//124byte
+	struct JOINT {	//124byte
 		char name[NAME_LEN];
 		unsigned int rbody[2];
 		float loc[3];
 		float rot[3];	//radian
 		float limit[12];	//lower_limit_loc upper_limit_loc lower_limit_rot upper_limit_rot
 		float spring[6];	//loc rot
-	}JOINT;
+	};
 
-	typedef struct {
+	struct MODEL {
 		HEADER header;
 		unsigned int vt_count;
 		VERTEX *vt;
@@ -152,9 +143,9 @@ extern "C" {
 		RIGID_BODY *rbody;
 		unsigned int joint_count;
 		JOINT *joint;
-	}MODEL;
+	};
 
-	typedef struct {
+	struct LIST {
 		unsigned int bone_count;
 		char(*bone)[NAME_LEN];
 		char(*bone_eng)[NAME_LEN];
@@ -164,7 +155,7 @@ extern "C" {
 		unsigned int disp_count;
 		char(*disp)[NAME_LEN];
 		char(*disp_eng)[NAME_LEN];
-	}LIST;
+	};
 
 #ifdef __cplusplus
 }
