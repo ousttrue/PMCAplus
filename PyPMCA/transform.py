@@ -167,6 +167,7 @@ class BodyTransform:
         self.transform_data = []
         self.transform_list = []
         self.transform_data=[MODEL_TRANS_DATA(scale=1.0, bones=[], props={})]
+        self.data=None
 
     def refresh(self):
         self.transform_observable.notify()
@@ -226,8 +227,74 @@ class BodyTransform:
     def select_transform(self, sel):
         if self.transform_sel==sel:return
         self.transform_sel=sel
+        self.cancel()
         t = self.transform_list[sel]
+
+        self.data = MODEL_TRANS_DATA(name = t.name,
+                             scale=1.0, 
+                             bones=[BONE_TRANS_DATA(name=x.name) for x in t.bones], 
+                             pos=[0.0, 0.0, 0.0], 
+                             rot=[0.0, 0.0, 0.0], 
+                             props={})
+        self.transform_data.append(self.data)
+
         self.transform_select_observable.notify(t)
+
+    def cancel(self):
+        if not self.data:return
+        self.transform_data.remove(self.data)
+        self.data=None
+        self.transform_observable.notify()
+
+    def apply(self):
+        if not self.data:return
+        self.transform_data[0].scale = self.data.scale * self.transform_data[0].scale
+        for i,x in enumerate(self.transform_data[0].pos):
+            x += self.data.pos[i]
+        for i,x in enumerate(self.transform_data[0].rot):
+            x += self.data.rot[i]
+        for x in self.data.bones:
+            tmp = None
+            for y in self.transform_data[0].bones:
+                if y.name==x.name:
+                    tmp = y
+                    break
+            else:
+                self.transform_data[0].bones.append(PyPMCA.BONE_TRANS_DATA(name=x.name))
+                tmp = self.transform_data[0].bones[-1]
+            
+            tmp.length = tmp.length*x.length
+            tmp.thick = tmp.thick * x.thick
+            for i,y in enumerate(tmp.pos):
+                y += x.pos[i]
+            for i,y in enumerate(tmp.rot):
+                y += x.rot[i]
+        self.transform_data.remove(self.data)
+        self.data=None
+        self.transform_observable.notify()
+           
+    def setValue(self, var):
+        if not self.data:return
+        weight = self.transform_list[self.transform_sel].scale
+        self.data.scale = weight * var+1-weight
+        
+        weight = self.transform_list[self.transform_sel].pos
+        for i,x in enumerate(weight):
+            self.data.pos[i] = x * var
+        
+        weight = self.transform_list[self.transform_sel].rot
+        for i,x in enumerate(weight):
+            self.data.rot[i] = x * var
+
+       
+        for i,x in enumerate(self.transform_list[self.transform_sel].bones):
+            self.data.bones[i].length = x.length * var+1-x.length
+            self.data.bones[i].thick = x.thick * var+1-x.thick
+            for j,y in enumerate(x.pos):
+                self.data.bones[i].pos[j] = y * var
+            for j,y in enumerate(x.rot):
+                self.data.bones[i].rot[j] = y * var
+        self.transform_observable.notify()
 
     def update(self):
         info_data = PMCA.getInfo(0)
