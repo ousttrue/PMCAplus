@@ -1,7 +1,8 @@
-/*PMDé–¢ä¿‚ã®ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã€PMDç·¨é›†ãªã© */
+/*PMDŠÖŒW‚Ìƒ‰ƒCƒuƒ‰ƒŠAPMD•ÒW‚È‚Ç */
 
 #include <stdio.h>
 #include <stdlib.h>
+#define _USE_MATH_DEFINES
 #include <math.h>
 #include <memory.h>
 
@@ -14,9 +15,9 @@ int translate(MODEL *model, LIST *list, short mode)
 	int i,j;
 	char str[NAME_LEN], *p;
 	/*
-	ãƒ¢ãƒ¼ãƒ‰1 è‹±åè¿½åŠ 
-	ãƒ¢ãƒ¼ãƒ‰2 æ—¥æœ¬èªåã‚’è‹±èªåã«(ãƒœãƒ¼ãƒ³ã€ã‚¹ã‚­ãƒ³ã®ã¿)
-	ãƒ¢ãƒ¼ãƒ‰3 è‹±èªåã‚’æ—¥æœ¬èªåã«(ãƒœãƒ¼ãƒ³ã€ã‚¹ã‚­ãƒ³ã®ã¿)
+	ƒ‚[ƒh1 ‰p–¼’Ç‰Á
+	ƒ‚[ƒh2 “ú–{Œê–¼‚ğ‰pŒê–¼‚É(ƒ{[ƒ“AƒXƒLƒ“‚Ì‚İ)
+	ƒ‚[ƒh3 ‰pŒê–¼‚ğ“ú–{Œê–¼‚É(ƒ{[ƒ“AƒXƒLƒ“‚Ì‚İ)
 	*/
 	
 	
@@ -91,7 +92,7 @@ int translate(MODEL *model, LIST *list, short mode)
 		}
 		
 		#ifdef DEBUG
-			printf("\nboneè¡¨ç¤ºæ \n");
+			printf("\nbone•\¦˜g\n");
 		#endif
 		
 	}else if(mode == 2){
@@ -162,10 +163,10 @@ int sort_bone(MODEL *model, LIST *list)
 	#endif
 	
 	for(i=0; i<model->bone_count; i++){
-		index[i] = -1;	//ãƒªã‚¹ãƒˆã«ç„¡ã„ãƒœãƒ¼ãƒ³ã«ã¯-1
+		index[i] = -1;	//ƒŠƒXƒg‚É–³‚¢ƒ{[ƒ“‚É‚Í-1
 		for(j=0; j<list->bone_count; j++){
 			if(strcmp(list->bone[j], model->bone[i].name) == 0){
-				index[i] = j;	//indexã«ãƒªã‚¹ãƒˆä¸­ã®ç•ªå·ã‚’ä»£å…¥
+				index[i] = j;	//index‚ÉƒŠƒXƒg’†‚Ì”Ô†‚ğ‘ã“ü
 				break;
 			}
 		}
@@ -177,8 +178,8 @@ int sort_bone(MODEL *model, LIST *list)
 	tmp = 0;
 	for(i=0; i<list->bone_count; i++){
 		for(j=0; j<model->bone_count; j++){
-			if(index[j] == i){	//indexã«iãŒå­˜åœ¨ã—ãŸã‚‰
-				//printf("index[%d]ã«%dãŒå­˜åœ¨ã—ã¾ã™\n", j, i);
+			if(index[j] == i){	//index‚Éi‚ª‘¶İ‚µ‚½‚ç
+				//printf("index[%d]‚É%d‚ª‘¶İ‚µ‚Ü‚·\n", j, i);
 				index[j] = index[j] - tmp;
 				j = -1;
 				break;
@@ -191,7 +192,7 @@ int sort_bone(MODEL *model, LIST *list)
 	tmp = -1;
 	for(i=0; i<model->bone_count; i++){
 		if(tmp < index[i]){
-			tmp = index[i];	//indexã®æœ€å¤§å€¤ã‚’è¦‹ã¤ã‘ã‚‹
+			tmp = index[i];	//index‚ÌÅ‘å’l‚ğŒ©‚Â‚¯‚é
 		}
 	}
 	tmp++;
@@ -204,7 +205,7 @@ int sort_bone(MODEL *model, LIST *list)
 		}
 	}
 	
-	//è¦ªå­é–¢ä¿‚ä¿®æ­£
+	//eqŠÖŒWC³
 	
 	{
 		int tmp_PBone_index;
@@ -217,15 +218,15 @@ int sort_bone(MODEL *model, LIST *list)
 				tmp_PBone_index = index[i];
 				for(j=0; j<model->bone_count; j++){
 					if(index[j] >= tmp_PBone_index && index[j] < tmp){
-						index[j]++;	//ä¸€ã¤å¾Œã‚ã«ãšã‚‰ã™
+						index[j]++;	//ˆê‚ÂŒã‚ë‚É‚¸‚ç‚·
 					}
 				}
-				index[model->bone[i].PBone_index] = tmp_PBone_index;	//ãƒœãƒ¼ãƒ³ã®ä¸€ã¤å‰ã«è¦ªãƒœãƒ¼ãƒ³ã‚’ç§»å‹•
+				index[model->bone[i].PBone_index] = tmp_PBone_index;	//ƒ{[ƒ“‚Ìˆê‚Â‘O‚Éeƒ{[ƒ“‚ğˆÚ“®
 			}
 		}
 	}
 	
-	for(i=0; i<model->bone_count; i++){	//ãƒœãƒ¼ãƒ³ä¸¦ã³å¤‰ãˆ
+	for(i=0; i<model->bone_count; i++){	//ƒ{[ƒ“•À‚Ñ•Ï‚¦
 		#ifdef DEBUG
 			printf("index[%d]=%d\n", i, index[i]);
 		#endif
@@ -279,7 +280,7 @@ int update_bone_index(MODEL *model,int index[])
 	char (*tmp_eng)[20];
 	unsigned short *tmp_rb;
 	
-	//é ‚ç‚¹ã®ãƒœãƒ¼ãƒ³ç•ªå·ã‚’æ›¸ãæ›ãˆ
+	//’¸“_‚Ìƒ{[ƒ“”Ô†‚ğ‘‚«Š·‚¦
 	tmp_vt = malloc(sizeof(unsigned short)*2*model->vt_count);
 	#ifdef MEM_DBG
 		printf("malloc %p\n", tmp_vt);
@@ -301,7 +302,7 @@ int update_bone_index(MODEL *model,int index[])
 	#endif
 	FREE(tmp_vt);
 	
-	//IKãƒªã‚¹ãƒˆã®ãƒœãƒ¼ãƒ³ç•ªå·ã‚’æ›¸ãæ›ãˆ
+	//IKƒŠƒXƒg‚Ìƒ{[ƒ“”Ô†‚ğ‘‚«Š·‚¦
 	tmp_ik = (IK_LIST*)malloc(sizeof(IK_LIST)*model->IK_count);
 	#ifdef MEM_DBG
 		printf("malloc %p\n", tmp_ik);
@@ -335,7 +336,7 @@ int update_bone_index(MODEL *model,int index[])
 	FREE(tmp_ik);
 	
 	
-	//è¡¨ç¤ºãƒœãƒ¼ãƒ³ç•ªå·ã‚’æ›¸ãæ›ãˆ
+	//•\¦ƒ{[ƒ“”Ô†‚ğ‘‚«Š·‚¦
 	tmp_disp = (unsigned short*)malloc(sizeof(unsigned short)*model->bone_disp_count);
 	#ifdef MEM_DBG
 		printf("malloc %p\n", tmp_disp);
@@ -354,10 +355,10 @@ int update_bone_index(MODEL *model,int index[])
 	
 	
 	#ifdef DEBUG
-		puts("å‰›ä½“æ›¸ãæ›ãˆ");
+		puts("„‘Ì‘‚«Š·‚¦");
 	#endif
 	
-	//å‰›ä½“ãƒœãƒ¼ãƒ³ç•ªå·ã‚’æ›¸ãæ›ãˆ
+	//„‘Ìƒ{[ƒ“”Ô†‚ğ‘‚«Š·‚¦
 	tmp_rb = (unsigned short*)malloc(sizeof(unsigned short)*model->rbody_count);
 	#ifdef MEM_DBG
 		printf("malloc %p\n", tmp_rb);
@@ -384,7 +385,7 @@ int update_bone_index(MODEL *model,int index[])
 	#endif
 	FREE(tmp_rb);
 	#ifdef DEBUG
-		puts("ãƒœãƒ¼ãƒ³ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹æ›´æ–°å®Œäº†");
+		puts("ƒ{[ƒ“ƒCƒ“ƒfƒbƒNƒXXVŠ®—¹");
 	#endif
 	
 	return 0;
@@ -405,10 +406,10 @@ int sort_skin(MODEL *model, LIST *list)
 	#endif
 	
 	for(i=0; i<model->skin_count; i++){
-		index[i] = -1;	//ãƒªã‚¹ãƒˆã«ç„¡ã„è¡¨æƒ…ã«ã¯-1
+		index[i] = -1;	//ƒŠƒXƒg‚É–³‚¢•\î‚É‚Í-1
 		for(j=0; j<list->skin_count; j++){
 			if(strcmp(list->skin[j], model->skin[i].name) == 0){
-				index[i] = j;	//indexã«ãƒªã‚¹ãƒˆä¸­ã®ç•ªå·ã‚’ä»£å…¥
+				index[i] = j;	//index‚ÉƒŠƒXƒg’†‚Ì”Ô†‚ğ‘ã“ü
 				break;
 			}
 		}
@@ -420,8 +421,8 @@ int sort_skin(MODEL *model, LIST *list)
 	tmp = 0;
 	for(i=0; i<list->skin_count; i++){
 		for(j=0; j<model->skin_count; j++){
-			if(index[j] == i){	//indexã«iãŒå­˜åœ¨ã—ãŸã‚‰
-				//printf("index[%d]ã«%dãŒå­˜åœ¨ã—ã¾ã™\n", j, i);
+			if(index[j] == i){	//index‚Éi‚ª‘¶İ‚µ‚½‚ç
+				//printf("index[%d]‚É%d‚ª‘¶İ‚µ‚Ü‚·\n", j, i);
 				index[j] = index[j] - tmp;
 				j = -1;
 				break;
@@ -434,7 +435,7 @@ int sort_skin(MODEL *model, LIST *list)
 	tmp = -1;
 	for(i=0; i<model->skin_count; i++){
 		if(tmp < index[i]){
-			tmp = index[i];	//indexã®æœ€å¤§å€¤ã‚’è¦‹ã¤ã‘ã‚‹
+			tmp = index[i];	//index‚ÌÅ‘å’l‚ğŒ©‚Â‚¯‚é
 		}
 	}
 	tmp++;
@@ -445,14 +446,14 @@ int sort_skin(MODEL *model, LIST *list)
 		}
 	}
 	
-	for(i=0; i<model->skin_count; i++){	//è¡¨æƒ…ä¸¦ã³å¤‰ãˆ
+	for(i=0; i<model->skin_count; i++){	//•\î•À‚Ñ•Ï‚¦
 		#ifdef DEBUG
 			printf("index[%d]=%d\n", i, index[i]);
 		#endif
 		skin[index[i]] = model->skin[i];
 	}
 	
-	for(i=0; i<model->skin_disp_count; i++){	//è¡¨æƒ…ä¸¦ã³å¤‰ãˆ
+	for(i=0; i<model->skin_disp_count; i++){	//•\î•À‚Ñ•Ï‚¦
 		model->skin_index[i] = i+1;
 	}
 	
@@ -486,7 +487,7 @@ int sort_disp(MODEL *model, LIST *list)
 	#endif
 	
 	for(i=0; i<model->bone_group_count; i++){
-		index[i] = -1;	//ãƒªã‚¹ãƒˆã«ç„¡ã„æ ã«ã¯-1
+		index[i] = -1;	//ƒŠƒXƒg‚É–³‚¢˜g‚É‚Í-1
 		tmpg = model->bone_group[i];
 		p = strchr( tmpg.name, '\n' );
 		if(p != NULL)*p = '\0';
@@ -495,7 +496,7 @@ int sort_disp(MODEL *model, LIST *list)
 				printf("%d %s : %s\n", j, list->disp[j], tmpg.name);
 			#endif
 			if(strcmp(list->disp[j], tmpg.name) == 0){
-				index[i] = j;	//indexã«ãƒªã‚¹ãƒˆä¸­ã®ç•ªå·ã‚’ä»£å…¥
+				index[i] = j;	//index‚ÉƒŠƒXƒg’†‚Ì”Ô†‚ğ‘ã“ü
 				break;
 			}
 		}
@@ -507,8 +508,8 @@ int sort_disp(MODEL *model, LIST *list)
 	tmp = 0;
 	for(i=0; i<list->disp_count; i++){
 		for(j=0; j<model->bone_group_count; j++){
-			if(index[j] == i){	//indexã«iãŒå­˜åœ¨ã—ãŸã‚‰
-				//printf("index[%d]ã«%dãŒå­˜åœ¨ã—ã¾ã™\n", j, i);
+			if(index[j] == i){	//index‚Éi‚ª‘¶İ‚µ‚½‚ç
+				//printf("index[%d]‚É%d‚ª‘¶İ‚µ‚Ü‚·\n", j, i);
 				index[j] = index[j] - tmp;
 				j = -1;
 				break;
@@ -521,7 +522,7 @@ int sort_disp(MODEL *model, LIST *list)
 	tmp = -1;
 	for(i=0; i<model->bone_group_count; i++){
 		if(tmp < index[i]){
-			tmp = index[i];	//indexã®æœ€å¤§å€¤ã‚’è¦‹ã¤ã‘ã‚‹
+			tmp = index[i];	//index‚ÌÅ‘å’l‚ğŒ©‚Â‚¯‚é
 		}
 	}
 	tmp++;
@@ -532,18 +533,18 @@ int sort_disp(MODEL *model, LIST *list)
 		}
 	}
 	
-	for(i=0; i<model->bone_group_count; i++){	//è¡¨ç¤ºæ ä¸¦ã³å¤‰ãˆ
+	for(i=0; i<model->bone_group_count; i++){	//•\¦˜g•À‚Ñ•Ï‚¦
 		#ifdef DEBUG
 			printf("index[%d]=%d\n", i, index[i]);
 		#endif
 		bone_group[index[i]] = model->bone_group[i];
 	}
 	
-	for(i=0; i<model->bone_group_count; i++){	//è¡¨ç¤ºæ ã‚³ãƒ”ãƒ¼
+	for(i=0; i<model->bone_group_count; i++){	//•\¦˜gƒRƒs[
 		model->bone_group[i] = bone_group[i];
 	}
 	
-	for(i=0; i<model->bone_disp_count; i++){	//è¡¨ç¤ºãƒœãƒ¼ãƒ³ä¸¦ã³å¤‰ãˆ
+	for(i=0; i<model->bone_disp_count; i++){	//•\¦ƒ{[ƒ“•À‚Ñ•Ï‚¦
 		model->bone_disp[i].bone_group = index[model->bone_disp[i].bone_group-1] + 1;
 	}
 	
@@ -576,7 +577,7 @@ int rename_tail(MODEL *model){
 	int i, j, tmp;
 	int flag = 0;
 	
-	//å…¨ã¦ã®bone tailã«"-0"ã®åå‰ã‚’ã¤ã‘ã‚‹
+	//‘S‚Ä‚Ìbone tail‚É"-0"‚Ì–¼‘O‚ğ‚Â‚¯‚é
 	for(i=0; i<model->bone_count; i++){
 		if(model->bone[i].type == 6 || model->bone[i].type == 7){
 			flag = 0;
@@ -593,7 +594,7 @@ int rename_tail(MODEL *model){
 		}
 	}
 	
-	//å­ãƒœãƒ¼ãƒ³ãŒtailãªã‚‰ã°+è¦ªãƒœãƒ¼ãƒ³åã¨ã„ã†åå‰ã«ã™ã‚‹
+	//qƒ{[ƒ“‚ªtail‚È‚ç‚Î+eƒ{[ƒ“–¼‚Æ‚¢‚¤–¼‘O‚É‚·‚é
 	for(i=0; i<model->bone_count; i++){
 		tmp = model->bone[i].TBone_index;
 		if(tmp < model->bone_count){
@@ -603,7 +604,7 @@ int rename_tail(MODEL *model){
 				//printf("%s\n", model->bone[tmp].name);
 			}
 		}else{
-			printf("ç¯„å›²å¤–ã®ãƒœãƒ¼ãƒ³ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚’è¦‹ã¤ã‘ã¾ã—ãŸ\n");
+			printf("”ÍˆÍŠO‚Ìƒ{[ƒ“ƒCƒ“ƒfƒbƒNƒX‚ğŒ©‚Â‚¯‚Ü‚µ‚½\n");
 		}
 	}
 	
@@ -635,10 +636,10 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz)
 	unsigned int *index_bone;
 	double (*diff_bone)[3];
 	
-	//ãƒ™ã‚¯ãƒˆãƒ«ãŒYè»¸ã«æ²¿ã†å‘ãã«ãªã‚‹ã‚ˆã†ã«ã™ã‚‹
+	//ƒxƒNƒgƒ‹‚ªY²‚É‰ˆ‚¤Œü‚«‚É‚È‚é‚æ‚¤‚É‚·‚é
 	if(bone_vec(model, index, loc, vec) < 0)return -1;
 	
-	//ãƒ™ã‚¯ãƒˆãƒ«ã®ãƒãƒ¼ãƒãƒ©ã‚¤ã‚º
+	//ƒxƒNƒgƒ‹‚Ìƒm[ƒ}ƒ‰ƒCƒY
 	vec_size = 0.0;
 	for(i=0; i<3; i++){
 		vec_size = vec_size + vec[i]*vec[i];
@@ -648,20 +649,20 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz)
 		nor_vec[i] = vec[i]/vec_size;
 	}
 	
-	//ãƒ™ã‚¯ãƒˆãƒ«ã®ZXYè§’ã‚’æ±‚ã‚ã‚‹
+	//ƒxƒNƒgƒ‹‚ÌZXYŠp‚ğ‹‚ß‚é
 	rot[0] = angle_from_vec(vec[0], vec[1]);
 	rot[1] = angle_from_vec(vec[2], sqrt(vec[0]*vec[0] + vec[1]*vec[1]));
 	rot[2] = 0;
 	
 	//printf("%f %f %f\n", rot[0], rot[1], rot[2]);
 	
-	//è¡Œåˆ—åˆæœŸåŒ–
+	//s—ñ‰Šú‰»
 	memset(mtr , 0, 9*sizeof(double));
 	memset(mtrz, 0, 9*sizeof(double));
 	memset(mtrx, 0, 9*sizeof(double));
 	
-	//å›è»¢è¡Œåˆ—ã‚’æ±‚ã‚ã‚‹
-	//Zè»¸
+	//‰ñ“]s—ñ‚ğ‹‚ß‚é
+	//Z²
 	theta = rot[0];
 	mtrz[0][0] = cos(theta);
 	mtrz[1][0] = sin(theta);
@@ -669,7 +670,7 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz)
 	mtrz[1][1] = cos(theta);
 	mtrz[2][2] = 1;
 	
-	//Xè»¸
+	//X²
 	theta = rot[1];
 	mtrx[0][0] = 1;
 	mtrx[1][1] = cos(theta);
@@ -677,7 +678,7 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz)
 	mtrx[2][1] = -sin(theta);
 	mtrx[2][2] = cos(theta);
 	
-	//åˆæˆ
+	//‡¬
 	for(i=0; i<3; i++){
 		for(j=0; j<3; j++){
 			for(k=0; k<3; k++){
@@ -695,8 +696,8 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz)
 	}
 	printf("\n");
 	*/
-	//åº§æ¨™å¤‰æ›
-		//å¤‰æ›ã™ã‚‹é ‚ç‚¹ã‚’tmp_vtã«æ ¼ç´
+	//À•W•ÏŠ·
+		//•ÏŠ·‚·‚é’¸“_‚ğtmp_vt‚ÉŠi”[
 	len_vt = 0;
 	for(i=0; i<(model->vt_count); i++){
 		if(model->vt[i].bone_num[0] == index || model->vt[i].bone_num[1] == index){
@@ -715,7 +716,7 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz)
 			j++;
 		}
 	}
-		//å¤‰æ›ã™ã‚‹ãƒœãƒ¼ãƒ³ã®å­ã‚’tmp_boneã«æ ¼ç´
+		//•ÏŠ·‚·‚éƒ{[ƒ“‚Ìq‚ğtmp_bone‚ÉŠi”[
 	len_bone = 0;
 	for(i=0; i<(model->bone_count); i++){
 		if(model->bone[i].PBone_index == index){
@@ -737,12 +738,12 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz)
 			
 		}
 	}
-		//å¤‰æ›
+		//•ÏŠ·
 	coordtrans(tmp_vt, len_vt, loc, mtr);
 	coordtrans(tmp_bone, len_bone, loc, mtr);
 	
 	
-	//å¤‰å½¢
+	//•ÏŒ`
 	for(i=0; i<len_vt; i++){
 		tmp_vt[i][0] = sx * tmp_vt[i][0];
 		tmp_vt[i][1] = sy * tmp_vt[i][1];
@@ -753,12 +754,12 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz)
 		tmp_bone[i][1] = sy * tmp_bone[i][1];
 		tmp_bone[i][2] = sz * tmp_bone[i][2];
 	}
-	//é€†å¤‰æ›
+	//‹t•ÏŠ·
 	coordtrans_inv(tmp_vt, len_vt, loc, mtr);
 	coordtrans_inv(tmp_bone, len_bone, loc, mtr);
 	
-	//å¤‰æ›çµæœã‚’å…ƒã®ãƒ‡ãƒ¼ã‚¿ã«æ›¸ãè¾¼ã‚€
-		//é ‚ç‚¹
+	//•ÏŠ·Œ‹‰Ê‚ğŒ³‚Ìƒf[ƒ^‚É‘‚«‚Ş
+		//’¸“_
 	for(i=0; i<len_vt; i++){
 		k = index_vt[i];
 		tmp[0] = 0.0;
@@ -776,7 +777,7 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz)
 		}
 	}
 	
-		//ãƒœãƒ¼ãƒ³
+		//ƒ{[ƒ“
 	for(i=0; i<len_bone; i++){
 		for(j=0; j<3; j++){
 			diff_bone[i][j] = tmp_bone[i][j] - diff_bone[i][j];
@@ -837,7 +838,7 @@ int bone_vec(MODEL *model, int index, double loc[], double vec[]){
 double angle_from_vec(double u, double v){
 	double angle;
 	double pi = M_PI;
-	//ãƒ™ã‚¯ãƒˆãƒ«ãŒvè»¸æ–¹å‘ã‚’å‘ãå›è»¢ã‚’æ±‚ã‚ã‚‹
+	//ƒxƒNƒgƒ‹‚ªv²•ûŒü‚ğŒü‚­‰ñ“]‚ğ‹‚ß‚é
 	
 	angle = asin(u/sqrt(u*u+v*v));
 	//printf("angle %f\n", angle);
@@ -849,12 +850,12 @@ double angle_from_vec(double u, double v){
 }
 
 int coordtrans(double array[][3], unsigned int len, double loc[], double mtr[3][3]){
-	/*é…åˆ—ã¯å¤§ãã•[len][3]ã®2æ¬¡å…ƒé…åˆ—ã§ã€ç‚¹ã®åº§æ¨™ãŒæ ¼ç´ã•ã‚Œã¦ã„ã‚‹
+	/*”z—ñ‚Í‘å‚«‚³[len][3]‚Ì2ŸŒ³”z—ñ‚ÅA“_‚ÌÀ•W‚ªŠi”[‚³‚ê‚Ä‚¢‚é
 	*/
 	int i, j, k;
 	double tmp[3];
 	
-	//åº§æ¨™å¤‰æ›
+	//À•W•ÏŠ·
 	for(i=0; i<len; i++){
 		if(&loc != 0){
 			for(j=0; j<3; j++){
@@ -873,20 +874,20 @@ int coordtrans(double array[][3], unsigned int len, double loc[], double mtr[3][
 }
 
 int coordtrans_inv(double array[][3], unsigned int len, double loc[], double mtr[3][3]){
-	/*é…åˆ—ã¯å¤§ãã•[len][3]ã®2æ¬¡å…ƒé…åˆ—ã§ã€ç‚¹ã®åº§æ¨™ãŒæ ¼ç´ã•ã‚Œã¦ã„ã‚‹
+	/*”z—ñ‚Í‘å‚«‚³[len][3]‚Ì2ŸŒ³”z—ñ‚ÅA“_‚ÌÀ•W‚ªŠi”[‚³‚ê‚Ä‚¢‚é
 	*/
 	int i, j, k;
 	double tmp[3];
 	double inverse_mtr[3][3];
 	
-	//è»¢ç½®è¡Œåˆ—
+	//“]’us—ñ
 	for(i=0; i<3; i++){
 		for(j=0; j<3; j++){
 			inverse_mtr[i][j]=mtr[j][i];
 		}
 	}
 	
-	//åº§æ¨™å¤‰æ›
+	//À•W•ÏŠ·
 	for(i=0; i<len; i++){
 		for(j=0; j<3; j++){
 			tmp[j] = 0;
@@ -1067,7 +1068,7 @@ int marge_bone(MODEL *model)
 		}
 	}
 	#ifdef DEBUG
-		printf("ãƒœãƒ¼ãƒ³ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒˆ\n", index, marge, model->bone);
+		printf("ƒ{[ƒ“ƒCƒ“ƒfƒbƒNƒX‚ğƒAƒbƒvƒf[ƒg\n", index, marge, model->bone);
 	#endif
 	update_bone_index(model, index);
 	model->bone_count = model->bone_count - tmp;
@@ -1112,7 +1113,7 @@ int marge_mat(MODEL *model)
 		printf("malloc %p %p %p %p\n", index, marge, vt_index, tmp_count);
 	#endif
 	
-	//ãƒ†ã‚¯ã‚¹ãƒãƒ£åã®åŒã˜æè³ªã‚’æ¢ã™
+	//ƒeƒNƒXƒ`ƒƒ–¼‚Ì“¯‚¶Ş¿‚ğ’T‚·
 	tmp = 0;
 	sum = 0;
 	/*
@@ -1192,7 +1193,7 @@ int marge_mat(MODEL *model)
 		#endif
 	}
 	
-	//é¢é ‚ç‚¹ãƒªã‚¹ãƒˆä¸¦ã³æ›¿ãˆ
+	//–Ê’¸“_ƒŠƒXƒg•À‚Ñ‘Ö‚¦
 	k=0;
 	
 	for(i=0; i<model->mat_count; i++){
@@ -1217,7 +1218,7 @@ int marge_mat(MODEL *model)
 		#endif
 	}
 	
-	//æè³ªä¸¦ã³æ›¿ãˆ
+	//Ş¿•À‚Ñ‘Ö‚¦
 	for(i=0; i<model->mat_count; i++){
 		if(marge[i] == 0){
 			if(index[i] != i)model->mat[index[i]] = tmp_mat[i];
@@ -1247,7 +1248,7 @@ int marge_IK(MODEL *model)
 	int *index;
 	char *marge;
 	
-	//é‡è¤‡IKã‚’å‰Šé™¤
+	//d•¡IK‚ğíœ
 	
 	index = (int*)MALLOC(model->IK_count * sizeof(int));
 	marge = (char*)MALLOC(model->IK_count * sizeof(char));
@@ -1302,7 +1303,7 @@ int marge_bone_disp(MODEL *model)
 	char *marge;
 	BONE_DISP *bone_disp;
 	
-	//åŒåæ ã‚’ãƒãƒ¼ã‚¸
+	//“¯–¼˜g‚ğƒ}[ƒW
 	#ifdef DEBUG
 		printf("%d\n", model->bone_group_count);
 	#endif
@@ -1378,7 +1379,7 @@ int marge_bone_disp(MODEL *model)
 	
 	model->bone_disp = bone_disp;
 	
-	//é‡è¤‡ç™»éŒ²ãƒœãƒ¼ãƒ³ã‚’å‰Šé™¤
+	//d•¡“o˜^ƒ{[ƒ“‚ğíœ
 	
 	index = (int*)MALLOC(model->bone_disp_count * sizeof(int));
 	marge = (char*)MALLOC(model->bone_disp_count * sizeof(char));
@@ -1434,7 +1435,7 @@ int marge_rb(MODEL *model)
 	int *index;
 	char *marge;
 	
-	//åŒåã®å‰›ä½“ã‚’å‰Šé™¤
+	//“¯–¼‚Ì„‘Ì‚ğíœ
 	
 	index = (int*)MALLOC(model->rbody_count * sizeof(int));
 	marge = (char*)MALLOC(model->rbody_count * sizeof(char));
@@ -1462,7 +1463,7 @@ int marge_rb(MODEL *model)
 		#endif
 	}
 	
-	//ã‚¸ãƒ§ã‚¤ãƒ³ãƒˆæ›¸ãæ›ãˆ
+	//ƒWƒ‡ƒCƒ“ƒg‘‚«Š·‚¦
 	for(i=0; i<model->joint_count; i++){
 		for(j=0; j<2; j++){
 			model->joint[i].rbody[j] = index[model->joint[i].rbody[j]];
@@ -1470,7 +1471,7 @@ int marge_rb(MODEL *model)
 		}
 	}
 	
-	//é‡è¤‡å‰Šé™¤
+	//d•¡íœ
 	
 	for(i=0; i<model->rbody_count; i++){
 		if(marge[i] == 0 && index[i] != i){
@@ -1494,7 +1495,7 @@ int marge_rb(MODEL *model)
 int update_skin(MODEL *model)
 {
 	int i, j, k;
-	//è¡¨æƒ…baseã®é ‚ç‚¹ä½ç½®ã‚’æ›´æ–°ã™ã‚‹
+	//•\îbase‚Ì’¸“_ˆÊ’u‚ğXV‚·‚é
 	if(model->skin_count == 0)return 0;
 	for(i=0; i<model->skin[0].skin_vt_count; i++){
 		for(j=0; j<3; j++){
@@ -1508,7 +1509,7 @@ int update_skin(MODEL *model)
 int adjust_joint(MODEL *model)
 {
 	int i, j;
-	//åŒã˜åå‰ã®ãƒœãƒ¼ãƒ³ã«ã‚¸ãƒ§ã‚¤ãƒ³ãƒˆã®ä½ç½®ã‚’åˆã‚ã›ã‚‹
+	//“¯‚¶–¼‘O‚Ìƒ{[ƒ“‚ÉƒWƒ‡ƒCƒ“ƒg‚ÌˆÊ’u‚ğ‡‚í‚¹‚é
 	
 	for(i=0; i<model->joint_count; i++){
 		for(j=0; j<model->bone_count; j++){
@@ -1528,17 +1529,17 @@ int show_detail(MODEL *model)
 		model->header.version,
 		model->header.name,
 		model->header.comment);
-	printf("é ‚ç‚¹æ•°:%d\n", model->vt_count);
-	printf("é¢é ‚ç‚¹æ•°:%d\n", model->vt_index_count);
-	printf("æè³ªæ•°:%d\n", model->mat_count);
-	printf("ãƒœãƒ¼ãƒ³æ•°:%d\n", model->bone_count);
-	printf("IKãƒ‡ãƒ¼ã‚¿æ•°:%d\n", model->IK_count);
-	printf("è¡¨æƒ…æ•°:%d\n", model->skin_count);
-	printf("è¡¨æƒ…æ :%d\n", model->skin_disp_count);
-	printf("ãƒœãƒ¼ãƒ³æ :%d\n", model->bone_group_count);
-	printf("è¡¨ç¤ºãƒœãƒ¼ãƒ³æ•°:%d\n", model->bone_disp_count);
-	printf("è‹±åå¯¾å¿œ:%d\n", model->eng_support);
-	printf("å‰›ä½“æ•°:%d\n", model->rbody_count);
-	printf("ã‚¸ãƒ§ã‚¤ãƒ³ãƒˆæ•°:%d\n\n", model->joint_count);
+	printf("’¸“_”:%d\n", model->vt_count);
+	printf("–Ê’¸“_”:%d\n", model->vt_index_count);
+	printf("Ş¿”:%d\n", model->mat_count);
+	printf("ƒ{[ƒ“”:%d\n", model->bone_count);
+	printf("IKƒf[ƒ^”:%d\n", model->IK_count);
+	printf("•\î”:%d\n", model->skin_count);
+	printf("•\î˜g:%d\n", model->skin_disp_count);
+	printf("ƒ{[ƒ“˜g:%d\n", model->bone_group_count);
+	printf("•\¦ƒ{[ƒ“”:%d\n", model->bone_disp_count);
+	printf("‰p–¼‘Î‰:%d\n", model->eng_support);
+	printf("„‘Ì”:%d\n", model->rbody_count);
+	printf("ƒWƒ‡ƒCƒ“ƒg”:%d\n\n", model->joint_count);
 	return 0;
 }

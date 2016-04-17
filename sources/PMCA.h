@@ -1,21 +1,12 @@
 #include <Python.h>
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
 #include <math.h>
 
-#include <SDL/SDL.h>
-#include <SDL/SDL_image.h>
-#include <SDL/SDL_thread.h>
-
-#include <GL/gl.h>
-#include <GL/glu.h>
 
 #include "mPMD.h"
 #define SCALE (2.0 * 3.14159265358979323846)
-#define MODEL_COUNT 16
 
 typedef struct{
 	float col[4];

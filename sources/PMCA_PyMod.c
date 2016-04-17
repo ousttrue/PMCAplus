@@ -1,6 +1,9 @@
-#include "PMCA.h"
+#include <Python.h>
+#include "mPMD.h"
 #define PMCA_MODULE
-
+#define MODEL_COUNT 16
+MODEL g_model[MODEL_COUNT];
+LIST list;
 static PyObject *PMCAError;
 
 int* zero;
@@ -9,7 +12,7 @@ int* zero;
 
 
 /************************************************************/
-/*„Éá„Éº„ÇøÂ§âÊèõUtils*/
+/*ÉfÅ[É^ïœä∑Utils*/
 PyObject* Array_to_PyList_UShort(const unsigned short* input, int count)
 {
 	int i;
@@ -91,7 +94,7 @@ int PyList_to_Array_Str(char** output, PyObject* List, int size, int val)
 }
 
 /************************************************************/
-/*C-Python„Éá„Éº„ÇøÂ§âÊèõÈñ¢ÈÄ£*/
+/*C-PythonÉfÅ[É^ïœä∑ä÷òA*/
 static PyObject* getInfo(PyObject *self, PyObject *args)
 {
 	int num;
@@ -443,57 +446,57 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 	delete_PMD(p);
 	*p = model;
 	
-	/*„É°„É¢„É™Á¢∫‰øù************************************************************************/
-	//È†ÇÁÇπ
+	/*ÉÅÉÇÉäämï€************************************************************************/
+	//í∏ì_
 	size = p->vt_count * sizeof(VERTEX);
 	p->vt = MALLOC(size);
 	memset(p->vt, 0, size);
-	//Èù¢È†ÇÁÇπ
+	//ñ í∏ì_
 	size = p->vt_index_count * sizeof(unsigned short);
 	p->vt_index = MALLOC(size);
 	memset(p->vt_index, 0, size);
 	
-	//ÊùêË≥™
+	//çﬁéø
 	size = p->mat_count * sizeof(MATERIAL);
 	p->mat = MALLOC(size);
 	memset(p->mat, 0, size);
 	
-	//„Éú„Éº„É≥
+	//É{Å[Éì
 	size = p->bone_count * sizeof(BONE);
 	p->bone = MALLOC(size);
 	memset(p->bone, 0, size);
 	
-	//IK„É™„Çπ„Éà
+	//IKÉäÉXÉg
 	size = p->IK_count * sizeof(IK_LIST);
 	p->IK_list = MALLOC(size);
 	memset(p->IK_list, 0, size);
 	
-	//Ë°®ÊÉÖ
+	//ï\èÓ
 	size = p->skin_count * sizeof(SKIN);
 	p->skin = MALLOC(size);
 	memset(p->skin, 0, size);
 	
-	//Ë°®ÊÉÖË°®Á§∫
+	//ï\èÓï\é¶
 	size = p->skin_disp_count * sizeof(unsigned short);
 	p->skin_index = MALLOC(size);
 	PyList_to_Array_UShort(p->skin_index, PyTmp, p->skin_disp_count);
 	
-	//„Éú„Éº„É≥Ë°®Á§∫„Ç∞„É´„Éº„Éó
+	//É{Å[Éìï\é¶ÉOÉãÅ[Év
 	size = p->bone_group_count * sizeof(BONE_GROUP);
 	p->bone_group = MALLOC(size);
 	memset(p->bone_group, 0, size);
 	
-	//Ë°®Á§∫„Éú„Éº„É≥
+	//ï\é¶É{Å[Éì
 	size = p->bone_disp_count * sizeof(BONE_DISP);
 	p->bone_disp = MALLOC(size);
 	memset(p->bone_disp, 0, size);
 	
-	//Ââõ‰Ωì
+	//çÑëÃ
 	size = p->rbody_count * sizeof(RIGID_BODY);
 	p->rbody = MALLOC(size);
 	memset(p->rbody, 0, size);
 	
-	//„Ç∏„Éß„Ç§„É≥„Éà
+	//ÉWÉáÉCÉìÉg
 	size = p->joint_count * sizeof(JOINT);
 	p->joint = MALLOC(size);
 	memset(p->joint, 0, size);
@@ -671,7 +674,7 @@ static PyObject* setSkin(PyObject *self, PyObject *args)
 	strncpy(skin.name,     str[0], NAME_LEN);
 	strncpy(skin.name_eng, str[1], NAME_LEN);
 	
-	//„É°„É¢„É™Á¢∫‰øù
+	//ÉÅÉÇÉäämï€
 	size = skin.skin_vt_count * sizeof(SKIN_DATA);
 	if(model->skin[i].skin_vt_count != skin.skin_vt_count){
 		FREE(model->skin[i].data);
@@ -907,7 +910,7 @@ static PyObject* Set_List(PyObject *self, PyObject *args)
 	
 	p = NULL;
 	
-	/*„Éú„Éº„É≥*/
+	/*É{Å[Éì*/
 	for(i=0; i<list.bone_count; i++){
 		tmp = PyList_GetItem(bn, i);
 		PyBytes_AsStringAndSize(tmp, &p, &len);
@@ -919,7 +922,7 @@ static PyObject* Set_List(PyObject *self, PyObject *args)
 		//printf("%d %s\n", i, list.bone[i]);
 	}
 	
-	/*Ë°®ÊÉÖ*/
+	/*ï\èÓ*/
 	for(i=0; i<list.skin_count; i++){
 		tmp = PyList_GetItem(sn, i);
 		//strncpy(list.skin[i], PyBytes_AsString(tmp), NAME_LEN);
@@ -932,7 +935,7 @@ static PyObject* Set_List(PyObject *self, PyObject *args)
 		strncpy(list.skin_eng[i], p, NAME_LEN);
 	}
 	
-	/*„Éú„Éº„É≥„Ç∞„É´„Éº„Éó*/
+	/*É{Å[ÉìÉOÉãÅ[Év*/
 	for(i=0; i<list.disp_count; i++){
 		tmp = PyList_GetItem(gn, i);
 		//strncpy(list.disp[i], PyBytes_AsString(tmp), NAME_LEN);
@@ -974,7 +977,6 @@ static PyObject* Init_PMD(PyObject *self, PyObject *args)
 	for(i=0; i<MODEL_COUNT; i++){
 		create_PMD(&g_model[i]);
 	}
-	model_mgr(-1, 0, NULL);
 	return Py_BuildValue("i", 0);
 }
 
@@ -1041,15 +1043,15 @@ static PyObject* Marge_PMD(PyObject *self, PyObject *args)
 	int num;
 	int ret;
 	if(!PyArg_ParseTuple(args, "i", &num))return NULL;
-	puts("„Éú„Éº„É≥„Éû„Éº„Ç∏");
+	puts("É{Å[ÉìÉ}Å[ÉW");
 	ret = marge_bone(&g_model[num]);
-	puts("ÊùêË≥™„Éû„Éº„Ç∏");
+	puts("çﬁéøÉ}Å[ÉW");
 	ret += marge_mat(&g_model[num]);
-	puts("IK„Éû„Éº„Ç∏");
+	puts("IKÉ}Å[ÉW");
 	ret += marge_IK(&g_model[num]);
-	puts("„Éú„Éº„É≥„Ç∞„É´„Éº„Éó„Éû„Éº„Ç∏");
+	puts("É{Å[ÉìÉOÉãÅ[ÉvÉ}Å[ÉW");
 	ret += marge_bone_disp(&g_model[num]);
-	puts("Ââõ‰Ωì„Éû„Éº„Ç∏");
+	puts("çÑëÃÉ}Å[ÉW");
 	ret += marge_rb(&g_model[num]);
 	return Py_BuildValue("i", ret);
 }
@@ -1061,22 +1063,22 @@ static PyObject* Sort_PMD(PyObject *self, PyObject *args)
 	if(!PyArg_ParseTuple(args, "i", &num))return NULL;
 	
 	rename_tail(&g_model[num]);
-	puts("„Éú„Éº„É≥„Éû„Éº„Ç∏");
+	puts("É{Å[ÉìÉ}Å[ÉW");
 	ret = marge_bone(&g_model[num]);
 	
-	puts("„Éú„Éº„É≥„ÇΩ„Éº„Éà");
+	puts("É{Å[ÉìÉ\Å[Ég");
 	ret = sort_bone(&g_model[num], &list);
-	puts("Ë°®ÊÉÖ„ÇΩ„Éº„Éà");
+	puts("ï\èÓÉ\Å[Ég");
 	ret += sort_skin(&g_model[num], &list);
-	puts("„Éú„Éº„É≥„Ç∞„É´„Éº„Éó„ÇΩ„Éº„Éà");
+	puts("É{Å[ÉìÉOÉãÅ[ÉvÉ\Å[Ég");
 	ret += sort_disp(&g_model[num], &list);
 	
 	
-	//-0„Éú„Éº„É≥ÂâäÈô§
+	//-0É{Å[ÉìçÌèú
 	if(strcmp(g_model[num].bone[g_model[num].bone_count-1].name, "-0") == 0){
 		g_model[num].bone_count--;
 	}
-	puts("Ëã±Ë™ûÂØæÂøúÂåñ");
+	puts("âpåÍëŒâûâª");
 	translate(&g_model[num], &list, 1);
 	return Py_BuildValue("i", ret);
 }
@@ -1160,43 +1162,6 @@ static PyObject* Adjust_Joints(PyObject *self, PyObject *args)
 	return Py_BuildValue("i", ret);
 }
 /*************************************************************************************************/
-static PyObject* PMD_view_set(PyObject *self, PyObject *args)
-{
-	const char *str;
-	int num, ret=0;
-	
-	if(!PyArg_ParseTuple(args, "is", &num, &str))return NULL;
-	if(strcmp(str,"replace") == 0){
-		model_mgr(0,0,&g_model[num]);
-	}else{
-		printf("unexpected string '%s'\n", str);
-		ret = 1;
-	}
-	
-	return Py_BuildValue("i", ret);
-}
-
-/*************************************************************************************************/
-static PyObject* MODEL_LOCK(PyObject *self, PyObject *args)
-{
-	int num, ret=0;
-	
-	if(!PyArg_ParseTuple(args, "i", &num))return NULL;
-	
-	if(num == 1){
-		printf("Lockstate %d\n", myflags.model_lock);
-		while(myflags.model_lock != 0){
-			SDL_Delay(30);
-			//printf("C");
-		}
-		myflags.model_lock=1;
-		
-	}else{
-		myflags.model_lock=0;
-	}
-	return Py_BuildValue("i", ret);
-}
-
 static PyObject* getWHT(PyObject *self, PyObject *args)
 {
 	const char *str;
@@ -1305,9 +1270,7 @@ static PyMethodDef PMCAMethods[] = {
 	"Marge PMD"},
 	{"Sort_PMD", Sort_PMD, METH_VARARGS,
 	"Sort PMD"},
-	{"PMD_view_set", PMD_view_set, METH_VARARGS,
-	"Set selected PMD to dispray"},
-	/***********************************************************************/
+
 	{"Resize_Model", Resize_Model, METH_VARARGS,
 	"Resize_Model"},
 	{"Move_Model", Move_Model, METH_VARARGS,
@@ -1321,24 +1284,8 @@ static PyMethodDef PMCAMethods[] = {
 	{"Adjust_Joints", Adjust_Joints, METH_VARARGS,
 	"Adjust_Joints"},
 	
-	/***********************************************************************/
-	{"MODEL_LOCK", MODEL_LOCK, METH_VARARGS,
-	"Lock/Unlock model"},
 	{"getWHT", getWHT, METH_VARARGS,
 	"get height, width, thickness from model"},
-	/***********************************************************************/
-	{"CretateViewerThread", CreateViewerThread, METH_VARARGS,
-	"CretateViewerThread"},
-	{"WaitViewerThread", WaitViewerThread, METH_VARARGS,
-	"WaitViewerThread"},
-	{"QuitViewerThread", QuitViewerThread, METH_VARARGS,
-	"QuitViewerThread"},
-	{"KillViewerThread", KillViewerThread, METH_VARARGS,
-	"KillViewerThread"},
-	{"GetViewerThreadState", GetViewerThreadState, METH_VARARGS,
-	"GetViewerThreadState"},
-	{"show3Dview", show3Dview, METH_VARARGS,
-	"show3Dview"},
 	{NULL, NULL, 0, NULL}
 };
 
@@ -1354,7 +1301,7 @@ static struct PyModuleDef PMCAmodule = {
     NULL
 };
 
-// „É¢„Ç∏„É•„Éº„É´ÁôªÈå≤
+// ÉÇÉWÉÖÅ[Éãìoò^
 PyMODINIT_FUNC PyInit_PMCA(void) {
 	PyObject *m;
 	//static void *PySpam_API[PyPMCA_API_pointers];
@@ -1381,4 +1328,3 @@ PyMODINIT_FUNC PyInit_PMCA(void) {
 	*/
 	return m;
 }
-

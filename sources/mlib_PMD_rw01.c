@@ -1,4 +1,4 @@
-/*PMDé–¢ä¿‚ã®ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã€èª­ã¿è¾¼ã¿æ›¸ãè¾¼ã¿ç³»*/
+/*PMDŠÖŒW‚Ìƒ‰ƒCƒuƒ‰ƒŠA“Ç‚İ‚İ‘‚«‚İŒn*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,7 +12,7 @@ size_t dbg_fread(void* p, size_t s, size_t n, FILE* fp){
 	if(s*n == 0)return 0;
 	r = fread(p, s, n, fp);
 	if(r < n){
-		printf("ãƒ•ã‚¡ã‚¤ãƒ«èª­ã¿è¾¼ã¿ã«å¤±æ•—\nFILE:%p\nn:%d < %d\n", fp, (int)r, (int)n);
+		printf("ƒtƒ@ƒCƒ‹“Ç‚İ‚İ‚É¸”s\nFILE:%p\nn:%d < %d\n", fp, (int)r, (int)n);
 		exit(1);
 	}
 	
@@ -23,7 +23,7 @@ void* dbg_fgets(char* p, size_t s, FILE* fp){
 	void* r;
 	r = fgets(p, s, fp);
 	if(r == NULL){
-		printf("ãƒ•ã‚¡ã‚¤ãƒ«èª­ã¿è¾¼ã¿ã«å¤±æ•—\nFILE:%p %p\n", fp, r);
+		printf("ƒtƒ@ƒCƒ‹“Ç‚İ‚İ‚É¸”s\nFILE:%p %p\n", fp, r);
 		exit(1);
 	}
 	
@@ -34,7 +34,7 @@ void* dbg_malloc(size_t s){
 	void *p;
 	p = malloc(s);
 	if(p==NULL){
-		puts("ãƒ¡ãƒ¢ãƒªã®ç¢ºä¿ã«å¤±æ•—ã—ã¾ã—ãŸ");
+		puts("ƒƒ‚ƒŠ‚ÌŠm•Û‚É¸”s‚µ‚Ü‚µ‚½");
 		exit(-1);
 	}
 	//printf("malloc:%p\n", p);
@@ -57,13 +57,13 @@ int load_list(LIST *list, const char file_name[])
 	FILE *lst_file;
 	
 	if(strcmp(file_name, "") == 0){
-		printf("ãƒ•ã‚¡ã‚¤ãƒ«åãŒã‚ã‚Šã¾ã›ã‚“\n");
+		printf("ƒtƒ@ƒCƒ‹–¼‚ª‚ ‚è‚Ü‚¹‚ñ\n");
 		return 1;
 	}
 	
 	lst_file = fopen(file_name,"r");
 	if(lst_file == NULL){
-		printf("ãƒ•ã‚¡ã‚¤ãƒ« %s ã‚’é–‹ã‘ã¾ã›ã‚“\n", file_name);
+		printf("ƒtƒ@ƒCƒ‹ %s ‚ğŠJ‚¯‚Ü‚¹‚ñ\n", file_name);
 		return 1;
 	}
 	FGETS(str, 256, lst_file);
@@ -91,14 +91,14 @@ int load_list(LIST *list, const char file_name[])
 	fclose(lst_file);
 	lst_file = fopen(file_name,"r");
 	if(lst_file == NULL){
-		printf("ãƒ•ã‚¡ã‚¤ãƒ« %s ã‚’é–‹ã‘ã¾ã›ã‚“\n", file_name);
+		printf("ƒtƒ@ƒCƒ‹ %s ‚ğŠJ‚¯‚Ü‚¹‚ñ\n", file_name);
 		return 1;
 	}
 	
 	
-	printf("ãƒªã‚¹ãƒˆãƒœãƒ¼ãƒ³æ•°:%d\n", list->bone_count);
-	printf("ãƒªã‚¹ãƒˆè¡¨æƒ…æ•°:%d\n", list->skin_count);
-	printf("ãƒªã‚¹ãƒˆè¡¨ç¤ºæ æ•°:%d\n", list->disp_count);
+	printf("ƒŠƒXƒgƒ{[ƒ“”:%d\n", list->bone_count);
+	printf("ƒŠƒXƒg•\î”:%d\n", list->skin_count);
+	printf("ƒŠƒXƒg•\¦˜g”:%d\n", list->disp_count);
 	
 	list->bone = MALLOC((size_t)list->bone_count * sizeof(char)* NAME_LEN);
 	list->bone_eng = MALLOC((size_t)list->bone_count * sizeof(char)*NAME_LEN);
@@ -175,7 +175,7 @@ int load_PMD(MODEL *model, const char file_name[])
 	
 	//dbg_0check(check,1000);
 	
-	//ã‚­ãƒ£ãƒƒã‚·ãƒ¥ã¾ã‚ã‚ŠåˆæœŸåŒ–
+	//ƒLƒƒƒbƒVƒ…‚Ü‚í‚è‰Šú‰»
 	if(cur_count == 255){
 		for(i=0; i<64; i++){
 			count[i] = 255;
@@ -185,7 +185,7 @@ int load_PMD(MODEL *model, const char file_name[])
 	}
 	
 	if(strcmp(file_name, "") == 0){
-		printf("ãƒ•ã‚¡ã‚¤ãƒ«åãŒã‚ã‚Šã¾ã›ã‚“\n");
+		printf("ƒtƒ@ƒCƒ‹–¼‚ª‚ ‚è‚Ü‚¹‚ñ\n");
 		return 1;
 	}
 	
@@ -248,11 +248,11 @@ int load_PMD(MODEL *model, const char file_name[])
 	#endif
 	FREAD(&model->vt_count, 4,  1, pmd);
 	#ifdef DEBUG
-		printf("é ‚ç‚¹æ•°:%d\n", model->vt_count);
+		printf("’¸“_”:%d\n", model->vt_count);
 	#endif
 	model->vt =(VERTEX *)MALLOC((size_t)model->vt_count*sizeof(VERTEX));
 	if(model->vt == NULL  ){
-		printf("é…åˆ—ã‚’ç¢ºä¿ã§ãã¾ã›ã‚“\n");
+		printf("”z—ñ‚ğŠm•Û‚Å‚«‚Ü‚¹‚ñ\n");
 		return 1;
 	}
 	
@@ -268,29 +268,29 @@ int load_PMD(MODEL *model, const char file_name[])
 	
 	FREAD(&model->vt_index_count, 4,  1, pmd);
 	#ifdef DEBUG
-		printf("é¢é ‚ç‚¹æ•°:%d\n", model->vt_index_count);
+		printf("–Ê’¸“_”:%d\n", model->vt_index_count);
 	#endif
 	model->vt_index  = (unsigned short *)MALLOC((size_t)model->vt_index_count*sizeof(unsigned short));
 	if(model->vt_index == NULL  ){
-		printf("é…åˆ—ã‚’ç¢ºä¿ã§ãã¾ã›ã‚“\n");
+		printf("”z—ñ‚ğŠm•Û‚Å‚«‚Ü‚¹‚ñ\n");
 		return 1;
 	}
 	
 	for(i=0; i<model->vt_index_count; i++){
 		FREAD(&model->vt_index[i], 2, 1, pmd);
 		if(model->vt_index[i] >= model->vt_count){
-			printf("é ‚ç‚¹ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãŒä¸æ­£ã§ã™\n");
+			printf("’¸“_ƒCƒ“ƒfƒbƒNƒX‚ª•s³‚Å‚·\n");
 			return 1;
 		}
 	}
 	
 	FREAD(&model->mat_count, 4,  1, pmd);
 	#ifdef DEBUG
-		printf("æè³ªæ•°:%d\n", model->mat_count);
+		printf("Ş¿”:%d\n", model->mat_count);
 	#endif
 	model->mat =(MATERIAL*)MALLOC((size_t)model->mat_count*sizeof(MATERIAL));
 	if(model->mat == NULL  ){
-		printf("é…åˆ—ã‚’ç¢ºä¿ã§ãã¾ã›ã‚“\n");
+		printf("”z—ñ‚ğŠm•Û‚Å‚«‚Ü‚¹‚ñ\n");
 		return 1;
 	}
 	for(i=0; i<model->mat_count; i++){
@@ -327,11 +327,11 @@ int load_PMD(MODEL *model, const char file_name[])
 	
 	FREAD(&model->bone_count, 2,  1, pmd);
 	#ifdef DEBUG
-		printf("ãƒœãƒ¼ãƒ³æ•°:%d\n", model->bone_count);
+		printf("ƒ{[ƒ“”:%d\n", model->bone_count);
 	#endif
 	model->bone =(BONE*)MALLOC((size_t)model->bone_count*sizeof(BONE));
 	if(model->bone == NULL  ){
-		printf("é…åˆ—ã‚’ç¢ºä¿ã§ãã¾ã›ã‚“\n");
+		printf("”z—ñ‚ğŠm•Û‚Å‚«‚Ü‚¹‚ñ\n");
 		return 1;
 	}
 	
@@ -348,11 +348,11 @@ int load_PMD(MODEL *model, const char file_name[])
 	
 	FREAD(&model->IK_count, 2,  1, pmd);
 	#ifdef DEBUG
-		printf("IKãƒ‡ãƒ¼ã‚¿æ•°:%d\n", model->IK_count);
+		printf("IKƒf[ƒ^”:%d\n", model->IK_count);
 	#endif
 	model->IK_list =(IK_LIST*)MALLOC(model->IK_count*sizeof(IK_LIST));
 	if(model->IK_list == NULL  ){
-		printf("é…åˆ—ã‚’ç¢ºä¿ã§ãã¾ã›ã‚“\n");
+		printf("”z—ñ‚ğŠm•Û‚Å‚«‚Ü‚¹‚ñ\n");
 		return 1;
 	}
 	for(i=0; i<model->IK_count; i++){
@@ -370,11 +370,11 @@ int load_PMD(MODEL *model, const char file_name[])
 	
 	FREAD(&model->skin_count, 2,  1, pmd);
 	#ifdef DEBUG
-		printf("è¡¨æƒ…æ•°:%d\n", model->skin_count);
+		printf("•\î”:%d\n", model->skin_count);
 	#endif
 	model->skin =(SKIN*)MALLOC((size_t)model->skin_count*sizeof(SKIN));
 	if(model->skin == NULL  ){
-		printf("é…åˆ—ã‚’ç¢ºä¿ã§ãã¾ã›ã‚“\n");
+		printf("”z—ñ‚ğŠm•Û‚Å‚«‚Ü‚¹‚ñ\n");
 		return 1;
 	}
 	for(i=0; i<model->skin_count; i++){
@@ -396,7 +396,7 @@ int load_PMD(MODEL *model, const char file_name[])
 	
 	FREAD(&model->skin_disp_count, 1,  1, pmd);
 	#ifdef DEBUG
-		printf("è¡¨æƒ…æ :%d\n", model->skin_disp_count);
+		printf("•\î˜g:%d\n", model->skin_disp_count);
 	#endif
 	model->skin_index = (unsigned short*)MALLOC((size_t)model->skin_disp_count*sizeof(unsigned short));
 	if(model->skin_index==NULL)return -1;
@@ -404,7 +404,7 @@ int load_PMD(MODEL *model, const char file_name[])
 	
 	FREAD(&model->bone_group_count, 1,  1, pmd);
 	#ifdef DEBUG
-		printf("ãƒœãƒ¼ãƒ³æ :%d\n", model->bone_group_count);
+		printf("ƒ{[ƒ“˜g:%d\n", model->bone_group_count);
 	#endif
 	model->bone_group = (BONE_GROUP*)MALLOC(sizeof(BONE_GROUP)*(size_t)model->bone_group_count);
 	if(model->bone_group == NULL)return -1;
@@ -415,7 +415,7 @@ int load_PMD(MODEL *model, const char file_name[])
 	
 	FREAD(&model->bone_disp_count, 4,  1, pmd);
 	#ifdef DEBUG
-		printf("è¡¨ç¤ºãƒœãƒ¼ãƒ³æ•°:%d\n", model->bone_disp_count);
+		printf("•\¦ƒ{[ƒ“”:%d\n", model->bone_disp_count);
 	#endif
 	model->bone_disp = (BONE_DISP*)MALLOC((size_t)model->bone_disp_count*sizeof(BONE_DISP));
 	if(model->bone_disp==NULL)return -1;
@@ -429,7 +429,7 @@ int load_PMD(MODEL *model, const char file_name[])
 	
 	if(feof(pmd)!=0){
 		#ifdef DEBUG
-			printf("æ‹¡å¼µéƒ¨åˆ†ãªã—\n");
+			printf("Šg’£•”•ª‚È‚µ\n");
 		#endif
 		model->eng_support = 0;
 		for(i=0; i<10; i++){
@@ -445,11 +445,11 @@ int load_PMD(MODEL *model, const char file_name[])
 	}
 	
 	#ifdef DEBUG
-		printf("è‹±åå¯¾å¿œ:%d\n", model->eng_support);
+		printf("‰p–¼‘Î‰:%d\n", model->eng_support);
 	#endif
 	
 	if(model->eng_support == 1){
-		printf("è‹±åå¯¾å¿œPMD\n");
+		printf("‰p–¼‘Î‰PMD\n");
 		FREAD(model->header.name_eng, 1,  20, pmd);
 		model->header.name_eng[21] = '\0';
 		
@@ -473,7 +473,7 @@ int load_PMD(MODEL *model, const char file_name[])
 			model->bone_group[i].name_eng[50] = '\0';
 		}
 	}else{
-		printf("è‹±åéå¯¾å¿œPMD\n");
+		printf("‰p–¼”ñ‘Î‰PMD\n");
 		
 		*model->header.name_eng = '\0';
 		*model->header.comment_eng = '\0';
@@ -514,12 +514,12 @@ int load_PMD(MODEL *model, const char file_name[])
 	
 	FREAD(&model->rbody_count, 4,  1, pmd);
 	#ifdef DEBUG
-		printf("å‰›ä½“æ•°:%d\n", model->rbody_count);
+		printf("„‘Ì”:%d\n", model->rbody_count);
 	#endif
 	model->rbody =(RIGID_BODY *) MALLOC((size_t)model->rbody_count*sizeof(RIGID_BODY));
 	
 	if(model->rbody == NULL  ){
-		printf("é…åˆ—ã‚’ç¢ºä¿ã§ãã¾ã›ã‚“\n");
+		printf("”z—ñ‚ğŠm•Û‚Å‚«‚Ü‚¹‚ñ\n");
 		return 1;
 	}
 	for(i=0; i<model->rbody_count; i++){
@@ -538,11 +538,11 @@ int load_PMD(MODEL *model, const char file_name[])
 	
 	FREAD(&model->joint_count, 4,  1, pmd);
 	#ifdef DEBUG
-		printf("ã‚¸ãƒ§ã‚¤ãƒ³ãƒˆæ•°:%d\n", model->joint_count);
+		printf("ƒWƒ‡ƒCƒ“ƒg”:%d\n", model->joint_count);
 	#endif
 	model->joint =(JOINT *) MALLOC((size_t)model->joint_count*sizeof(JOINT));
 	if(model->joint == NULL  ){
-		printf("é…åˆ—ã‚’ç¢ºä¿ã§ãã¾ã›ã‚“\n");
+		printf("”z—ñ‚ğŠm•Û‚Å‚«‚Ü‚¹‚ñ\n");
 		return 1;
 	}
 	for(i=0; i<model->joint_count; i++){
@@ -561,7 +561,7 @@ int load_PMD(MODEL *model, const char file_name[])
 	
 	//FREE(check);
 	
-	//ãƒ¢ãƒ‡ãƒ«ã‚’ã‚­ãƒ£ãƒƒã‚·ãƒ¥ã«ä¿å­˜
+	//ƒ‚ƒfƒ‹‚ğƒLƒƒƒbƒVƒ…‚É•Û‘¶
 	for(i=0; i<64; i++){
 		if(count[i]==255){
 			copy_PMD(&cache_model[i],model);
@@ -582,17 +582,17 @@ int write_PMD(MODEL *model, const char file_name[])
 	FILE *pmd;
 	
 	if(strcmp(file_name, "") == 0){
-		printf("ãƒ•ã‚¡ã‚¤ãƒ«åãŒã‚ã‚Šã¾ã›ã‚“\n");
+		printf("ƒtƒ@ƒCƒ‹–¼‚ª‚ ‚è‚Ü‚¹‚ñ\n");
 		return 1;
 	}
 	
 	pmd = fopen(file_name,"wb");
 	if(pmd == NULL  ){
-		printf("ãƒ•ã‚¡ã‚¤ãƒ« %s ã‚’é–‹ã‘ã¾ã›ã‚“\n", file_name);
+		printf("ƒtƒ@ƒCƒ‹ %s ‚ğŠJ‚¯‚Ü‚¹‚ñ\n", file_name);
 		return 1;
 	}
 	
-	/*ã‚¼ãƒ­åŸ‹ã‚*/
+	/*ƒ[ƒ–„‚ß*/
 	/*{
 		int total_bytes;
 		char b = '\0';
@@ -605,7 +605,7 @@ int write_PMD(MODEL *model, const char file_name[])
 		fseek(pmd, 0, SEEK_SET);
 	}*/
 	
-	//ãƒ˜ãƒƒãƒ€ãƒ¼æ›¸ãæ›ãˆ
+	//ƒwƒbƒ_[‘‚«Š·‚¦
 	strcpy(model->header.magic, "Pmd");
 	model->header.version = 1.0;
 	
@@ -615,7 +615,7 @@ int write_PMD(MODEL *model, const char file_name[])
 	fwrite(model->header.comment, 256, 1, pmd);
 	
 	#ifdef DEBUG
-		printf("ãƒ˜ãƒƒãƒ€\n");
+		printf("ƒwƒbƒ_\n");
 	#endif
 	
 	fwrite(&model->vt_count, 4,  1, pmd);
@@ -631,20 +631,20 @@ int write_PMD(MODEL *model, const char file_name[])
 	}
 	
 	#ifdef DEBUG
-		printf("é ‚ç‚¹\n");
+		printf("’¸“_\n");
 	#endif
 	
 	fwrite(&model->vt_index_count, 4,  1, pmd);
 	
 	for(i=0; i<model->vt_index_count; i++){
 		if(model->vt_index[i] >= model->vt_count){
-			printf("é ‚ç‚¹ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ãŒä¸æ­£ã§ã™ :%d\n", model->vt_index[i]);
+			printf("’¸“_ƒCƒ“ƒfƒbƒNƒX‚ª•s³‚Å‚· :%d\n", model->vt_index[i]);
 			return 1;
 		}
 		fwrite(&model->vt_index[i], 2, 1, pmd);
 	}
 	#ifdef DEBUG
-		printf("é¢é ‚ç‚¹\n");
+		printf("–Ê’¸“_\n");
 	#endif
 	
 	fwrite(&model->mat_count, 4,  1, pmd);
@@ -671,7 +671,7 @@ int write_PMD(MODEL *model, const char file_name[])
 		}
 	}
 	#ifdef DEBUG
-		printf("æè³ª\n");
+		printf("Ş¿\n");
 	#endif
 	
 	
@@ -686,7 +686,7 @@ int write_PMD(MODEL *model, const char file_name[])
 		fwrite(model->bone[i].loc, 4, 3, pmd);
 	}
 	#ifdef DEBUG
-		printf("ãƒœãƒ¼ãƒ³\n");
+		printf("ƒ{[ƒ“\n");
 	#endif
 	
 	fwrite(&model->IK_count, 2,  1, pmd);
@@ -700,7 +700,7 @@ int write_PMD(MODEL *model, const char file_name[])
 		fwrite(model->IK_list[i].IKCBone_index, 2, model->IK_list[i].IK_chain_len, pmd);
 	}
 	#ifdef DEBUG
-		printf("IKãƒªã‚¹ãƒˆ\n");
+		printf("IKƒŠƒXƒg\n");
 	#endif
 	
 	fwrite(&model->skin_count, 2,  1, pmd);
@@ -715,14 +715,14 @@ int write_PMD(MODEL *model, const char file_name[])
 		}
 	}
 	#ifdef DEBUG
-		printf("è¡¨æƒ…\n");
+		printf("•\î\n");
 	#endif
 	
 	
 	fwrite(&model->skin_disp_count, 1,  1, pmd);
 	fwrite(model->skin_index, 2, model->skin_disp_count, pmd);
 	#ifdef DEBUG
-		printf("è¡¨æƒ…è¡¨ç¤º\n");
+		printf("•\î•\¦\n");
 	#endif
 	
 	fwrite(&model->bone_group_count, 1,  1, pmd);
@@ -736,7 +736,7 @@ int write_PMD(MODEL *model, const char file_name[])
 		fwrite(&model->bone_disp[i].bone_group, 1,  1, pmd);
 	}
 	#ifdef DEBUG
-		printf("ãƒœãƒ¼ãƒ³è¡¨ç¤º\n");
+		printf("ƒ{[ƒ“•\¦\n");
 	#endif
 	
 	//extension
@@ -756,7 +756,7 @@ int write_PMD(MODEL *model, const char file_name[])
 		}
 	}
 	#ifdef DEBUG
-		printf("è‹±å\n");
+		printf("‰p–¼\n");
 	#endif
 	
 	for(i=0; i<10; i++){
@@ -778,7 +778,7 @@ int write_PMD(MODEL *model, const char file_name[])
 		fwrite(&model->rbody[i].type, 1,  1, pmd);
 	}
 	#ifdef DEBUG
-		printf("å‰›ä½“\n");
+		printf("„‘Ì\n");
 	#endif
 	
 	fwrite(&model->joint_count, 4,  1, pmd);
@@ -792,11 +792,11 @@ int write_PMD(MODEL *model, const char file_name[])
 		fwrite(model->joint[i].spring, 4,  6, pmd);
 	}
 	#ifdef DEBUG
-		printf("ã‚¸ãƒ§ã‚¤ãƒ³ãƒˆ\n");
+		printf("ƒWƒ‡ƒCƒ“ƒg\n");
 	#endif
 	
 	fclose(pmd);
-	printf("%sã¸å‡ºåŠ›ã—ã¾ã—ãŸã€‚\n",file_name);
+	printf("%s‚Öo—Í‚µ‚Ü‚µ‚½B\n",file_name);
 	
 	return ret;
 }
@@ -808,13 +808,13 @@ int print_PMD(MODEL *model, const char file_name[])
 	FILE *txt;
 	
 	if(strcmp(file_name, "") == 0){
-		printf("ãƒ•ã‚¡ã‚¤ãƒ«åãŒã‚ã‚Šã¾ã›ã‚“\n");
+		printf("ƒtƒ@ƒCƒ‹–¼‚ª‚ ‚è‚Ü‚¹‚ñ\n");
 		return 1;
 	}
 	
 	txt = fopen(file_name,"w");
 	if(txt == NULL  ){
-		fprintf(txt, "å‡ºåŠ›ãƒ†ã‚­ã‚¹ãƒˆãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã‘ã¾ã›ã‚“\n");
+		fprintf(txt, "o—ÍƒeƒLƒXƒgƒtƒ@ƒCƒ‹‚ğŠJ‚¯‚Ü‚¹‚ñ\n");
 		return 1;
 	}
 	
@@ -847,14 +847,14 @@ int print_PMD(MODEL *model, const char file_name[])
 		
 	}
 	
-	fprintf(txt, "é¢é ‚ç‚¹æ•°:%d\n", model->vt_index_count);
+	fprintf(txt, "–Ê’¸“_”:%d\n", model->vt_index_count);
 	
 	for(i=0; i<model->vt_index_count; i++){
 		fprintf(txt, "%d\n", model->vt_index[i]);
 	}
 	fprintf(txt, "\n");
 	
-	fprintf(txt, "æè³ªæ•°:%d\n", model->mat_count);
+	fprintf(txt, "Ş¿”:%d\n", model->mat_count);
 	
 	
 	for(i=0; i<model->mat_count; i++){
@@ -878,41 +878,41 @@ int print_PMD(MODEL *model, const char file_name[])
 		fprintf(txt, "vt_index_count:%d\n", model->mat[i].vt_index_count);
 		fprintf(txt, "texture:%s\n\n", model->mat[i].tex);
 	}
-	fprintf(txt, "ãƒœãƒ¼ãƒ³æ•°:%d\n", model->bone_count);
+	fprintf(txt, "ƒ{[ƒ“”:%d\n", model->bone_count);
 	
 	for(i=0; i<model->bone_count; i++){
-		fprintf(txt, "ãƒœãƒ¼ãƒ³å:%s\n", model->bone[i].name);
-		fprintf(txt, "è¦ªãƒœãƒ¼ãƒ³:%d\n", model->bone[i].PBone_index);
-		fprintf(txt, "ãƒ†ã‚¤ãƒ«ãƒœãƒ¼ãƒ³:%d\n", model->bone[i].TBone_index);
-		fprintf(txt, "ã‚¿ã‚¤ãƒ—:%d\n", model->bone[i].type);
-		fprintf(txt, "IKãƒœãƒ¼ãƒ³:%d\n", model->bone[i].IKBone_index);
-		fprintf(txt, "ä½ç½®:");
+		fprintf(txt, "ƒ{[ƒ“–¼:%s\n", model->bone[i].name);
+		fprintf(txt, "eƒ{[ƒ“:%d\n", model->bone[i].PBone_index);
+		fprintf(txt, "ƒeƒCƒ‹ƒ{[ƒ“:%d\n", model->bone[i].TBone_index);
+		fprintf(txt, "ƒ^ƒCƒv:%d\n", model->bone[i].type);
+		fprintf(txt, "IKƒ{[ƒ“:%d\n", model->bone[i].IKBone_index);
+		fprintf(txt, "ˆÊ’u:");
 		for(j=0; j<3; j++){
 			fprintf(txt, "%f ", model->bone[i].loc[j]);
 		}
 		fprintf(txt, "\n\n");
 	}
 	
-	fprintf(txt, "IKãƒ‡ãƒ¼ã‚¿æ•°:%d\n", model->IK_count);
+	fprintf(txt, "IKƒf[ƒ^”:%d\n", model->IK_count);
 	
 	for(i=0; i<model->IK_count; i++){
-		fprintf(txt, "IKãƒœãƒ¼ãƒ³:%d\n", model->IK_list[i].IKBone_index);
-		fprintf(txt, "IKãƒ†ã‚¤ãƒ«ãƒœãƒ¼ãƒ³:%d\n", model->IK_list[i].IKTBone_index);
-		fprintf(txt, "IKãƒã‚§ãƒ¼ãƒ³é•·:%d\n", model->IK_list[i].IK_chain_len);
+		fprintf(txt, "IKƒ{[ƒ“:%d\n", model->IK_list[i].IKBone_index);
+		fprintf(txt, "IKƒeƒCƒ‹ƒ{[ƒ“:%d\n", model->IK_list[i].IKTBone_index);
+		fprintf(txt, "IKƒ`ƒF[ƒ“’·:%d\n", model->IK_list[i].IK_chain_len);
 		fprintf(txt, "iteration:%d\n", model->IK_list[i].iterations);
-		fprintf(txt, "ã‚¦ã‚¨ã‚¤ãƒˆ:%f\n", model->IK_list[i].weight);
+		fprintf(txt, "ƒEƒGƒCƒg:%f\n", model->IK_list[i].weight);
 		for(j=0; j<model->IK_list[i].IK_chain_len; j++){
-			fprintf(txt, "IKå­ %d:%d\n", j, model->IK_list[i].IKCBone_index[j]);
+			fprintf(txt, "IKq %d:%d\n", j, model->IK_list[i].IKCBone_index[j]);
 		}
 		fprintf(txt, "\n");
 	}
 	
-	fprintf(txt, "è¡¨æƒ…æ•°:%d\n", model->skin_count);
+	fprintf(txt, "•\î”:%d\n", model->skin_count);
 	
 	for(i=0; i<model->skin_count; i++){
-		fprintf(txt, "è¡¨æƒ…å:%s\n", model->skin[i].name);
-		fprintf(txt, "è¡¨æƒ…é ‚ç‚¹æ•°:%d\n", model->skin[i].skin_vt_count);
-		fprintf(txt, "è¡¨æƒ…ã‚¿ã‚¤ãƒ—:%d\n", model->skin[i].type);
+		fprintf(txt, "•\î–¼:%s\n", model->skin[i].name);
+		fprintf(txt, "•\î’¸“_”:%d\n", model->skin[i].skin_vt_count);
+		fprintf(txt, "•\îƒ^ƒCƒv:%d\n", model->skin[i].type);
 		for(j=0; j<model->skin[i].skin_vt_count; j++){
 			fprintf(txt, "%d ", model->skin[i].data[j].index);
 			for(k=0; k<3; k++){
@@ -923,25 +923,25 @@ int print_PMD(MODEL *model, const char file_name[])
 		fprintf(txt, "\n");
 	}
 	
-	fprintf(txt, "\nè¡¨æƒ…æ :%d\n", model->skin_disp_count);
+	fprintf(txt, "\n•\î˜g:%d\n", model->skin_disp_count);
 	for(i=0; i<model->skin_disp_count; i++){
 		fprintf(txt, "%d\n", model->skin_index[i]);
 	}
 	
-	fprintf(txt, "\nãƒœãƒ¼ãƒ³æ :%d\n", model->bone_group_count);
+	fprintf(txt, "\nƒ{[ƒ“˜g:%d\n", model->bone_group_count);
 	
 	for(i=0; i<model->bone_group_count; i++){
 		fprintf(txt, "%d %s", i,model->bone_group[i].name);
 	}
 	
-	fprintf(txt, "\nè¡¨ç¤ºãƒœãƒ¼ãƒ³æ•°:%d\n", model->bone_disp_count);
+	fprintf(txt, "\n•\¦ƒ{[ƒ“”:%d\n", model->bone_disp_count);
 	
 	for(i=0; i<model->bone_disp_count; i++){
-		fprintf(txt, "ãƒœãƒ¼ãƒ³ç•ªå·:%d\n", model->bone_disp[i].index);
-		fprintf(txt, "è¡¨ç¤ºç•ªå·:%d\n", model->bone_disp[i].bone_group);
+		fprintf(txt, "ƒ{[ƒ“”Ô†:%d\n", model->bone_disp[i].index);
+		fprintf(txt, "•\¦”Ô†:%d\n", model->bone_disp[i].bone_group);
 	}
 	
-	fprintf(txt, "è‹±åå¯¾å¿œ:%d\n", model->eng_support);
+	fprintf(txt, "‰p–¼‘Î‰:%d\n", model->eng_support);
 	if(model->eng_support == 1){
 		fprintf(txt, "%s\n", model->header.name_eng);
 		fprintf(txt, "%s\n", model->header.comment_eng);
@@ -961,14 +961,14 @@ int print_PMD(MODEL *model, const char file_name[])
 	}
 	
 	
-	fprintf(txt,"å‰›ä½“æ•°:%d\n", model->rbody_count);
+	fprintf(txt,"„‘Ì”:%d\n", model->rbody_count);
 	
 	for(i=0; i<model->rbody_count; i++){
 		fprintf(txt, "%s\n", model->rbody[i].name);
-		fprintf(txt, "ãƒœãƒ¼ãƒ³:%d\n", model->rbody[i].bone);
-		fprintf(txt, "ã‚°ãƒ«ãƒ¼ãƒ—:%d\n", model->rbody[i].group);
-		fprintf(txt, "ã‚¿ãƒ¼ã‚²ãƒƒãƒˆ:%d\n",model->rbody[i].target);
-		fprintf(txt, "å½¢çŠ¶:%d\n",model->rbody[i].shape);
+		fprintf(txt, "ƒ{[ƒ“:%d\n", model->rbody[i].bone);
+		fprintf(txt, "ƒOƒ‹[ƒv:%d\n", model->rbody[i].group);
+		fprintf(txt, "ƒ^[ƒQƒbƒg:%d\n",model->rbody[i].target);
+		fprintf(txt, "Œ`ó:%d\n",model->rbody[i].shape);
 		fprintf(txt, "size:");
 		for(j=0; j<3; j++){
 			fprintf(txt, "%f ",model->rbody[i].size[j]);
@@ -986,14 +986,14 @@ int print_PMD(MODEL *model, const char file_name[])
 			fprintf(txt, "%f ",model->rbody[i].property[j]);
 		}
 		fprintf(txt, "\n");
-		fprintf(txt, "ã‚¿ã‚¤ãƒ—:%d\n\n",model->rbody[i].type);
+		fprintf(txt, "ƒ^ƒCƒv:%d\n\n",model->rbody[i].type);
 	}
 	
-	fprintf(txt,"ã‚¸ãƒ§ã‚¤ãƒ³ãƒˆæ•°:%d\n", model->joint_count);
+	fprintf(txt,"ƒWƒ‡ƒCƒ“ƒg”:%d\n", model->joint_count);
 	
 	for(i=0; i<model->joint_count; i++){
 		fprintf(txt, "%s\n", model->joint[i].name);
-		fprintf(txt, "å‰›ä½“:");
+		fprintf(txt, "„‘Ì:");
 		for(j=0; j<2; j++){
 			fprintf(txt, "%d ",model->joint[i].rbody[j]);
 		}
@@ -1095,7 +1095,7 @@ int delete_PMD(MODEL *model)
 	model->bone = NULL;
 	
 	#ifdef DEBUGC
-		printf("ãƒœãƒ¼ãƒ³\n");
+		printf("ƒ{[ƒ“\n");
 	#endif
 	for(i=0; i<model->IK_count; i++){
 		FREE(model->IK_list[i].IKCBone_index);
@@ -1109,7 +1109,7 @@ int delete_PMD(MODEL *model)
 	
 	
 	#ifdef DEBUGC
-		printf("IKãƒªã‚¹ãƒˆ\n");
+		printf("IKƒŠƒXƒg\n");
 	#endif
 	for(i=0; i<model->skin_count; i++){
 		#ifdef DEBUG
@@ -1174,9 +1174,9 @@ int copy_PMD(MODEL *out, MODEL *model)
 		out->vt[i] = model->vt[i];
 	}
 	#ifdef DEBUG
-		printf("é ‚ç‚¹\n");
+		printf("’¸“_\n");
 	#endif
-	//é¢é ‚ç‚¹
+	//–Ê’¸“_
 	out->vt_index_count = model->vt_index_count;
 	out->vt_index = (unsigned short*)MALLOC((size_t)model->vt_index_count * sizeof(unsigned short));
 	if(out->vt_index == NULL)return -1;
@@ -1185,9 +1185,9 @@ int copy_PMD(MODEL *out, MODEL *model)
 	}
 	
 	#ifdef DEBUG
-		printf("é¢é ‚ç‚¹\n");
+		printf("–Ê’¸“_\n");
 	#endif
-	//æè³ª
+	//Ş¿
 	out->mat_count = model->mat_count;
 	out->mat = (MATERIAL*)MALLOC((size_t)model->mat_count * sizeof(MATERIAL));
 	if(out->mat==NULL)return -1;
@@ -1196,9 +1196,9 @@ int copy_PMD(MODEL *out, MODEL *model)
 	}
 	
 	#ifdef DEBUG
-		printf("æè³ª\n");
+		printf("Ş¿\n");
 	#endif
-	//ãƒœãƒ¼ãƒ³
+	//ƒ{[ƒ“
 	out->bone_count = model->bone_count;
 	out->bone = (BONE*)MALLOC((size_t)model->bone_count * sizeof(BONE));
 	if(out->bone==NULL)return -1;
@@ -1206,9 +1206,9 @@ int copy_PMD(MODEL *out, MODEL *model)
 		out->bone[i] = model->bone[i];
 	}
 	#ifdef DEBUG
-		printf("ãƒœãƒ¼ãƒ³\n");
+		printf("ƒ{[ƒ“\n");
 	#endif
-	//IKãƒªã‚¹ãƒˆ
+	//IKƒŠƒXƒg
 	out->IK_count = model->IK_count;
 	out->IK_list = (IK_LIST*)MALLOC((size_t)model->IK_count * sizeof(IK_LIST));
 	if(out->IK_list==NULL)return -1;
@@ -1220,10 +1220,10 @@ int copy_PMD(MODEL *out, MODEL *model)
 		memcpy(out->IK_list[i].IKCBone_index, model->IK_list[i].IKCBone_index, size);
 	}
 	#ifdef DEBUG
-		printf("IKãƒªã‚¹ãƒˆ\n");
+		printf("IKƒŠƒXƒg\n");
 	#endif
 	
-	//è¡¨æƒ…
+	//•\î
 	out->skin_count = model->skin_count;
 	out->skin = (SKIN*)MALLOC((size_t)model->skin_count * sizeof(SKIN));
 	if(out->skin==NULL)return -1;
@@ -1235,10 +1235,10 @@ int copy_PMD(MODEL *out, MODEL *model)
 		memcpy(out->skin[i].data, model->skin[i].data, size);
 	}
 	#ifdef DEBUG
-		printf("è¡¨æƒ…\n");
+		printf("•\î\n");
 	#endif
 	
-	//è¡¨æƒ…è¡¨ç¤º
+	//•\î•\¦
 	out->skin_disp_count = model->skin_disp_count;
 	out->skin_index = (unsigned short*)MALLOC((size_t)model->skin_disp_count * sizeof(unsigned short));
 	if(out->skin_index==NULL)return -1;
@@ -1247,9 +1247,9 @@ int copy_PMD(MODEL *out, MODEL *model)
 	}
 	
 	#ifdef DEBUG
-		printf("è¡¨æƒ…è¡¨ç¤º\n");
+		printf("•\î•\¦\n");
 	#endif
-	//ãƒœãƒ¼ãƒ³è¡¨ç¤ºã‚°ãƒ«ãƒ¼ãƒ—
+	//ƒ{[ƒ“•\¦ƒOƒ‹[ƒv
 	out->bone_group_count = model->bone_group_count;
 	out->bone_group = (BONE_GROUP*)MALLOC((size_t)model->bone_group_count * sizeof(BONE_GROUP));
 	if(out->bone_group==NULL)return -1;
@@ -1257,10 +1257,10 @@ int copy_PMD(MODEL *out, MODEL *model)
 		out->bone_group[i] = model->bone_group[i];
 	}
 	#ifdef DEBUG
-		printf("ãƒœãƒ¼ãƒ³è¡¨ç¤ºã‚°ãƒ«ãƒ¼ãƒ—\n");
+		printf("ƒ{[ƒ“•\¦ƒOƒ‹[ƒv\n");
 	#endif
 	
-	//è¡¨ç¤ºãƒœãƒ¼ãƒ³
+	//•\¦ƒ{[ƒ“
 	size = (size_t)model->bone_disp_count * sizeof(BONE_DISP);
 	out->bone_disp_count = model->bone_disp_count;
 	out->bone_disp = (BONE_DISP*)MALLOC(size);
@@ -1272,19 +1272,19 @@ int copy_PMD(MODEL *out, MODEL *model)
 	}
 	*/
 	#ifdef DEBUG
-		printf("è¡¨ç¤ºãƒœãƒ¼ãƒ³\n");
+		printf("•\¦ƒ{[ƒ“\n");
 	#endif
 	
 	memcpy(out->toon, model->toon, sizeof(char)*10*100);
 	memcpy(out->toon_path, model->toon_path, sizeof(char)*10*NAME_LEN);
 	
-	//è‹±å
+	//‰p–¼
 	out->eng_support = model->eng_support;
 	#ifdef DEBUG
-		printf("è‹±å\n");
+		printf("‰p–¼\n");
 	#endif
 	
-	//å‰›ä½“
+	//„‘Ì
 	out->rbody_count = model->rbody_count;
 	out->rbody = (RIGID_BODY*)MALLOC((size_t)model->rbody_count * sizeof(RIGID_BODY));
 	if(out->rbody==NULL)return -1;
@@ -1292,9 +1292,9 @@ int copy_PMD(MODEL *out, MODEL *model)
 		out->rbody[i] = model->rbody[i];
 	}
 	#ifdef DEBUG
-		printf("å‰›ä½“\n");
+		printf("„‘Ì\n");
 	#endif
-	//ã‚¸ãƒ§ã‚¤ãƒ³ãƒˆ
+	//ƒWƒ‡ƒCƒ“ƒg
 	out->joint_count = model->joint_count;
 	out->joint = (JOINT*)MALLOC((size_t)model->joint_count * sizeof(JOINT));
 	if(out->joint==NULL)return -1;
@@ -1302,7 +1302,7 @@ int copy_PMD(MODEL *out, MODEL *model)
 		out->joint[i] = model->joint[i];
 	}
 	#ifdef DEBUG
-		printf("ã‚¸ãƒ§ã‚¤ãƒ³ãƒˆ\n");
+		printf("ƒWƒ‡ƒCƒ“ƒg\n");
 	#endif
 	
 	return 0;
@@ -1339,7 +1339,7 @@ int add_PMD(MODEL *model, MODEL *add)
 	unsigned int joint_count;
 	JOINT *joint;
 	
-	//é ‚ç‚¹
+	//’¸“_
 	vt_count = model->vt_count + add->vt_count;
 	
 	vt = (VERTEX*)MALLOC((size_t)vt_count * sizeof(VERTEX));
@@ -1359,10 +1359,10 @@ int add_PMD(MODEL *model, MODEL *add)
 	}
 	
 	#ifdef DEBUG
-		printf("é ‚ç‚¹\n");
+		printf("’¸“_\n");
 	#endif
 	
-	//é¢é ‚ç‚¹
+	//–Ê’¸“_
 	vt_index_count = model->vt_index_count + add->vt_index_count;
 	vt_index = (unsigned short*)MALLOC((size_t)vt_index_count * sizeof(unsigned short));
 	if(vt_index==NULL)return -1;
@@ -1376,10 +1376,10 @@ int add_PMD(MODEL *model, MODEL *add)
 	}
 	
 	#ifdef DEBUG
-		printf("é¢é ‚ç‚¹\n");
+		printf("–Ê’¸“_\n");
 	#endif
 	
-	//æè³ª
+	//Ş¿
 	mat_count = model->mat_count + add->mat_count;
 	mat = (MATERIAL*)MALLOC((size_t)mat_count * sizeof(MATERIAL));
 	if(mat==NULL)return -1;
@@ -1395,10 +1395,10 @@ int add_PMD(MODEL *model, MODEL *add)
 	}
 	
 	#ifdef DEBUG
-		printf("æè³ª\n");
+		printf("Ş¿\n");
 	#endif
 	
-	//ãƒœãƒ¼ãƒ³
+	//ƒ{[ƒ“
 	bone_count = model->bone_count + add->bone_count;
 	bone = (BONE*)MALLOC((size_t)bone_count * sizeof(BONE));
 	if(bone==NULL)return -1;
@@ -1417,9 +1417,9 @@ int add_PMD(MODEL *model, MODEL *add)
 		j++;
 	}
 	#ifdef DEBUG
-		printf("ãƒœãƒ¼ãƒ³\n");
+		printf("ƒ{[ƒ“\n");
 	#endif
-	//IKãƒªã‚¹ãƒˆ
+	//IKƒŠƒXƒg
 	IK_count = model->IK_count + add->IK_count;
 	IK_list = (IK_LIST*)MALLOC((size_t)IK_count * sizeof(IK_LIST));
 	if(IK_list==NULL)return -1;
@@ -1446,10 +1446,10 @@ int add_PMD(MODEL *model, MODEL *add)
 	}
 	
 	#ifdef DEBUG
-		printf("IKãƒªã‚¹ãƒˆ\n");
+		printf("IKƒŠƒXƒg\n");
 	#endif
 	
-	//è¡¨æƒ…
+	//•\î
 	skin_count = model->skin_count + add->skin_count;
 	skin = (SKIN*)MALLOC((size_t)skin_count * sizeof(SKIN));
 	if(skin==NULL)return -1;
@@ -1485,7 +1485,7 @@ int add_PMD(MODEL *model, MODEL *add)
 		tmp[0] = model->skin[0].skin_vt_count;
 		memcpy(skin[0].data, model->skin[0].data, tmp[0] * sizeof(SKIN_DATA));
 		memcpy(&skin[0].data[tmp[0]], add->skin[0].data, add->skin[0].skin_vt_count * sizeof(SKIN_DATA));
-		//baseã®åˆæˆ
+		//base‚Ì‡¬
 		
 		for(i=0; i < model->skin[0].skin_vt_count; i++){
 			skin[0].data[i].index = model->skin[0].data[i].index;
@@ -1497,7 +1497,7 @@ int add_PMD(MODEL *model, MODEL *add)
 			skin[0].data[i].index = add->skin[0].data[j].index + model->vt_count;
 			j++;
 		}
-		//è¡¨æƒ…è¿½åŠ 
+		//•\î’Ç‰Á
 		for(i=1; i<model->skin_count; i++){
 			skin[i] = model->skin[i];
 			size = (size_t)skin[i].skin_vt_count * sizeof(SKIN_DATA);
@@ -1521,10 +1521,10 @@ int add_PMD(MODEL *model, MODEL *add)
 		}
 	}
 	#ifdef DEBUG
-		printf("è¡¨æƒ…\n");
+		printf("•\î\n");
 	#endif
 	
-	//è¡¨æƒ…è¡¨ç¤º
+	//•\î•\¦
 	skin_disp_count = model->skin_disp_count + add->skin_disp_count;
 	skin_index = (unsigned short*)MALLOC((size_t)skin_disp_count * sizeof(unsigned short));
 	if(skin_index == NULL)return -1;
@@ -1539,9 +1539,9 @@ int add_PMD(MODEL *model, MODEL *add)
 	}
 	
 	#ifdef DEBUG
-		printf("è¡¨æƒ…è¡¨ç¤º\n");
+		printf("•\î•\¦\n");
 	#endif
-	//ãƒœãƒ¼ãƒ³è¡¨ç¤º
+	//ƒ{[ƒ“•\¦
 	bone_group_count = model->bone_group_count + add->bone_group_count;
 	bone_group = (BONE_GROUP*)MALLOC((size_t)bone_group_count * sizeof(BONE_GROUP));
 	if(bone_group == NULL)return -1;
@@ -1568,17 +1568,17 @@ int add_PMD(MODEL *model, MODEL *add)
 	}
 	
 	#ifdef DEBUG
-		printf("ãƒœãƒ¼ãƒ³è¡¨ç¤º\n");
+		printf("ƒ{[ƒ“•\¦\n");
 	#endif
 	
-	//è‹±å
+	//‰p–¼
 	model->eng_support = add->eng_support;
 	
 	#ifdef DEBUG
-		printf("è‹±å\n");
+		printf("‰p–¼\n");
 	#endif
 	
-	//å‰›ä½“
+	//„‘Ì
 	rbody_count = model->rbody_count + add->rbody_count;
 	rbody = (RIGID_BODY*)MALLOC((size_t)rbody_count * sizeof(RIGID_BODY));
 	
@@ -1592,9 +1592,9 @@ int add_PMD(MODEL *model, MODEL *add)
 		j++;
 	}
 	#ifdef DEBUG
-		printf("å‰›ä½“\n");
+		printf("„‘Ì\n");
 	#endif
-	//ã‚¸ãƒ§ã‚¤ãƒ³ãƒˆ
+	//ƒWƒ‡ƒCƒ“ƒg
 	joint_count = model->joint_count + add->joint_count;
 	joint = (JOINT*)MALLOC((size_t)joint_count * sizeof(JOINT));
 	
@@ -1611,7 +1611,7 @@ int add_PMD(MODEL *model, MODEL *add)
 	}
 	
 	#ifdef DEBUG
-		printf("ã‚¸ãƒ§ã‚¤ãƒ³ãƒˆ\n");
+		printf("ƒWƒ‡ƒCƒ“ƒg\n");
 	#endif
 	
 	#ifdef MEM_DBG
@@ -1716,17 +1716,17 @@ int listup_bone(MODEL *model, const char file_name[]){
 	FILE *txt;
 	
 	if(strcmp(file_name, "") == 0){
-		printf("ãƒ•ã‚¡ã‚¤ãƒ«åãŒã‚ã‚Šã¾ã›ã‚“\n");
+		printf("ƒtƒ@ƒCƒ‹–¼‚ª‚ ‚è‚Ü‚¹‚ñ\n");
 		return 1;
 	}
 	txt = fopen(file_name,"w");
 	if(txt == NULL  ){
-		fprintf(txt, "å‡ºåŠ›ãƒ†ã‚­ã‚¹ãƒˆãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã‘ã¾ã›ã‚“\n");
+		fprintf(txt, "o—ÍƒeƒLƒXƒgƒtƒ@ƒCƒ‹‚ğŠJ‚¯‚Ü‚¹‚ñ\n");
 		return 1;
 	}
 	
 	if(model->eng_support == 0){
-		printf("ãƒªã‚¹ãƒˆå‡ºåŠ›ãŒã§ãã‚‹ã®ã¯è‹±åå¯¾å¿œãƒ¢ãƒ‡ãƒ«ã®ã¿ã§ã™\n");
+		printf("ƒŠƒXƒgo—Í‚ª‚Å‚«‚é‚Ì‚Í‰p–¼‘Î‰ƒ‚ƒfƒ‹‚Ì‚İ‚Å‚·\n");
 		return 1;
 	}
 	
@@ -1736,17 +1736,17 @@ int listup_bone(MODEL *model, const char file_name[]){
 		model->header.name,
 		model->header.comment);
 	
-	fprintf(txt, "ãƒœãƒ¼ãƒ³æ•°:%d\n", model->bone_count);
+	fprintf(txt, "ƒ{[ƒ“”:%d\n", model->bone_count);
 	
 	for(i=0; i<model->bone_count; i++){
 		fprintf(txt, "%s %s\n", model->bone[i].name, model->bone[i].name_eng);
 	}
 	
-	fprintf(txt, "è¡¨æƒ…æ•°:%d\n", model->skin_count);
+	fprintf(txt, "•\î”:%d\n", model->skin_count);
 	for(i=0; i<model->skin_count; i++){
 		fprintf(txt, "%s %s\n", model->skin[i].name, model->skin[i].name_eng);
 	}
-	fprintf(txt, "ãƒœãƒ¼ãƒ³æ æ•°:%d\n", model->bone_group_count);
+	fprintf(txt, "ƒ{[ƒ“˜g”:%d\n", model->bone_group_count);
 	for(i=0; i<model->bone_group_count; i++){
 		strcpy(str, model->bone_group[i].name);
 		p = strchr( str, '\n' );
@@ -1764,7 +1764,7 @@ int get_file_name(char file_name[])
 {
 	int i;
 	char input[256];
-	printf("ãƒ•ã‚¡ã‚¤ãƒ«å:");
+	printf("ƒtƒ@ƒCƒ‹–¼:");
 	gets(input);
 	if(input[0] == '\"'){
 		for(i=1; i<256; i++){
