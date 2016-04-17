@@ -270,10 +270,10 @@ def Set_Name_Comment(num=0,name='',comment='',name_eng='',comment_eng=''):
 
 class Observable:
     def __init__(self):
-        self.observers = set()
+        self.observers = []
 
     def add(self, callback):
-        self.observers.add(callback)
+        self.observers.append(callback)
         return lambda : self.observers.remove(callback)
 
     def notify(self, *args):

@@ -110,6 +110,7 @@ class Model:
 
 class ModelVBO:
     def __init__(self, vertices, uvs, indices, colors, paths, indexCounts):
+        logger.debug('ModelVBO')
         self.is_initialized=False
         self.vertices=vertices
         self.uvs=uvs
@@ -121,6 +122,7 @@ class ModelVBO:
     def initilaize(self):
         if(self.is_initialized):return
         self.is_initialized=True
+        logger.debug('ModelVBO.initialize')
 
         self.buffers = glGenBuffers(3)
         # vertices

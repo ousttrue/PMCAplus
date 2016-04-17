@@ -434,7 +434,7 @@ class MainFrame(QtGui.QMainWindow):
         dock.setWidget(widget)
         self.addDockWidget(area, dock)
 
-    def bind_pmca(self, pmca):
+    def bind_pmca(self, pmca: PyPMCA.PyPMCA):
         logger.info('bind_pmca')
         self.parts_tab.bind_pmca(pmca.parts_tree)
         self.material_tab.bind_pmca(pmca.materials)
@@ -444,6 +444,7 @@ class MainFrame(QtGui.QMainWindow):
         # OpenGL
         #
         def update_gl():
+            logger.debug('repaint')
             self.glframe.repaint()
         pmca.model_update_observable.add(update_gl)
 

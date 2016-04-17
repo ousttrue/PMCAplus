@@ -375,14 +375,14 @@ class PartsTree:
         self.tree_list[0].node.text_to_node(self.parts_list, lines)
         self.__update_tree_entry()
 
-    def __update_tree_entry(self):
+    def __update_tree_entry(self, sel=-1, parts_sel=-1):
         '''
         ツリーリスト更新
         '''
         self.tree_entry=[x for x in self.tree_list[0].node.create_list()][1:]
         self.tree_current=-1
         self.parts_entry=[]
-        self.parts_current=-1
+        self.parts_current=parts_sel
         def get_name(x):
             i=x.c_num
             joint=x.node.parts.joint[i]
@@ -391,8 +391,8 @@ class PartsTree:
                 return "%s#%s => %s" %('  '*x.depth, joint, node.parts.name)
             else:
                 return "%s#%s" % ('  '*x.depth, joint) 
-        self.tree_entry_observable.notify([get_name(x) for x in self.tree_entry], 0)
-        self.select_node(0)
+        self.tree_entry_observable.notify([get_name(x) for x in self.tree_entry], sel)
+        self.select_node(sel)
 
     def __update_parts_entry(self):
         '''
@@ -480,7 +480,7 @@ class PartsTree:
         self.tree_entry[self.tree_current].node.child[self.tree_entry[self.tree_current].c_num] = node
         #self.tree_list[sel_t].node.list_num = sel
 
-        self.__update_tree_entry()
+        self.__update_tree_entry(self.tree_current, self.parts_current)
 
     def build(self):
         '''

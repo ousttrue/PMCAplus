@@ -14,7 +14,7 @@ from logging import getLogger
 logger = getLogger(__name__)
 
 
-APP_NAME = 'PMCA v0.0.6r10'
+APP_NAME = 'PMCA+ v0.0.1'
 
 
 def load_list(fp):
@@ -102,6 +102,7 @@ class PyPMCA:
         if self.update_level<0:
             # モデルの更新なし
             return
+        logger.debug('update_level %d', self.update_level)
 
         if self.update_level < 1:
             self.parts_tree.build()
