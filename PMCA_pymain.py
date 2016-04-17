@@ -21,8 +21,8 @@ logging.basicConfig(
 
 
 def filter(r: logging.LogRecord):
-    if r.name.startswith('PIL.'):
-        return False
+    if r.name.startswith('PIL.'):return False
+    if r.name.startswith('glglue.'):return False
     return True
 for h in logging.getLogger().handlers:
     h.addFilter(filter)

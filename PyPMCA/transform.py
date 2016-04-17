@@ -161,10 +161,12 @@ class BONE_TRANS_DATA:
 
 class BodyTransform:
     def __init__(self):
+        self.transform_observable=Observable()
+        self.transform_select_observable=Observable()
+        self.transform_sel=-1
         self.transform_data = []
         self.transform_list = []
         self.transform_data=[MODEL_TRANS_DATA(scale=1.0, bones=[], props={})]
-        self.transform_observable=Observable()
 
     def refresh(self):
         self.transform_observable.notify()
@@ -182,14 +184,8 @@ class BodyTransform:
     def load_CNL_lines(self, lines):
         self.transform_data[0].text_to_list(lines)
 
-    def select_body(self, frame, sel):
-        buff=''
-        
-        for x in self.transform_list[sel].bones:
-            buff += '%s %f %f\n'%(x.name,x.length,x.thick)
-        
-        t = self.transform_list[sel]
-        
+    def build_dialog(self, t: MODEL_TRANS_DATA):
+        # buidl dialog
         root = Toplevel()
         root.fancs = PMCA_dialogs.SCALE_DIALOG_FANC(self,root, sel)
         
@@ -201,6 +197,7 @@ class BodyTransform:
         root.frame1 = Frame(root)
         root.frame2 = Frame(root)
         
+        buff="".join('%s %f %f\n'%(x.name,x.length,x.thick) for x in t.bones)       
         Label(root, text = buff).grid(row=0, padx=10, pady=5)
         
         root.frame1.spinbox = Spinbox(root.frame1, from_=-100, to=100, increment=0.02, format = '%.3f', textvariable=root.fancs.tvar, width=5, command=root.fancs.change_spinbox)
@@ -217,7 +214,20 @@ class BodyTransform:
         Button(root.frame2, text = 'OK', command = root.fancs.OK).pack(side="right", padx=5)
         Button(root.frame2, text = 'Cancel', command = root.fancs.CANCEL).pack(side="left", padx=5)
         root.frame2.grid(row=2, sticky="e", padx=10, pady=5)
+        return root
+
+    def select_body(self, frame, sel):
+        '''
+        Transform listの選択に応じてTkinterのダイアログを表示する
+        '''
+        root=self.build_dialog(self.transform_list[sel])
         root.mainloop()
+
+    def select_transform(self, sel):
+        if self.transform_sel==sel:return
+        self.transform_sel=sel
+        t = self.transform_list[sel]
+        self.transform_select_observable.notify(t)
 
     def update(self):
         info_data = PMCA.getInfo(0)

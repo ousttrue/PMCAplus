@@ -155,9 +155,208 @@ class MaterialTab(QtGui.QWidget):
         self.color_list.selectionModel().selectionChanged.connect(color_selected)
 
 
+class FloatSlider(QtGui.QWidget):
+    valueChanged = QtCore.pyqtSignal(float)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        sbox=QtGui.QHBoxLayout()
+        self.min=QtGui.QLabel()
+        sbox.addWidget(self.min)
+
+        self.sld = QtGui.QSlider(QtCore.Qt.Horizontal, self)
+        self.sld.setFocusPolicy(QtCore.Qt.NoFocus)
+        #self.sld.setMinimum(t.limit[0])
+        #self.sld.setMaximum(t.limit[1])
+        self.sld.setRange(0, 500)
+
+        #self.sld.setGeometry(30, 40, 100, 30)
+        sbox.addWidget(self.sld)
+
+        self.max=QtGui.QLabel()
+        sbox.addWidget(self.max)
+
+        self.value=QtGui.QDoubleSpinBox()
+        sbox.addWidget(self.value)
+
+        self.setLayout(sbox)
+
+        def on_value_value_changed(value):
+            logger.debug('on_value_value_changed')
+            self.sld.setValue(self.to_sld(value))
+            self.valueChanged.emit(value)
+        self.value.valueChanged.connect(on_value_value_changed)
+        def on_sld_value_changed(sld_value):
+            logger.debug('on_sld_value_changed')
+            value=self.from_sld(sld_value)
+            self.value.setValue(value)
+            self.valueChanged.emit(value)
+        self.sld.valueChanged.connect(on_sld_value_changed)
+
+        self.setRange(0, 1)
+        self.setValue(0.5)
+
+    def from_sld(self, value):
+        return self.range[0] + (self.range[1]-self.range[0])*(value/500.0)
+
+    def to_sld(self, value):
+        return 500.0 * (value-self.range[0])/(self.range[1]-self.range[0])
+
+    def setRange(self, min, max):
+        self.range=(min, max)
+        self.min.setText(str(min))
+        self.max.setText(str(max))
+
+    def setValue(self, value):
+        logger.debug('setValue %f', value)
+        self.value.setValue(value)
+        self.sld.setValue(self.to_sld(value))
+
+
 class TransformWidget(QtGui.QWidget):
     def __init__(self):
         super().__init__()
+        self.build_gui()
+        self.transform=None
+
+    def build_gui(self):
+        vbox=QtGui.QVBoxLayout()
+
+        self.text=QtGui.QLabel()
+        vbox.addWidget(self.text)
+
+        vbox.addStretch(1)
+
+        self.slider=FloatSlider()
+        vbox.addWidget(self.slider)
+
+        # button
+        hbox=QtGui.QHBoxLayout()
+
+        self.ok=QtGui.QPushButton('OK')
+        hbox.addWidget(self.ok)
+
+        self.cancel=QtGui.QPushButton('Cancel')
+        hbox.addWidget(self.cancel)
+
+        vbox.addLayout(hbox)
+
+        self.setLayout(vbox)
+
+    def bind_pmca(self, transforms: PyPMCA.BodyTransform):
+        def on_value_changed(value):
+            logger.debug('on_value_changed %f', value)
+            pass
+        self.slider.valueChanged.connect(on_value_changed)
+
+    def set(self, t: PyPMCA.MODEL_TRANS_DATA):
+        if self.transform==t: return
+        self.transform=t
+        logger.debug('set %f - %f', t.limit[0], t.limit[1])
+        self.text.setText("".join('%s %f %f\n'%(x.name,x.length,x.thick) for x in t.bones))
+        self.slider.setRange(*t.limit)
+        self.slider.setValue((t.limit[0] + t.limit[1])/2)
+        
+        '''
+    def changeValue(self, value):
+        self.sld.valueChanged.connect(self.changeValue)
+        logger.debug('slider %f', value)
+        '''
+
+    def x__init__(self, app, root, sel):
+        self.app =app
+        self.root=root
+        self.sel =sel
+        self.root.title(self.app.transform_list[self.sel].name)
+        self.var =None
+        self.tvar =StringVar()
+        self.refbone = []
+        self.refbone_index=[]
+        
+        self.app.transform_data.append(PyPMCA.MODEL_TRANS_DATA(name = self.app.transform_list[self.sel].name ,scale=1.0, bones=[], pos=[0.0, 0.0, 0.0], rot=[0.0, 0.0, 0.0], props={}))
+        self.data = self.app.transform_data[-1]
+        for i,x in enumerate(self.app.transform_list[self.sel].bones):
+            self.data.bones.append(PyPMCA.BONE_TRANS_DATA(name=x.name))
+    
+    def CANCEL(self):
+        self.app.transform_data.remove(self.data)
+        self.app.refresh()
+        self.root.winfo_toplevel().destroy()
+        self.root.quit()
+    
+    def OK(self):
+        self.app.transform_data[0].scale = self.data.scale * self.app.transform_data[0].scale
+        for i,x in enumerate(self.app.transform_data[0].pos):
+            x += self.data.pos[i]
+        for i,x in enumerate(self.app.transform_data[0].rot):
+            x += self.data.rot[i]
+        for x in self.data.bones:
+            tmp = None
+            for y in self.app.transform_data[0].bones:
+                if y.name==x.name:
+                    tmp = y
+                    break
+            else:
+                self.app.transform_data[0].bones.append(PyPMCA.BONE_TRANS_DATA(name=x.name))
+                tmp = self.app.transform_data[0].bones[-1]
+            
+            tmp.length = tmp.length*x.length
+            tmp.thick = tmp.thick * x.thick
+            for i,y in enumerate(tmp.pos):
+                y += x.pos[i]
+            for i,y in enumerate(tmp.rot):
+                y += x.rot[i]
+        self.app.transform_data.remove(self.data)
+        self.app.refresh()
+        
+        self.root.winfo_toplevel().destroy()
+        self.root.quit()
+        
+        
+    def change_scale(self, event):
+        var = self.var.get()
+        self.tvar.set('%.3f'%var)
+        
+        self.change_var(var)
+    
+    def change_spinbox(self):
+        var = float(self.tvar.get())
+        self.var.set(var)
+        self.change_var(var)
+    
+    def enter_spinbox(self, event):
+        try:
+            var = float(self.tvar.get())
+        except:
+            var = self.var.get()
+            return None
+        
+        self.tvar.set('%.3f'%var)
+        self.var.set(var)
+        self.change_var(var)
+    
+    def change_var(self, var):
+        weight = self.app.transform_list[self.sel].scale
+        self.data.scale = weight * var+1-weight
+        
+        weight = self.app.transform_list[self.sel].pos
+        for i,x in enumerate(weight):
+            self.data.pos[i] = x * var
+        
+        weight = self.app.transform_list[self.sel].rot
+        for i,x in enumerate(weight):
+            self.data.rot[i] = x * var
+
+       
+        for i,x in enumerate(self.app.transform_list[self.sel].bones):
+            self.data.bones[i].length = x.length * var+1-x.length
+            self.data.bones[i].thick = x.thick * var+1-x.thick
+            for j,y in enumerate(x.pos):
+                self.data.bones[i].pos[j] = y * var
+            for j,y in enumerate(x.rot):
+                self.data.bones[i].rot[j] = y * var
+        self.app.refresh()
 
 
 class TransformTab(QtGui.QWidget):
@@ -171,7 +370,9 @@ class TransformTab(QtGui.QWidget):
         self.transform_list.setModel(self.transform_model)
         hbox.addWidget(self.transform_list)
         # right
-        hbox.addWidget(TransformWidget())
+        self.transform_widget=TransformWidget()
+        hbox.addWidget(self.transform_widget)
+
         # set
         self.setLayout(hbox)
 
@@ -179,14 +380,20 @@ class TransformTab(QtGui.QWidget):
         # pmca to gui
         self.transform_model.setEntries(transforms.tmp)
 
+        def on_transform_select(t: PyPMCA.MODEL_TRANS_DATA):
+            self.transform_widget.set(t)
+        transforms.transform_select_observable.add(on_transform_select)
+
         # gui to pmca
         def transform_selected(selected, deselected):
             if(len(selected)==0):return
             range=selected[0]
             index=range.top()
             logger.debug('transform_selected %d', index)
-            #transforms.select_body(None, index)
+            transforms.select_transform(index)
         self.transform_list.selectionModel().selectionChanged.connect(transform_selected)
+
+        self.transform_widget.bind_pmca(transforms)
 
 
 class InfoTab(QtGui.QWidget):
@@ -206,23 +413,23 @@ class MainFrame(QtGui.QMainWindow):
 
         # parts
         self.parts_tab=PartsTab()
-        self.add_widget('Tree', self.parts_tab)
+        self.add_widget('Tree', self.parts_tab, QtCore.Qt.LeftDockWidgetArea)
         # material
         self.material_tab=MaterialTab()
-        self.add_widget('Color', self.material_tab)
+        self.add_widget('Color', self.material_tab, QtCore.Qt.RightDockWidgetArea)
         # transform
         self.transform_tab=TransformTab()
-        self.add_widget('Transform', self.transform_tab)
+        self.add_widget('Transform', self.transform_tab, QtCore.Qt.RightDockWidgetArea)
         # info
         self.info_tab=InfoTab()
-        self.add_widget('Info', self.info_tab)
+        self.add_widget('Info', self.info_tab, QtCore.Qt.LeftDockWidgetArea)
 
         # logger
         self.logger = QtGui.QPlainTextEdit()
         self.logger.setReadOnly(True)    
         self.add_widget('Logger', self.logger, QtCore.Qt.BottomDockWidgetArea)
 
-    def add_widget(self, name: str, widget, area=QtCore.Qt.RightDockWidgetArea):
+    def add_widget(self, name: str, widget, area):
         dock = QtGui.QDockWidget(name, self)
         dock.setWidget(widget)
         self.addDockWidget(area, dock)

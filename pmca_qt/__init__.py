@@ -45,7 +45,7 @@ def App(pmca, scene):
     pmca.model_update_observable.add(update_gl)
 
     w=MainFrame(controller)
-    w.resize(800, 600)
+    w.resize(1024, 600)
     #w.setGeometry(300, 300, 250, 150)
     w.show()
     w.bind_pmca(pmca)
