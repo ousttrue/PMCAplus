@@ -6,8 +6,7 @@
     <ProjectGuid>{13fd63b0-76ac-4c82-bbac-c16311812adb}</ProjectGuid>
     <ProjectHome />
     <StartupFile>PMCA_pymain.py</StartupFile>
-    <SearchPath>
-    </SearchPath>
+    <SearchPath>glglue\</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>

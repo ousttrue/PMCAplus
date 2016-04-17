@@ -155,9 +155,38 @@ class MaterialTab(QtGui.QWidget):
         self.color_list.selectionModel().selectionChanged.connect(color_selected)
 
 
+class TransformWidget(QtGui.QWidget):
+    def __init__(self):
+        super().__init__()
+
+
 class TransformTab(QtGui.QWidget):
     def __init__(self):
         super().__init__()
+        hbox = QtGui.QHBoxLayout()
+        # left
+        self.transform_model=ListModel()
+        self.transform_list = QtGui.QListView()
+        self.transform_list.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
+        self.transform_list.setModel(self.transform_model)
+        hbox.addWidget(self.transform_list)
+        # right
+        hbox.addWidget(TransformWidget())
+        # set
+        self.setLayout(hbox)
+
+    def bind_pmca(self, transforms: PyPMCA.BodyTransform):
+        # pmca to gui
+        self.transform_model.setEntries(transforms.tmp)
+
+        # gui to pmca
+        def transform_selected(selected, deselected):
+            if(len(selected)==0):return
+            range=selected[0]
+            index=range.top()
+            logger.debug('transform_selected %d', index)
+            #transforms.select_body(None, index)
+        self.transform_list.selectionModel().selectionChanged.connect(transform_selected)
 
 
 class InfoTab(QtGui.QWidget):
@@ -202,6 +231,7 @@ class MainFrame(QtGui.QMainWindow):
         logger.info('bind_pmca')
         self.parts_tab.bind_pmca(pmca.parts_tree)
         self.material_tab.bind_pmca(pmca.materials)
+        self.transform_tab.bind_pmca(pmca.transform)
 
         #
         # OpenGL

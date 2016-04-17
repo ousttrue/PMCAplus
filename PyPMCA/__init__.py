@@ -96,6 +96,7 @@ class PyPMCA:
     def force_update_entry(self):
         self.parts_tree.update()
         self.materials.force_update()
+        #self.transform.update_list()
 
     def update(self):
         if self.update_level<0:
