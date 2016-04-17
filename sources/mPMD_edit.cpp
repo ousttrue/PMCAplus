@@ -8,9 +8,6 @@
 #include "mPMD.h"
 #include "debug_io.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 int translate(MODEL *model, LIST *list, short mode)
 {
@@ -1539,7 +1536,3 @@ int show_detail(MODEL *model)
 	printf("ƒWƒ‡ƒCƒ“ƒg”:%d\n\n", model->joint_count);
 	return 0;
 }
-
-#ifdef __cplusplus
-}
-#endif

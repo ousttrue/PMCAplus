@@ -1,8 +1,6 @@
+#pragma once
 #include "mPMD.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 int translate(MODEL *model, LIST *list, short mode);
 
@@ -42,9 +40,3 @@ int add_PMD(MODEL *model, MODEL *add);
 int listup_bone(MODEL *model, const char file_name[]);
 
 int get_file_name(char file_name[]);
-
-
-
-#ifdef __cplusplus
-}
-#endif

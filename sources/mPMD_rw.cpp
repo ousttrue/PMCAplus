@@ -7,9 +7,6 @@
 #include "mPMD.h"
 #include "debug_io.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 int load_list(LIST *list, const char file_name[])
 {
@@ -1744,8 +1741,3 @@ int get_file_name(char file_name[])
 	
 	return 0;
 }
-
-#ifdef __cplusplus
-}
-#endif
-
