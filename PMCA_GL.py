@@ -4,6 +4,9 @@ import ctypes
 from glglue.sample import *
 from OpenGL.GL import *
 from PIL import Image
+from logging import getLogger
+logger = getLogger(__name__)
+
 
 DELEGATE_PATTERN=re.compile('^on[A-Z]')
 VELOCITY=0.1
@@ -27,9 +30,9 @@ class Texture(object):
     def createTexture(self):
         self.id=glGenTextures(1)
         if self.id==0:
-            print("fail to glGenTextures")
+            logger.warn("fail to glGenTextures")
             return False
-        print("createTexture: %d" % self.id)
+        #logger.debug("createTexture: %d", self.id)
 
         channels=len(self.image.getbands())
         w, h=self.image.size
@@ -39,15 +42,17 @@ class Texture(object):
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         if channels==4:
-            print("RGBA")
+            #logger.debug("GL_RGBA")
             glPixelStorei(GL_UNPACK_ALIGNMENT, 4)
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 
                     0, GL_RGBA, GL_UNSIGNED_BYTE, self.image.tobytes())
         elif channels==3:
-            print("RGB")
+            #logger.debug("GL_RGB")
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 
                     0, GL_RGB, GL_UNSIGNED_BYTE, self.image.tobytes())
+        else:
+            logger.warn("unsport channels: %d", channels)
 
     def begin(self):
         if not self.isInitialized:
@@ -56,15 +61,16 @@ class Texture(object):
                 if not self.image:
                     self.image=Image.open(self.path)
                     if self.image:
-                        print("load image:", self.path)
+                        #logger.debug("load image: %s", self.path)
+                        pass
                     else:
-                        print("failt to load image:", self.path)
+                        logger.warn("failt to load image: %s", self.path)
                         return
                 # createTexture
                 if self.image:
                     self.createTexture()
             except Exception as e:
-                print(e)
+                logger.error(e)
                 return
             finally:
                 self.isInitialized=True
@@ -208,7 +214,6 @@ class GLController(object):
         self.root.onUpdate(ms)
 
     def onKeyDown(self, key):
-        #print("onKeyDown: %x" % key)
         if key==ord('\033'):
             # Escape
             sys.exit()
@@ -216,7 +221,7 @@ class GLController(object):
             # q
             sys.exit()
         else:
-            print(key)
+            logger.debug(key)
 
     def onInitialize(*args):
         pass

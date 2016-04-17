@@ -82,6 +82,7 @@ class PyPMCA:
         self.settings = SETTINGS()
         self.target_dir = './model/'
         self.init()
+        self.update_level=-1
 
         def on_update(level):
             def __internal(*args):

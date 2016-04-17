@@ -15,6 +15,8 @@ import PyPMCA
 
 from tkinter import *
 from tkinter.ttk import *
+from logging import getLogger
+logger = getLogger(__name__)
 
 
 class QUIT:
@@ -71,8 +73,6 @@ class SCALE_DIALOG_FANC:
                 y += x.rot[i]
         self.app.transform_data.remove(self.data)
         self.app.refresh()
-        for x in self.app.transform_data[0].bones:
-            print(x.name)
         
         self.root.winfo_toplevel().destroy()
         self.root.quit()
@@ -111,13 +111,8 @@ class SCALE_DIALOG_FANC:
         weight = self.app.transform_list[self.sel].rot
         for i,x in enumerate(weight):
             self.data.rot[i] = x * var
-        '''
-        print(var)
-        print(self.app.transform_list[self.sel].pos)
-        print(self.data.pos)
-        '''
-        
-        #print(self.app.transform_list[self.sel].name, len(self.app.transform_list[self.sel].bones))
+
+       
         for i,x in enumerate(self.app.transform_list[self.sel].bones):
             self.data.bones[i].length = x.length * var+1-x.length
             self.data.bones[i].thick = x.thick * var+1-x.thick
@@ -143,5 +138,3 @@ class SETTING_DIALOG_FANC:
     def OK(self):
         self.root.winfo_toplevel().destroy()
         self.root.quit()
-        
-
