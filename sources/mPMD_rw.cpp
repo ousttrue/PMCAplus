@@ -1,111 +1,72 @@
-/*PMD関係のライブラリ、読み込み書き込み系*/
-
+#include "mPMD_rw.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <memory.h>
-
+#include <string.h>
 #include "mPMD.h"
+#include "debug_io.h"
 
-size_t dbg_fread(void* p, size_t s, size_t n, FILE* fp){
-	size_t r;
-	if(s*n == 0)return 0;
-	r = fread(p, s, n, fp);
-	if(r < n){
-		printf("ファイル読み込みに失敗\nFILE:%p\nn:%d < %d\n", fp, (int)r, (int)n);
-		exit(1);
-	}
-	
-	return r;
-}
-
-void* dbg_fgets(char* p, size_t s, FILE* fp){
-	void* r;
-	r = fgets(p, s, fp);
-	if(r == NULL){
-		printf("ファイル読み込みに失敗\nFILE:%p %p\n", fp, r);
-		exit(1);
-	}
-	
-	return r;
-}
-
-void* dbg_malloc(size_t s){
-	void *p;
-	p = malloc(s);
-	if(p==NULL){
-		puts("メモリの確保に失敗しました");
-		exit(-1);
-	}
-	//printf("malloc:%p\n", p);
-	return p;
-}
-
-
-void dbg_free(void* p){
-	//printf("free:%p\n", p);
-	if(p==NULL)return 0;
-	free(p);
-	p = NULL;
-	//exit(1);
-}
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int load_list(LIST *list, const char file_name[])
 {
 	int i;
 	char str[256];
 	FILE *lst_file;
-	
-	if(strcmp(file_name, "") == 0){
+
+	if (strcmp(file_name, "") == 0) {
 		printf("ファイル名がありません\n");
 		return 1;
 	}
-	
-	lst_file = fopen(file_name,"r");
-	if(lst_file == NULL){
+
+	lst_file = fopen(file_name, "r");
+	if (lst_file == NULL) {
 		printf("ファイル %s を開けません\n", file_name);
 		return 1;
 	}
 	FGETS(str, 256, lst_file);
-	
+
 	i = 0;
-	while(FGETS(str, 256, lst_file)!=NULL){
-		if(strcmp(str, "skin\n") == 0)break;
+	while (FGETS(str, 256, lst_file) != NULL) {
+		if (strcmp(str, "skin\n") == 0)break;
 		i++;
 	}
 	list->bone_count = i;
 	i = 0;
-	while(FGETS(str, 256, lst_file)!=NULL){
-		if(strcmp(str, "bone_disp\n") == 0)break;
+	while (FGETS(str, 256, lst_file) != NULL) {
+		if (strcmp(str, "bone_disp\n") == 0)break;
 		i++;
 	}
 	list->skin_count = i;
-	
+
 	i = 0;
-	while(FGETS(str, 256, lst_file)!=NULL){
-		if(strcmp(str, "end\n") == 0)break;
+	while (FGETS(str, 256, lst_file) != NULL) {
+		if (strcmp(str, "end\n") == 0)break;
 		i++;
 	}
 	list->disp_count = i;
-	
+
 	fclose(lst_file);
-	lst_file = fopen(file_name,"r");
-	if(lst_file == NULL){
+	lst_file = fopen(file_name, "r");
+	if (lst_file == NULL) {
 		printf("ファイル %s を開けません\n", file_name);
 		return 1;
 	}
-	
-	
+
+
 	printf("リストボーン数:%d\n", list->bone_count);
 	printf("リスト表情数:%d\n", list->skin_count);
 	printf("リスト表示枠数:%d\n", list->disp_count);
-	
-	list->bone = MALLOC((size_t)list->bone_count * sizeof(char)* NAME_LEN);
-	list->bone_eng = MALLOC((size_t)list->bone_count * sizeof(char)*NAME_LEN);
-	list->skin = MALLOC((size_t)list->skin_count * sizeof(char)*NAME_LEN);
-	list->skin_eng = MALLOC((size_t)list->skin_count * sizeof(char)*NAME_LEN);
-	list->disp = MALLOC((size_t)list->disp_count * sizeof(char)*NAME_LEN);
-	list->disp_eng = MALLOC((size_t)list->disp_count * sizeof(char)*NAME_LEN);
+
+	list->bone = (char(*)[128])MALLOC((size_t)list->bone_count * sizeof(char)* NAME_LEN);
+	list->bone_eng = (char(*)[128])MALLOC((size_t)list->bone_count * sizeof(char)*NAME_LEN);
+	list->skin = (char(*)[128])MALLOC((size_t)list->skin_count * sizeof(char)*NAME_LEN);
+	list->skin_eng = (char(*)[128])MALLOC((size_t)list->skin_count * sizeof(char)*NAME_LEN);
+	list->disp = (char(*)[128])MALLOC((size_t)list->disp_count * sizeof(char)*NAME_LEN);
+	list->disp_eng = (char(*)[128])MALLOC((size_t)list->disp_count * sizeof(char)*NAME_LEN);
 	if(list->bone == NULL)return -1;
 	if(list->bone_eng == NULL)return -1;
 	if(list->skin == NULL)return -1;
@@ -1765,7 +1726,7 @@ int get_file_name(char file_name[])
 	int i;
 	char input[256];
 	printf("ファイル名:");
-	gets(input);
+	fgets(input, 256, stdin);
 	if(input[0] == '\"'){
 		for(i=1; i<256; i++){
 			file_name[i-1] = input[i];
@@ -1784,4 +1745,7 @@ int get_file_name(char file_name[])
 	return 0;
 }
 
+#ifdef __cplusplus
+}
+#endif
 

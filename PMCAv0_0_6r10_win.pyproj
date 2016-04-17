@@ -165,12 +165,6 @@
     <Content Include="parts\tex_sources\emblem02.svg" />
     <Content Include="parts\tex_sources\mark1.png" />
     <Content Include="PMCA.pyd" />
-    <Content Include="sources\mlib_PMD_edit01.c" />
-    <Content Include="sources\mlib_PMD_rw01.c" />
-    <Content Include="sources\mPMD.h" />
-    <Content Include="sources\PMCA.h" />
-    <Content Include="sources\PMCA_PyMod.c" />
-    <Content Include="sources\データ構造.odg" />
     <Content Include="toon\toon_mt_hair_bl01.bmp" />
     <Content Include="toon\toon_mt_hair_br01.bmp" />
     <Content Include="りどみ.txt" />

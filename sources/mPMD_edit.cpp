@@ -1,14 +1,16 @@
-/*PMD関係のライブラリ、PMD編集など */
-
+#include "mPMD_edit.h"
 #include <stdio.h>
 #include <stdlib.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <memory.h>
-
-//#define DLLExport edit
+#include <string.h>
 #include "mPMD.h"
+#include "debug_io.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int translate(MODEL *model, LIST *list, short mode)
 {
@@ -150,13 +152,10 @@ int sort_bone(MODEL *model, LIST *list)
 {
 		int i, j;
 	int tmp;
-	int *index;
-	BONE *bone;
+
 	
-	
-	
-	index = malloc(model->bone_count * sizeof(int));
-	bone = malloc(model->bone_count * sizeof(BONE));
+	auto index = (int*)malloc(model->bone_count * sizeof(int));
+	auto bone = (BONE*)malloc(model->bone_count * sizeof(BONE));
 	
 	#ifdef MEM_DBG
 		printf("malloc %p %p\n", index, bone);
@@ -274,14 +273,14 @@ int sort_bone(MODEL *model, LIST *list)
 int update_bone_index(MODEL *model,int index[])
 {
 	int i, j;
-	unsigned short (*tmp_vt)[2];
+
 	IK_LIST *tmp_ik;
 	unsigned short *tmp_disp;
 	char (*tmp_eng)[20];
 	unsigned short *tmp_rb;
 	
 	//頂点のボーン番号を書き換え
-	tmp_vt = malloc(sizeof(unsigned short)*2*model->vt_count);
+	auto tmp_vt = (unsigned short(*)[2])malloc(sizeof(unsigned short)*2*model->vt_count);
 	#ifdef MEM_DBG
 		printf("malloc %p\n", tmp_vt);
 	#endif
@@ -627,14 +626,11 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz)
 	
 	double tmp[3];
 	
-	double (*tmp_vt)[3];
 	unsigned int len_vt;
 	unsigned int *index_vt;
 	
-	double (*tmp_bone)[3];
 	unsigned int len_bone;
 	unsigned int *index_bone;
-	double (*diff_bone)[3];
 	
 	//ベクトルがY軸に沿う向きになるようにする
 	if(bone_vec(model, index, loc, vec) < 0)return -1;
@@ -704,7 +700,7 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz)
 			len_vt++;
 		}
 	}
-	tmp_vt = (double*)MALLOC(sizeof(double) * len_vt * 3);
+	auto tmp_vt = (double(*)[3])MALLOC(sizeof(double) * len_vt * 3);
 	index_vt = (unsigned int*)MALLOC(sizeof(unsigned int)*len_vt);
 	j = 0;
 	for(i=0; i<model->vt_count; i++){
@@ -723,8 +719,8 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz)
 			len_bone++;
 		}
 	}
-	tmp_bone = (double*)MALLOC(sizeof(double) * len_bone * 3);
-	diff_bone = (double*)MALLOC(sizeof(double) * len_bone * 3);
+	auto tmp_bone = (double(*)[3])MALLOC(sizeof(double) * len_bone * 3);
+	auto diff_bone = (double(*)[3])MALLOC(sizeof(double) * len_bone * 3);
 	index_bone = (unsigned int*)MALLOC(sizeof(unsigned int)*len_bone);
 	j = 0;
 	for(i=0; i<model->bone_count; i++){
@@ -1543,3 +1539,7 @@ int show_detail(MODEL *model)
 	printf("ジョイント数:%d\n\n", model->joint_count);
 	return 0;
 }
+
+#ifdef __cplusplus
+}
+#endif

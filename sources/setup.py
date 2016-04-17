@@ -7,7 +7,7 @@ module1 = Extension(
     'PMCA'
     , sources = [
         'PMCA_PyMod.c', 
-        'mPMD_edit.c',
+        'mPMD_edit.cpp',
         'mPMD_rw.c',
         ]
     , include_dirs = [
