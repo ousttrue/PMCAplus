@@ -5,7 +5,6 @@ fullpython化しようとしていたが、モデル編集部分はCじゃない
 # Bug
 * [ ] ファイル/新規
 * [ ] ファイル/読み込み sample2.cnl
-* [ ] Materialリストの更新
 
 # ToDo
 * [ ] Info
@@ -24,4 +23,5 @@ fullpython化しようとしていたが、モデル編集部分はCじゃない
 * GUIをtkinterからPyQt4に変更
 * Python3.2 32bitからPython3.5 64bit(Anaconda)
 * PMCA.pydからOpenGL関連をPyOpenGLに移動
+* PARTS定義をAssetsディレクトリに移動
 

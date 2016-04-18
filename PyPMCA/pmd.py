@@ -50,7 +50,10 @@ class MATERIAL:
 		self.sph = sph.decode('cp932','replace')
 		self.tex_path = tex_path.decode('cp932','replace')
 		self.sph_path = sph_path.decode('cp932','replace')
-		
+
+	def __str__(self):
+		return "<MATERIAL:{0}>".format(self.tex)
+
 
 class BONE:
 	def __init__(self, name, name_eng, parent, tail, btype, IK, loc):

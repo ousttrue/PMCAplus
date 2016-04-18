@@ -7,13 +7,12 @@ from logging import getLogger
 logger = getLogger(__name__)
 
 
-def load_translist(fp, trans_list):
+def load_translist(lines, trans_list):
 	trans_list.append(MODEL_TRANS_DATA(bones=[]))
 	
-	line = fp.readline()
 	mode = 0
 	
-	while line:
+	for line in lines:
 		line = line.rstrip('\n').replace('\t',' ').split(' ', 1)
 		if line[0]=='':
 			pass
@@ -60,7 +59,7 @@ def load_translist(fp, trans_list):
 				trans_list[-1].props[line[0][1:-1]].append(line[1])
 			else:
 				trans_list[-1].props[line[0][1:-1]] = [line[1]]
-		line = fp.readline()
+
 	'''
 	mats_list.append(mats_list[-1])
 	if mats_list[-1].entries[-1].__class__.__name__ == 'MATS_ENTRY':
@@ -172,8 +171,8 @@ class BodyTransform:
     def refresh(self):
         self.transform_observable.notify()
 
-    def load_transformlist(self, fp):
-        self.transform_list = load_translist(fp, self.transform_list)
+    def load_transformlist(self, lines):
+        self.transform_list = load_translist(lines, self.transform_list)
         self.tmp = []
         for x in self.transform_list:
             self.tmp.append(x.name)

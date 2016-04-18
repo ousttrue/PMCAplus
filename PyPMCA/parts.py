@@ -9,57 +9,49 @@ logger = getLogger(__name__)
 sysenc = sys.getfilesystemencoding()
 
 
-def load_partslist(fp, parts_list):
-    directry = ''
+def parse_partslist(assetdir, lines):
+    parts_dir = assetdir
     active = PARTS(props = {})
-    line = fp.readline()
-    while line:
-        line = line.rstrip('\n').replace('\t',' ').split(' ', 1)
-        if line[0]=='':
-            pass
-        if line[0][:1]=='#':
-            pass
-        elif line[0]=='SETDIR':
-            directry = line[1]
-        
-        elif line[0]=='NEXT':
-            parts_list.append(active)
+    for line in (l.strip().replace('\t',' ') for l in lines):
+        if line=='':continue
+        if line.startswith('#'):continue
+        if line=='NEXT':
+            yield active
             active = PARTS(props = {})
-        
-        elif len(line)<2:
-            pass
-        elif line[0]=='[name]':
-            active.name = line[1]
-        elif line[0]=='[path]':
-            active.path = directry+line[1]
-        elif line[0]=='[comment]':
-            active.comment = line[1]
-        elif line[0]=='[type]':
-            active.type = active.type+line[1].split(',')
-        elif line[0]=='[joint]':
-            active.joint = active.joint+line[1].split(',')
-        elif line[0][:1] == '[' and line[0][-1:] == ']':
-            if line[0][1:-1] in active.props:
-                active.props[line[0][1:-1]].append(line[1])
+            continue
+
+        splited = line.split(' ', 1)
+        key=splited[0]
+        value=splited[1] if len(splited)>1 else ''
+        if key=='SETDIR':
+            parts_dir = parts_dir.joinpath(value)
+        elif key=='[name]':
+            active.name = value
+        elif key=='[path]':
+            active.path = parts_dir.joinpath(value)
+        elif key=='[comment]':
+            active.comment = value
+        elif key=='[type]':
+            active.type = active.type+value.split(',')
+        elif key=='[joint]':
+            active.joint = active.joint+value.split(',')
+        elif key[:1] == '[' and key[-1:] == ']':
+            if key[1:-1] in active.props:
+                active.props[key[1:-1]].append(value)
             else:
-                active.props[line[0][1:-1]] = [line[1]]
-        line = fp.readline()
-    parts_list.append(active)
-    return parts_list
+                active.props[key[1:-1]] = [value]
+    yield active
 
 
 ###PMCA操作関連
-def tree_click(event):
-    pass
+#def tree_click(event):
+#    pass
 
-def space(i):
-    string = ''
-    for x in range(i):
-        string = string+'  '
-    return string
 
-###データ関連
-class NODE:    #モデルのパーツツリー
+class NODE:    
+    '''
+    モデルのパーツツリー
+    '''
     def __init__(self, parts = '', depth = 0, child = [], list_num=-1):
         self.parts = parts
         self.depth = depth
@@ -130,7 +122,7 @@ class NODE:    #モデルのパーツツリー
         pmpy = app
         
         PMCA.Create_PMD(4)
-        PMCA.Load_PMD(4, self.parts.path.encode(sysenc,'replace'))
+        PMCA.Load_PMD(4, str(self.parts.path).encode(sysenc, 'replace'))
         
         info_data = PMCA.getInfo(4)
         info = INFO(info_data)
@@ -204,22 +196,22 @@ class NODE:    #モデルのパーツツリー
                 x.assemble_child(num,app)
     
     def create_list(self):
-        List = [TREE_LIST(node=self, depth=self.depth, text=space(self.depth) + self.parts.name)]
+        List = [TREE_LIST(node=self, depth=self.depth, text='  '*(self.depth) + self.parts.name)]
         for i,x in enumerate(self.child):
             if x != None:
-                List.append(TREE_LIST(node=self, depth=self.depth+1, text=space(self.depth+1) +self.child[i].parts.name, c_num=i))
+                List.append(TREE_LIST(node=self, depth=self.depth+1, text='  '*(self.depth+1) +self.child[i].parts.name, c_num=i))
                 x.list_add(List)
             elif self.parts.joint[i] != '':
-                List.append(TREE_LIST(node=self, depth=self.depth+1, text=space(self.depth+1) + '#'+self.parts.joint[i], c_num=i))
+                List.append(TREE_LIST(node=self, depth=self.depth+1, text='  '*(self.depth+1) + '#'+self.parts.joint[i], c_num=i))
         return List
     
     def list_add(self, List):
         for i,x in enumerate(self.child):
             if x != None:
-                List.append(TREE_LIST(node=self, depth=self.depth+1, text=space(self.depth+1) +self.child[i].parts.name, c_num=i))
+                List.append(TREE_LIST(node=self, depth=self.depth+1, text='  '*(self.depth+1) +self.child[i].parts.name, c_num=i))
                 x.list_add(List)
             elif self.parts.joint[i] != '':
-                List.append(TREE_LIST(node=self, depth=self.depth+1, text=space(self.depth+1) + '#'+self.parts.joint[i], c_num=i))
+                List.append(TREE_LIST(node=self, depth=self.depth+1, text='  '*(self.depth+1) + '#'+self.parts.joint[i], c_num=i))
     
     def recalc_depth(self, depth):
         self.depth = depth
@@ -323,7 +315,10 @@ class NODE:    #モデルのパーツツリー
         return lines
 
 
-class PARTS:    #読み込みパーツデータ
+class PARTS:    
+    '''
+    読み込みパーツデータ
+    '''
     def __init__(self, name='', comment='', path='', t=[], joint=[], props={}):
         self.name=name
         self.comment=comment
@@ -333,6 +328,7 @@ class PARTS:    #読み込みパーツデータ
         self.props=props
         self.tree_current=-1
         self.parts_current=-1
+
 
 class TREE_LIST:
     def __init__(self, node=None, depth=0, text='', c_num=-1, list_num=0):
@@ -418,11 +414,12 @@ class PartsTree:
                 return "#NONE"
         self.parts_entry_observable.notify([get_name(x) for x in self.parts_entry], self.tree_entry[self.tree_current].node.list_num)
 
-    def load_partslist(self, fp):
+    def load_partslist(self, assets_dir, lines):
         '''
         パーツリスト読み込み
         '''
-        self.parts_list = load_partslist(fp, self.parts_list)
+        for parts in parse_partslist(assets_dir, lines):
+            self.parts_list.append(parts)
         self.select_node(0)
 
     def select_node(self, sel_t):

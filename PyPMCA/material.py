@@ -6,69 +6,44 @@ from logging import getLogger
 logger = getLogger(__name__)
 
 
-def load_matslist(fp, mats_list):
-    directry = ''
-    
-    mats_list.append(MATS(entries=[], props={}))
-    
-    line = fp.readline()
-    mode = 0
-    active = mats_list[-1]
-    while line:
-        line = line.rstrip('\n').replace('\t',' ').split(' ', 1)
-        if line[0]=='':
-            pass
-        if line[0][:1]=='#':
-            pass
-        elif line[0]=='SETDIR':
-            directry = line[1]
-        
-        elif line[0]=='NEXT':
-            if len(active.entries) == 0:
-                mats_list.pop()
-            mats_list.append(MATS(entries=[], props={}))
-            active = mats_list[-1]
-            mode = 0
-        
-        elif len(line)<2:
-            pass
-        
-        elif line[0]=='[ENTRY]':
-            active.entries.append(MATS_ENTRY(name = line[1], props = {}))
-            mode = 1
-        elif line[0]=='[name]':
-            if mode == 0:
-                for x in mats_list:
-                    if x.name == line[1]:
-                        active = x
-                        mats_list.pop()
-                        break
-                else:
-                    active.name = line[1]
-        elif line[0]=='[comment]':
-            if mode == 0:
-                active.comment = line[1]
-        elif line[0]=='[tex]':
-            active.entries[-1].props['tex'] = line[1]
-            active.entries[-1].props['tex_path'] = directry+line[1]
-        elif line[0]=='[sph]':
-            active.entries[-1].props['sph'] = line[1]
-            active.entries[-1].props['sph_path'] = directry+line[1]
-        elif line[0][:1] == '[' and line[0][-5:] == '_rgb]':
-            active.entries[-1].props[line[0][1:-1]] = line[1].split()
-        elif line[0][:1] == '[' and line[0][-1:] == ']':
-            if line[0][1:-1] in active.entries[-1].props:
-                active.entries[-1].props[line[0][1:-1]].append(line[1])
+def parse_material_list(assets_dir, lines):
+    parats_dir = assets_dir
+       
+    active=MATS(entries=[], props={})
+    for line in (l.strip().replace('\t',' ') for l in lines):
+        if line=='': continue
+        if line.startswith('#'): continue
+        if line=='NEXT':
+            if len(active.entries) > 0:
+                yield active
+            active=MATS(entries=[], props={})
+
+        splited = line.split(' ', 1)
+        key=splited[0]
+        value = splited[1] if len(splited)>1 else ''
+
+        if key=='SETDIR':
+            parats_dir = parats_dir.joinpath(value)       
+        elif key=='[ENTRY]':
+            active.entries.append(MATS_ENTRY(name = value, props = {}))
+        elif key=='[name]':
+            active.name = value
+        elif key=='[comment]':
+            active.comment = value
+        elif key=='[tex]':
+            active.entries[-1].props['tex'] = value
+            active.entries[-1].props['tex_path'] = parats_dir.joinpath(value)
+        elif key=='[sph]':
+            active.entries[-1].props['sph'] = value
+            active.entries[-1].props['sph_path'] = parats_dir.joinpath(value)
+        elif key[:1] == '[' and key[-5:] == '_rgb]':
+            active.entries[-1].props[key[1:-1]] = value.split()
+        elif key[:1] == '[' and key[-1:] == ']':
+            if key[1:-1] in active.entries[-1].props:
+                active.entries[-1].props[key[1:-1]].append(value)
             else:
-                active.entries[-1].props[line[0][1:-1]] = [line[1]]
-        line = fp.readline()
-    '''
-    mats_list.append(mats_list[-1])
-    if mats_list[-1].entries[-1].__class__.__name__ == 'MATS_ENTRY':
-        mats_list[-1].entries.append(mats_list[-1].entries[-1])
-    '''
-    
-    return mats_list
+                active.entries[-1].props[key[1:-1]] = [value]
+    yield active
 
 
 class MAT_REP:    #材質置換
@@ -109,21 +84,12 @@ class MAT_REP:    #材質置換
                     if self.mat[m.tex].sel == None:
                         self.mat[m.tex].sel = self.mat[m.tex].mat.entries[0]
         
-    def ApplyToPmd(self, model=None, info=None, num = 0):
+    def ApplyToPmd(self, num):
         '''
         PMDに反映する
         '''
-        if model == None:
-            if info == None:
-                info_data = PMCA.getInfo(num)
-                info = INFO(info_data)
-            mat = []
-            for i in range(info.data["mat_count"]):
-                tmp = PMCA.getMat(num, i)
-                mat.append(MATERIAL(**tmp))
-        else:
-            info = model.info
-            mat = model.mat
+        info = INFO(PMCA.getInfo(num))
+        mat = [MATERIAL(**PMCA.getMat(num, i)) for i in range(info.data["mat_count"])]
         
         for i,x in enumerate(mat):
             if self.mat.get(x.tex) != None:
@@ -180,7 +146,16 @@ class MAT_REP:    #材質置換
                             else:
                                 self.app.licenses.append(y)
                     
-                PMCA.setMat(num, i, x.diff_col, x.alpha, x.spec, x.spec_col, x.mirr_col, x.toon, x.edge, x.face_count, bytes(x.tex.encode('cp932','replace')), bytes(x.sph.encode('cp932','replace')), bytes(x.tex_path.encode('cp932','replace')), bytes(x.sph_path.encode('cp932','replace')))
+                PMCA.setMat(num, i,
+                            x.diff_col, x.alpha, 
+                            x.spec, x.spec_col, 
+                            x.mirr_col, 
+                            x.toon, x.edge, x.face_count, 
+                            x.tex.encode('cp932','replace'), 
+                            x.sph.encode('cp932','replace'), 
+                            str(x.tex_path).encode('cp932','replace'), 
+                            str(x.sph_path).encode('cp932','replace')
+                            )
     
     def list_to_text(self):
         lines=[]
@@ -231,7 +206,10 @@ class MAT_REP_DATA:    #材質置換データ
         self.sel=sel
 
 
-class MATS:    #読み込み材質データ
+class MATS:    
+    '''
+    読み込み材質データ
+    '''
     def __init__(self, name='', comment='', entries=[], props={}):
         self.name=name
         self.comment=comment
@@ -282,11 +260,19 @@ class MaterialSelector:
     def force_update(self):
         self.__update_material_entry()
 
-    def load_materiallist(self, fp):
+    def load_material_list(self, assets_dir, lines):
         '''
         マテリアルリストを読み込む
         '''
-        self.mats_list = load_matslist(fp, self.mats_list)
+        for new_material in parse_material_list(assets_dir, lines):
+            isMerged=False
+            for material in self.mats_list:
+                if material.name==new_material.name:
+                    material.entries += new_material.entries
+                    isMerged=True
+            if not isMerged:
+                self.mats_list.append(new_material)
+
         self.__update_material_entry()
 
     def load_CNL_lines(self, lines):

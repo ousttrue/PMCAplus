@@ -4,6 +4,7 @@ import shutil
 import sys
 import os
 sys.path.append('%s/converter'%(os.getcwd()))
+import pathlib
 import converter
 
 from PyPMCA.parts import *
@@ -100,6 +101,9 @@ class PyPMCA:
         #self.transform.update_list()
 
     def update(self):
+        '''
+        パーツリスト、マテリアルリスト、トランスフォームの変更を描画モデルに反映する
+        '''
         if self.update_level<0:
             # モデルの更新なし
             return
@@ -129,55 +133,37 @@ class PyPMCA:
         self.model_bb_observable.notify(wht)
 
     def init(self):
-        for x in os.listdir('./'):
-            if os.path.isfile(x):
-            
-                fp = open(x, 'r', encoding = 'cp932')
-                try:
-                    lines = fp.read()
-                    line = lines.split('\n')
-                    line = line[0].replace('\n', '')
-                    if line == "PMCA Parts list v1.0" or line == "PMCA Materials list v1.1" or line == "PMCA Materials list v1.0" or line == "PMCA Textures list v1.0" or line == "PMCA Bone_Group list v1.0":
-                        fp.close()
-                    
-                        if os.name == 'posix':
-                            fp = open(x, 'w', encoding = 'cp932')
-                            fp.write(lines)
-                            fp.close()
-                            converter.v1_v2('./converter/PMCA_1.0-2.0converter', [x])
-                        elif os.name == 'nt':
-                            converter.v1_v2('.\\converter\\PMCA_1.0-2.0converter.exe', [x])
-                    if line == "bone":
-                        fp = open(x, 'r', encoding = 'cp932')
-                        lines = fp.read()
-                        fp.close()
-                    
-                        fp = open(x, 'w', encoding = 'utf-8')
-                        fp.write('PMCA list data v2.0\n')
-                        fp.write(lines)
-                        fp.close()
-                    
-                except UnicodeDecodeError:
-                    fp.close()
-                fp = open(x, 'r', encoding = 'utf-8-sig')
-                try:
-                    line = fp.readline()               
-                    if line=='PMCA Parts list v2.0\n' :
-                        self.parts_tree.load_partslist(fp)
-                    elif line=='PMCA Materials list v2.0\n' :
-                        self.materials.load_materiallist(fp)
-                    elif line=='PMCA Transform list v2.0\n' :
-                        self.transform.load_transformlist(fp)
-                
-                    fp.close()
-                except UnicodeDecodeError:
-                    fp.close()
-                except UnicodeEncodeError:
-                    fp.close()
-            
-        with open('list.txt', 'r', encoding = 'utf-8-sig') as fp:
+        '''
+        初期化。アセットリストをロードする
+        '''
+
+        with open('./assets/list.txt', 'r', encoding = 'utf-8-sig') as fp:
             LIST = load_list(fp)
             PMCA.Set_List(len(LIST['b'][0]), LIST['b'][0], LIST['b'][1], len(LIST['s'][0]), LIST['s'][0], LIST['s'][1], len(LIST['g'][0]), LIST['g'][0], LIST['g'][1])   
+            logger.info('load list.txt')
+
+        for x in os.listdir('./assets/'):
+            path=pathlib.Path('./assets/', x)
+            if path.is_dir():
+                try:
+                    self.load_asset(path)
+                except:
+                    logger.error('fail to load %s', path)
+                
+    def load_asset(self, assets_dir: pathlib.Path):
+        logger.info('load_asset %s', assets_dir)
+        for x in assets_dir.glob('*.txt'):
+            if x.is_file():
+                with x.open('r', encoding = 'utf-8-sig') as fp:
+                    lines=fp.readlines()
+                    if lines[0]=='PMCA Parts list v2.0\n' :
+                        self.parts_tree.load_partslist(assets_dir, lines[1:])
+                    elif lines[0]=='PMCA Materials list v2.0\n' :
+                        self.materials.load_material_list(assets_dir, lines[1:])
+                    elif lines[0]=='PMCA Transform list v2.0\n' :
+                        self.transform.load_transformlist(lines[1:])
+                    else:
+                        logger.warn('unknown line: %s %s', x, lines[0])
 
     def get_license(self):
         return self.materials.license.get_entry()
