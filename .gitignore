@@ -5,3 +5,6 @@ last.cnl
 *.sdf
 *.opensdf
 sources/build
+assets/
+*.pdb
+

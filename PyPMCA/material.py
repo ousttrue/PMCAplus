@@ -23,7 +23,7 @@ def parse_material_list(assets_dir, lines):
         value = splited[1] if len(splited)>1 else ''
 
         if key=='SETDIR':
-            parats_dir = parats_dir.joinpath(value)       
+            parats_dir = assets_dir.joinpath(value)       
         elif key=='[ENTRY]':
             active.entries.append(MATS_ENTRY(name = value, props = {}))
         elif key=='[name]':

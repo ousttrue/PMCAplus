@@ -5,6 +5,8 @@ fullpython化しようとしていたが、モデル編集部分はCじゃない
 # Bug
 * [ ] ファイル/新規
 * [ ] ファイル/読み込み sample2.cnl
+* [ ] 外部モデル
+* [ ] テクスチャパス
 
 # ToDo
 * [ ] Info
@@ -17,11 +19,11 @@ fullpython化しようとしていたが、モデル編集部分はCじゃない
     - [o] ファイル/PMD概要確認
     - [o] ファイル/PMD詳細確認
 * [ ] 編集/PMCA設定
-* [ ] 追加パーツの管理
+* [ ] パーツ所属アセット名表示
 
 # 済み
 * GUIをtkinterからPyQt4に変更
-* Python3.2 32bitからPython3.5 64bit(Anaconda)
+* Python3.2 32bitからPython3.5 64bit(Anaconda)に変更
 * PMCA.pydからOpenGL関連をPyOpenGLに移動
-* PARTS定義をAssetsディレクトリに移動
+* PARTS定義をAssetsディレクトリに移動。追加パーツのディレクトリをAssetsディレクトリにコピーすれば読み込める
 
