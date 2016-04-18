@@ -362,16 +362,56 @@ class MainFrame(QtGui.QMainWindow):
         files = menubar.addMenu('ファイル')
 
         files.addAction(self.create_action("新規", pmca.init))
-        files.addAction(self.create_action("読み込み", pmca.load_node))
+
+        def load():
+            fname = QtGui.QFileDialog.getOpenFileName(self, 'Open CNL file', pmca.target_dir, '*.cnl')
+            if fname:
+                pmca.target_dir = fname.rsplit('/',1)[0]
+                pmca.load_CNL_File(fname)
+        files.addAction(self.create_action("読み込み", load))
+
         files.addSeparator()
-        files.addAction(self.create_action("保存", pmca.save_node))
-        files.addAction(self.create_action("モデル保存", pmca.dialog_save_PMD))
+
+        def save():
+            fname = QtGui.QFileDialog.getSaveFileName(self, 'Save CNL file', pmca.target_dir, '*.cnl')
+            if fname:
+                pmca.target_dir = fname.rsplit('/',1)[0]
+                pmca.save_CNL_File(fname)
+        files.addAction(self.create_action("保存", save))
+
+        def save_PMD():
+            fname = QtGui.QFileDialog.getSaveFileName(self, 'Save PMD file', pmca.target_dir, '*.pmd')
+            if fname:
+                pmca.target_dir = fname.rsplit('/',1)[0]
+                pmca.save_PMD(fname)
+        files.addAction(self.create_action("モデル保存", save_PMD))
+
         files.addSeparator()
-        files.addAction(self.create_action("一括組立て", pmca.batch_assemble))
+
+        def batch_assemble():
+            fname = QtGui.QFileDialog.getOpenFileNames(self, 'Open CNL file', pmca.target_dir, '*.cnl')
+            if fname and len(fname)>0:
+                pmca.target_dir = fname[0].rsplit('/',1)[0]
+                pmca.batch_assemble(fname)
+        files.addAction(self.create_action("一括組立て", batch_assemble))
+
         files.addSeparator()
-        files.addAction(self.create_action("PMDフォーマットチェック", pmca.savecheck_PMD))
-        files.addAction(self.create_action("PMD概要確認", pmca.check_PMD))
-        files.addAction(self.create_action("PMD詳細確認", pmca.propcheck_PMD))
+
+        def savecheck_PMD():
+            errors=pmca.savecheck_PMD()
+            logger.debug(errors)
+        files.addAction(self.create_action("PMDフォーマットチェック", savecheck_PMD))
+
+        def check_PMD():
+            errors=pmca.check_PMD()
+            logger.debug(errors)
+        files.addAction(self.create_action("PMD概要確認", check_PMD))
+
+        def propcheck_PMD():
+            errors=pmca.propcheck_PMD()
+            logger.debug(errors)
+        files.addAction(self.create_action("PMD詳細確認", propcheck_PMD))
+
         files.addSeparator()
         files.addAction(self.create_action('exit', QtGui.qApp.quit))
         

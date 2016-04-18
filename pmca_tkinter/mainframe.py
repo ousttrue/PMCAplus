@@ -53,7 +53,8 @@ class MainFrame(Frame):
         self.QUIT["command"] = pmca_tkinter.QUIT(self.master)
         self.QUIT.pack(side = RIGHT)
         return frame_button
-        
+
+       
     def bind_pmca(self, pmca):
         #Menu
         self.menubar = Menu(self.master)
@@ -62,16 +63,110 @@ class MainFrame(Frame):
         files = Menu(self.menubar, tearoff = False)
         self.menubar.add_cascade(label="ファイル", underline = 0, menu=files)
         files.add_command(label = "新規", under = 0, command = pmca.init)
-        files.add_command(label = "読み込み", under = 0, command = pmca.load_node)
+
+        def load_node_tkinter():
+            name = filedialog.askopenfilename(filetypes = [('キャラクタノードリスト','.cnl'),('all','.*')], 
+                                              initialdir = pmca.target_dir, 
+                                              defaultextension='.cnl'
+                                              )
+            if name == None:
+                #showinfo(text='Error!')
+                return
+
+            pmca.load_CNL_File(name)
+            pmca.target_dir = name.rsplit('/',1)[0]
+            #self.refresh()
+        files.add_command(label = "読み込み", under = 0, command = load_node_tkinter)
+
         files.add_separator
-        files.add_command(label = "保存", under = 0, command = pmca.save_node)
-        files.add_command(label = "モデル保存", under = 0, command = pmca.dialog_save_PMD)
+
+        def save_node_tkinter():
+            if pmca.parts_tree.is_empty():
+                showinfo(lavel='ノードが空です')
+                return
+
+            name = filedialog.asksaveasfilename(filetypes = [('キャラクタノードリスト','.cnl'),('all','.*')], initialdir = pmca.target_dir, defaultextension='.cnl')
+            if name == '':
+                #showinfo(text='Error!')
+                return None
+
+            pmca.refresh(level = 3)
+            pmca.save_CNL_File(name)
+            pmca.target_dir = name.rsplit('/',1)[0]
+        files.add_command(label = "保存", under = 0, command = save_node_tkinter)
+
+        def dialog_save_PMD_tkinter():
+            name = filedialog.asksaveasfilename(filetypes = [('Plygon Model Deta(for MMD)','.pmd'),('all','.*')], initialdir = pmca.target_dir, defaultextension='.pmd')
+            pmca.refresh()
+            pmca.save_PMD(name)
+            pmca.target_dir = name.rsplit('/',1)[0]
+        files.add_command(label = "モデル保存", under = 0, command = dialog_save_PMD)
+
         files.add_separator
+
+        def batch_assemble():
+            names = filedialog.askopenfilename(filetypes = [('キャラクタノードリスト','.cnl'),('all','.*')], initialdir = self.target_dir, defaultextension='.cnl',  multiple=True)
+            if names:
+                pmca.batch_assemble(names)
         files.add_command(label = "一括組立て", under = 0, command = pmca.batch_assemble)
+
         files.add_separator
-        files.add_command(label = "PMDフォーマットチェック", under = 0, command = pmca.savecheck_PMD)
-        files.add_command(label = "PMD概要確認", under = 0, command = pmca.check_PMD)
-        files.add_command(label = "PMD詳細確認", under = 0, command = pmca.propcheck_PMD)
+
+        def savecheck_PMD():
+            errors=pmca.savecheck_PMD()
+            root = Toplevel()
+            root.transient(self)
+            close = QUIT(root)
+            frame = Frame(root)
+            frame.log = Text(frame)
+            for x in errors:
+                frame.log.insert(END, x + '\n')
+            frame.log['state'] = 'disabled'
+            frame.yscroll = Scrollbar(frame, orient = VERTICAL, command = frame.log.yview)
+            frame.yscroll.pack(side = RIGHT, fill = Y, expand = 0, anchor=E)
+            frame.log["yscrollcommand"] = frame.yscroll.set
+            frame.log.pack(side = RIGHT, fill = BOTH, expand=1)
+            frame.pack(fill = BOTH, expand=1)
+            Button(root, text = 'OK', command = close).pack()
+            root.mainloop()
+        files.add_command(label = "PMDフォーマットチェック", under = 0, command = savecheck_PMD)
+
+        def check_PMD():
+            string=pmca.check_PMD()
+            root = Toplevel()
+            root.transient(self)
+            close = QUIT(root)
+            frame = Frame(root)
+            frame.log = Text(frame)
+            frame.log.insert(END, string)
+            frame.log['state'] = 'disabled'
+            frame.yscroll = Scrollbar(frame, orient = VERTICAL, command = frame.log.yview)
+            frame.yscroll.pack(side = RIGHT, fill = Y, expand = 0, anchor=E)
+            frame.log["yscrollcommand"] = frame.yscroll.set
+            frame.log.pack(side = RIGHT, fill = BOTH, expand=1)
+            frame.pack(fill = BOTH, expand=1)
+            Button(root, text = 'OK', command = close).pack()
+            root.mainloop()
+        files.add_command(label = "PMD概要確認", under = 0, command = check_PMD)
+
+        def procheck_PMD():
+            string=pmca.procheck_PMD()
+            root = Toplevel()
+            root.transient(self)
+            close = QUIT(root)
+            frame = Frame(root)
+            frame.log = Text(frame)
+            frame.log.insert(END, string)
+            frame.log['state'] = 'disabled'
+            frame.yscroll = Scrollbar(frame, orient = VERTICAL, command = frame.log.yview)
+            frame.yscroll.pack(side = RIGHT, fill = Y, expand = 0, anchor=E)
+            frame.log["yscrollcommand"] = frame.yscroll.set
+            frame.log.pack(side = RIGHT, fill = BOTH, expand=1)
+            frame.pack(fill = BOTH, expand=1)
+            Button(root, text = 'OK', command = close).pack()
+            root.mainloop()
+        files.add_command(label = "PMD詳細確認", under = 0, command = propcheck_PMD)
+
         files.add_separator
         files.add_command(label = "exit", under = 0, command = pmca_tkinter.QUIT(self.master))
         

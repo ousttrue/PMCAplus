@@ -1,5 +1,6 @@
 ﻿# coding: utf-8
 from itertools import chain
+import shutil
 import sys
 import os
 sys.path.append('%s/converter'%(os.getcwd()))
@@ -192,9 +193,11 @@ class PyPMCA:
             comment_eng='%s\nAuthor:%s\nLicense:%s\n%s'%(self.modelinfo.name_l_eng,str1,str2,self.modelinfo.comment_eng))
 
     def load_CNL_File(self, name):
-        f = open(name, 'r', encoding = 'utf-8-sig')
-        lines = f.read()
-        f.close
+        if not os.path.exists(name):
+            logger.warning('%s is not exists', name)
+            return
+        with open(name, 'r', encoding = 'utf-8-sig') as f:
+            lines = f.read()
         lines = lines.split('\n')
 
         self.modelinfo.name=lines[0]
@@ -241,31 +244,7 @@ class PyPMCA:
         
         return True
 
-    def load_node(self):
-        name = filedialog.askopenfilename(filetypes = [('キャラクタノードリスト','.cnl'),('all','.*')], 
-                                          initialdir = self.target_dir, 
-                                          defaultextension='.cnl'
-                                          )
-        if name == None:
-            showinfo(text='Error!')
-            return None
-        self.load_CNL_File(name)
-        self.target_dir = name.rsplit('/',1)[0]
-        #self.refresh()
 
-    def save_node(self):
-        if self.pmca.parts_tree.is_empty():
-            showinfo(lavel='ノードが空です')
-            return
-
-        name = filedialog.asksaveasfilename(filetypes = [('キャラクタノードリスト','.cnl'),('all','.*')], initialdir = self.target_dir, defaultextension='.cnl')
-        if name == '':
-            #showinfo(text='Error!')
-            return None
-
-        self.refresh(level = 3)
-        self.save_CNL_File(name)
-        self.target_dir = name.rsplit('/',1)[0]
        
     def save_PMD(self, name):
         if self.settings.export2folder:
@@ -274,14 +253,14 @@ class PyPMCA:
             tmp = name.rsplit('/', 1)
             name = "%s/%s/%s"%(tmp[0] ,dirc.rsplit('/', 1)[1] ,tmp[1])
             
+        logger.info('Write_PMD %s', name)
         if PMCA.Write_PMD(0, name.encode(sysenc,'replace')) == 0:    
             #テクスチャコピー
-            dirc = name.rsplit('/', 1)[0]
-            dirc += '/'
+            dirc = os.path.dirname(name)
             info_data = PMCA.getInfo(0)
-            info = PyPMCA.INFO(info_data)
+            info = INFO(info_data)
             for i in range(info.data["mat_count"]):
-                mat = PyPMCA.MATERIAL(**PMCA.getMat(0, i))
+                mat = MATERIAL(**PMCA.getMat(0, i))
                 if mat.tex != '':
                     try:
                         shutil.copy(mat.tex_path, dirc)
@@ -306,21 +285,16 @@ class PyPMCA:
                         except IOError:
                             logger.warning('コピー失敗:%s', toon[i])
     
-    def dialog_save_PMD(self):
-        name = filedialog.asksaveasfilename(filetypes = [('Plygon Model Deta(for MMD)','.pmd'),('all','.*')], initialdir = self.target_dir, defaultextension='.pmd')
-        self.refresh()
-        self.save_PMD(name)
-        self.target_dir = name.rsplit('/',1)[0]
-        
-    def batch_assemble(self):
-        names = filedialog.askopenfilename(filetypes = [('キャラクタノードリスト','.cnl'),('all','.*')], initialdir = self.target_dir, defaultextension='.cnl',  multiple=True)
-        
+    def batch_assemble(self, names):
+        '''
+        まとめてcnlをpmdに変換する
+        '''
         self.save_CNL_File('./last.cnl')
         if type(names) is str:
             names = names.split(' ')
         for name in names:
             self.load_CNL_File(name)
-            self.refresh()
+            #self.refresh()
             
             name_PMD = name
             if name_PMD[-4:] == '.cnl':
@@ -329,12 +303,12 @@ class PyPMCA:
                 name_PMD += '.pmd'
             self.save_PMD(name_PMD)
         self.load_CNL_File('./last.cnl')
-        self.refresh()
+        #self.refresh()
         self.target_dir = name.rsplit('/',1)[0]
        
     def savecheck_PMD(self):
-        self.refresh(level=3)
-        model = PyPMCA.Get_PMD(0)
+        #self.refresh(level=3)
+        model = Get_PMD(0)
         
         errors=[]
         
@@ -399,26 +373,12 @@ class PyPMCA:
         if len(errors) == 0:
             errors.append('PMDとして正常に保存できます')
         
-        root = Toplevel()
-        root.transient(self)
-        close = QUIT(root)
-        frame = Frame(root)
-        frame.log = Text(frame)
-        for x in errors:
-            frame.log.insert(END, x + '\n')
-        frame.log['state'] = 'disabled'
-        frame.yscroll = Scrollbar(frame, orient = VERTICAL, command = frame.log.yview)
-        frame.yscroll.pack(side = RIGHT, fill = Y, expand = 0, anchor=E)
-        frame.log["yscrollcommand"] = frame.yscroll.set
-        frame.log.pack(side = RIGHT, fill = BOTH, expand=1)
-        frame.pack(fill = BOTH, expand=1)
-        Button(root, text = 'OK', command = close).pack()
-        root.mainloop()
+        return errors
     
     def check_PMD(self):
-        self.refresh(level=3)
+        #self.refresh(level=3)
         info_data = PMCA.getInfo(0)
-        info = PyPMCA.INFO(info_data)
+        info = INFO(info_data)
         string = 'name :' + info.name
         string += '\ncomment :\n' + info.comment
         string += '\n頂点数 :' + str(info_data['vt_count'])
@@ -433,25 +393,11 @@ class PyPMCA:
         string += '\n\n英語対応 :' + str(info_data['eng_support'])
         string += '\n剛体数 :' + str(info_data['rb_count'])
         string += '\nジョイント数 :' + str(info_data['joint_count'])
-        
-        root = Toplevel()
-        root.transient(self)
-        close = QUIT(root)
-        frame = Frame(root)
-        frame.log = Text(frame)
-        frame.log.insert(END, string)
-        frame.log['state'] = 'disabled'
-        frame.yscroll = Scrollbar(frame, orient = VERTICAL, command = frame.log.yview)
-        frame.yscroll.pack(side = RIGHT, fill = Y, expand = 0, anchor=E)
-        frame.log["yscrollcommand"] = frame.yscroll.set
-        frame.log.pack(side = RIGHT, fill = BOTH, expand=1)
-        frame.pack(fill = BOTH, expand=1)
-        Button(root, text = 'OK', command = close).pack()
-        root.mainloop()
-    
+        return string
+            
     def propcheck_PMD(self):
-        self.refresh(level=3)
-        model = PyPMCA.Get_PMD(0)
+        #self.refresh(level=3)
+        model = Get_PMD(0)
         string = 'name :' + model.info.name
         string += '\ncomment :\n' + model.info.comment
         string += '\n\nname_en :' + model.info.name_eng
@@ -540,20 +486,7 @@ class PyPMCA:
             string += str(i) + '\n'
             string += 'name:' + x.name + '\n\n'
         
-        root = Toplevel()
-        root.transient(self)
-        close = QUIT(root)
-        frame = Frame(root)
-        frame.log = Text(frame)
-        frame.log.insert(END, string)
-        frame.log['state'] = 'disabled'
-        frame.yscroll = Scrollbar(frame, orient = VERTICAL, command = frame.log.yview)
-        frame.yscroll.pack(side = RIGHT, fill = Y, expand = 0, anchor=E)
-        frame.log["yscrollcommand"] = frame.yscroll.set
-        frame.log.pack(side = RIGHT, fill = BOTH, expand=1)
-        frame.pack(fill = BOTH, expand=1)
-        Button(root, text = 'OK', command = close).pack()
-        root.mainloop()
+        return string
 
     def get_model(self):
         info=PMCA.getInfo(0)
