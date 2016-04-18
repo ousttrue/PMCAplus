@@ -335,6 +335,7 @@ class MainFrame(QtGui.QMainWindow):
 
     def bind_pmca(self, pmca: PyPMCA.PyPMCA):
         logger.info('bind_pmca')
+        self.setup_menu(pmca)
         self.parts_tab.bind_pmca(pmca.parts_tree)
         self.material_tab.bind_pmca(pmca.materials)
         self.transform_tab.bind_pmca(pmca.transform)
@@ -355,3 +356,34 @@ class MainFrame(QtGui.QMainWindow):
             pmca.update()
         self.timer.timeout.connect(timer_update)
         self.timer.start(33)
+
+    def setup_menu(self, pmca: PyPMCA.PyPMCA):
+        menubar = self.menuBar()
+        files = menubar.addMenu('ファイル')
+
+        files.addAction(self.create_action("新規", pmca.init))
+        files.addAction(self.create_action("読み込み", pmca.load_node))
+        files.addSeparator()
+        files.addAction(self.create_action("保存", pmca.save_node))
+        files.addAction(self.create_action("モデル保存", pmca.dialog_save_PMD))
+        files.addSeparator()
+        files.addAction(self.create_action("一括組立て", pmca.batch_assemble))
+        files.addSeparator()
+        files.addAction(self.create_action("PMDフォーマットチェック", pmca.savecheck_PMD))
+        files.addAction(self.create_action("PMD概要確認", pmca.check_PMD))
+        files.addAction(self.create_action("PMD詳細確認", pmca.propcheck_PMD))
+        files.addSeparator()
+        files.addAction(self.create_action('exit', QtGui.qApp.quit))
+        
+        editing = menubar.addMenu("編集")
+        editing.addAction(self.create_action("体型調整を初期化", pmca.transform.clear))
+        editing.addAction(self.create_action("材質をランダム選択", pmca.materials.random))
+        editing.addAction(self.create_action("PMCA設定", self.setting_dialog))
+        
+    def create_action(self, label, callback):
+        action = QtGui.QAction(label, self)        
+        action.triggered.connect(callback)
+        return action
+
+    def setting_dialog(self):
+        pass
