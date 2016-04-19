@@ -743,7 +743,7 @@ static PyObject* setBone_disp(PyObject *self, PyObject *args)
 	int num, i;
 	MODEL *model;
 	BONE_DISP bone_disp;
-	if(!PyArg_ParseTuple(args, "iiii",
+	if(!PyArg_ParseTuple(args, "iiHB",
 							&num, &i,
 							&bone_disp.index,
 							&bone_disp.bone_group))return NULL;
