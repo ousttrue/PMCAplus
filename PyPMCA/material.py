@@ -98,9 +98,9 @@ class MaterialSelector:
         '''
         CNLに選択状態を出力する
         '''
-        info = INFO(PMCA.getInfo(num))       
+        info = INFO(PMCA.getInfo(0))       
         for i in range(info.data["mat_count"]):
-            m=MATERIAL(**PMCA.getMat(num, i))
+            m=MATERIAL(**PMCA.getMat(0, i))
             if m.tex in self.replace_map:
                 x=self.replace_map[m.tex]       
                 yield '[Name] %s' % (x.mat.name)

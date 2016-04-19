@@ -222,7 +222,7 @@ class PyPMCA:
         lines.append('PARTS')
         lines.extend(self.parts_tree.tree_list[0].node.child[0].node_to_text())
         lines.append('MATERIAL')
-        lines.extend(self.materials.mat_rep.list_to_text())
+        lines.extend(self.materials.list_to_text())
         lines.append('TRANSFORM')
         lines.extend(self.transform.transform_data[0].list_to_text())
         

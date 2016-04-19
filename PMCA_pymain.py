@@ -55,6 +55,8 @@ if __name__ == "__main__":
     pmca.update()
     pmca.force_update_entry()
 
-    app.mainloop()
-
-    pmca.save_CNL_File('./last.cnl')
+    try:
+        app.mainloop()
+    finally:
+        logger.info('save')
+        pmca.save_CNL_File('./last.cnl')
