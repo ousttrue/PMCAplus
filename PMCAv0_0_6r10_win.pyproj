@@ -94,6 +94,9 @@
     <Compile Include="PyPMCA\material.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="PyPMCA\material_entry.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="PyPMCA\parts.py">
       <SubType>Code</SubType>
     </Compile>

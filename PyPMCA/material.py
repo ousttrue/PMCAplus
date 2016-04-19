@@ -2,48 +2,9 @@
 import random
 import PMCA
 from PyPMCA.pmd import TOON, INFO, MATERIAL, Observable
+from PyPMCA.material_entry import MATS, MATS_ENTRY
 from logging import getLogger
 logger = getLogger(__name__)
-
-
-def parse_material_list(assets_dir, lines):
-    parats_dir = assets_dir
-       
-    active=MATS(entries=[], props={})
-    for line in (l.strip().replace('\t',' ') for l in lines):
-        if line=='': continue
-        if line.startswith('#'): continue
-        if line=='NEXT':
-            if len(active.entries) > 0:
-                yield active
-            active=MATS(entries=[], props={})
-
-        splited = line.split(' ', 1)
-        key=splited[0]
-        value = splited[1] if len(splited)>1 else ''
-
-        if key=='SETDIR':
-            parats_dir = assets_dir.joinpath(value)       
-        elif key=='[ENTRY]':
-            active.entries.append(MATS_ENTRY(name = value, props = {}))
-        elif key=='[name]':
-            active.name = value
-        elif key=='[comment]':
-            active.comment = value
-        elif key=='[tex]':
-            active.entries[-1].props['tex'] = value
-            active.entries[-1].props['tex_path'] = parats_dir.joinpath(value)
-        elif key=='[sph]':
-            active.entries[-1].props['sph'] = value
-            active.entries[-1].props['sph_path'] = parats_dir.joinpath(value)
-        elif key[:1] == '[' and key[-5:] == '_rgb]':
-            active.entries[-1].props[key[1:-1]] = value.split()
-        elif key[:1] == '[' and key[-1:] == ']':
-            if key[1:-1] in active.entries[-1].props:
-                active.entries[-1].props[key[1:-1]].append(value)
-            else:
-                active.entries[-1].props[key[1:-1]] = [value]
-    yield active
 
 
 class LicenseInfo:
@@ -69,18 +30,30 @@ class MAT_REP_DATA:
     def __init__(self, num, mat, sel):
         self.num=num
         self.mat=mat
-        self.sel=sel
+        self.sel=sel  
 
 
-class MAT_REP:
-    '''
-    材質置換
-    '''
-    def __init__(self):
+class MaterialSelector:
+    def __init__(self):             
+        self.material_entry_observable=Observable()
+        self.material_entry_observable.add(lambda entry, sel_t: self.__update_color_entry())
+        self.color_entry_observable=Observable()
+        self.color_select_observable=Observable()
+
+        self.mats_list=[]    #list of class MATS
+        self.mat_entry = []
+        self.color_entry = []
+        #self.mat_rep = MAT_REP()
         self.replace_map = {}
         self.toon= TOON()
         self.app = LicenseInfo()
-    
+
+        self.cur_mat = -1
+        self.cur_color= -1
+
+    def force_update(self):
+        self.__update_material_entry()
+
     def UpdateMaterial(self, num, mats_list):
         '''
         mats_listで置き換え
@@ -218,46 +191,11 @@ class MAT_REP:
                         self.replace_map[tmp[0]] = MAT_REP_DATA(num = -1, mat=tmp[2], sel=y)
                         break
 
-
-class MATS:    
-    '''
-    読み込み材質データ
-    '''
-    def __init__(self, name='', comment='', entries=[], props={}):
-        self.name=name
-        self.comment=comment
-        self.entries=entries
-        self.props=props
-
-
-class MATS_ENTRY:
-    def __init__(self, name='', props={}):
-        self.name=name
-        self.props=props
-
-
-class MaterialSelector:
-    def __init__(self):             
-        self.material_entry_observable=Observable()
-        self.material_entry_observable.add(lambda entry, sel_t: self.__update_color_entry())
-        self.color_entry_observable=Observable()
-        self.color_select_observable=Observable()
-
-        self.mats_list=[]    #list of class MATS
-        self.mat_entry = []
-        self.color_entry = []
-        self.mat_rep = MAT_REP()
-        self.cur_mat = -1
-        self.cur_color= -1
-
-    def force_update(self):
-        self.__update_material_entry()
-
     def load_material_list(self, assets_dir, lines):
         '''
         マテリアルリストを読み込む
         '''
-        for new_material in parse_material_list(assets_dir, lines):
+        for new_material in MATS.parse(assets_dir, lines):
             isMerged=False
             for material in self.mats_list:
                 if material.name==new_material.name:
@@ -272,7 +210,7 @@ class MaterialSelector:
         '''
         CNLを読み込む
         '''
-        self.mat_rep.text_to_list(lines, self.mats_list)
+        self.text_to_list(lines, self.mats_list)
         self.__update_material_entry()
 
     def __update_material_entry(self, sel_t=0):
@@ -282,7 +220,7 @@ class MaterialSelector:
         self.cur_mat=sel_t
         self.cur_color=0
         self.mat_entry = [[],[]]
-        for v in self.mat_rep.replace_map.values():
+        for v in self.replace_map.values():
             if v.num >= 0:
                 self.mat_entry[0].append(v.mat.name + '  ' + v.sel.name)
                 self.mat_entry[1].append(v.mat.name)
@@ -297,7 +235,7 @@ class MaterialSelector:
         self.cur_mat = sel_t
         self.cur_color=0
         self.color_entry = []
-        for x in self.mat_rep.replace_map[self.mat_entry[1][sel_t]].mat.entries:
+        for x in self.replace_map[self.mat_entry[1][sel_t]].mat.entries:
             self.color_entry.append(x.name)
         self.color_entry_observable.notify(self.color_entry, self.cur_color)
 
@@ -308,7 +246,7 @@ class MaterialSelector:
         if self.cur_mat==sel_t:return
 
         self.__update_color_entry(sel_t)
-        return self.mat_rep.replace_map[self.mat_entry[1][sel_t]].mat.comment
+        return self.replace_map[self.mat_entry[1][sel_t]].mat.comment
 
     def select_color(self, sel_t):
         '''
@@ -317,14 +255,14 @@ class MaterialSelector:
         if self.cur_color==sel_t:return
         self.cur_color=sel_t
 
-        self.mat_rep.replace_map[self.mat_entry[1][self.cur_mat]].sel = self.mat_rep.replace_map[self.mat_entry[1][self.cur_mat]].mat.entries[sel_t]
+        self.replace_map[self.mat_entry[1][self.cur_mat]].sel = self.replace_map[self.mat_entry[1][self.cur_mat]].mat.entries[sel_t]
         self.color_select_observable.notify()
 
     def random(self):
         '''
         マテリアルカラーをランダムに選択する
         '''
-        for x in self.mat_rep.replace_map.items():
+        for x in self.replace_map.items():
             random.seed()
             x[1].sel = x[1].mat.entries[random.randint(0, len(x[1].mat.entries)-1)]
         self.color_select_observable.notify()
@@ -334,6 +272,6 @@ class MaterialSelector:
         マテリアル置き換えを実行する        
         '''
         logger.info("Material.Replace")
-        self.mat_rep.UpdateMaterial(0, self.mats_list)
-        self.mat_rep.ApplyToPmd(0)
+        self.UpdateMaterial(0, self.mats_list)
+        self.ApplyToPmd(0)
         PMCA.Copy_PMD(0, 2)

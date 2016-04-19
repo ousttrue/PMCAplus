@@ -9,6 +9,7 @@ import converter
 
 from PyPMCA.parts import *
 from PyPMCA.material import *
+from PyPMCA.material_entry import *
 from PyPMCA.transform import *
 from PyPMCA.pmd import *
 
