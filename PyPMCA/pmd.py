@@ -266,9 +266,14 @@ def Set_PMD(num, model):
 	
 	for (i,x) in enumerate(model.joint):
 		PMCA.setJoint(num, i, bytes(x.name.encode('cp932','replace')), x.rb, x.loc, x.rot, x.limit, x.spring)
+
 	
-def Set_Name_Comment(num=0,name='',comment='',name_eng='',comment_eng=''):
-	PMCA.Set_Name_Comment(num, name.encode('cp932','replace'), comment.encode('cp932','replace'), name.encode('cp932','replace'), comment.encode('cp932','replace'))
+def Set_Name_Comment(num=0, name='',comment='',name_eng='',comment_eng=''):
+	PMCA.Set_Name_Comment(num, 
+                       name.encode('cp932','replace'), 
+                       comment.encode('cp932','replace'), 
+                       name_eng.encode('cp932','replace'), 
+                       comment_eng.encode('cp932','replace'))
 	
 
 class Observable:

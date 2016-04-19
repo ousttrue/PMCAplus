@@ -1,4 +1,5 @@
 ﻿import re
+import os
 import math
 import ctypes
 from glglue.sample import *
@@ -58,7 +59,7 @@ class Texture(object):
         if not self.isInitialized:
             try:
                 # load image
-                if not self.image:
+                if not self.image and os.path.exists(self.path):
                     self.image=Image.open(self.path)
                     if self.image:
                         #logger.debug("load image: %s", self.path)

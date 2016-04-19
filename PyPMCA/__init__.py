@@ -165,11 +165,10 @@ class PyPMCA:
                     else:
                         logger.warn('unknown line: %s %s', x, lines[0])
 
-    def get_license(self):
-        return self.materials.license.get_entry()
-
     def name_update(self):
-        str1, str2=self.get_license()
+        #str1, str2=self.get_license()
+        str1='author'
+        str2='license'
         #self.modelinfo.name = self.info_tab.frame.name.get()
         #self.modelinfo.name_l = self.info_tab.frame.name_l.get()
         #self.modelinfo.comment = self.info_tab.frame.comment.get('1.0',END)
@@ -230,8 +229,6 @@ class PyPMCA:
         
         return True
 
-
-       
     def save_PMD(self, name):
         if self.settings.export2folder:
             dirc = name[0:-4]

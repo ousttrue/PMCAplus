@@ -10,6 +10,7 @@ fullpython化しようとしていたが、モデル編集部分はCじゃない
 
 # ToDo
 * [ ] Info
+    - [ ]Author/License
 * [o] menu移植
     - [o] ファイル/読み込み
     - [o] ファイル/保存

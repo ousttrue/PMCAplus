@@ -46,29 +46,52 @@ def parse_material_list(assets_dir, lines):
     yield active
 
 
-class MAT_REP:    #材質置換
-    def __init__(self, app=None):
-        self.mat = {}
+class LicenseInfo:
+    def __init__(self):
+        self.licenses = []
+        self.authors = []
+
+    def get_entry(self):
+        str1=''
+        str2=''
+        for x in self.authors:
+            str1 += '%s '%(x)
+        for x in self.licenses:
+            str2 += '%s '%(x)
+        logger.info('authors and license: %s/%s' , str1, str2)
+        return str1, str2
+
+
+class MAT_REP_DATA:
+    '''
+    材質置換データ
+    '''
+    def __init__(self, num, mat, sel):
+        self.num=num
+        self.mat=mat
+        self.sel=sel
+
+
+class MAT_REP:
+    '''
+    材質置換
+    '''
+    def __init__(self):
+        self.replace_map = {}
         self.toon= TOON()
-        self.app = app
+        self.app = LicenseInfo()
     
-    def UpdateMaterial(self, mats_list, model=None, info=None, num = 0):
+    def UpdateMaterial(self, num, mats_list):
         '''
         mats_listで置き換え
         '''
-        if model == None:
-            if info == None:
-                info_data = PMCA.getInfo(num)
-                info = INFO(info_data)
-            mat = []
-            for i in range(info.data["mat_count"]):
-                tmp = PMCA.getMat(num, i)
-                mat.append(MATERIAL(**tmp))
-        else:
-            info = model.info
-            mat = model.mat
+        info = INFO(PMCA.getInfo(num))
+        mat = []
+        for i in range(info.data["mat_count"]):
+            tmp = PMCA.getMat(num, i)
+            mat.append(MATERIAL(**tmp))
         
-        for x in self.mat.values():
+        for x in self.replace_map.values():
             x.num = -1
         
         #logger.debug([m.tex for m in mat])
@@ -76,13 +99,13 @@ class MAT_REP:    #材質置換
         for i, m in enumerate(mat):
             for x in mats_list:
                 if m.tex == x.name and x.name != '':
-                    if self.mat.get(m.tex) == None:
-                        self.mat[m.tex] = MAT_REP_DATA(mat=x, num=i)
+                    if self.replace_map.get(m.tex) == None:
+                        self.replace_map[m.tex] = MAT_REP_DATA(mat=x, num=i)
                     else:
-                        self.mat[m.tex].num = i
+                        self.replace_map[m.tex].num = i
                     
-                    if self.mat[m.tex].sel == None:
-                        self.mat[m.tex].sel = self.mat[m.tex].mat.entries[0]
+                    if self.replace_map[m.tex].sel == None:
+                        self.replace_map[m.tex].sel = self.replace_map[m.tex].mat.entries[0]
         
     def ApplyToPmd(self, num):
         '''
@@ -92,8 +115,8 @@ class MAT_REP:    #材質置換
         mat = [MATERIAL(**PMCA.getMat(num, i)) for i in range(info.data["mat_count"])]
         
         for i,x in enumerate(mat):
-            if self.mat.get(x.tex) != None:
-                rep = self.mat[x.tex].sel
+            if self.replace_map.get(x.tex) != None:
+                rep = self.replace_map[x.tex].sel
                 for k,v in rep.props.items():
                     if k == 'tex':
                         x.tex = v
@@ -160,7 +183,7 @@ class MAT_REP:    #材質置換
     def list_to_text(self):
         lines=[]
         
-        for x in self.mat.values():
+        for x in self.replace_map.values():
             lines.append('[Name] %s'%(x.mat.name))
             lines.append('[Sel] %s'%(x.sel.name))
             lines.append('NEXT')
@@ -168,7 +191,7 @@ class MAT_REP:    #材質置換
         return lines
     
     def text_to_list(self, lines, mat_list):
-        self.mat = {}
+        self.replace_map = {}
         tmp = ['','',None]
         i=0
         while lines[i] != 'MATERIAL':
@@ -192,18 +215,8 @@ class MAT_REP:    #材質置換
                 
                 for y in tmp[2].entries:
                     if y.name == tmp[1]:
-                        self.mat[tmp[0]] = MAT_REP_DATA(num = -1, mat=tmp[2], sel=y)
+                        self.replace_map[tmp[0]] = MAT_REP_DATA(num = -1, mat=tmp[2], sel=y)
                         break
-        
-                
-                
-        
-
-class MAT_REP_DATA:    #材質置換データ
-    def __init__(self, num=-1, mat=None, sel=None):
-        self.num=num
-        self.mat=mat
-        self.sel=sel
 
 
 class MATS:    
@@ -216,26 +229,11 @@ class MATS:
         self.entries=entries
         self.props=props
 
+
 class MATS_ENTRY:
     def __init__(self, name='', props={}):
         self.name=name
         self.props=props
-
-
-class LicenseInfo:
-    def __init__(self):
-        self.licenses = []
-        self.authors = []
-
-    def get_entry(self):
-        str1=''
-        str2=''
-        for x in self.authors:
-            str1 += '%s '%(x)
-        for x in self.licenses:
-            str2 += '%s '%(x)
-        logger.info('authors and license: %s/%s' , str1, str2)
-        return str1, str2
 
 
 class MaterialSelector:
@@ -243,19 +241,14 @@ class MaterialSelector:
         self.material_entry_observable=Observable()
         self.material_entry_observable.add(lambda entry, sel_t: self.__update_color_entry())
         self.color_entry_observable=Observable()
-        #self.color_entry_observable.add(lambda entry, sel_t: self.replace())
         self.color_select_observable=Observable()
 
         self.mats_list=[]    #list of class MATS
         self.mat_entry = []
         self.color_entry = []
-        self.license=LicenseInfo()       
-        self.mat_rep = MAT_REP(app=self.license)
+        self.mat_rep = MAT_REP()
         self.cur_mat = -1
         self.cur_color= -1
-
-    def is_empty(self):
-        return len(self.mat_rep.mat)==0
 
     def force_update(self):
         self.__update_material_entry()
@@ -286,14 +279,10 @@ class MaterialSelector:
         '''
         マテリアルリストを更新する(ツリーが変化した時など)
         '''
-        if self.is_empty(): return
-
-        #self.__replace()
-        #self.mat_rep.UpdateMaterial(self.mats_list, num=0)
         self.cur_mat=sel_t
         self.cur_color=0
         self.mat_entry = [[],[]]
-        for v in self.mat_rep.mat.values():
+        for v in self.mat_rep.replace_map.values():
             if v.num >= 0:
                 self.mat_entry[0].append(v.mat.name + '  ' + v.sel.name)
                 self.mat_entry[1].append(v.mat.name)
@@ -303,13 +292,12 @@ class MaterialSelector:
         '''
         マテリアルカラーリストを更新する(左リストの選択が変った時など)
         '''
-        if self.is_empty(): return
         if len(self.mat_entry[0])==0: return
 
         self.cur_mat = sel_t
         self.cur_color=0
         self.color_entry = []
-        for x in self.mat_rep.mat[self.mat_entry[1][sel_t]].mat.entries:
+        for x in self.mat_rep.replace_map[self.mat_entry[1][sel_t]].mat.entries:
             self.color_entry.append(x.name)
         self.color_entry_observable.notify(self.color_entry, self.cur_color)
 
@@ -320,7 +308,7 @@ class MaterialSelector:
         if self.cur_mat==sel_t:return
 
         self.__update_color_entry(sel_t)
-        return self.mat_rep.mat[self.mat_entry[1][sel_t]].mat.comment
+        return self.mat_rep.replace_map[self.mat_entry[1][sel_t]].mat.comment
 
     def select_color(self, sel_t):
         '''
@@ -329,14 +317,14 @@ class MaterialSelector:
         if self.cur_color==sel_t:return
         self.cur_color=sel_t
 
-        self.mat_rep.mat[self.mat_entry[1][self.cur_mat]].sel = self.mat_rep.mat[self.mat_entry[1][self.cur_mat]].mat.entries[sel_t]
+        self.mat_rep.replace_map[self.mat_entry[1][self.cur_mat]].sel = self.mat_rep.replace_map[self.mat_entry[1][self.cur_mat]].mat.entries[sel_t]
         self.color_select_observable.notify()
 
     def random(self):
         '''
         マテリアルカラーをランダムに選択する
         '''
-        for x in self.mat_rep.mat.items():
+        for x in self.mat_rep.replace_map.items():
             random.seed()
             x[1].sel = x[1].mat.entries[random.randint(0, len(x[1].mat.entries)-1)]
         self.color_select_observable.notify()
@@ -346,6 +334,6 @@ class MaterialSelector:
         マテリアル置き換えを実行する        
         '''
         logger.info("Material.Replace")
-        self.mat_rep.UpdateMaterial(self.mats_list, num=0)
-        self.mat_rep.ApplyToPmd(num=0)
+        self.mat_rep.UpdateMaterial(0, self.mats_list)
+        self.mat_rep.ApplyToPmd(0)
         PMCA.Copy_PMD(0, 2)
