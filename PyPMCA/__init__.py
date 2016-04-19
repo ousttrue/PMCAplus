@@ -92,7 +92,10 @@ class PyPMCA:
                 self.update_level=level
             return __internal
 
-        self.parts_tree.tree_entry_observable.add(on_update(0))
+        def on_teee_entry(entry, sel):
+             on_update(0)()
+             self.materials.force_update(entry)
+        self.parts_tree.tree_entry_observable.add(on_teee_entry)
         self.materials.color_select_observable.add(on_update(1))
         self.transform.transform_observable.add(on_update(2))
 

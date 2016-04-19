@@ -59,14 +59,17 @@ class Texture(object):
         if not self.isInitialized:
             try:
                 # load image
-                if not self.image and os.path.exists(self.path):
-                    self.image=Image.open(self.path)
-                    if self.image:
-                        #logger.debug("load image: %s", self.path)
-                        pass
+                if not self.image:
+                    if os.path.exists(self.path):
+                        self.image=Image.open(self.path)
+                        if self.image:
+                            #logger.debug("load image: %s", self.path)
+                            pass
+                        else:
+                            logger.warn("failt to load image: %s", self.path)
+                            return
                     else:
-                        logger.warn("failt to load image: %s", self.path)
-                        return
+                        logger.warn("not exists: %s", self.path)
                 # createTexture
                 if self.image:
                     self.createTexture()
