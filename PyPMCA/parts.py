@@ -58,10 +58,10 @@ class NODE:
         self.child = child
         self.list_num = list_num
     
-    def assemble(self, num, app):
+    def assemble(self, app):
         app.script_fin = []
-        PMCA.Create_PMD(num)
-        PMCA.Load_PMD(num, self.parts.path.encode(sysenc,'replace'))
+        #PMCA.Create_PMD(0)
+        PMCA.Load_PMD(0, self.parts.path.encode(sysenc,'replace'))
         info_data = PMCA.getInfo(0)
         info = INFO(info_data)
         line = info.comment.split('\n')
@@ -106,9 +106,9 @@ class NODE:
                 app.licenses = tmp[1].split(' ')
         for x in self.child:
             if x != None:
-                x.assemble_child(num, app)
+                x.assemble_child(app)
                     
-        PMCA.Sort_PMD(num)
+        PMCA.Sort_PMD(0)
         
         for x in app.script_fin:
             argv = x.split()
@@ -118,7 +118,7 @@ class NODE:
             fp.close
         
             
-    def assemble_child(self, num, app):
+    def assemble_child(self, app):
         pmpy = app
         
         PMCA.Create_PMD(4)
@@ -177,8 +177,8 @@ class NODE:
                 exec(script)
                 fp.close
         
-        PMCA.Add_PMD(num, 4)
-        PMCA.Marge_PMD(num)
+        PMCA.Add_PMD(0, 4)
+        PMCA.Marge_PMD(0)
         
         if 'script_post' in self.parts.props:
             for x in self.parts.props['script_post']:
@@ -193,7 +193,7 @@ class NODE:
         
         for x in self.child:
             if x != None:
-                x.assemble_child(num,app)
+                x.assemble_child(app)
     
     def create_list(self):
         List = [TREE_LIST(node=self, depth=self.depth, text='  '*(self.depth) + self.parts.name)]
@@ -488,4 +488,4 @@ class PartsTree:
         if x == None:
             return
 
-        x.assemble(0, self)
+        x.assemble(self)
