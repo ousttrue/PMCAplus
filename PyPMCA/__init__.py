@@ -7,7 +7,7 @@ sys.path.append('%s/converter'%(os.getcwd()))
 import pathlib
 import converter
 
-from PyPMCA.parts import *
+from PyPMCA.parts_tree import *
 from PyPMCA.material import *
 from PyPMCA.material_entry import *
 from PyPMCA.transform import *
