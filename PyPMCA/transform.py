@@ -341,4 +341,3 @@ class BodyTransform:
             
         PMCA.Update_Skin(0)
         PMCA.Adjust_Joints(0)
-        PMCA.Copy_PMD(0,3)

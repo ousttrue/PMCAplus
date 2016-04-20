@@ -221,4 +221,3 @@ class MaterialSelector:
         '''
         logger.info("Material.Replace")
         self.ApplyToPmd(0)
-        PMCA.Copy_PMD(0, 2)

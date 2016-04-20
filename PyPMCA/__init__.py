@@ -111,27 +111,28 @@ class PyPMCA:
         if self.update_level<0:
             # モデルの更新なし
             return
-        logger.debug('update_level %d', self.update_level)
 
-        if self.update_level < 1:
+        if self.update_level==0:
+            logger.debug('update_tree_parts')
             self.parts_tree.build()
-        else:
-            PMCA.Copy_PMD(1,0)
-
-        if self.update_level < 2:
+            PMCA.Copy_PMD(0, 1)
             self.materials.replace()
-        else:
+            PMCA.Copy_PMD(0, 2)
+        elif self.update_level==1:
+            logger.debug('update_material_select')
+            PMCA.Copy_PMD(1, 0)
+            self.materials.replace()
+            PMCA.Copy_PMD(0, 2)
+        elif self.update_level==2:
+            logger.debug('update_transform')
             PMCA.Copy_PMD(2,0)
-        
-        if self.update_level < 3:
-            self.transform.update()
         else:
-            PMCA.Copy_PMD(3,0)
-        
-        if self.update_level < 4:
-            self.name_update()       
+            raise Exception("unknown update_level: " + self.update_level)
 
+        self.transform.update()
+        PMCA.Copy_PMD(0,3)
         self.update_level=-1
+        self.name_update()       
         self.model_update_observable.notify()
         wht = PMCA.getWHT(0)
         self.model_bb_observable.notify(wht)
