@@ -10,7 +10,7 @@ logger = getLogger(__name__)
 sysenc = sys.getfilesystemencoding()
 
 
-class NODE:    
+class NODE:
     '''
     モデルのパーツツリー
     '''
@@ -204,17 +204,13 @@ class NODE:
         '''
         tmp = [None,None]
         curnode = self
-        parents = [self]
+        parents_stack = [self]
         child_nums = [0]
-        count=0
-        while lines[count] != 'PARTS':
-            count+=1
-        count+=1
-        
-        while count < len(lines):
-            line = lines[count].split(' ')
-            if len(parents) == 0:
+
+        for line  in lines:
+            if len(parents_stack) == 0:
                 break
+            line = line.split(' ')
             if line[0] == 'None':
                 tmp = [None,None]
                 child_nums[-1]+=1
@@ -244,7 +240,7 @@ class NODE:
                 
                 if tp != None:
                     curnode.child[child_nums[-1]] = NODE(parts = y, depth = curnode.depth+1, child=[])
-                    parents.append(curnode)
+                    parents_stack.append(curnode)
                     curnode = curnode.child[child_nums[-1]]
                     child_nums.append(0)
                     for x in curnode.parts.joint:
@@ -258,26 +254,18 @@ class NODE:
                             depc += 1
                         if lines[count] == '[Parent]':
                             depc -= 1
-                    parents.pop()
+                    parents_stack.pop()
                     child_nums.pop()
                     child_nums[-1]+=1
             
             elif line[0] == '[Parent]':
-                curnode = parents.pop()
+                curnode = parents_stack.pop()
                 child_nums.pop()
                 if len(child_nums) > 0:
                     child_nums[-1]+=1
             elif line[0] == 'MATERIAL':
                 break
-            count +=1
-        
-        
-        self.recalc_depth
-        
-        return lines
-
-
-
+       
 
 class TREE_LIST:
     def __init__(self, node=None, depth=0, text='', c_num=-1, list_num=0):
