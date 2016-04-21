@@ -28,7 +28,7 @@ class ListModel(QtCore.QAbstractListModel):
             return None
 
         if role == QtCore.Qt.DisplayRole:
-            return self.rows[index.row()]
+            return str(self.rows[index.row()])
         else:
             return None
 

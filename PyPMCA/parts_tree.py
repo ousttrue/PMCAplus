@@ -277,8 +277,9 @@ class TREE_LIST:
     def get_parts_entry(self, parts_list):
         joint = self.node.parts.joint[self.c_num]
         parts_entry = [x for x in parts_list if x.has_joint(joint)]
-        parts_entry.append('load')
+        #parts_entry.append('load')
         parts_entry.append(None)
+        '''
         def get_name(x):
             if isinstance(x, PARTS):
                 return x.name
@@ -287,6 +288,8 @@ class TREE_LIST:
             else:
                 return "#NONE"
         return [get_name(x) for x in parts_entry]
+        '''
+        return parts_entry
 
 
 class PartsTree:
@@ -298,7 +301,6 @@ class PartsTree:
         # ツリー初期化
         self.tree_root=NODE(parts = PARTS.create_root(), depth = -1, child=[None])   
         self.tree_entry_selected=-1
-        self.parts_entry=[]
         self.update(0)
 
     def update(self, sel=None):
@@ -309,7 +311,6 @@ class PartsTree:
             sel=self.tree_entry_selected 
         self.tree_entry=[x for x in self.tree_root.create_list()][1:]
         self.tree_entry_selected=-1
-        self.parts_entry=[]
         def get_name(x):
             i=x.c_num
             joint=x.node.parts.joint[i]
@@ -326,14 +327,13 @@ class PartsTree:
         CharacterNodeListの読み込み
         '''
         self.tree_root.text_to_node(self.parts_list, lines)
-        self.update()
+        self.update(0)
 
     def __update_parts_entry(self):
         '''
         パーツリスト更新
         '''
         if len(self.tree_entry)==0: return
-
         item=self.tree_entry[self.tree_entry_selected]
         self.parts_entry_observable.notify(item.get_parts_entry(self.parts_list), item.node.list_num)
 
@@ -349,7 +349,7 @@ class PartsTree:
         '''
         ツリーノード選択
         '''
-        logger.debug('select_node %d', sel_t)
+        logger.debug('select_node: %d -> %d', self.tree_entry_selected, sel_t)
         if(self.tree_entry_selected==sel_t):return
         self.tree_entry_selected=sel_t
         self.__update_parts_entry()
@@ -358,12 +358,13 @@ class PartsTree:
         '''
         パーツ選択
         '''
-        if sel>=len(self.parts_entry): return
+        parts_entry=self.tree_entry[self.tree_entry_selected].get_parts_entry(self.parts_list)
+        if sel>=len(parts_entry): return
 
-        if self.parts_entry[sel]==None:    #Noneを選択した場合
+        if parts_entry[sel]==None:    #Noneを選択した場合
             node = None
         
-        elif self.parts_entry[sel]=='load':    #外部モデル読み込み
+        elif parts_entry[sel]=='load':    #外部モデル読み込み
             path = filedialog.askopenfilename(filetypes = [('Plygon Model Deta(for MMD)','.pmd'),('all','.*')], defaultextension='.pmd')
             if(path != ''):
                 name = path.split('/')[-1]
@@ -375,7 +376,7 @@ class PartsTree:
                 node = None               
                 
         else:          
-            node = NODE(parts = self.parts_entry[sel], depth = self.tree_entry[self.tree_entry_selected].node.depth+1, child=[])
+            node = NODE(parts = parts_entry[sel], depth = self.tree_entry[self.tree_entry_selected].node.depth+1, child=[])
             p_node=self.tree_entry[self.tree_entry_selected].node.child[self.tree_entry[self.tree_entry_selected].c_num]
             
             child_appended = []
@@ -404,8 +405,4 @@ class PartsTree:
         モデル組立て
         '''
         logger.info('Parts.Build')
-        x = self.tree_root
-        if x == None:
-            return
-
-        x.assemble(self)
+        self.tree_root.assemble(self)

@@ -15,6 +15,9 @@ class PARTS:
         self.tree_current=-1
         self.parts_current=-1
 
+    def __str__(self):
+        return self.name
+
     def has_joint(self, joint):
         for y in self.type:
             if y == joint:
