@@ -72,7 +72,6 @@ class SETTINGS:
         self.export2folder = False
 
 
-
 class PyPMCA:
     def __init__(self):
         self.model_update_observable=Observable()

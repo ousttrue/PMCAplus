@@ -293,35 +293,21 @@ class PartsTree:
         self.parts_entry_observable=Observable()
         # 全パーツのリスト
         self.parts_list=[]
-        # 現在選択中のノードに対応するリスト(jointが一致する)
-        self.parts_entry = []
-        # パーツツリー
-        self.tree_root = []
-        self.tree_entry = []
-        self.tree_current=-1
-        self.parts_current=-1
         # ツリー初期化
         self.tree_root=NODE(parts = PARTS.create_root(), depth = -1, child=[None])   
-        self.__update_tree_entry()
+        self.tree_entry_selected=-1
+        self.parts_entry=[]
+        self.update(0)
 
-    def update(self):
-        self.__update_tree_entry()
-
-    def load_CNL_lines(self, lines):
-        '''
-        CharacterNodeListの読み込み
-        '''
-        self.tree_root.text_to_node(self.parts_list, lines)
-        self.__update_tree_entry()
-
-    def __update_tree_entry(self, sel=-1, parts_sel=-1):
+    def update(self, sel=None):
         '''
         ツリーリスト更新
         '''
+        if sel==None:
+            sel=self.tree_entry_selected 
         self.tree_entry=[x for x in self.tree_root.create_list()][1:]
-        self.tree_current=-1
+        self.tree_entry_selected=-1
         self.parts_entry=[]
-        self.parts_current=parts_sel
         def get_name(x):
             i=x.c_num
             joint=x.node.parts.joint[i]
@@ -333,13 +319,20 @@ class PartsTree:
         self.tree_entry_observable.notify([get_name(x) for x in self.tree_entry], sel)
         self.select_node(sel)
 
+    def load_CNL_lines(self, lines):
+        '''
+        CharacterNodeListの読み込み
+        '''
+        self.tree_root.text_to_node(self.parts_list, lines)
+        self.update()
+
     def __update_parts_entry(self):
         '''
         パーツリスト更新
         '''
         if len(self.tree_entry)==0: return
 
-        joint = self.tree_entry[self.tree_current].node.parts.joint[self.tree_entry[self.tree_current].c_num]
+        joint = self.tree_entry[self.tree_entry_selected].node.parts.joint[self.tree_entry[self.tree_entry_selected].c_num]
         self.parts_entry = []
         for x in self.parts_list:
             for y in x.type:
@@ -355,7 +348,7 @@ class PartsTree:
                 return "#外部モデル"
             else:
                 return "#NONE"
-        self.parts_entry_observable.notify([get_name(x) for x in self.parts_entry], self.tree_entry[self.tree_current].node.list_num)
+        self.parts_entry_observable.notify([get_name(x) for x in self.parts_entry], self.tree_entry[self.tree_entry_selected].node.list_num)
 
     def load_partslist(self, assets_dir, lines):
         '''
@@ -370,17 +363,15 @@ class PartsTree:
         ツリーノード選択
         '''
         logger.debug('select_node %d', sel_t)
-        if(self.tree_current==sel_t):return
-        self.tree_current=sel_t
+        if(self.tree_entry_selected==sel_t):return
+        self.tree_entry_selected=sel_t
         self.__update_parts_entry()
 
     def select_part(self, sel):
         '''
         パーツ選択
         '''
-        if self.parts_current==sel: return
         if sel>=len(self.parts_entry): return
-        self.parts_current=sel
 
         if self.parts_entry[sel]==None:    #Noneを選択した場合
             node = None
@@ -390,15 +381,15 @@ class PartsTree:
             if(path != ''):
                 name = path.split('/')[-1]
                 parts = PyPMCA.PARTS(name = name, path = path, props = {})
-                node = PyPMCA.NODE(parts = parts, depth = self.tree_list[self.tree_current].node.depth+1, child=[])
+                node = PyPMCA.NODE(parts = parts, depth = self.tree_list[self.tree_entry_selected].node.depth+1, child=[])
                 for x in node.parts.joint:
                     node.child.append(None)
             else:
                 node = None               
                 
         else:          
-            node = NODE(parts = self.parts_entry[sel], depth = self.tree_entry[self.tree_current].node.depth+1, child=[])
-            p_node=self.tree_entry[self.tree_current].node.child[self.tree_entry[self.tree_current].c_num]
+            node = NODE(parts = self.parts_entry[sel], depth = self.tree_entry[self.tree_entry_selected].node.depth+1, child=[])
+            p_node=self.tree_entry[self.tree_entry_selected].node.child[self.tree_entry[self.tree_entry_selected].c_num]
             
             child_appended = []
             if p_node != None:
@@ -417,9 +408,9 @@ class PartsTree:
                 for x in node.parts.joint:
                     node.child.append(None)
             
-        self.tree_entry[self.tree_current].node.child[self.tree_entry[self.tree_current].c_num] = node
+        self.tree_entry[self.tree_entry_selected].node.child[self.tree_entry[self.tree_entry_selected].c_num] = node
 
-        self.__update_tree_entry(self.tree_current, self.parts_current)
+        self.update(self.tree_entry_selected)
 
     def build(self):
         '''
