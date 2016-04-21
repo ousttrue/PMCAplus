@@ -4,6 +4,7 @@ import sys
 from PyPMCA.pmd import *
 from PyPMCA.parts import PARTS
 from logging import getLogger
+import io
 logger = getLogger(__name__)
 
 
@@ -198,7 +199,7 @@ class NODE:
         lines.append('[Parent]')
         return lines
     
-    def text_to_node(self, parts_list, lines):
+    def text_to_node(self, iio: io.IOBase, parts_list):
         '''
         CNLを読み込み
         '''
@@ -207,7 +208,8 @@ class NODE:
         parents_stack = [self]
         child_nums = [0]
 
-        for line  in lines:
+        while iio.readable():
+            line=iio.readline().strip()
             if len(parents_stack) == 0:
                 break
             line = line.split(' ')
@@ -225,7 +227,6 @@ class NODE:
                     tmp[1] = line[1]
                     
             elif line[0] == '[Child]':
-                
                 tp = None
                 if tmp[0] != None:
                     for y in parts_list:
@@ -238,26 +239,13 @@ class NODE:
                                 tp = y
                                 break
                 
-                if tp != None:
-                    curnode.child[child_nums[-1]] = NODE(parts = y, depth = curnode.depth+1, child=[])
-                    parents_stack.append(curnode)
-                    curnode = curnode.child[child_nums[-1]]
-                    child_nums.append(0)
-                    for x in curnode.parts.joint:
-                        curnode.child.append(None)
-                
-                else:
-                    depc = 1
-                    while depc == 0:
-                        count += 1
-                        if lines[count] == '[Child]':
-                            depc += 1
-                        if lines[count] == '[Parent]':
-                            depc -= 1
-                    parents_stack.pop()
-                    child_nums.pop()
-                    child_nums[-1]+=1
-            
+                curnode.child[child_nums[-1]] = NODE(parts = y, depth = curnode.depth+1, child=[])
+                parents_stack.append(curnode)
+                curnode = curnode.child[child_nums[-1]]
+                child_nums.append(0)
+                for x in curnode.parts.joint:
+                    curnode.child.append(None)
+           
             elif line[0] == '[Parent]':
                 curnode = parents_stack.pop()
                 child_nums.pop()
@@ -322,11 +310,11 @@ class PartsTree:
         self.tree_entry_observable.notify([get_name(x) for x in self.tree_entry], sel)
         self.select_node(sel)
 
-    def load_CNL_lines(self, lines):
+    def load_CNL_lines(self, iio: io.IOBase):
         '''
         CharacterNodeListの読み込み
         '''
-        self.tree_root.text_to_node(self.parts_list, lines)
+        self.tree_root.text_to_node(iio, self.parts_list)
         self.update(0)
 
     def __update_parts_entry(self):
