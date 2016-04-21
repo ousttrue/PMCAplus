@@ -203,56 +203,47 @@ class NODE:
         '''
         CNLを読み込み
         '''
-        tmp = [None,None]
-        curnode = self
-        parents_stack = [self]
-        child_nums = [0]
 
+        index = 0
         while iio.readable():
             line=iio.readline().strip()
-            if len(parents_stack) == 0:
-                break
+
             line = line.split(' ')
             if line[0] == 'None':
-                tmp = [None,None]
-                child_nums[-1]+=1
+                index+=1
                 
             elif line[0] == '[Name]':
-                tmp[0] = line[1]
+                name = line[1]
                 
             elif line[0] == '[Path]':
                 if len(line) == 1:
-                    tmp[1] = ''
+                    path = ''
                 else:
-                    tmp[1] = line[1]
+                    path = line[1]
                     
             elif line[0] == '[Child]':
                 tp = None
-                if tmp[0] != None:
+                if name != None:
                     for y in parts_list:
-                        if y.name == tmp[0]:
+                        if y.name == name:
                             tp = y
                             break
-                    else:
-                        for y in parts_list:
-                            if y.path == tmp[1]:
-                                tp = y
-                                break
+                elif path != None:
+                    for y in parts_list:
+                        if y.path == path:
+                            tp = y
+                            break
                 
-                curnode.child[child_nums[-1]] = NODE(parts = y, depth = curnode.depth+1, child=[])
-                parents_stack.append(curnode)
-                curnode = curnode.child[child_nums[-1]]
-                child_nums.append(0)
-                for x in curnode.parts.joint:
-                    curnode.child.append(None)
-           
+                child = NODE(parts = y, depth = self.depth+1, child=[None for x in y.joint])
+                self.child[index] = child
+                index+=1
+                child.text_to_node(iio, parts_list)
+          
             elif line[0] == '[Parent]':
-                curnode = parents_stack.pop()
-                child_nums.pop()
-                if len(child_nums) > 0:
-                    child_nums[-1]+=1
+                return
+
             elif line[0] == 'MATERIAL':
-                break
+                return
       
 
 class TREE_LIST:
