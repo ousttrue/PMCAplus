@@ -291,16 +291,16 @@ class PartsTree:
     def __init__(self):
         self.tree_entry_observable=Observable()
         self.parts_entry_observable=Observable()
+        # 全パーツのリスト
         self.parts_list=[]
+        # 現在選択中のノードに対応するリスト(jointが一致する)
         self.parts_entry = []
+        # パーツツリー
         self.tree_list = []
         self.tree_entry = []
         self.tree_current=-1
         self.parts_current=-1
         self.__init_parts_tree()
-
-    def is_empty(self):
-        return self.tree_list[0].node.child[0] == None
 
     def update(self):
         self.__update_tree_entry()

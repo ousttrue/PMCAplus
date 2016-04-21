@@ -211,10 +211,7 @@ class PyPMCA:
         self.transform.load_CNL_lines(lines)
         return True
         
-    def save_CNL_File(self, name):
-        if self.parts_tree.is_empty():
-            return False
-        
+    def save_CNL_File(self, name):       
         lines = []
         lines.append(self.modelinfo.name)
         lines.append(self.modelinfo.name_l)
