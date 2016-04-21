@@ -296,35 +296,29 @@ class PartsTree:
         # 現在選択中のノードに対応するリスト(jointが一致する)
         self.parts_entry = []
         # パーツツリー
-        self.tree_list = []
+        self.tree_root = []
         self.tree_entry = []
         self.tree_current=-1
         self.parts_current=-1
-        self.__init_parts_tree()
-
-    def update(self):
+        # ツリー初期化
+        self.tree_root=NODE(parts = PARTS.create_root(), depth = -1, child=[None])   
         self.__update_tree_entry()
 
-    def __init_parts_tree(self):
-        '''
-        ツリー初期化
-        '''
-        node =NODE(parts = PARTS.create_root(), depth = -1, child=[None])   
-        self.tree_list = node.create_list()
+    def update(self):
         self.__update_tree_entry()
 
     def load_CNL_lines(self, lines):
         '''
         CharacterNodeListの読み込み
         '''
-        self.tree_list[0].node.text_to_node(self.parts_list, lines)
+        self.tree_root.text_to_node(self.parts_list, lines)
         self.__update_tree_entry()
 
     def __update_tree_entry(self, sel=-1, parts_sel=-1):
         '''
         ツリーリスト更新
         '''
-        self.tree_entry=[x for x in self.tree_list[0].node.create_list()][1:]
+        self.tree_entry=[x for x in self.tree_root.create_list()][1:]
         self.tree_current=-1
         self.parts_entry=[]
         self.parts_current=parts_sel
@@ -424,7 +418,6 @@ class PartsTree:
                     node.child.append(None)
             
         self.tree_entry[self.tree_current].node.child[self.tree_entry[self.tree_current].c_num] = node
-        #self.tree_list[sel_t].node.list_num = sel
 
         self.__update_tree_entry(self.tree_current, self.parts_current)
 
@@ -433,7 +426,7 @@ class PartsTree:
         モデル組立て
         '''
         logger.info('Parts.Build')
-        x = self.tree_list[0].node
+        x = self.tree_root
         if x == None:
             return
 
