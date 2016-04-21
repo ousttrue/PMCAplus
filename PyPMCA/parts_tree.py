@@ -265,7 +265,7 @@ class NODE:
                     child_nums[-1]+=1
             elif line[0] == 'MATERIAL':
                 break
-       
+      
 
 class TREE_LIST:
     def __init__(self, node=None, depth=0, text='', c_num=-1, list_num=0):
@@ -273,6 +273,20 @@ class TREE_LIST:
         self.depth= depth
         self.text = text
         self.c_num = c_num
+
+    def get_parts_entry(self, parts_list):
+        joint = self.node.parts.joint[self.c_num]
+        parts_entry = [x for x in parts_list if x.has_joint(joint)]
+        parts_entry.append('load')
+        parts_entry.append(None)
+        def get_name(x):
+            if isinstance(x, PARTS):
+                return x.name
+            if x=="load":
+                return "#外部モデル"
+            else:
+                return "#NONE"
+        return [get_name(x) for x in parts_entry]
 
 
 class PartsTree:
@@ -320,23 +334,8 @@ class PartsTree:
         '''
         if len(self.tree_entry)==0: return
 
-        joint = self.tree_entry[self.tree_entry_selected].node.parts.joint[self.tree_entry[self.tree_entry_selected].c_num]
-        self.parts_entry = []
-        for x in self.parts_list:
-            for y in x.type:
-                if y == joint:
-                    self.parts_entry.append(x)
-                    break
-        self.parts_entry.append('load')
-        self.parts_entry.append(None)
-        def get_name(x):
-            if isinstance(x, PARTS):
-                return x.name
-            if x=="load":
-                return "#外部モデル"
-            else:
-                return "#NONE"
-        self.parts_entry_observable.notify([get_name(x) for x in self.parts_entry], self.tree_entry[self.tree_entry_selected].node.list_num)
+        item=self.tree_entry[self.tree_entry_selected]
+        self.parts_entry_observable.notify(item.get_parts_entry(self.parts_list), item.node.list_num)
 
     def load_partslist(self, assets_dir, lines):
         '''

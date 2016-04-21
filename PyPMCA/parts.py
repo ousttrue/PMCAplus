@@ -15,6 +15,11 @@ class PARTS:
         self.tree_current=-1
         self.parts_current=-1
 
+    def has_joint(self, joint):
+        for y in self.type:
+            if y == joint:
+                return True
+
     @staticmethod
     def create_root():
         return PARTS('ROOT', ['root'])
