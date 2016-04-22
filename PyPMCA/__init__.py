@@ -217,7 +217,7 @@ class PyPMCA:
         lines.append(self.modelinfo.comment)
     
         lines.append('PARTS')
-        lines.extend(self.parts_tree.tree_root.child[0].node_to_text())
+        lines.extend(self.parts_tree.tree_root.joints[0].node.node_to_text())
         lines.append('MATERIAL')
         lines.extend(self.materials.list_to_text())
         lines.append('TRANSFORM')
@@ -238,7 +238,7 @@ class PyPMCA:
             name = "%s/%s/%s"%(tmp[0] ,dirc.rsplit('/', 1)[1] ,tmp[1])
             
         logger.info('Write_PMD %s', name)
-        if PMCA.Write_PMD(0, name.encode(sysenc,'replace')) == 0:    
+        if PMCA.Write_PMD(0, name.encode(fsenc,'replace')) == 0:    
             #テクスチャコピー
             dirc = os.path.dirname(name)
             info_data = PMCA.getInfo(0)

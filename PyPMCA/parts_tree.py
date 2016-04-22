@@ -8,23 +8,35 @@ import io
 logger = getLogger(__name__)
 
 
-sysenc = sys.getfilesystemencoding()
+fsenc = sys.getfilesystemencoding()
 
 
-class NODE:
+class Joint:
+    def __init__(self, name, node=None):
+        self.name=name
+        self.node=node
+
+
+class PartNode:
     '''
     モデルのパーツツリー
     '''
     def __init__(self, parts, depth):
         self.parts = parts
         self.depth = depth
-        self.child = [None for x in parts.joint]
+        self.joints = [Joint(x) for x in parts.joint]
         self.list_num=-1
+
+    def connect(self, node):
+        for x in self.joints:
+            if x.name in node.parts.type:
+                x.node=node
+                return
     
     def assemble(self, app):
         app.script_fin = []
         #PMCA.Create_PMD(0)
-        PMCA.Load_PMD(0, self.parts.path.encode(sysenc,'replace'))
+        PMCA.Load_PMD(0, self.parts.path.encode(fsenc,'replace'))
         info_data = PMCA.getInfo(0)
         info = INFO(info_data)
         line = info.comment.split('\n')
@@ -67,9 +79,9 @@ class NODE:
             elif tmp[0] == 'License' or tmp[0] == 'license' or tmp[0] == 'ライセンス':
                 tmp[1] = tmp[1].replace('　', ' ')
                 app.licenses = tmp[1].split(' ')
-        for x in self.child:
-            if x != None:
-                x.assemble_child(app)
+        for x in self.joints:
+            if x.node != None:
+                x.node.assemble_child(app)
                     
         PMCA.Sort_PMD(0)
         
@@ -84,7 +96,7 @@ class NODE:
         pmpy = app
         
         PMCA.Create_PMD(4)
-        PMCA.Load_PMD(4, str(self.parts.path).encode(sysenc, 'replace'))
+        PMCA.Load_PMD(4, str(self.parts.path).encode(fsenc, 'replace'))
         
         info_data = PMCA.getInfo(4)
         info = INFO(info_data)
@@ -153,32 +165,32 @@ class NODE:
             app.script_fin.extend(self.parts.props['script_fin'])
         
         
-        for x in self.child:
-            if x != None:
-                x.assemble_child(app)
+        for x in self.joints:
+            if x.node != None:
+                x.node.assemble_child(app)
     
     def create_list(self):
-        List = [TREE_LIST(node=self, depth=self.depth, text='  '*(self.depth) + self.parts.name)]
-        for i,x in enumerate(self.child):
-            if x != None:
-                List.append(TREE_LIST(node=self, depth=self.depth+1, text='  '*(self.depth+1) +self.child[i].parts.name, c_num=i))
-                x.list_add(List)
+        List = [LeftItem(node=self, depth=self.depth, text='  '*(self.depth) + self.parts.name)]
+        for i, x in enumerate(self.joints):
+            if x.node != None:
+                List.append(LeftItem(node=self, depth=self.depth+1, text='  '*(self.depth+1) + x.node.parts.name, c_num=i))
+                x.node.list_add(List)
             elif self.parts.joint[i] != '':
-                List.append(TREE_LIST(node=self, depth=self.depth+1, text='  '*(self.depth+1) + '#'+self.parts.joint[i], c_num=i))
+                List.append(LeftItem(node=self, depth=self.depth+1, text='  '*(self.depth+1) + '#'+x.name, c_num=i))
         return List
     
     def list_add(self, List):
-        for i,x in enumerate(self.child):
-            if x != None:
-                List.append(TREE_LIST(node=self, depth=self.depth+1, text='  '*(self.depth+1) +self.child[i].parts.name, c_num=i))
-                x.list_add(List)
+        for i, x in enumerate(self.joints):
+            if x.node != None:
+                List.append(LeftItem(node=self, depth=self.depth+1, text='  '*(self.depth+1) + x.node.parts.name, c_num=i))
+                x.node.list_add(List)
             elif self.parts.joint[i] != '':
-                List.append(TREE_LIST(node=self, depth=self.depth+1, text='  '*(self.depth+1) + '#'+self.parts.joint[i], c_num=i))
+                List.append(LeftItem(node=self, depth=self.depth+1, text='  '*(self.depth+1) + '#'+ x.name, c_num=i))
     
     def recalc_depth(self, depth):
         self.depth = depth
         depth = depth+1
-        for x in self.child:
+        for x in self.joints:
             if x != None:
                 x.recalc_depth(depth)
         
@@ -190,9 +202,9 @@ class NODE:
         lines.append('[Name] %s'%(self.parts.name))
         lines.append('[Path] %s'%(self.parts.path))
         lines.append('[Child]')
-        for x in self.child:
-            if x != None:
-                lines.extend(x.node_to_text())
+        for x in self.joints:
+            if x.node != None:
+                lines.extend(x.node.node_to_text())
             else:
                 lines.append('None')
         lines.append('[Parent]')
@@ -231,8 +243,8 @@ class NODE:
                     path = line[1]
                     
             elif line[0] == '[Child]':
-                child = NODE(find_part(name, path), self.depth+1)
-                self.child[index] = child
+                child = PartNode(find_part(name, path), self.depth+1)
+                self.joints[index] = Joint(self.parts.joint[index], child)
                 index+=1
                 child.text_to_node(iio, parts_list)
           
@@ -243,7 +255,7 @@ class NODE:
                 return
       
 
-class TREE_LIST:
+class LeftItem:
     def __init__(self, node=None, depth=0, text='', c_num=-1, list_num=0):
         self.node = node
         self.depth= depth
@@ -256,6 +268,9 @@ class TREE_LIST:
         parts_entry.append(None)
         return parts_entry
 
+    def get_selected(self):
+        return self.node.joints[self.c_num]
+
 
 class PartsTree:
     def __init__(self):
@@ -264,7 +279,7 @@ class PartsTree:
         # 全パーツのリスト
         self.parts_list=[]
         # ツリー初期化
-        self.tree_root=NODE(PARTS.create_root(), -1)   
+        self.tree_root=PartNode(PARTS.create_root(), -1)   
         self.tree_entry_selected=-1
         self.update(0)
 
@@ -278,12 +293,11 @@ class PartsTree:
         self.tree_entry_selected=-1
         def get_name(x):
             i=x.c_num
-            joint=x.node.parts.joint[i]
-            node=x.node.child[i]
-            if node:
-                return "%s#%s => %s" %('  '*x.depth, joint, node.parts.name)
+            joint=x.node.joints[i]
+            if joint.node:
+                return "%s#%s => %s" %('  '*x.depth, joint.name, joint.node.parts.name)
             else:
-                return "%s#%s" % ('  '*x.depth, joint) 
+                return "%s#%s" % ('  '*x.depth, joint.name) 
         self.tree_entry_observable.notify([get_name(x) for x in self.tree_entry], sel)
         self.select_node(sel)
 
@@ -323,30 +337,27 @@ class PartsTree:
         '''
         パーツ選択
         '''
-        parts_entry=self.tree_entry[self.tree_entry_selected].get_parts_entry(self.parts_list)
+        left_selected=self.tree_entry[self.tree_entry_selected]
+        parts_entry=left_selected.get_parts_entry(self.parts_list)
         if sel>=len(parts_entry): return
-
-        if parts_entry[sel]==None:    #Noneを選択した場合
+        right_selected=parts_entry[sel]
+        if right_selected==None:    #Noneを選択した場合
             new_node = None
         
         else:          
-            new_node = NODE(parts_entry[sel], self.tree_entry[self.tree_entry_selected].node.depth+1)
-            p_node=self.tree_entry[self.tree_entry_selected].node.child[self.tree_entry[self.tree_entry_selected].c_num]
-            
+            new_node = PartNode(right_selected, left_selected.depth+1)
+            old_node = left_selected.get_selected().node
             child_appended = []
-            if p_node != None:
+            if old_node != None:
                 for i, x in enumerate(new_node.parts.joint):
-                    for j, y in enumerate(p_node.parts.joint):
+                    for j, y in enumerate(old_node.parts.joint):
                         if x == y:
-                            for z in child_appended:
-                                if z == y:
-                                    break
-                            else:
-                                new_node.child[i] = p_node.child[j]
+                            if y not in child_appended:
+                                new_node.joints[i] = old_node.joints[j]
                                 child_appended.append(y)
                                 break
             
-        self.tree_entry[self.tree_entry_selected].node.child[self.tree_entry[self.tree_entry_selected].c_num] = new_node
+        left_selected.node.connect(new_node)
 
         self.update(self.tree_entry_selected)
 
