@@ -15,11 +15,11 @@ class NODE:
     '''
     モデルのパーツツリー
     '''
-    def __init__(self, parts = '', depth = 0, child = [], list_num=-1):
+    def __init__(self, parts, depth):
         self.parts = parts
         self.depth = depth
-        self.child = child
-        self.list_num = list_num
+        self.child = [None for x in parts.joint]
+        self.list_num=-1
     
     def assemble(self, app):
         app.script_fin = []
@@ -78,8 +78,7 @@ class NODE:
             fp = open(argv[0], 'r', encoding = 'utf-8-sig')
             script = fp.read()
             exec(script)
-            fp.close
-        
+            fp.close       
             
     def assemble_child(self, app):
         pmpy = app
@@ -204,6 +203,16 @@ class NODE:
         CNLを読み込み
         '''
 
+        def find_part(name, path):
+            if name != None:
+                for y in parts_list:
+                    if y.name == name:
+                        return y
+            elif path != None:
+                for y in parts_list:
+                    if y.path == path:
+                        return y
+
         index = 0
         while iio.readable():
             line=iio.readline().strip()
@@ -222,19 +231,7 @@ class NODE:
                     path = line[1]
                     
             elif line[0] == '[Child]':
-                tp = None
-                if name != None:
-                    for y in parts_list:
-                        if y.name == name:
-                            tp = y
-                            break
-                elif path != None:
-                    for y in parts_list:
-                        if y.path == path:
-                            tp = y
-                            break
-                
-                child = NODE(parts = y, depth = self.depth+1, child=[None for x in y.joint])
+                child = NODE(find_part(name, path), self.depth+1)
                 self.child[index] = child
                 index+=1
                 child.text_to_node(iio, parts_list)
@@ -256,18 +253,7 @@ class TREE_LIST:
     def get_parts_entry(self, parts_list):
         joint = self.node.parts.joint[self.c_num]
         parts_entry = [x for x in parts_list if x.has_joint(joint)]
-        #parts_entry.append('load')
         parts_entry.append(None)
-        '''
-        def get_name(x):
-            if isinstance(x, PARTS):
-                return x.name
-            if x=="load":
-                return "#外部モデル"
-            else:
-                return "#NONE"
-        return [get_name(x) for x in parts_entry]
-        '''
         return parts_entry
 
 
@@ -278,7 +264,7 @@ class PartsTree:
         # 全パーツのリスト
         self.parts_list=[]
         # ツリー初期化
-        self.tree_root=NODE(parts = PARTS.create_root(), depth = -1, child=[None])   
+        self.tree_root=NODE(PARTS.create_root(), -1)   
         self.tree_entry_selected=-1
         self.update(0)
 
@@ -341,41 +327,26 @@ class PartsTree:
         if sel>=len(parts_entry): return
 
         if parts_entry[sel]==None:    #Noneを選択した場合
-            node = None
+            new_node = None
         
-        elif parts_entry[sel]=='load':    #外部モデル読み込み
-            path = filedialog.askopenfilename(filetypes = [('Plygon Model Deta(for MMD)','.pmd'),('all','.*')], defaultextension='.pmd')
-            if(path != ''):
-                name = path.split('/')[-1]
-                parts = PyPMCA.PARTS(name = name, path = path, props = {})
-                node = PyPMCA.NODE(parts = parts, depth = self.tree_list[self.tree_entry_selected].node.depth+1, child=[])
-                for x in node.parts.joint:
-                    node.child.append(None)
-            else:
-                node = None               
-                
         else:          
-            node = NODE(parts = parts_entry[sel], depth = self.tree_entry[self.tree_entry_selected].node.depth+1, child=[])
+            new_node = NODE(parts_entry[sel], self.tree_entry[self.tree_entry_selected].node.depth+1)
             p_node=self.tree_entry[self.tree_entry_selected].node.child[self.tree_entry[self.tree_entry_selected].c_num]
             
             child_appended = []
             if p_node != None:
-                for x in node.parts.joint:
-                    node.child.append(None)
-                    for j,y in enumerate(p_node.parts.joint):
+                for i, x in enumerate(new_node.parts.joint):
+                    for j, y in enumerate(p_node.parts.joint):
                         if x == y:
                             for z in child_appended:
                                 if z == y:
                                     break
                             else:
-                                node.child[-1] = p_node.child[j]
+                                new_node.child[i] = p_node.child[j]
                                 child_appended.append(y)
                                 break
-            else:
-                for x in node.parts.joint:
-                    node.child.append(None)
             
-        self.tree_entry[self.tree_entry_selected].node.child[self.tree_entry[self.tree_entry_selected].c_num] = node
+        self.tree_entry[self.tree_entry_selected].node.child[self.tree_entry[self.tree_entry_selected].c_num] = new_node
 
         self.update(self.tree_entry_selected)
 
