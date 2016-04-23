@@ -207,7 +207,8 @@ class PyPMCA:
         else:
             self.info_tab.frame.comment.delete('1.0',END)
     
-        self.parts_tree.load_CNL_lines(io.StringIO('\n'.join(lines)))
+        self.parts_tree.root=cnl.load(iio, self.parts_tree.parts_list)
+        self.parts_tree.update()
         self.materials.load_CNL_lines(lines)
         self.transform.load_CNL_lines(lines)
         return True

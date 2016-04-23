@@ -5,7 +5,6 @@ from logging import getLogger
 logger = getLogger(__name__)
 from PyPMCA.parts import PARTS
 from PyPMCA.pmd import Observable
-from PyPMCA import cnl
 from PyPMCA.parts_node import PartNode
 
 
@@ -30,13 +29,6 @@ class PartsTree:
         self.tree_entry_selected=-1
         self.tree_entry_observable.notify(self.tree_entry, sel)
         self.select_node(sel)
-
-    def load_CNL_lines(self, iio: io.IOBase):
-        '''
-        CharacterNodeListの読み込み
-        '''
-        self.root=cnl.load(iio, self.parts_list)
-        self.update(0)
 
     def __get_parts_entry_and_selected(self):
         node=self.tree_entry[self.tree_entry_selected]
@@ -80,6 +72,5 @@ class PartsTree:
         left_selected=self.tree_entry[self.tree_entry_selected]
         parts_entry, _=self.__get_parts_entry_and_selected()
         if sel>=0 and sel<len(parts_entry):
-            right_selected=parts_entry[sel]
-            left_selected.connect(right_selected)
+            left_selected.connect(parts_entry[sel])
             self.update(self.tree_entry_selected)
