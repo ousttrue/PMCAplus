@@ -3,7 +3,7 @@ import sys
 import io
 from logging import getLogger
 logger = getLogger(__name__)
-from PyPMCA.parts import PARTS
+from PyPMCA.parts_entry import PARTS
 from PyPMCA.pmd import Observable
 from PyPMCA.parts_node import PartNode
 

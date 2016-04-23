@@ -3,6 +3,7 @@ from itertools import chain
 import shutil
 import sys
 import os
+import io
 sys.path.append('%s/converter'%(os.getcwd()))
 import pathlib
 import converter
@@ -13,6 +14,7 @@ from PyPMCA.material import *
 from PyPMCA.material_entry import *
 from PyPMCA.transform import *
 from PyPMCA.pmd import *
+from PyPMCA import cnl
 
 from logging import getLogger
 logger = getLogger(__name__)
@@ -207,7 +209,7 @@ class PyPMCA:
         else:
             self.info_tab.frame.comment.delete('1.0',END)
     
-        self.parts_tree.root=cnl.load(iio, self.parts_tree.parts_list)
+        self.parts_tree.root=cnl.load(io.StringIO('\n'.join(lines)), self.parts_tree.parts_list)
         self.parts_tree.update()
         self.materials.load_CNL_lines(lines)
         self.transform.load_CNL_lines(lines)

@@ -100,7 +100,7 @@
     <Compile Include="PyPMCA\material_entry.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="PyPMCA\parts.py">
+    <Compile Include="PyPMCA\parts_entry.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="PyPMCA\parts_assembler.py">
