@@ -1,215 +1,81 @@
 ﻿# coding: utf-8
-import PMCA
 import sys
-from PyPMCA.pmd import *
-from PyPMCA.parts import PARTS
-from logging import getLogger
 import io
+from logging import getLogger
 logger = getLogger(__name__)
-
-
-fsenc = sys.getfilesystemencoding()
-
-
-class Joint:
-    def __init__(self, name, node=None):
-        self.name=name
-        self.node=node
+from PyPMCA.parts import PARTS
+from PyPMCA.pmd import Observable
+from PyPMCA.parts_assembler import Assembler
 
 
 class PartNode:
     '''
     モデルのパーツツリー
     '''
-    def __init__(self, parts, depth):
-        self.parts = parts
+    def __init__(self, joint, depth, part=None):
+        self.joint = joint
+        if not joint:
+            a=0
         self.depth = depth
-        self.joints = [Joint(x) for x in parts.joint]
-        self.list_num=-1
+        self.connect(part)
 
-    def connect(self, node):
-        for x in self.joints:
-            if x.name in node.parts.type:
-                x.node=node
-                return
-    
-    def assemble(self, app):
-        app.script_fin = []
-        #PMCA.Create_PMD(0)
-        PMCA.Load_PMD(0, self.parts.path.encode(fsenc,'replace'))
-        info_data = PMCA.getInfo(0)
-        info = INFO(info_data)
-        line = info.comment.split('\n')
-        
-        app.authors=[]
-        app.licenses=[]
-        if info.name != '':
-            app.authors=['Unknown']
-            app.licenses=['Nonfree']
-        
-        pmpy = app
-        pmpy.functions = PMCA
-        if 'script_pre' in self.parts.props:
-            for x in self.parts.props['script_pre']:
-                argv = x.split()
-                fp = open(argv[0], 'r', encoding = 'utf-8-sig')
-                script = fp.read()
-                exec(script)
-                fp.close
-        
-        if 'script_post' in self.parts.props:
-            for x in self.parts.props['script_post']:
-                argv = x.split()
-                fp = open(argv[0], 'r', encoding = 'utf-8-sig')
-                script = fp.read()
-                exec(script)
-                fp.close
-        
-        if 'script_fin' in self.parts.props:
-            app.script_fin.extend(self.parts.props['script_fin'])
-        
-        for x in line:
-            tmp = x.split(':', 1)
-            if len(tmp)==1:
-                tmp = x.split('：', 1)
-            if tmp[0] == 'Author' or tmp[0] == 'author' or tmp[0] == 'Creator' or tmp[0] == 'creator' or tmp[0] == 'モデル制作':
-                tmp[1] = tmp[1].replace('　', ' ')
-                app.authors = tmp[1].split(' ')
-                
-            elif tmp[0] == 'License' or tmp[0] == 'license' or tmp[0] == 'ライセンス':
-                tmp[1] = tmp[1].replace('　', ' ')
-                app.licenses = tmp[1].split(' ')
-        for x in self.joints:
-            if x.node != None:
-                x.node.assemble_child(app)
-                    
-        PMCA.Sort_PMD(0)
-        
-        for x in app.script_fin:
-            argv = x.split()
-            fp = open(argv[0], 'r', encoding = 'utf-8-sig')
-            script = fp.read()
-            exec(script)
-            fp.close       
-            
-    def assemble_child(self, app):
-        pmpy = app
-        
-        PMCA.Create_PMD(4)
-        PMCA.Load_PMD(4, str(self.parts.path).encode(fsenc, 'replace'))
-        
-        info_data = PMCA.getInfo(4)
-        info = INFO(info_data)
-        line = info.comment.split('\n')
-        flag_author=False
-        flag_license=False
-        for x in line:
-            tmp = x.split(':', 1)
-            if len(tmp)==1:
-                tmp = x.split('：', 1)
-            if tmp[0] == 'Author' or tmp[0] == 'author' or tmp[0] == 'Creator' or tmp[0] == 'creator' or tmp[0] == 'モデル制作':
-                if len(tmp) > 1:
-                    flag_author=True
-                    tmp[1] = tmp[1].replace('　', ' ')
-                    for x in tmp[1].split(' '):
-                        for y in app.authors:
-                            if x == y:
-                                break
-                        else:
-                            app.authors.append(x)
-                
-            elif tmp[0] == 'License' or tmp[0] == 'license' or tmp[0] == 'ライセンス':
-                if len(tmp) > 1:
-                    flag_license=True
-                    tmp[1] = tmp[1].replace('　', ' ')
-                    for x in tmp[1].split(' '):
-                        for y in app.licenses:
-                            if x == y:
-                                break
-                        else:
-                            app.licenses.append(x)
-        if info.name != '':
-            if flag_author == False:
-                for x in app.authors:
-                    if x == 'Unknown':
-                        break
-                else:
-                    app.authors.append('Unknown')
-            if flag_license == False:
-                for x in app.licenses:
-                    if x == 'Nonfree':
-                        break
-                else:
-                    app.licenses.append('Nonfree')
-                    
-        
-        if 'script_pre' in self.parts.props:
-            for x in self.parts.props['script_pre']:
-                argv = x.split()
-                fp = open(argv[0], 'r', encoding = 'utf-8-sig')
-                script = fp.read()
-                exec(script)
-                fp.close
-        
-        PMCA.Add_PMD(0, 4)
-        PMCA.Marge_PMD(0)
-        
-        if 'script_post' in self.parts.props:
-            for x in self.parts.props['script_post']:
-                argv = x.split()
-                fp = open(argv[0], 'r', encoding = 'utf-8-sig')
-                script = fp.read()
-                exec(script)
-                fp.close
-        if 'script_fin' in self.parts.props:
-            app.script_fin.extend(self.parts.props['script_fin'])
-        
-        
-        for x in self.joints:
-            if x.node != None:
-                x.node.assemble_child(app)
-    
-    def create_list(self):
-        List = [LeftItem(node=self, depth=self.depth, text='  '*(self.depth) + self.parts.name)]
-        for i, x in enumerate(self.joints):
-            if x.node != None:
-                List.append(LeftItem(node=self, depth=self.depth+1, text='  '*(self.depth+1) + x.node.parts.name, c_num=i))
-                x.node.list_add(List)
-            elif self.parts.joint[i] != '':
-                List.append(LeftItem(node=self, depth=self.depth+1, text='  '*(self.depth+1) + '#'+x.name, c_num=i))
-        return List
-    
-    def list_add(self, List):
-        for i, x in enumerate(self.joints):
-            if x.node != None:
-                List.append(LeftItem(node=self, depth=self.depth+1, text='  '*(self.depth+1) + x.node.parts.name, c_num=i))
-                x.node.list_add(List)
-            elif self.parts.joint[i] != '':
-                List.append(LeftItem(node=self, depth=self.depth+1, text='  '*(self.depth+1) + '#'+ x.name, c_num=i))
-    
-    def recalc_depth(self, depth):
-        self.depth = depth
-        depth = depth+1
-        for x in self.joints:
-            if x != None:
-                x.recalc_depth(depth)
+    def __str__(self):
+        indent='  ' * self.depth
+        if self.part:
+            return '{0}#{1} => {2}'.format(indent, self.joint, self.part.name)
+        else:
+            return '{0}#{1}'.format(indent, self.joint)
+
+    @staticmethod
+    def create_root():
+        root=PartNode(None, -1)
+        root.children=[PartNode('root', 0)]
+        return root
+
+    def get_selected(self):
+        return self.children[self.selected]
+
+    def connect(self, part):
+        '''
+        部品を接続する。childrenを更新する
+        '''
+        self.part=part
+        if not self.part: 
+            self.children=[]
+            self.selected=-1
+            return
+
+        children=self.children
+        def get_or_create_node(joint):
+            for c in children:
+                if c.joint==joint:
+                    return c
+            return PartNode(joint, self.depth+1)
+        self.children = [get_or_create_node(x) for x in part.child_joints]
+  
+    def traverse(self):
+        for i, x in enumerate(self.children):
+            yield x
+            for y in x.traverse():
+                yield y
         
     def node_to_text(self):
         '''
         CNLに出力
         '''
         lines=[]
-        lines.append('[Name] %s'%(self.parts.name))
-        lines.append('[Path] %s'%(self.parts.path))
-        lines.append('[Child]')
-        for x in self.joints:
-            if x.node != None:
-                lines.extend(x.node.node_to_text())
+        for x in self.children:
+            indent='  ' * (x.depth)
+            if x.part:
+                lines.append(indent+'[Name] %s'%(x.part.name))
+                lines.append(indent+'[Path] %s'%(x.part.path))
+                lines.append(indent+'[Child]')
+                lines.extend(x.node_to_text())
+                lines.append(indent+'[Parent]')
             else:
-                lines.append('None')
-        lines.append('[Parent]')
+                lines.append(indent+'None')
         return lines
-    
+
     def text_to_node(self, iio: io.IOBase, parts_list):
         '''
         CNLを読み込み
@@ -243,35 +109,17 @@ class PartNode:
                     path = line[1]
                     
             elif line[0] == '[Child]':
-                child = PartNode(find_part(name, path), self.depth+1)
-                self.joints[index] = Joint(self.parts.joint[index], child)
+                self.children[index].connect(find_part(name, path))
+                self.children[index].text_to_node(iio, parts_list)
                 index+=1
-                child.text_to_node(iio, parts_list)
           
             elif line[0] == '[Parent]':
                 return
 
             elif line[0] == 'MATERIAL':
                 return
+
       
-
-class LeftItem:
-    def __init__(self, node=None, depth=0, text='', c_num=-1, list_num=0):
-        self.node = node
-        self.depth= depth
-        self.text = text
-        self.c_num = c_num
-
-    def get_parts_entry(self, parts_list):
-        joint = self.node.parts.joint[self.c_num]
-        parts_entry = [x for x in parts_list if x.has_joint(joint)]
-        parts_entry.append(None)
-        return parts_entry
-
-    def get_selected(self):
-        return self.node.joints[self.c_num]
-
-
 class PartsTree:
     def __init__(self):
         self.tree_entry_observable=Observable()
@@ -279,7 +127,7 @@ class PartsTree:
         # 全パーツのリスト
         self.parts_list=[]
         # ツリー初期化
-        self.tree_root=PartNode(PARTS.create_root(), -1)   
+        self.tree_root=PartNode.create_root()
         self.tree_entry_selected=-1
         self.update(0)
 
@@ -289,32 +137,30 @@ class PartsTree:
         '''
         if sel==None:
             sel=self.tree_entry_selected 
-        self.tree_entry=[x for x in self.tree_root.create_list()][1:]
+        self.tree_entry=[x for x in self.tree_root.traverse()]
         self.tree_entry_selected=-1
-        def get_name(x):
-            i=x.c_num
-            joint=x.node.joints[i]
-            if joint.node:
-                return "%s#%s => %s" %('  '*x.depth, joint.name, joint.node.parts.name)
-            else:
-                return "%s#%s" % ('  '*x.depth, joint.name) 
-        self.tree_entry_observable.notify([get_name(x) for x in self.tree_entry], sel)
+        self.tree_entry_observable.notify(self.tree_entry, sel)
         self.select_node(sel)
 
     def load_CNL_lines(self, iio: io.IOBase):
         '''
         CharacterNodeListの読み込み
         '''
+        self.tree_root=PartNode.create_root()
         self.tree_root.text_to_node(iio, self.parts_list)
         self.update(0)
+
+    def get_parts_entry(self):
+        node=self.tree_entry[self.tree_entry_selected]
+        return [x for x in self.parts_list if node.joint in x.joints]
 
     def __update_parts_entry(self):
         '''
         パーツリスト更新
         '''
         if len(self.tree_entry)==0: return
-        item=self.tree_entry[self.tree_entry_selected]
-        self.parts_entry_observable.notify(item.get_parts_entry(self.parts_list), item.node.list_num)
+        node=self.tree_entry[self.tree_entry_selected]
+        self.parts_entry_observable.notify(self.get_parts_entry(), node.selected)
 
     def load_partslist(self, assets_dir, lines):
         '''
@@ -338,32 +184,16 @@ class PartsTree:
         パーツ選択
         '''
         left_selected=self.tree_entry[self.tree_entry_selected]
-        parts_entry=left_selected.get_parts_entry(self.parts_list)
-        if sel>=len(parts_entry): return
-        right_selected=parts_entry[sel]
-        if right_selected==None:    #Noneを選択した場合
-            new_node = None
-        
-        else:          
-            new_node = PartNode(right_selected, left_selected.depth+1)
-            old_node = left_selected.get_selected().node
-            child_appended = []
-            if old_node != None:
-                for i, x in enumerate(new_node.parts.joint):
-                    for j, y in enumerate(old_node.parts.joint):
-                        if x == y:
-                            if y not in child_appended:
-                                new_node.joints[i] = old_node.joints[j]
-                                child_appended.append(y)
-                                break
-            
-        left_selected.node.connect(new_node)
-
-        self.update(self.tree_entry_selected)
+        parts_entry=self.get_parts_entry()
+        if sel>=0 and sel<len(parts_entry):
+            right_selected=parts_entry[sel]
+            left_selected.connect(right_selected)
+            self.update(self.tree_entry_selected)
 
     def build(self):
         '''
         モデル組立て
         '''
         logger.info('Parts.Build')
-        self.tree_root.assemble(self)
+        assembler=Assembler()
+        assembler.assemble(self.tree_root)

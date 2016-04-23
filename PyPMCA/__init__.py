@@ -217,7 +217,7 @@ class PyPMCA:
         lines.append(self.modelinfo.comment)
     
         lines.append('PARTS')
-        lines.extend(self.parts_tree.tree_root.joints[0].node.node_to_text())
+        lines.extend(self.parts_tree.tree_root.node_to_text())
         lines.append('MATERIAL')
         lines.extend(self.materials.list_to_text())
         lines.append('TRANSFORM')

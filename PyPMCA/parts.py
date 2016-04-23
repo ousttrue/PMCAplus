@@ -5,27 +5,23 @@ class PARTS:
     '''
     読み込みパーツデータ
     '''
-    def __init__(self, name='', joint=[]):
-        self.name=name
-        self.joint=joint
-        self.comment=''
+    def __init__(self):
+        self.name=''
         self.path=''
-        self.type=[]
+        self.comment=''
+
+        # connect parent
+        self.joints = []
+
+        # connect children
+        self.child_joints = []
+
         self.props={}
         self.tree_current=-1
         self.parts_current=-1
 
     def __str__(self):
         return self.name
-
-    def has_joint(self, joint):
-        for y in self.type:
-            if y == joint:
-                return True
-
-    @staticmethod
-    def create_root():
-        return PARTS('ROOT', ['root'])
 
     @staticmethod
     def parse_partslist(assetdir, lines):
@@ -51,9 +47,10 @@ class PARTS:
             elif key=='[comment]':
                 active.comment = value
             elif key=='[type]':
-                active.type = active.type+value.split(',')
+                active.joints = active.joints +value.split(',')
             elif key=='[joint]':
-                active.joint = active.joint+value.split(',')
+                if value.strip() != '':
+                    active.child_joints = active.child_joints+value.split(',')
             elif key[:1] == '[' and key[-1:] == ']':
                 if key[1:-1] in active.props:
                     active.props[key[1:-1]].append(value)
