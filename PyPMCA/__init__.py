@@ -185,59 +185,26 @@ class PyPMCA:
             name_eng=self.modelinfo.name_eng,
             comment_eng='%s\nAuthor:%s\nLicense:%s\n%s'%(self.modelinfo.name_l_eng,str1,str2,self.modelinfo.comment_eng))
 
-    def load_CNL_File(self, name):
-        if not os.path.exists(name):
-            logger.warning('%s is not exists', name)
-            return
-        with open(name, 'r', encoding = 'utf-8-sig') as f:
-            lines = f.read()
-        lines = lines.split('\n')
-
-        self.modelinfo.name=lines[0]
-        self.modelinfo.name_l=lines[1]        
-        #self.info_tab.frame.name.set(lines[0])
-        #self.info_tab.frame.name_l.set(lines[1])
-        for line in lines[2:]:
-            if line == 'PARTS':
-                break
-            elif line == '':
-                pass
-            else:
-                self.info_tab.frame.comment.insert(END, line)
-                self.info_tab.frame.comment.insert(END, '\n')
-        
-        else:
-            self.info_tab.frame.comment.delete('1.0',END)
-    
-        self.parts_tree.root=cnl.load(io.StringIO('\n'.join(lines)), self.parts_tree.parts_list)
+    def load_CNL_File(self, path):
+        name, long_name, tree, replace_map, transform_data=cnl.load_CNL_File(
+            path, self.parts_tree.parts_list, self.materials.mats_list)
+        self.modelinfo.name=name
+        self.modelinfo.name_l=long_name
+        self.parts_tree.root=tree
         self.parts_tree.update()
+        self.materials.update_replace_map(replace_map)
+        self.transform.transform_data=transform_data
 
-        self.materials.load_CNL_lines(lines)
-
-        #self.transform.load_CNL_lines(lines)
-        self.transform.transform_data=[cnl.transform_text_to_list(lines)]
-
-        return True
+    def get_materials(self):
+        info = INFO(PMCA.getInfo(0))       
+        for i in range(info.data["mat_count"]):
+            yield MATERIAL(**PMCA.getMat(0, i))
         
-    def save_CNL_File(self, name):       
-        lines = []
-        lines.append(self.modelinfo.name)
-        lines.append(self.modelinfo.name_l)
-        lines.append(self.modelinfo.comment)
-    
-        lines.append('PARTS')
-        lines.extend(cnl.node_to_text(self.parts_tree.root))
-        lines.append('MATERIAL')
-        lines.extend(self.materials.list_to_text())
-        lines.append('TRANSFORM')
-        lines.extend(cnl.transform_list_to_text(self.transform.transform_data[0]))
-        
-        fp = open(name, 'w', encoding = 'utf-8')
-        for x in lines:
-            fp.write(x+'\n')
-        fp.close
-        
-        return True
+    def save_CNL_File(self, path):
+        cnl.save_CNL_File(path, self.modelinfo, 
+                          self.parts_tree.root, 
+                          self.get_materials(), self.materials.replace_map,
+                          self.transform.transform_data[0])
 
     def save_PMD(self, name):
         if self.settings.export2folder:

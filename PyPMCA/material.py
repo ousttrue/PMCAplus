@@ -3,6 +3,7 @@ import random
 import PMCA
 from PyPMCA.pmd import TOON, INFO, MATERIAL, Observable
 from PyPMCA.material_entry import MATS, MATS_ENTRY
+from PyPMCA.cnl import *
 from logging import getLogger
 logger = getLogger(__name__)
 
@@ -23,13 +24,6 @@ class LicenseInfo:
         return str1, str2
 
 
-class MAT_REP_DATA:
-    '''
-    材質置換データ
-    '''
-    def __init__(self, mat, sel: MATS_ENTRY=None):
-        self.mat=mat
-        self.sel=sel if sel else mat.entries[0]
 
 
 class MaterialSelector:
@@ -51,6 +45,12 @@ class MaterialSelector:
         self.cur_color= -1
 
     def force_update(self, entry=None):
+        self.__update_material_entry()
+
+    def update_replace_map(self, map):
+        for k, v in map.items():
+            if k in self.replace_map:
+                self.replace_map[k]=v
         self.__update_material_entry()
 
     def apply_entry(self, x:MATERIAL, m:MATS_ENTRY):
@@ -94,19 +94,6 @@ class MaterialSelector:
                             m.sph_path.encode('cp932','replace')
                             )
 
-    def list_to_text(self):
-        '''
-        CNLに選択状態を出力する
-        '''
-        info = INFO(PMCA.getInfo(0))       
-        for i in range(info.data["mat_count"]):
-            m=MATERIAL(**PMCA.getMat(0, i))
-            if m.tex in self.replace_map:
-                x=self.replace_map[m.tex]       
-                yield '[Name] %s' % (x.mat.name)
-                yield '[Sel] %s' % (x.sel.name)
-                yield 'NEXT'
-    
     def load_material_list(self, assets_dir, lines):
         '''
         マテリアルリストを読み込む
@@ -124,38 +111,6 @@ class MaterialSelector:
 
         self.__update_material_entry()
 
-    def load_CNL_lines(self, lines):
-        '''
-        CNLを読み込む
-        '''
-        tmp = ['','',None]
-        i=0
-        while lines[i] != 'MATERIAL':
-            i+=1
-        i+=1
-
-        for x in lines[i:]:
-            x = x.split(' ')
-            if x[0] == '[Name]':
-                tmp[0] = x[1]
-            elif x[0] == '[Sel]':
-                tmp[1] = x[1]
-            elif x[0] == 'NEXT':
-                for y in self.mats_list:
-                    if y.name == tmp[0]:
-                        tmp[2] = y
-                        break
-                else:
-                    tmp[2] = None
-                    continue
-                
-                for y in tmp[2].entries:
-                    if y.name == tmp[1]:
-                        if tmp[0] in self.replace_map:
-                            self.replace_map[tmp[0]] = MAT_REP_DATA(tmp[2], y)
-                            break
-
-        self.__update_material_entry()
 
     def __update_material_entry(self, sel_t=0):
         '''

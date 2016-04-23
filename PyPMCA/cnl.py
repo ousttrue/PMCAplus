@@ -1,8 +1,14 @@
 ﻿# coding: utf-8
 import io
+import os
+from PyPMCA.pmd import TOON, INFO
 from PyPMCA.parts_node import PartNode
+from PyPMCA.material_entry import MATS_ENTRY
 
 
+###############################################################################
+# Part
+###############################################################################
 def node_to_text(self):
     '''
     CNLに出力
@@ -20,7 +26,7 @@ def node_to_text(self):
             lines.append(indent+'None')
     return lines
 
-def load(iio: io.IOBase, parts_list):
+def tree_load(iio: io.IOBase, parts_list):
     root=PartNode.create_root()
     text_to_node(root, iio, parts_list)
     return root
@@ -68,6 +74,63 @@ def text_to_node(self, iio: io.IOBase, parts_list):
         elif line[0] == 'MATERIAL':
             return
 
+
+###############################################################################
+# Material
+###############################################################################
+class MAT_REP_DATA:
+    '''
+    材質置換データ
+    '''
+    def __init__(self, mat, sel: MATS_ENTRY=None):
+        self.mat=mat
+        self.sel=sel if sel else mat.entries[0]
+
+
+def material_load_CNL_lines(lines, mats_list):
+    '''
+    CNLを読み込む
+    '''
+    tmp = ['','',None]
+    i=0
+    while lines[i] != 'MATERIAL':
+        i+=1
+    i+=1
+
+    replace_map={}
+    for x in lines[i:]:
+        x = x.split(' ')
+        if x[0] == '[Name]':
+            tmp[0] = x[1]
+        elif x[0] == '[Sel]':
+            tmp[1] = x[1]
+        elif x[0] == 'NEXT':
+            for y in mats_list:
+                if y.name == tmp[0]:
+                    tmp[2] = y
+                    break
+            else:
+                tmp[2] = None
+                continue
+                
+            for y in tmp[2].entries:
+                if y.name == tmp[1]:
+                        replace_map[tmp[0]] = MAT_REP_DATA(tmp[2], y)
+                        break
+    return replace_map
+
+def material_list_to_text(materials, replace_map):
+    '''
+    CNLに選択状態を出力する
+    '''
+    for m in materials:
+        if m.tex in replace_map:
+            x=replace_map[m.tex]       
+            yield '[Name] %s' % (x.mat.name)
+            yield '[Sel] %s' % (x.sel.name)
+            yield 'NEXT'
+
+
 ###############################################################################
 # Transform
 ###############################################################################
@@ -91,7 +154,6 @@ class MODEL_TRANS_DATA:
 		self.default = default
 		self.gamma = gamma
 		self.props=props
-
 
 def transform_list_to_text(self):
 	lines=[]
@@ -161,3 +223,43 @@ def transform_text_to_list(lines):
 			if self.bones[-1].name != '':
 				self.bones.append(BONE_TRANS_DATA())
 	return self
+
+
+###############################################################################
+# interface
+###############################################################################
+def save_CNL_File(path, modelinfo, 
+                  parts_tree, 
+                  materials, replace_map,
+                  transform_data):
+    lines = []
+    lines.append(modelinfo.name)
+    lines.append(modelinfo.name_l)
+    lines.append(modelinfo.comment)
+    
+    lines.append('PARTS')
+    lines.extend(node_to_text(parts_tree))
+    lines.append('MATERIAL')
+
+    lines.extend(material_list_to_text(materials, replace_map))
+    lines.append('TRANSFORM')
+    lines.extend(transform_list_to_text(transform_data))
+
+    with open(path, 'w', encoding = 'utf-8') as fp:
+        for x in lines:
+            fp.write(x+'\n')
+       
+    return True
+
+def load_CNL_File(path, parts_list, mats_list):
+    if not os.path.exists(path):
+        logger.warning('%s is not exists', path)
+        return
+    with open(path, 'r', encoding = 'utf-8-sig') as f:
+        lines = f.read().split('\n')
+         
+    root=tree_load(io.StringIO('\n'.join(lines)), parts_list)
+    replace_map=material_load_CNL_lines(lines, mats_list)
+    transform_data=[transform_text_to_list(lines)]
+
+    return lines[0], lines[1], root, replace_map, transform_data
