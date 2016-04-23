@@ -91,6 +91,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="pmca_tkinter\__init__.py" />
+    <Compile Include="PyPMCA\cnl.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="PyPMCA\material.py">
       <SubType>Code</SubType>
     </Compile>
@@ -101,6 +104,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="PyPMCA\parts_assembler.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="PyPMCA\parts_node.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="PyPMCA\parts_tree.py">

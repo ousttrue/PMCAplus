@@ -8,6 +8,7 @@ import pathlib
 import converter
 
 from PyPMCA.parts_tree import *
+from PyPMCA.parts_assembler import Assembler
 from PyPMCA.material import *
 from PyPMCA.material_entry import *
 from PyPMCA.transform import *
@@ -112,8 +113,9 @@ class PyPMCA:
             return
 
         if self.update_level==0:
-            logger.debug('update_tree_parts')
-            self.parts_tree.build()
+            logger.info('Parts.Build')
+            assembler=Assembler()
+            assembler.assemble(self.parts_tree.root)
             PMCA.Copy_PMD(0, 1)
             self.materials.replace()
             PMCA.Copy_PMD(0, 2)
@@ -217,7 +219,7 @@ class PyPMCA:
         lines.append(self.modelinfo.comment)
     
         lines.append('PARTS')
-        lines.extend(self.parts_tree.tree_root.node_to_text())
+        lines.extend(cnl.node_to_text(self.parts_tree.root))
         lines.append('MATERIAL')
         lines.extend(self.materials.list_to_text())
         lines.append('TRANSFORM')
