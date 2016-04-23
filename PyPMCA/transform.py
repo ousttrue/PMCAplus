@@ -2,13 +2,13 @@
 import PMCA
 import PMCA_dialogs
 from PyPMCA.pmd import INFO, BONE, Observable
-from tkinter import *
+from PyPMCA import cnl
 from logging import getLogger
 logger = getLogger(__name__)
 
 
 def load_translist(lines, trans_list):
-	trans_list.append(MODEL_TRANS_DATA(bones=[]))
+	trans_list.append(cnl.MODEL_TRANS_DATA(bones=[]))
 	
 	mode = 0
 	
@@ -19,14 +19,14 @@ def load_translist(lines, trans_list):
 		if line[0][:1]=='#':
 			pass
 		elif line[0]=='NEXT':
-			trans_list.append(MODEL_TRANS_DATA(scale=0.0, bones=[]))
+			trans_list.append(cnl.MODEL_TRANS_DATA(scale=0.0, bones=[]))
 			mode = 0
 		
 		elif len(line)<2:
 			pass
 		
 		elif line[0]=='[ENTRY]':
-			trans_list[-1].bones.append(BONE_TRANS_DATA(name = line[1], length=0.0, thick=0.0, props = {}))
+			trans_list[-1].bones.append(cnl.BONE_TRANS_DATA(name = line[1], length=0.0, thick=0.0, props = {}))
 			mode = 1
 		elif line[0]=='[name]':
 			if mode == 0:
@@ -69,93 +69,9 @@ def load_translist(lines, trans_list):
 	return trans_list
 
 
-class MODEL_TRANS_DATA:
-	def __init__(self, name='', scale=1.0, pos=[0.0,0.0,0.0], rot=[0.0,0.0,0.0], bones=[], limit=[0.0,2.0], default=1.0, gamma=1.0, props={}):
-		self.name  = name
-		self.scale = scale
-		self.pos   = pos
-		self.rot   = rot
-		self.bones = bones
-		self.limit = limit
-		self.default = default
-		self.gamma = gamma
-		self.props=props
 	
-	def list_to_text(self):
-		lines=[]
-		#lines.append('[Name] %s'%(self.name))
-		lines.append('[Scale] %f'%(self.scale))
-		lines.append('[Pos] %f %f %f'%(self.pos[0],self.pos[1],self.pos[2]))
-		lines.append('[Rot] %f %f %f'%(self.rot[0],self.rot[1],self.rot[2]))
-		lines.append('BONES')
-		for x in self.bones:
-			lines.append('[Name] %s'%(x.name))
-			lines.append('[Length] %f'%(x.length))
-			lines.append('[Thick] %f'%(x.thick))
-			lines.append('[Pos] %f %f %f'%(x.pos[0], x.pos[1], x.pos[2]))
-			lines.append('[Rot] %f %f %f'%(x.rot[0], x.rot[1], x.rot[2]))
-			lines.append('NEXT')
-		lines.pop()
-		
-		return lines
-	
-	def text_to_list(self, lines):
-		tmp = ['','',None]
-		i=0
-		try:
-			while lines[i] != 'TRANSFORM':
-				i+=1
-		except:
-			return None
-		
-		i+=1
-		for j,x in enumerate(lines[i:]):
-			x = x.split(' ')
-			if x[0] == '[Name]':
-				self.name = x[1]
-			elif x[0] == '[Scale]':
-				self.scale = float(x[1])
-			elif x[0] == '[Pos]':
-				self.pos[0] = float(x[1])
-				self.pos[1] = float(x[2])
-				self.pos[2] = float(x[3])
-			elif x[0] == '[Rot]':
-				self.rot[0] = float(x[1])
-				self.rot[1] = float(x[2])
-				self.rot[2] = float(x[3])
-			elif x[0] == 'BONES':
-				break
-		self.bones = []
-		self.bones.append(BONE_TRANS_DATA())
-		for x in lines[i+j:]:
-			x = x.split(' ')
-			if x[0] == '[Name]':
-				self.bones[-1].name = x[1]
-			elif x[0] == '[Length]':
-				self.bones[-1].length = float(x[1])
-			elif x[0] == '[Thick]':
-				self.bones[-1].thick = float(x[1])
-			elif x[0] == '[Pos]':
-				self.bones[-1].pos[0] = float(x[1])
-				self.bones[-1].pos[1] = float(x[2])
-				self.bones[-1].pos[2] = float(x[3])
-			elif x[0] == '[Rot]':
-				self.bones[-1].rot[0] = float(x[1])
-				self.bones[-1].rot[1] = float(x[2])
-				self.bones[-1].rot[2] = float(x[3])
-			elif x[0] == 'NEXT':
-				if self.bones[-1].name != '':
-					self.bones.append(BONE_TRANS_DATA())
 				
 		
-class BONE_TRANS_DATA:
-	def __init__(self, name='', length=1.0, thick=1.0, pos=[0.0,0.0,0.0], rot=[0.0,0.0,0.0], props={}):
-		self.name  = name
-		self.length= length
-		self.thick = thick
-		self.pos   = pos
-		self.rot   = rot
-		self.props=props
 
 
 class BodyTransform:
@@ -165,7 +81,7 @@ class BodyTransform:
         self.transform_sel=-1
         self.transform_data = []
         self.transform_list = []
-        self.transform_data=[MODEL_TRANS_DATA(scale=1.0, bones=[], props={})]
+        self.transform_data=[cnl.MODEL_TRANS_DATA(scale=1.0, bones=[], props={})]
         self.data=None
 
     def refresh(self):
@@ -178,50 +94,8 @@ class BodyTransform:
             self.tmp.append(x.name)
 
     def clear(self):
-        self.transform_data = [MODEL_TRANS_DATA(scale=1.0, pos=[0.0, 0.0, 0.0], rot=[0.0, 0.0, 0.0], bones=[], props={})]
+        self.transform_data = [cnl.MODEL_TRANS_DATA(scale=1.0, pos=[0.0, 0.0, 0.0], rot=[0.0, 0.0, 0.0], bones=[], props={})]
         self.transform_observable.notify()
-
-    def load_CNL_lines(self, lines):
-        self.transform_data[0].text_to_list(lines)
-
-    def build_dialog(self, t: MODEL_TRANS_DATA):
-        # buidl dialog
-        root = Toplevel()
-        root.fancs = PMCA_dialogs.SCALE_DIALOG_FANC(self,root, sel)
-        
-        root.fancs.var = DoubleVar()
-        root.fancs.var.set(t.default)
-        root.fancs.tvar.set('%.3f'%t.default)
-        
-        root.transient(frame)
-        root.frame1 = Frame(root)
-        root.frame2 = Frame(root)
-        
-        buff="".join('%s %f %f\n'%(x.name,x.length,x.thick) for x in t.bones)       
-        Label(root, text = buff).grid(row=0, padx=10, pady=5)
-        
-        root.frame1.spinbox = Spinbox(root.frame1, from_=-100, to=100, increment=0.02, format = '%.3f', textvariable=root.fancs.tvar, width=5, command=root.fancs.change_spinbox)
-        root.frame1.spinbox.pack(side="right", padx=5)
-        root.frame1.spinbox.bind('<Return>', root.fancs.enter_spinbox)
-        
-        Scale(root.frame1, orient = 'h',from_ = t.limit[0], to = t.limit[1], 
-              variable = root.fancs.var , 
-              resolution = -1,
-              length = 256, 
-              command=root.fancs.change_scale).pack(side="left", padx=5)
-        root.frame1.grid(row=1, padx=10, pady=5)
-        
-        Button(root.frame2, text = 'OK', command = root.fancs.OK).pack(side="right", padx=5)
-        Button(root.frame2, text = 'Cancel', command = root.fancs.CANCEL).pack(side="left", padx=5)
-        root.frame2.grid(row=2, sticky="e", padx=10, pady=5)
-        return root
-
-    def select_body(self, frame, sel):
-        '''
-        Transform listの選択に応じてTkinterのダイアログを表示する
-        '''
-        root=self.build_dialog(self.transform_list[sel])
-        root.mainloop()
 
     def select_transform(self, sel):
         if self.transform_sel==sel:return
@@ -229,7 +103,7 @@ class BodyTransform:
         self.cancel()
         t = self.transform_list[sel]
 
-        self.data = MODEL_TRANS_DATA(name = t.name,
+        self.data = cnl.MODEL_TRANS_DATA(name = t.name,
                              scale=1.0, 
                              bones=[BONE_TRANS_DATA(name=x.name) for x in t.bones], 
                              pos=[0.0, 0.0, 0.0], 

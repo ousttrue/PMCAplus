@@ -249,7 +249,7 @@ class TransformWidget(QtGui.QWidget):
         self.cancel.clicked.connect(transforms.cancel)
         self.ok.clicked.connect(transforms.apply)
 
-    def set(self, t: PyPMCA.MODEL_TRANS_DATA):
+    def set(self):
         if self.transform==t: return
         self.transform=t
         logger.debug('set %f - %f', t.limit[0], t.limit[1])
@@ -279,7 +279,7 @@ class TransformTab(QtGui.QWidget):
         # pmca to gui
         self.transform_model.setEntries(transforms.tmp)
 
-        def on_transform_select(t: PyPMCA.MODEL_TRANS_DATA):
+        def on_transform_select(t):
             self.transform_widget.set(t)
         transforms.transform_select_observable.add(on_transform_select)
 

@@ -211,8 +211,12 @@ class PyPMCA:
     
         self.parts_tree.root=cnl.load(io.StringIO('\n'.join(lines)), self.parts_tree.parts_list)
         self.parts_tree.update()
+
         self.materials.load_CNL_lines(lines)
-        self.transform.load_CNL_lines(lines)
+
+        #self.transform.load_CNL_lines(lines)
+        self.transform.transform_data=[cnl.transform_text_to_list(lines)]
+
         return True
         
     def save_CNL_File(self, name):       
@@ -226,7 +230,7 @@ class PyPMCA:
         lines.append('MATERIAL')
         lines.extend(self.materials.list_to_text())
         lines.append('TRANSFORM')
-        lines.extend(self.transform.transform_data[0].list_to_text())
+        lines.extend(cnl.transform_list_to_text(self.transform.transform_data[0]))
         
         fp = open(name, 'w', encoding = 'utf-8')
         for x in lines:
