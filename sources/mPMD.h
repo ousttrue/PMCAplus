@@ -120,8 +120,9 @@ struct JOINT
 struct MODEL 
 {
 	HEADER header;
-	unsigned int vt_count;
-	VERTEX *vt;
+
+	std::vector<VERTEX> vt;
+
 	unsigned int vt_index_count;
 	unsigned short *vt_index;
 	unsigned int mat_count;

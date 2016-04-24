@@ -119,7 +119,7 @@ static PyObject* getInfo(PyObject *self, PyObject *args)
 							"comment", comment,
 							"comment_eng", comment_eng,
 							
-							"vt_count", model->vt_count,
+							"vt_count", model->vt.size(),
 							"face_count", model->vt_index_count/3,
 							"mat_count", model->mat_count,
 							"bone_count", model->bone_count,
@@ -141,7 +141,7 @@ static PyObject* getVt(PyObject *self, PyObject *args)
 	MODEL *model;
 	if(!PyArg_ParseTuple(args, "ii", &num, &i))return NULL;
 	model = &g_model[num];
-	if(model->vt_count <= i)Py_RETURN_NONE;
+	if(model->vt.size() <= i)Py_RETURN_NONE;
 	return Py_BuildValue("{s:O,s:O,s:O,"
 							"s:i,s:i,"
 							"s:i,s:i}",
@@ -401,6 +401,7 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 	
 	create_PMD(&model);
 	
+	int vt_count;
 	int IK_count;
 	int skin_count;
 	if(!PyArg_ParseTuple(args, "i"
@@ -415,7 +416,7 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 							&str[2],
 							&str[3],
 							
-							&model.vt_count,
+							&vt_count,
 							&model.vt_index_count,
 							&model.mat_count,
 							&model.bone_count,
@@ -450,9 +451,8 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 	
 	/*ƒƒ‚ƒŠŠm•Û************************************************************************/
 	//’¸“_
-	size = p->vt_count * sizeof(VERTEX);
-	p->vt = (VERTEX*)MALLOC(size);
-	memset(p->vt, 0, size);
+	p->vt.resize(vt_count);
+
 	//–Ê’¸“_
 	size = p->vt_index_count * sizeof(unsigned short);
 	p->vt_index = (unsigned short*)MALLOC(size);
@@ -526,7 +526,7 @@ static PyObject* setVt(PyObject *self, PyObject *args)
 	PyList_to_Array_Float(vt.uv , PyTmp[2], 2);
 	
 	model = &g_model[num];
-	if(model->vt_count <= i)Py_RETURN_NONE;
+	if(model->vt.size() <= i)Py_RETURN_NONE;
 	model->vt[i] = vt;
 	return Py_BuildValue("i", 0);
 }
@@ -1153,7 +1153,7 @@ static PyObject* getWHT(PyObject *self, PyObject *args)
 	
 	if(!PyArg_ParseTuple(args, "i", &num))return NULL;
 	
-	for(i=0; i<g_model[num].vt_count; i++){
+	for(i=0; i<g_model[num].vt.size(); i++){
 		for(j=0; j<3; j++){
 			if(g_model[num].vt[i].loc[j] > max[j]){
 				max[j] = g_model[num].vt[i].loc[j];

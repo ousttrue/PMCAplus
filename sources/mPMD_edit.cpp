@@ -265,18 +265,18 @@ int update_bone_index(MODEL *model,int index[])
 	unsigned short *tmp_rb;
 	
 	//頂点のボーン番号を書き換え
-	auto tmp_vt = (unsigned short(*)[2])malloc(sizeof(unsigned short)*2*model->vt_count);
+	auto tmp_vt = (unsigned short(*)[2])malloc(sizeof(unsigned short)*2*model->vt.size());
 	#ifdef MEM_DBG
 		printf("malloc %p\n", tmp_vt);
 	#endif
 	
 	
-	for(i=0; i<model->vt_count; i++){
+	for(i=0; i<model->vt.size(); i++){
 		for(j=0; j<2; j++){
 			tmp_vt[i][j] = model->vt[i].bone_num[j];
 		}
 	}
-	for(i=0; i<model->vt_count; i++){
+	for(i=0; i<model->vt.size(); i++){
 		for(j=0; j<2; j++){
 			model->vt[i].bone_num[j] = index[tmp_vt[i][j]];
 		}
@@ -636,7 +636,7 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz)
 	//座標変換
 		//変換する頂点をtmp_vtに格納
 	len_vt = 0;
-	for(i=0; i<(model->vt_count); i++){
+	for(i=0; i<(model->vt.size()); i++){
 		if(model->vt[i].bone_num[0] == index || model->vt[i].bone_num[1] == index){
 			len_vt++;
 		}
@@ -644,7 +644,7 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz)
 	auto tmp_vt = (double(*)[3])MALLOC(sizeof(double) * len_vt * 3);
 	index_vt = (unsigned int*)MALLOC(sizeof(unsigned int)*len_vt);
 	j = 0;
-	for(i=0; i<model->vt_count; i++){
+	for(i=0; i<model->vt.size(); i++){
 		if(model->vt[i].bone_num[0] == index || model->vt[i].bone_num[1] == index){
 			index_vt[j] = i;
 			for(k=0; k<3; k++){
@@ -854,7 +854,7 @@ int move_bone(MODEL *model, unsigned int index, double diff[])
 	for(i=0; i<3; i++){
 		model->bone[index].loc[i] = model->bone[index].loc[i] + diff[i];
 	}
-	for(i=0; i<model->vt_count; i++){
+	for(i=0; i<model->vt.size(); i++){
 		k=0;
 		tmp = 0.0;
 		if(model->vt[i].bone_num[0] == index){
@@ -900,7 +900,7 @@ int move_model(MODEL *model, double diff[])
 			model->bone[i].loc[j] = model->bone[i].loc[j] + diff[j];
 		}
 	}
-	for(i=0; i<model->vt_count; i++){
+	for(i=0; i<model->vt.size(); i++){
 		for(j=0; j<3; j++){
 			model->vt[i].loc[j] = model->vt[i].loc[j] + diff[j];
 		}
@@ -920,7 +920,7 @@ int resize_model(MODEL *model, double size)
 			model->bone[i].loc[j] = model->bone[i].loc[j] * size;
 		}
 	}
-	for(i=0; i<model->vt_count; i++){
+	for(i=0; i<model->vt.size(); i++){
 		for(j=0; j<3; j++){
 			model->vt[i].loc[j] = model->vt[i].loc[j] * size;
 		}
@@ -1447,7 +1447,7 @@ int show_detail(MODEL *model)
 		model->header.version,
 		model->header.name,
 		model->header.comment);
-	printf("頂点数:%d\n", model->vt_count);
+	printf("頂点数:%d\n", model->vt.size());
 	printf("面頂点数:%d\n", model->vt_index_count);
 	printf("材質数:%d\n", model->mat_count);
 	printf("ボーン数:%d\n", model->bone_count);

@@ -90,24 +90,10 @@ int load_PMD(MODEL *model, const char file_name[])
 	FREAD(model->header.name, 1, 20, pmd);
 	FREAD(model->header.comment, 1, 256, pmd);
 	
-	#ifdef DEBUG
-		printf("%s \n %f \n %s \n %s \n",
-			model->header.magic,
-			model->header.version,
-			model->header.name,
-			model->header.comment);
-	#endif
-	FREAD(&model->vt_count, 4,  1, pmd);
-	#ifdef DEBUG
-		printf("頂点数:%d\n", model->vt_count);
-	#endif
-	model->vt =(VERTEX *)MALLOC((size_t)model->vt_count*sizeof(VERTEX));
-	if(model->vt == NULL  ){
-		printf("配列を確保できません\n");
-		return 1;
-	}
-	
-	for(i=0; i<(model->vt_count); i++){
+	int vt_count;
+	FREAD(&vt_count, 4,  1, pmd);
+	model->vt.resize(vt_count);
+	for(i=0; i<(model->vt.size()); i++){
 		//fseek(pmd, 38, SEEK_CUR);
 		FREAD(model->vt[i].loc, 4, 3, pmd);
 		FREAD(model->vt[i].nor, 4, 3, pmd);
@@ -129,7 +115,7 @@ int load_PMD(MODEL *model, const char file_name[])
 	
 	for(i=0; i<model->vt_index_count; i++){
 		FREAD(&model->vt_index[i], 2, 1, pmd);
-		if(model->vt_index[i] >= model->vt_count){
+		if(model->vt_index[i] >= model->vt.size()){
 			printf("頂点インデックスが不正です\n");
 			return 1;
 		}
@@ -225,7 +211,7 @@ int load_PMD(MODEL *model, const char file_name[])
 		model->skin[i].data.resize(skin_vt_count);
 		for(j=0; j<model->skin[i].data.size(); j++){
 			FREAD(&model->skin[i].data[j].index, 4, 1, pmd);
-			if(model->skin[i].data[j].index > model->vt_count){
+			if(model->skin[i].data[j].index > model->vt.size()){
 				exit(1);
 			}
 			FREAD(&model->skin[i].data[j].loc, 4, 3, pmd);
@@ -454,13 +440,10 @@ int write_PMD(MODEL *model, const char file_name[])
 	fwrite(model->header.name, 20, 1, pmd);
 	fwrite(model->header.comment, 256, 1, pmd);
 	
-	#ifdef DEBUG
-		printf("ヘッダ\n");
-	#endif
+	int vt_count = model->vt.size();
+	fwrite(&vt_count, 4,  1, pmd);
 	
-	fwrite(&model->vt_count, 4,  1, pmd);
-	
-	for(i=0; i<(model->vt_count); i++){
+	for(i=0; i<(model->vt.size()); i++){
 		//fseek(pmd, 38, SEEK_CUR);
 		fwrite(model->vt[i].loc, 4, 3, pmd);
 		fwrite(model->vt[i].nor, 4, 3, pmd);
@@ -477,7 +460,7 @@ int write_PMD(MODEL *model, const char file_name[])
 	fwrite(&model->vt_index_count, 4,  1, pmd);
 	
 	for(i=0; i<model->vt_index_count; i++){
-		if(model->vt_index[i] >= model->vt_count){
+		if(model->vt_index[i] >= model->vt.size()){
 			printf("頂点インデックスが不正です :%d\n", model->vt_index[i]);
 			return 1;
 		}
@@ -668,7 +651,7 @@ int print_PMD(MODEL *model, const char file_name[])
 		model->header.name,
 		model->header.comment);
 	
-	for(i=0; i<model->vt_count; i++){
+	for(i=0; i<model->vt.size(); i++){
 		fprintf(txt, "No:%d\n", i);
 		fprintf(txt, "Loc:");
 		for(j=0; j<3; j++){
@@ -872,8 +855,7 @@ int create_PMD(MODEL *model)
 	strcpy(model->header.name, "");
 	strcpy(model->header.comment, "");
 	
-	model->vt_count = 0;
-	model->vt =NULL;
+	model->vt.clear();
 	
 	model->vt_index_count = 0;
 	model->vt_index = NULL;
@@ -918,9 +900,7 @@ int delete_PMD(MODEL *model)
 	model->header.name[0]='\0';
 	model->header.comment[0]='\0';
 	
-	FREE(model->vt);
-	model->vt_count = 0;
-	model->vt =NULL;
+	model->vt.clear();
 	
 	model->vt_index_count = 0;
 	FREE(model->vt_index);
@@ -979,16 +959,8 @@ int copy_PMD(MODEL *out, MODEL *model)
 	int tmp[3];
 	
 	out->header =model->header;
-	
-	out->vt_count = model->vt_count;
-	out->vt = (VERTEX*)MALLOC((size_t)model->vt_count * sizeof(VERTEX));
-	if(out->vt==NULL)return -1;
-	for(i=0; i<model->vt_count; i++){
-		out->vt[i] = model->vt[i];
-	}
-	#ifdef DEBUG
-		printf("頂点\n");
-	#endif
+	out->vt = model->vt;
+
 	//面頂点
 	out->vt_index_count = model->vt_index_count;
 	out->vt_index = (unsigned short*)MALLOC((size_t)model->vt_index_count * sizeof(unsigned short));
@@ -1107,8 +1079,6 @@ int add_PMD(MODEL *model, MODEL *add)
 	unsigned int bone_count;
 	BONE *bone;
 	
-	unsigned int vt_count;
-	VERTEX *vt;
 	unsigned int vt_index_count;
 	unsigned short *vt_index;
 	unsigned int mat_count;
@@ -1130,28 +1100,20 @@ int add_PMD(MODEL *model, MODEL *add)
 	JOINT *joint;
 	
 	//頂点
-	vt_count = model->vt_count + add->vt_count;
-	
-	vt = (VERTEX*)MALLOC((size_t)vt_count * sizeof(VERTEX));
-	if(vt==NULL)return -1;
-	
-	for(i=0; i<model->vt_count; i++){
+	std::vector<VERTEX> vt(model->vt.size() + add->vt.size());
+	for(i=0; i<model->vt.size(); i++){
 		vt[i] = model->vt[i];
 	}
 	j = 0;
 	
-	for(i=model->vt_count; i<vt_count; i++){
+	for(i=model->vt.size(); i<vt.size(); i++){
 		vt[i] = add->vt[j];
 		for(k=0; k<2; k++){
 			vt[i].bone_num[k] += model->bone_count;
 		}
 		j++;
 	}
-	
-	#ifdef DEBUG
-		printf("頂点\n");
-	#endif
-	
+		
 	//面頂点
 	vt_index_count = model->vt_index_count + add->vt_index_count;
 	vt_index = (unsigned short*)MALLOC((size_t)vt_index_count * sizeof(unsigned short));
@@ -1161,7 +1123,7 @@ int add_PMD(MODEL *model, MODEL *add)
 	}
 	j = 0;
 	for(i=model->vt_index_count; i<vt_index_count; i++){
-		vt_index[i] = add->vt_index[j] + model->vt_count;
+		vt_index[i] = add->vt_index[j] + model->vt.size();
 		j++;
 	}
 	
@@ -1254,7 +1216,7 @@ int add_PMD(MODEL *model, MODEL *add)
 		j = 0;
 		for(i = model->skin[0].data.size(); i < skin[0].data.size(); i++){
 			//printf("%d \n", i);
-			skin[0].data[i].index = add->skin[0].data[j].index + model->vt_count;
+			skin[0].data[i].index = add->skin[0].data[j].index + model->vt.size();
 			j++;
 		}
 		//表情追加
@@ -1365,12 +1327,7 @@ int add_PMD(MODEL *model, MODEL *add)
 		printf("ジョイント\n");
 	#endif
 	
-	#ifdef MEM_DBG
-		printf("free %p\n", model->vt);
-	#endif
-	FREE(model->vt);
 	model->vt = vt;
-	model->vt_count = vt_count;
 	
 	#ifdef MEM_DBG
 		printf("free %p\n", model->vt_index);
