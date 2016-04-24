@@ -149,17 +149,10 @@ int load_PMD(MODEL *model, const char file_name[])
 		sprintf(model->mat[i].tex_path,"%s%s\0", str, model->mat[i].tex);
 	}
 	
-	FREAD(&model->bone_count, 2,  1, pmd);
-	#ifdef DEBUG
-		printf("ボーン数:%d\n", model->bone_count);
-	#endif
-	model->bone =(BONE*)MALLOC((size_t)model->bone_count*sizeof(BONE));
-	if(model->bone == NULL  ){
-		printf("配列を確保できません\n");
-		return 1;
-	}
-	
-	for(i=0; i<model->bone_count; i++){
+	unsigned short bone_count;
+	FREAD(&bone_count, 2,  1, pmd);
+	model->bone.resize(bone_count);
+	for(i=0; i<model->bone.size(); i++){
 		FREAD(model->bone[i].name, 1, 20, pmd);
 		FREAD(&model->bone[i].PBone_index, 2, 1, pmd);
 		FREAD(&model->bone[i].TBone_index, 2, 1, pmd);
@@ -269,7 +262,7 @@ int load_PMD(MODEL *model, const char file_name[])
 		FREAD(model->header.comment_eng, 1,  256, pmd);
 		model->header.comment_eng[255] = '\0';
 		
-		for(i=0; i<model->bone_count; i++){
+		for(i=0; i<model->bone.size(); i++){
 			FREAD(model->bone[i].name_eng, 1,  20, pmd);
 			model->bone[i].name_eng[20] = '\0';
 		}
@@ -291,7 +284,7 @@ int load_PMD(MODEL *model, const char file_name[])
 		*model->header.name_eng = '\0';
 		*model->header.comment_eng = '\0';
 		
-		for(i=0; i<model->bone_count; i++){
+		for(i=0; i<model->bone.size(); i++){
 			*model->bone[i].name_eng = '\0';
 		}
 		
@@ -472,14 +465,10 @@ int write_PMD(MODEL *model, const char file_name[])
 			fwrite(model->mat[i].tex, 1, 20, pmd);
 		}
 	}
-	#ifdef DEBUG
-		printf("材質\n");
-	#endif
 	
-	
-	fwrite(&model->bone_count, 2,  1, pmd);
-	
-	for(i=0; i<model->bone_count; i++){
+	unsigned short bone_count = model->bone.size();
+	fwrite(&bone_count, 2,  1, pmd);
+	for(i=0; i<model->bone.size(); i++){
 		fwrite(model->bone[i].name, 1, 20, pmd);
 		fwrite(&model->bone[i].PBone_index, 2, 1, pmd);
 		fwrite(&model->bone[i].TBone_index, 2, 1, pmd);
@@ -487,9 +476,6 @@ int write_PMD(MODEL *model, const char file_name[])
 		fwrite(&model->bone[i].IKBone_index, 2, 1, pmd);
 		fwrite(model->bone[i].loc, 4, 3, pmd);
 	}
-	#ifdef DEBUG
-		printf("ボーン\n");
-	#endif
 	
 	unsigned short IK_count = model->IK_list.size();
 	fwrite(&IK_count, 2,  1, pmd);
@@ -541,9 +527,6 @@ int write_PMD(MODEL *model, const char file_name[])
 		fwrite(&model->bone_disp[i].index, 2,  1, pmd);
 		fwrite(&model->bone_disp[i].bone_group, 1,  1, pmd);
 	}
-	#ifdef DEBUG
-		printf("ボーン表示\n");
-	#endif
 	
 	//extension
 	fwrite(&model->eng_support, 1,  1, pmd);
@@ -551,7 +534,7 @@ int write_PMD(MODEL *model, const char file_name[])
 	if(model->eng_support==1){
 		fwrite(model->header.name_eng, 1,  20, pmd);
 		fwrite(model->header.comment_eng, 1,  256, pmd);
-		for(i=0; i<model->bone_count; i++){
+		for(i=0; i<model->bone.size(); i++){
 			fwrite(model->bone[i].name_eng, 1,  20, pmd);
 		}
 		for(i=1; i<model->skin.size(); i++){
@@ -683,9 +666,9 @@ int print_PMD(MODEL *model, const char file_name[])
 		fprintf(txt, "vt_index_count:%d\n", model->mat[i].vt_index_count);
 		fprintf(txt, "texture:%s\n\n", model->mat[i].tex);
 	}
-	fprintf(txt, "ボーン数:%d\n", model->bone_count);
+	fprintf(txt, "ボーン数:%d\n", model->bone.size());
 	
-	for(i=0; i<model->bone_count; i++){
+	for(i=0; i<model->bone.size(); i++){
 		fprintf(txt, "ボーン名:%s\n", model->bone[i].name);
 		fprintf(txt, "親ボーン:%d\n", model->bone[i].PBone_index);
 		fprintf(txt, "テイルボーン:%d\n", model->bone[i].TBone_index);
@@ -750,7 +733,7 @@ int print_PMD(MODEL *model, const char file_name[])
 	if(model->eng_support == 1){
 		fprintf(txt, "%s\n", model->header.name_eng);
 		fprintf(txt, "%s\n", model->header.comment_eng);
-		for(i=0; i<model->bone_count; i++){
+		for(i=0; i<model->bone.size(); i++){
 			fprintf(txt, "%s\n", model->bone[i].name_eng);
 		}
 		for(i=0; i<model->skin.size(); i++){
@@ -836,9 +819,7 @@ int create_PMD(MODEL *model)
 	model->vt.clear();	
 	model->vt_index.clear();	
 	model->mat.clear();
-	
-	model->bone_count = 0;
-	model->bone = NULL;
+	model->bone.clear();
 	
 	model->IK_list.clear();
 	model->skin.clear();
@@ -877,11 +858,7 @@ int delete_PMD(MODEL *model)
 	model->vt.clear();	
 	model->vt_index.clear();	
 	model->mat.clear();
-	
-	FREE(model->bone);
-	model->bone_count = 0;
-	model->bone = NULL;
-	
+	model->bone.clear();	
 	model->IK_list.clear();
 	model->skin.clear();
 	
@@ -929,22 +906,8 @@ int copy_PMD(MODEL *out, MODEL *model)
 	out->vt = model->vt;
 	out->vt_index = model->vt_index;
 	out->mat = model->mat;
-	
-	//ボーン
-	out->bone_count = model->bone_count;
-	out->bone = (BONE*)MALLOC((size_t)model->bone_count * sizeof(BONE));
-	if(out->bone==NULL)return -1;
-	for(i=0; i<model->bone_count; i++){
-		out->bone[i] = model->bone[i];
-	}
-	#ifdef DEBUG
-		printf("ボーン\n");
-	#endif
-
-	//IKリスト
+	out->bone = model->bone;
 	out->IK_list = model->IK_list;
-	
-	//表情
 	out->skin = model->skin;
 	
 	//表情表示
@@ -1023,8 +986,6 @@ int add_PMD(MODEL *model, MODEL *add)
 	int i, j, k;
 	int size;
 	int tmp[3];
-	unsigned int bone_count;
-	BONE *bone;
 	
 
 	std::vector<IK_LIST> IK_list;
@@ -1051,7 +1012,7 @@ int add_PMD(MODEL *model, MODEL *add)
 	for(i=model->vt.size(); i<vt.size(); i++){
 		vt[i] = add->vt[j];
 		for(k=0; k<2; k++){
-			vt[i].bone_num[k] += model->bone_count;
+			vt[i].bone_num[k] += model->bone.size();
 		}
 		j++;
 	}
@@ -1079,21 +1040,19 @@ int add_PMD(MODEL *model, MODEL *add)
 	}
 		
 	//ボーン
-	bone_count = model->bone_count + add->bone_count;
-	bone = (BONE*)MALLOC((size_t)bone_count * sizeof(BONE));
-	if(bone==NULL)return -1;
-	for(i=0; i<model->bone_count; i++){
+	std::vector<BONE> bone(model->bone.size() + add->bone.size());
+	for(i=0; i<model->bone.size(); i++){
 		bone[i] = model->bone[i];
 	}
 	j=0;
-	for(i=model->bone_count; i<bone_count; i++){
+	for(i=model->bone.size(); i<bone.size(); i++){
 		bone[i] = add->bone[j];
 		if(bone[i].PBone_index != USHORT_MAX)
-		bone[i].PBone_index = bone[i].PBone_index + model->bone_count;
+		bone[i].PBone_index = bone[i].PBone_index + model->bone.size();
 		if(bone[i].TBone_index != 0)
-		bone[i].TBone_index = bone[i].TBone_index + model->bone_count;
+		bone[i].TBone_index = bone[i].TBone_index + model->bone.size();
 		if(bone[i].IKBone_index != 0)
-		bone[i].IKBone_index = bone[i].IKBone_index + model->bone_count;
+		bone[i].IKBone_index = bone[i].IKBone_index + model->bone.size();
 		j++;
 	}
 	#ifdef DEBUG
@@ -1107,10 +1066,10 @@ int add_PMD(MODEL *model, MODEL *add)
 	j = 0;
 	for(i=model->IK_list.size(); i<IK_list.size(); i++){
 		IK_list[i] = add->IK_list[j];
-		IK_list[i].IKBone_index = IK_list[i].IKBone_index + model->bone_count;
-		IK_list[i].IKTBone_index = IK_list[i].IKTBone_index + model->bone_count;
+		IK_list[i].IKBone_index = IK_list[i].IKBone_index + model->bone.size();
+		IK_list[i].IKTBone_index = IK_list[i].IKTBone_index + model->bone.size();
 		for(k=0; k<IK_list[i].IKCBone_index.size(); k++){
-			IK_list[i].IKCBone_index[k] = IK_list[i].IKCBone_index[k] + model->bone_count;
+			IK_list[i].IKCBone_index[k] = IK_list[i].IKCBone_index[k] + model->bone.size();
 		}
 		j++;
 	}
@@ -1202,7 +1161,7 @@ int add_PMD(MODEL *model, MODEL *add)
 	}
 	j = 0;
 	for(i=model->bone_disp_count; i<bone_disp_count; i++){
-		bone_disp[i].index = add->bone_disp[j].index + model->bone_count;
+		bone_disp[i].index = add->bone_disp[j].index + model->bone.size();
 		bone_disp[i].bone_group = add->bone_disp[j].bone_group + model->bone_group_count;
 		j++;
 		//printf("%d %d %d %d\n", add->bone_disp[j].index, add->bone_disp[j].bone_group, bone_disp[i].index, bone_disp[i].bone_group);
@@ -1229,7 +1188,7 @@ int add_PMD(MODEL *model, MODEL *add)
 	j=0;
 	for(i=model->rbody_count; i<rbody_count; i++){
 		rbody[i] = add->rbody[j];
-		rbody[i].bone = rbody[i].bone + model->bone_count;
+		rbody[i].bone = rbody[i].bone + model->bone.size();
 		j++;
 	}
 	#ifdef DEBUG
@@ -1258,14 +1217,7 @@ int add_PMD(MODEL *model, MODEL *add)
 	model->vt = vt;	
 	model->vt_index = vt_index;	
 	model->mat = mat;
-	
-	#ifdef MEM_DBG
-		printf("free %p\n", model->bone);
-	#endif
-	FREE(model->bone);
 	model->bone = bone;
-	model->bone_count = bone_count;
-	
 	model->IK_list = IK_list;
 	model->skin = skin;
 	
@@ -1334,9 +1286,9 @@ int listup_bone(MODEL *model, const char file_name[]){
 		model->header.name,
 		model->header.comment);
 	
-	fprintf(txt, "ボーン数:%d\n", model->bone_count);
+	fprintf(txt, "ボーン数:%d\n", model->bone.size());
 	
-	for(i=0; i<model->bone_count; i++){
+	for(i=0; i<model->bone.size(); i++){
 		fprintf(txt, "%s %s\n", model->bone[i].name, model->bone[i].name_eng);
 	}
 	
