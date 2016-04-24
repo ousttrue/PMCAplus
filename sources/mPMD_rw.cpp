@@ -197,25 +197,20 @@ int load_PMD(MODEL *model, const char file_name[])
 		model->bone[i].name[21] = '\0';
 	}
 	
-	FREAD(&model->IK_count, 2,  1, pmd);
-	#ifdef DEBUG
-		printf("IKデータ数:%d\n", model->IK_count);
-	#endif
-	model->IK_list =(IK_LIST*)MALLOC(model->IK_count*sizeof(IK_LIST));
-	if(model->IK_list == NULL  ){
-		printf("配列を確保できません\n");
-		return 1;
-	}
-	for(i=0; i<model->IK_count; i++){
+	unsigned short IK_count;
+	FREAD(&IK_count, 2,  1, pmd);
+
+	model->IK_list.resize(IK_count);
+	for(i=0; i<model->IK_list.size(); i++){
 		FREAD(&model->IK_list[i].IKBone_index, 2, 1, pmd);
 		FREAD(&model->IK_list[i].IKTBone_index, 2, 1, pmd);
-		FREAD(&model->IK_list[i].IK_chain_len, 1, 1, pmd);
+		unsigned char IK_chain_len;
+		FREAD(&IK_chain_len, 1, 1, pmd);
 		FREAD(&model->IK_list[i].iterations, 2, 1, pmd);
 		FREAD(&model->IK_list[i].weight, 4, 1, pmd);
-		model->IK_list[i].IKCBone_index = (unsigned short*)MALLOC((size_t)model->IK_list[i].IK_chain_len*sizeof(unsigned short));
-		if(model->IK_list[i].IKCBone_index == NULL)return -1;
-		if(model->IK_list[i].IK_chain_len > 0){
-			FREAD(model->IK_list[i].IKCBone_index, 2, model->IK_list[i].IK_chain_len, pmd);
+		model->IK_list[i].IKCBone_index.resize(IK_chain_len);
+		if(IK_chain_len > 0){
+			FREAD(&model->IK_list[i].IKCBone_index[0], 2, IK_chain_len, pmd);
 		}
 	}
 	
@@ -540,15 +535,17 @@ int write_PMD(MODEL *model, const char file_name[])
 		printf("ボーン\n");
 	#endif
 	
-	fwrite(&model->IK_count, 2,  1, pmd);
+	unsigned short IK_count = model->IK_list.size();
+	fwrite(&IK_count, 2,  1, pmd);
 	
-	for(i=0; i<model->IK_count; i++){
+	for(i=0; i<model->IK_list.size(); i++){
 		fwrite(&model->IK_list[i].IKBone_index, 2, 1, pmd);
 		fwrite(&model->IK_list[i].IKTBone_index, 2, 1, pmd);
-		fwrite(&model->IK_list[i].IK_chain_len, 1, 1, pmd);
+		unsigned char IK_chain_len = model->IK_list[i].IKCBone_index.size();
+		fwrite(&IK_chain_len, 1, 1, pmd);
 		fwrite(&model->IK_list[i].iterations, 2, 1, pmd);
 		fwrite(&model->IK_list[i].weight, 4, 1, pmd);
-		fwrite(model->IK_list[i].IKCBone_index, 2, model->IK_list[i].IK_chain_len, pmd);
+		fwrite(&model->IK_list[i].IKCBone_index[0], 2, model->IK_list[i].IKCBone_index.size(), pmd);
 	}
 	#ifdef DEBUG
 		printf("IKリスト\n");
@@ -744,15 +741,15 @@ int print_PMD(MODEL *model, const char file_name[])
 		fprintf(txt, "\n\n");
 	}
 	
-	fprintf(txt, "IKデータ数:%d\n", model->IK_count);
+	fprintf(txt, "IKデータ数:%d\n", model->IK_list.size());
 	
-	for(i=0; i<model->IK_count; i++){
+	for(i=0; i<model->IK_list.size(); i++){
 		fprintf(txt, "IKボーン:%d\n", model->IK_list[i].IKBone_index);
 		fprintf(txt, "IKテイルボーン:%d\n", model->IK_list[i].IKTBone_index);
-		fprintf(txt, "IKチェーン長:%d\n", model->IK_list[i].IK_chain_len);
+		fprintf(txt, "IKチェーン長:%d\n", model->IK_list[i].IKCBone_index.size());
 		fprintf(txt, "iteration:%d\n", model->IK_list[i].iterations);
 		fprintf(txt, "ウエイト:%f\n", model->IK_list[i].weight);
-		for(j=0; j<model->IK_list[i].IK_chain_len; j++){
+		for(j=0; j<model->IK_list[i].IKCBone_index.size(); j++){
 			fprintf(txt, "IK子 %d:%d\n", j, model->IK_list[i].IKCBone_index[j]);
 		}
 		fprintf(txt, "\n");
@@ -891,8 +888,7 @@ int create_PMD(MODEL *model)
 	model->bone_count = 0;
 	model->bone = NULL;
 	
-	model->IK_count = 0;
-	model->IK_list = NULL;
+	model->IK_list.clear();
 	
 	model->skin_count = 0;
 	model->skin = NULL;
@@ -945,23 +941,8 @@ int delete_PMD(MODEL *model)
 	model->bone_count = 0;
 	model->bone = NULL;
 	
-	#ifdef DEBUGC
-		printf("ボーン\n");
-	#endif
-	for(i=0; i<model->IK_count; i++){
-		FREE(model->IK_list[i].IKCBone_index);
-		model->IK_list[i].IKCBone_index = NULL;
-	}
-	model->IK_count = 0;
-	
-	
-	FREE(model->IK_list);
-	model->IK_list = NULL;
-	
-	
-	#ifdef DEBUGC
-		printf("IKリスト\n");
-	#endif
+	model->IK_list.clear();
+
 	for(i=0; i<model->skin_count; i++){
 		#ifdef DEBUG
 			printf("%d \n", i);
@@ -1060,19 +1041,8 @@ int copy_PMD(MODEL *out, MODEL *model)
 		printf("ボーン\n");
 	#endif
 	//IKリスト
-	out->IK_count = model->IK_count;
-	out->IK_list = (IK_LIST*)MALLOC((size_t)model->IK_count * sizeof(IK_LIST));
-	if(out->IK_list==NULL)return -1;
-	for(i=0; i<model->IK_count; i++){
-		out->IK_list[i] = model->IK_list[i];
-		size = (size_t)model->IK_list[i].IK_chain_len * sizeof(unsigned short);
-		out->IK_list[i].IKCBone_index = (unsigned short*)MALLOC(size);
-		if(out->IK_list[i].IKCBone_index==NULL)return -1;
-		memcpy(out->IK_list[i].IKCBone_index, model->IK_list[i].IKCBone_index, size);
-	}
-	#ifdef DEBUG
-		printf("IKリスト\n");
-	#endif
+
+	out->IK_list = model->IK_list;
 	
 	//表情
 	out->skin_count = model->skin_count;
@@ -1174,8 +1144,8 @@ int add_PMD(MODEL *model, MODEL *add)
 	unsigned short *vt_index;
 	unsigned int mat_count;
 	MATERIAL *mat;
-	unsigned short IK_count;
-	IK_LIST *IK_list;
+
+	std::vector<IK_LIST> IK_list;
 	unsigned short skin_count;
 	SKIN *skin;
 	unsigned char skin_disp_count;
@@ -1271,26 +1241,16 @@ int add_PMD(MODEL *model, MODEL *add)
 		printf("ボーン\n");
 	#endif
 	//IKリスト
-	IK_count = model->IK_count + add->IK_count;
-	IK_list = (IK_LIST*)MALLOC((size_t)IK_count * sizeof(IK_LIST));
-	if(IK_list==NULL)return -1;
-	for(i=0; i<model->IK_count; i++){
+	IK_list.resize(model->IK_list.size() + add->IK_list.size());
+	for(i=0; i<model->IK_list.size(); i++){
 		IK_list[i] = model->IK_list[i];
-		size = IK_list[i].IK_chain_len * sizeof(unsigned short);
-		IK_list[i].IKCBone_index = (unsigned short*)MALLOC(size);
-		if(IK_list[i].IKCBone_index==NULL)return -1;
-		memcpy(IK_list[i].IKCBone_index, model->IK_list[i].IKCBone_index, size);
 	}
 	j = 0;
-	for(i=model->IK_count; i<IK_count; i++){
+	for(i=model->IK_list.size(); i<IK_list.size(); i++){
 		IK_list[i] = add->IK_list[j];
 		IK_list[i].IKBone_index = IK_list[i].IKBone_index + model->bone_count;
 		IK_list[i].IKTBone_index = IK_list[i].IKTBone_index + model->bone_count;
-		size = IK_list[i].IK_chain_len * sizeof(unsigned short);
-		IK_list[i].IKCBone_index = (unsigned short*)MALLOC(size);
-		if(IK_list[i].IKCBone_index==NULL)return -1;
-		memcpy(IK_list[i].IKCBone_index, add->IK_list[j].IKCBone_index, size);
-		for(k=0; k<IK_list[i].IK_chain_len; k++){
+		for(k=0; k<IK_list[i].IKCBone_index.size(); k++){
 			IK_list[i].IKCBone_index[k] = IK_list[i].IKCBone_index[k] + model->bone_count;
 		}
 		j++;
@@ -1493,20 +1453,7 @@ int add_PMD(MODEL *model, MODEL *add)
 	model->bone = bone;
 	model->bone_count = bone_count;
 	
-	for(i=0; i<model->IK_count; i++){
-		#ifdef MEM_DBG
-			printf("free %p\n", model->IK_list[i].IKCBone_index);
-		#endif
-		FREE(model->IK_list[i].IKCBone_index);
-		model->IK_list[i].IKCBone_index = NULL;
-	}
-	#ifdef MEM_DBG
-		printf("free %p\n", model->IK_list);
-	#endif
-	FREE(model->IK_list);
 	model->IK_list = IK_list;
-	model->IK_count = IK_count;
-	
 	
 	for(i=0; i<model->skin_count; i++){
 		#ifdef MEM_DBG

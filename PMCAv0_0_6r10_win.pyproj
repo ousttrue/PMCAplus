@@ -15,7 +15,7 @@
     <InterpreterVersion>3.5</InterpreterVersion>
     <CommandLineArguments>
     </CommandLineArguments>
-    <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
+    <EnableNativeCodeDebugging>True</EnableNativeCodeDebugging>
     <InterpreterArguments>
     </InterpreterArguments>
   </PropertyGroup>

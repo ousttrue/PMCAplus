@@ -61,10 +61,9 @@ struct IK_LIST
 {	/*11+2*IK_chain_len byte*/
 	unsigned short IKBone_index;
 	unsigned short IKTBone_index;
-	unsigned char IK_chain_len;
 	unsigned short iterations;
 	float weight;
-	unsigned short *IKCBone_index;
+	std::vector<unsigned short> IKCBone_index;
 };
 
 struct SKIN_DATA 
@@ -130,8 +129,9 @@ struct MODEL
 	MATERIAL *mat;
 	unsigned short bone_count;
 	BONE *bone;
-	unsigned short IK_count;
-	IK_LIST *IK_list;
+
+	std::vector<IK_LIST> IK_list;
+
 	unsigned short skin_count;
 	SKIN *skin;
 	unsigned char skin_disp_count;

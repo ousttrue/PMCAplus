@@ -260,7 +260,6 @@ int update_bone_index(MODEL *model,int index[])
 {
 	int i, j;
 
-	IK_LIST *tmp_ik;
 	unsigned short *tmp_disp;
 	char (*tmp_eng)[20];
 	unsigned short *tmp_rb;
@@ -288,38 +287,14 @@ int update_bone_index(MODEL *model,int index[])
 	FREE(tmp_vt);
 	
 	//IKリストのボーン番号を書き換え
-	tmp_ik = (IK_LIST*)malloc(sizeof(IK_LIST)*model->IK_count);
-	#ifdef MEM_DBG
-		printf("malloc %p\n", tmp_ik);
-	#endif
-	memcpy(tmp_ik, model->IK_list, sizeof(IK_LIST)*model->IK_count);
-	for(i=0; i<model->IK_count; i++){
-		tmp_ik[i].IKCBone_index = (unsigned short*)malloc(sizeof(unsigned short)*tmp_ik[i].IK_chain_len);
-		#ifdef MEM_DBG
-			printf("malloc %p\n", tmp_ik[i].IKCBone_index);
-		#endif
-		memcpy(tmp_ik[i].IKCBone_index, model->IK_list[i].IKCBone_index, sizeof(unsigned short)*tmp_ik[i].IK_chain_len);
-	}
-	for(i=0; i<model->IK_count; i++){
-		#ifdef DEBUG
-			printf("%d \n", i);
-		#endif
+	auto tmp_ik=model->IK_list;
+	for(i=0; i<model->IK_list.size(); i++){
 		model->IK_list[i].IKBone_index = index[tmp_ik[i].IKBone_index];
 		model->IK_list[i].IKTBone_index = index[tmp_ik[i].IKTBone_index];
-		for(j=0; j<tmp_ik[i].IK_chain_len; j++){
+		for(j=0; j<tmp_ik[i].IKCBone_index.size(); j++){
 			model->IK_list[i].IKCBone_index[j] = index[tmp_ik[i].IKCBone_index[j]];
 		}
-		#ifdef MEM_DBG
-			printf("FREE %p\n", tmp_ik[i].IKCBone_index);
-		#endif
-		FREE(tmp_ik[i].IKCBone_index);
 	}
-	//printf("%d\n", tmp_ik[i].IK_chain_len);getch();
-	#ifdef MEM_DBG
-		printf("FREE %p\n", tmp_ik);
-	#endif
-	FREE(tmp_ik);
-	
 	
 	//表示ボーン番号を書き換え
 	tmp_disp = (unsigned short*)malloc(sizeof(unsigned short)*model->bone_disp_count);
@@ -1226,25 +1201,16 @@ int marge_mat(MODEL *model)
 
 int marge_IK(MODEL *model)
 {
-	int i, j, tmp;
-	int *index;
-	char *marge;
-	
 	//重複IKを削除
 	
-	index = (int*)MALLOC(model->IK_count * sizeof(int));
-	marge = (char*)MALLOC(model->IK_count * sizeof(char));
-	memset(marge, 0, model->IK_count * sizeof(char));
-	#ifdef MEM_DBG
-		printf("malloc %p %p\n", index, marge);
-	#endif
+	std::vector<int> index(model->IK_list.size());
+	std::vector<char> marge (model->IK_list.size());
 	
-	
-	tmp = 0;
-	for(i=0; i<model->IK_count; i++){
+	int tmp = 0;
+	for(int i=0; i<model->IK_list.size(); i++){
 		if(marge[i] == 0){
 			index[i] = i - tmp;
-			for(j=i+1; j<model->IK_count; j++){
+			for(int j=i+1; j<model->IK_list.size(); j++){
 				if(model->IK_list[i].IKBone_index == model->IK_list[j].IKBone_index){
 					index[j] = i - tmp;
 					marge[j] = 1;
@@ -1258,22 +1224,12 @@ int marge_IK(MODEL *model)
 		#endif
 	}
 	
-	
-	for(i=0; i<model->IK_count; i++){
+	for(int i=0; i<model->IK_list.size(); i++){
 		if(marge[i] == 0 && index[i] != i){
 			model->IK_list[index[i]] = model->IK_list[i];
 		}
 	}
-	model->IK_count = model->IK_count - tmp;
-	
-	#ifdef MEM_DBG
-		printf("FREE %p %p\n", index, marge);
-	#endif
-	
-	FREE(index);
-	FREE(marge);
-	
-	
+	model->IK_list.resize(model->IK_list.size() - tmp);
 	
 	return 0;
 }
@@ -1515,7 +1471,7 @@ int show_detail(MODEL *model)
 	printf("面頂点数:%d\n", model->vt_index_count);
 	printf("材質数:%d\n", model->mat_count);
 	printf("ボーン数:%d\n", model->bone_count);
-	printf("IKデータ数:%d\n", model->IK_count);
+	printf("IKデータ数:%d\n", model->IK_list.size());
 	printf("表情数:%d\n", model->skin_count);
 	printf("表情枠:%d\n", model->skin_disp_count);
 	printf("ボーン枠:%d\n", model->bone_group_count);

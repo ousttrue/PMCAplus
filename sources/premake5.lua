@@ -81,6 +81,7 @@ do
     links {
     }
     postbuildcommands {
+        'echo $(OutDir)$(TargetName).dll'
         'copy $(OutDir)$(TargetName).dll ..\\..\\$(TargetName).pyd',
         'copy $(OutDir)$(TargetName).pdb ..\\..\\$(TargetName).pdb',
     }
