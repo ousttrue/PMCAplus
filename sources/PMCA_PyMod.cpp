@@ -120,7 +120,7 @@ static PyObject* getInfo(PyObject *self, PyObject *args)
 							"comment_eng", comment_eng,
 							
 							"vt_count", model->vt.size(),
-							"face_count", model->vt_index_count/3,
+							"face_count", model->vt_index.size()/3,
 							"mat_count", model->mat_count,
 							"bone_count", model->bone_count,
 							
@@ -161,7 +161,7 @@ static PyObject* getFace(PyObject *self, PyObject *args)
 	if(!PyArg_ParseTuple(args, "ii", &num, &i))return NULL;
 	model = &g_model[num];
 	i = i*3;
-	if(model->vt_index_count+3 < i)Py_RETURN_NONE;
+	if(model->vt_index.size()+3 < i)Py_RETURN_NONE;
 	return Array_to_PyList_UShort(&model->vt_index[i], 3);
 }
 
@@ -402,6 +402,7 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 	create_PMD(&model);
 	
 	int vt_count;
+	int vt_index_count;
 	int IK_count;
 	int skin_count;
 	if(!PyArg_ParseTuple(args, "i"
@@ -417,7 +418,7 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 							&str[3],
 							
 							&vt_count,
-							&model.vt_index_count,
+							&vt_index_count,
 							&model.mat_count,
 							&model.bone_count,
 							
@@ -431,7 +432,6 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 							&model.joint_count,
 							&model.skin_disp_count,
 							&PyTmp))return NULL;
-	model.vt_index_count = model.vt_index_count*3;
 	
 	strncpy(model.header.magic, "Pmd", 4);
 	model.header.version = 1.0;
@@ -450,13 +450,8 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 	*p = model;
 	
 	/*ƒƒ‚ƒŠŠm•Û************************************************************************/
-	//’¸“_
 	p->vt.resize(vt_count);
-
-	//–Ê’¸“_
-	size = p->vt_index_count * sizeof(unsigned short);
-	p->vt_index = (unsigned short*)MALLOC(size);
-	memset(p->vt_index, 0, size);
+	p->vt_index.resize(vt_index_count * 3);
 	
 	//ÞŽ¿
 	size = p->mat_count * sizeof(MATERIAL);
@@ -542,7 +537,7 @@ static PyObject* setFace(PyObject *self, PyObject *args)
 							&PyTmp))return NULL;
 	
 	model = &g_model[num];
-	if(model->vt_index_count < i*3+3)Py_RETURN_NONE;
+	if(model->vt_index.size() < i*3+3)Py_RETURN_NONE;
 	
 	PyList_to_Array_UShort(&model->vt_index[i*3], PyTmp, 3);
 	return Py_BuildValue("i", 0);

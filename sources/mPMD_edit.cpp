@@ -1028,19 +1028,16 @@ int marge_mat(MODEL *model)
 	int i, j, k;
 	int tmp, size, sum;
 	int *tmp_count;
-	int vt_index_count;
 	int *index;
 	char *marge;
 	char *p;
 	
-	unsigned short *vt_index;
 	MATERIAL *tmp_mat;
 	
 	index = (int*)MALLOC(model->mat_count * sizeof(int));
 	marge = (char*)MALLOC(model->mat_count * sizeof(char));
 	memset(marge, 0, model->mat_count * sizeof(char));
-	vt_index = (unsigned short*)MALLOC(model->vt_index_count * sizeof(unsigned short));
-	if(vt_index == NULL)return -1;	
+	std::vector<unsigned short> vt_index(model->vt_index.size());
 	tmp_count = (int*)MALLOC(model->mat_count * sizeof(int));
 	if(tmp_count == NULL)return -1;	
 	memset(tmp_count, 0, model->mat_count * sizeof(int));
@@ -1134,7 +1131,7 @@ int marge_mat(MODEL *model)
 	k=0;
 	
 	for(i=0; i<model->mat_count; i++){
-		vt_index_count = 0;
+		int vt_index_count = 0;
 		sum = 0;
 		for(j=0; j<model->mat_count; j++){
 			if(index[j] == i){
@@ -1169,7 +1166,6 @@ int marge_mat(MODEL *model)
 		printf("FREE %p %p %p %p\n", index, marge, model->vt, tmp_count);
 	#endif
 	
-	FREE(model->vt_index);
 	FREE(index);
 	FREE(marge);
 	FREE(tmp_count);
@@ -1448,7 +1444,7 @@ int show_detail(MODEL *model)
 		model->header.name,
 		model->header.comment);
 	printf("頂点数:%d\n", model->vt.size());
-	printf("面頂点数:%d\n", model->vt_index_count);
+	printf("面頂点数:%d\n", model->vt_index.size());
 	printf("材質数:%d\n", model->mat_count);
 	printf("ボーン数:%d\n", model->bone_count);
 	printf("IKデータ数:%d\n", model->IK_list.size());
