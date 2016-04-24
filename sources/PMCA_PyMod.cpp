@@ -121,7 +121,7 @@ static PyObject* getInfo(PyObject *self, PyObject *args)
 							
 							"vt_count", model->vt.size(),
 							"face_count", model->vt_index.size()/3,
-							"mat_count", model->mat_count,
+							"mat_count", model->mat.size(),
 							"bone_count", model->bone_count,
 							
 							"IK_count", model->IK_list.size(),
@@ -171,7 +171,7 @@ static PyObject* getMat(PyObject *self, PyObject *args)
 	MODEL *model;
 	if(!PyArg_ParseTuple(args, "ii", &num, &i))return NULL;
 	model = &g_model[num];
-	if(model->mat_count <= i)Py_RETURN_NONE;
+	if(model->mat.size() <= i)Py_RETURN_NONE;
 	return Py_BuildValue("{s:O,s:f,s:f,"
 							"s:O,s:O,"
 							"s:i,s:i,s:i,"
@@ -403,6 +403,7 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 	
 	int vt_count;
 	int vt_index_count;
+	int mat_count;
 	int IK_count;
 	int skin_count;
 	if(!PyArg_ParseTuple(args, "i"
@@ -419,7 +420,7 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 							
 							&vt_count,
 							&vt_index_count,
-							&model.mat_count,
+							&mat_count,
 							&model.bone_count,
 							
 							&IK_count,
@@ -452,11 +453,7 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 	/*ƒƒ‚ƒŠŠm•Û************************************************************************/
 	p->vt.resize(vt_count);
 	p->vt_index.resize(vt_index_count * 3);
-	
-	//ÞŽ¿
-	size = p->mat_count * sizeof(MATERIAL);
-	p->mat = (MATERIAL*)MALLOC(size);
-	memset(p->mat, 0, size);
+	p->mat.resize(mat_count);
 	
 	//ƒ{[ƒ“
 	size = p->bone_count * sizeof(BONE);
@@ -567,7 +564,7 @@ static PyObject* setMat(PyObject *self, PyObject *args)
 							&str[3]))return NULL;
 	
 	model = &g_model[num];
-	if(model->mat_count <= i)Py_RETURN_NONE;
+	if(model->mat.size() <= i)Py_RETURN_NONE;
 	
 	mat.vt_index_count = mat.vt_index_count*3;
 	PyList_to_Array_Float(mat.diffuse, PyTmp[0], 3);

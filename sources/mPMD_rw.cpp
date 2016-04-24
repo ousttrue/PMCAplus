@@ -114,16 +114,10 @@ int load_PMD(MODEL *model, const char file_name[])
 		}
 	}
 	
-	FREAD(&model->mat_count, 4,  1, pmd);
-	#ifdef DEBUG
-		printf("材質数:%d\n", model->mat_count);
-	#endif
-	model->mat =(MATERIAL*)MALLOC((size_t)model->mat_count*sizeof(MATERIAL));
-	if(model->mat == NULL  ){
-		printf("配列を確保できません\n");
-		return 1;
-	}
-	for(i=0; i<model->mat_count; i++){
+	int mat_count;
+	FREAD(&mat_count, 4,  1, pmd);
+	model->mat.resize(mat_count);
+	for(i=0; i<model->mat.size(); i++){
 		FREAD(model->mat[i].diffuse, 4, 3, pmd);
 		FREAD(&model->mat[i].alpha, 4, 1, pmd);
 		FREAD(&model->mat[i].spec, 4, 1, pmd);
@@ -455,8 +449,9 @@ int write_PMD(MODEL *model, const char file_name[])
 		fwrite(&model->vt_index[i], 2, 1, pmd);
 	}
 	
-	fwrite(&model->mat_count, 4,  1, pmd);	
-	for(i=0; i<model->mat_count; i++){
+	int mat_count = model->mat.size();
+	fwrite(&mat_count, 4,  1, pmd);	
+	for(i=0; i<model->mat.size(); i++){
 		//70bytes
 		fwrite(model->mat[i].diffuse, 4, 3, pmd);
 		fwrite(&model->mat[i].alpha, 4, 1, pmd);
@@ -665,10 +660,9 @@ int print_PMD(MODEL *model, const char file_name[])
 	}
 	fprintf(txt, "\n");
 	
-	fprintf(txt, "材質数:%d\n", model->mat_count);
+	fprintf(txt, "材質数:%d\n", model->mat.size());
 	
-	
-	for(i=0; i<model->mat_count; i++){
+	for(i=0; i<model->mat.size(); i++){
 		fprintf(txt, "No:%d\n", i);
 		fprintf(txt, "diffuse:");
 		for(j=0; j<3; j++){
@@ -840,10 +834,8 @@ int create_PMD(MODEL *model)
 	strcpy(model->header.comment, "");
 	
 	model->vt.clear();	
-	model->vt_index.clear();
-	
-	model->mat_count = 0;
-	model->mat = NULL;
+	model->vt_index.clear();	
+	model->mat.clear();
 	
 	model->bone_count = 0;
 	model->bone = NULL;
@@ -883,11 +875,8 @@ int delete_PMD(MODEL *model)
 	model->header.comment[0]='\0';
 	
 	model->vt.clear();	
-	model->vt_index.clear();
-	
-	FREE(model->mat);
-	model->mat_count = 0;
-	model->mat = NULL;
+	model->vt_index.clear();	
+	model->mat.clear();
 	
 	FREE(model->bone);
 	model->bone_count = 0;
@@ -939,18 +928,8 @@ int copy_PMD(MODEL *out, MODEL *model)
 	out->header =model->header;
 	out->vt = model->vt;
 	out->vt_index = model->vt_index;
-
-	//材質
-	out->mat_count = model->mat_count;
-	out->mat = (MATERIAL*)MALLOC((size_t)model->mat_count * sizeof(MATERIAL));
-	if(out->mat==NULL)return -1;
-	for(i=0; i<model->mat_count; i++){
-		out->mat[i] = model->mat[i];
-	}
+	out->mat = model->mat;
 	
-	#ifdef DEBUG
-		printf("材質\n");
-	#endif
 	//ボーン
 	out->bone_count = model->bone_count;
 	out->bone = (BONE*)MALLOC((size_t)model->bone_count * sizeof(BONE));
@@ -1047,8 +1026,6 @@ int add_PMD(MODEL *model, MODEL *add)
 	unsigned int bone_count;
 	BONE *bone;
 	
-	unsigned int mat_count;
-	MATERIAL *mat;
 
 	std::vector<IK_LIST> IK_list;
 	std::vector<SKIN> skin;
@@ -1091,24 +1068,16 @@ int add_PMD(MODEL *model, MODEL *add)
 	}
 		
 	//材質
-	mat_count = model->mat_count + add->mat_count;
-	mat = (MATERIAL*)MALLOC((size_t)mat_count * sizeof(MATERIAL));
-	if(mat==NULL)return -1;
-	
-	for(i=0; i<model->mat_count; i++){
+	std::vector<MATERIAL> mat(model->mat.size() + add->mat.size());
+	for(i=0; i<model->mat.size(); i++){
 		mat[i] = model->mat[i];
 	}
-	j = 0;
-	
-	for(i=model->mat_count; i<mat_count; i++){
+	j = 0;	
+	for(i=model->mat.size(); i<mat.size(); i++){
 		mat[i] = add->mat[j];
 		j++;
 	}
-	
-	#ifdef DEBUG
-		printf("材質\n");
-	#endif
-	
+		
 	//ボーン
 	bone_count = model->bone_count + add->bone_count;
 	bone = (BONE*)MALLOC((size_t)bone_count * sizeof(BONE));
@@ -1287,14 +1256,8 @@ int add_PMD(MODEL *model, MODEL *add)
 	#endif
 	
 	model->vt = vt;	
-	model->vt_index = vt_index;
-	
-	#ifdef MEM_DBG
-		printf("free %p\n", model->mat);
-	#endif
-	FREE(model->mat);
+	model->vt_index = vt_index;	
 	model->mat = mat;
-	model->mat_count = mat_count;
 	
 	#ifdef MEM_DBG
 		printf("free %p\n", model->bone);
