@@ -125,7 +125,7 @@ static PyObject* getInfo(PyObject *self, PyObject *args)
 							"bone_count", model->bone_count,
 							
 							"IK_count", model->IK_list.size(),
-							"skin_count", model->skin_count,
+							"skin_count", model->skin.size(),
 							"bone_group_count", model->bone_group_count,
 							"bone_disp_count", model->bone_disp_count,
 							
@@ -236,12 +236,12 @@ static PyObject* getSkin(PyObject *self, PyObject *args)
 	MODEL *model;
 	if(!PyArg_ParseTuple(args, "ii", &num, &i))return NULL;
 	model = &g_model[num];
-	if(model->skin_count <= i)Py_RETURN_NONE;
+	if(model->skin.size() <= i)Py_RETURN_NONE;
 	return Py_BuildValue("{s:y,s:y,"
 							"s:i,s:i}",
 							"name", model->skin[i].name,
 							"name_eng", model->skin[i].name_eng,
-							"count", (int)model->skin[i].skin_vt_count,
+							"count", (int)model->skin[i].data.size(),
 							"type", (int)model->skin[i].type);
 }
 
@@ -402,6 +402,7 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 	create_PMD(&model);
 	
 	int IK_count;
+	int skin_count;
 	if(!PyArg_ParseTuple(args, "i"
 							"yyyy"
 							"iiii"
@@ -420,7 +421,7 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 							&model.bone_count,
 							
 							&IK_count,
-							&model.skin_count,
+							&skin_count,
 							&model.bone_group_count,
 							&model.bone_disp_count,
 							
@@ -471,9 +472,7 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 	p->IK_list.resize(IK_count);
 	
 	//表情
-	size = p->skin_count * sizeof(SKIN);
-	p->skin = (SKIN*)MALLOC(size);
-	memset(p->skin, 0, size);
+	p->skin.resize(skin_count);
 	
 	//表情表示
 	size = p->skin_disp_count * sizeof(unsigned short);
@@ -652,30 +651,21 @@ static PyObject* setSkin(PyObject *self, PyObject *args)
 	SKIN skin;
 	char *str[2];
 	
+	int skin_vt_count;
 	if(!PyArg_ParseTuple(args, "iiyyib",
 							&num, &i,
 							&str[0],
 							&str[1],
-							&skin.skin_vt_count,
+							&skin_vt_count,
 							&skin.type))return NULL;
 	model = &g_model[num];
-	if(model->skin_count <= i)Py_RETURN_NONE;
+	if(model->skin.size() <= i)Py_RETURN_NONE;
 	
 	strncpy(skin.name,     str[0], NAME_LEN);
 	strncpy(skin.name_eng, str[1], NAME_LEN);
 	
 	//メモリ確保
-	size = skin.skin_vt_count * sizeof(SKIN_DATA);
-	if(model->skin[i].skin_vt_count != skin.skin_vt_count){
-		FREE(model->skin[i].data);
-		
-		model->skin[i].data == NULL;
-	}
-	if(model->skin[i].data == NULL){
-		skin.data = (SKIN_DATA*)MALLOC(size);
-	}else{
-		skin.data = model->skin[i].data;
-	}
+	skin.data.resize(skin_vt_count);
 	
 	model->skin[i] = skin;
 	
@@ -697,8 +687,8 @@ static PyObject* setSkindata(PyObject *self, PyObject *args)
 	
 	model = &g_model[num];
 	
-	if(model->skin_count <= i)Py_RETURN_NONE;
-	if(model->skin[i].skin_vt_count <= j)Py_RETURN_NONE;
+	if(model->skin.size() <= i)Py_RETURN_NONE;
+	if(model->skin[i].data.size() <= j)Py_RETURN_NONE;
 	
 	model->skin[i].data[j] = data;
 	return Py_BuildValue("i", 0);

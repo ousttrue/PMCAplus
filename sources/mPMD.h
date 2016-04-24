@@ -76,9 +76,8 @@ struct SKIN
 {	/*25+16*skin_vt_count byte*/
 	char name[NAME_LEN];
 	char name_eng[NAME_LEN];
-	unsigned int skin_vt_count;
 	unsigned char type;
-	SKIN_DATA *data;
+	std::vector<SKIN_DATA> data;
 };
 
 struct BONE_GROUP 
@@ -131,9 +130,8 @@ struct MODEL
 	BONE *bone;
 
 	std::vector<IK_LIST> IK_list;
+	std::vector<SKIN> skin;
 
-	unsigned short skin_count;
-	SKIN *skin;
 	unsigned char skin_disp_count;
 	unsigned short *skin_index;
 	unsigned char bone_group_count;
@@ -152,5 +150,3 @@ struct MODEL
 	unsigned int joint_count;
 	JOINT *joint;
 };
-
-
