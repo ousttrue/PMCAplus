@@ -193,7 +193,6 @@ cdef extern from "mPMD_edit.h":
     cdef int show_detail(MODEL *model);
 
 
-
 ##############################################################################
 # definition
 ##############################################################################
@@ -380,7 +379,37 @@ def getJoint(index, j_index):
             "spring": j.spring,
             }
 
+def setMat(index, m_index, 
+        diffuse, alpha, 
+        specularity, specular,
+        ambient, toon_index,
+        edge_flag, vt_index_count,
+        name, comment, name_english, comment_english
+        ):
+    if index<0 or index>=g_model.size():
+        return
+    model = &g_model[index];
+
+    cdef MATERIAL mat;
+    mat.vt_index_count = vt_index_count*3;
+    mat.diffuse=diffuse
+    #mat.specular=specular
+    #mat.ambient=ambient
+    #strncpy(mat.tex, str[0], NAME_LEN);
+    #strncpy(mat.sph, str[1], NAME_LEN);
+    #strncpy(mat.tex_path, str[2], PATH_LEN);
+    #strncpy(mat.sph_path, str[3], PATH_LEN);
+    model.mat[m_index] = mat;
+
+def setToon(index, toon):
+    pass
+
+def setToonPath(index, toon):
+    pass
+
+
 cdef LIST g_list
+
 
 def Set_List(bone_count, bone_names, bone_english_names,
         skin_count, skin_names, skin_english_names,
@@ -407,10 +436,10 @@ def Set_Name_Comment(index, name, comment, name_english, comment_english):
     if index<0 or index>=g_model.size():
         return
     model = g_model[index]
-    model.header.name= name
-    model.header.comment= comment
-    model.header.name_eng= name_english
-    model.header.comment_eng= comment_english
+    #model.header.name= name
+    #model.header.comment= comment
+    #model.header.name_eng= name_english
+    #model.header.comment_eng= comment_english
 
 def Init_PMD():
     g_model.resize(16)
@@ -418,26 +447,42 @@ def Init_PMD():
         create_PMD(&g_model[i]);
 
 def Load_PMD(index, path):
+    if index<0 or index>=g_model.size():
+        return
     delete_PMD(&g_model[index]);
     return load_PMD(&g_model[index], path);
 
 def Write_PMD(index, path):
+    if index<0 or index>=g_model.size():
+        return
     return write_PMD(&g_model[index], path);
 
 def Add_PMD(dst, src):
+    if src<0 or src>=g_model.size():
+        return
+    if dst<0 or dst>=g_model.size():
+        return
     cdef MODEL model;
     create_PMD(&model);
     add_PMD(&g_model[dst], &g_model[src]);
     delete_PMD(&model);
 
 def Copy_PMD(src, dst):
+    if src<0 or src>=g_model.size():
+        return
+    if dst<0 or dst>=g_model.size():
+        return
     delete_PMD(&g_model[dst]);
     return copy_PMD(&g_model[dst], &g_model[src]);
 
 def Create_PMD(index):
+    if index<0 or index>=g_model.size():
+        return
     return delete_PMD(&g_model[index]);
 
 def Marge_PMD(index):
+    if index<0 or index>=g_model.size():
+        return
     m=g_model[index]
     marge_bone(&m);
     marge_mat(&m);
@@ -446,6 +491,8 @@ def Marge_PMD(index):
     marge_rb(&m);
 
 def Sort_PMD(index):
+    if index<0 or index>=g_model.size():
+        return
     m=g_model[index]
     rename_tail(&m);
     marge_bone(&m);
@@ -457,19 +504,27 @@ def Sort_PMD(index):
     translate(&m, &g_list, 1);
 
 def Resize_Model(index, scale):
+    if index<0 or index>=g_model.size():
+        return
     return resize_model(&g_model[index], scale);
 
 def Move_Model(index, x, y, z):
+    if index<0 or index>=g_model.size():
+        return
     cdef array.array v=array.array('d', [x, y, z])
     return move_model(&g_model[index], v.data.as_doubles);
 
 def Resize_Bone(index, name, length, thickness):
+    if index<0 or index>=g_model.size():
+        return
     m=g_model[index]
     for i in range(m.bone.size()):
         if m.bone[i].name==name:
             return scale_bone(&m, i, thickness, length, thickness);
 
 def Move_Bone(index, name, x, y, z):
+    if index<0 or index>=g_model.size():
+        return
     cdef array.array v=array.array('d', [x, y, z])
     m=g_model[index]
     for i in range(m.bone.size()):
@@ -477,12 +532,18 @@ def Move_Bone(index, name, x, y, z):
             return move_bone(&m, i, v.data.as_doubles);
 
 def Update_Skin(index):
+    if index<0 or index>=g_model.size():
+        return
     return update_skin(&g_model[index]);
 
 def Adjust_Joints(index):
+    if index<0 or index>=g_model.size():
+        return
     return adjust_joint(&g_model[index]);
 
 def getWHT(index):
+    if index<0 or index>=g_model.size():
+        return
     cdef array.array min=array.array('d', [0, 0, 0])
     cdef array.array max=array.array('d', [0, 0, 0])
     m=g_model[index]

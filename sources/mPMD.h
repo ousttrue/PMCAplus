@@ -18,6 +18,17 @@ struct HEADER
 	char name_eng[NAME_LEN];
 	char comment_eng[COMMENT_LEN];
 	char path[PATH_LEN];
+
+    HEADER()
+        : version(0)
+    {
+        magic[0]=magic[1]=magic[2]=magic[3]=0;
+        memset(name, 0, NAME_LEN);
+        memset(comment, 0, COMMENT_LEN);
+        memset(name_eng, 0, NAME_LEN);
+        memset(comment_eng, 0, COMMENT_LEN);
+        memset(path, 0, PATH_LEN);
+    }
 };
 
 struct VERTEX
@@ -28,6 +39,11 @@ struct VERTEX
 	unsigned short bone_num[2];
 	unsigned char bone_weight;
 	unsigned char edge_flag;
+
+    VERTEX()
+    {
+        bone_num[0]=bone_num[1]=0;
+    }
 };
 
 struct MATERIAL 
@@ -55,6 +71,10 @@ struct BONE
 	unsigned char type;
 	unsigned short IKBone_index;
 	float loc[3];
+
+    BONE()
+        : PBone_index(0), TBone_index(0), IKBone_index(0)
+    {}
 };
 
 struct IK_LIST 
@@ -64,12 +84,20 @@ struct IK_LIST
 	unsigned short iterations;
 	float weight;
 	std::vector<unsigned short> IKCBone_index;
+
+    IK_LIST()
+        : IKCBone_index(0), IKTBone_index(0)
+    {}
 };
 
 struct SKIN_DATA 
 {
 	unsigned int index;
 	float loc[3];
+
+    SKIN_DATA()
+        : index(0)
+    {}
 };
 
 struct SKIN 
@@ -90,6 +118,10 @@ struct BONE_DISP
 {	/*3 byte*/
 	unsigned short index;
 	unsigned char bone_group;
+
+    BONE_DISP()
+        : index(0)
+    {}
 };
 
 struct RIGID_BODY 
@@ -104,6 +136,10 @@ struct RIGID_BODY
 	float rot[3];	//radian
 	float property[5];	//mass damp rotdamp restitution friction
 	unsigned char type;
+
+    RIGID_BODY()
+        : bone(0), group(0), target(0), shape(0), type(0)
+    {}
 };
 
 struct JOINT 
@@ -114,6 +150,11 @@ struct JOINT
 	float rot[3];	//radian
 	float limit[12];	//lower_limit_loc upper_limit_loc lower_limit_rot upper_limit_rot
 	float spring[6];	//loc rot
+
+    JOINT()
+    {
+        rbody[0]=rbody[1]=0;
+    }
 };
 
 
@@ -145,4 +186,9 @@ struct MODEL
 	RIGID_BODY *rbody;
 	unsigned int joint_count;
 	JOINT *joint;
+
+    MODEL()
+        : eng_support(0)
+    {}
 };
+
