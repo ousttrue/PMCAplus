@@ -155,14 +155,12 @@ int load_PMD(MODEL *model, const char file_name[])
 	FREAD(&bone_count, 2,  1, pmd);
 	model->bone.resize(bone_count);
 	for(i=0; i<model->bone.size(); i++){
-		FREAD(model->bone[i].name, 1, 20, pmd);
+		model->bone[i].name.fread<20>(pmd);
 		FREAD(&model->bone[i].PBone_index, 2, 1, pmd);
 		FREAD(&model->bone[i].TBone_index, 2, 1, pmd);
 		FREAD(&model->bone[i].type, 1, 1, pmd);
 		FREAD(&model->bone[i].IKBone_index, 2, 1, pmd);
 		FREAD(model->bone[i].loc, 4, 3, pmd);
-		model->bone[i].name_eng[0] = '\0';
-		model->bone[i].name[21] = '\0';
 	}
 	
 	unsigned short IK_count;
@@ -261,8 +259,7 @@ int load_PMD(MODEL *model, const char file_name[])
 		model->header.comment_eng.fread<256>(pmd);
 		
 		for(i=0; i<model->bone.size(); i++){
-			FREAD(model->bone[i].name_eng, 1,  20, pmd);
-			model->bone[i].name_eng[20] = '\0';
+			model->bone[i].name_eng.fread<20>(pmd);
 		}
 		
 		if(model->skin.size() > 0){
@@ -461,7 +458,7 @@ int write_PMD(MODEL *model, const char file_name[])
 	unsigned short bone_count = model->bone.size();
 	fwrite(&bone_count, 2,  1, pmd);
 	for(i=0; i<model->bone.size(); i++){
-		fwrite(model->bone[i].name, 1, 20, pmd);
+		fwrite(model->bone[i].name.c_str(), 1, 20, pmd);
 		fwrite(&model->bone[i].PBone_index, 2, 1, pmd);
 		fwrite(&model->bone[i].TBone_index, 2, 1, pmd);
 		fwrite(&model->bone[i].type, 1, 1, pmd);
@@ -516,7 +513,7 @@ int write_PMD(MODEL *model, const char file_name[])
 		fwrite(model->header.name_eng.c_str(), 1,  20, pmd);
 		fwrite(model->header.comment_eng.c_str(), 1,  256, pmd);
 		for(i=0; i<model->bone.size(); i++){
-			fwrite(model->bone[i].name_eng, 1,  20, pmd);
+			fwrite(model->bone[i].name_eng.c_str(), 1,  20, pmd);
 		}
 		for(i=1; i<model->skin.size(); i++){
 			fwrite(model->skin[i].name_eng, 1,  20, pmd);

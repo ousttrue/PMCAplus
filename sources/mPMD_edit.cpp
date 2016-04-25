@@ -31,15 +31,15 @@ int translate(MODEL *model, LIST *list, short mode)
 		// bone
 		for(i=0; i<model->bone.size(); i++){
 			for(j=0; j<list->bone.size(); j++){
-				if(list->bone[j].name==model->bone[i].name){
-					strncpy(model->bone[i].name_eng, list->bone[j].english.c_str(), list->bone[j].english.size());
+				if(model->bone[i].name==list->bone[j].name){
+					model->bone[i].name_eng=list->bone[j].english;
 					j = -1;
 					break;
 				}
 			}
 			if(j != -1){
-				if(model->bone[i].name[0] == '\0'){
-					strncpy(model->bone[i].name_eng, model->bone[i].name, NAME_LEN);
+				if(model->bone[i].name.size()==0){
+					model->bone[i].name_eng=model->bone[i].name;
 				}
 			
 			}
@@ -84,14 +84,14 @@ int translate(MODEL *model, LIST *list, short mode)
 
 		for(i=0; i<model->bone.size(); i++){
 			for(j=0; j<list->bone.size(); j++){
-				if(list->bone[j].name==model->bone[i].name){
-					strncpy(model->bone[i].name, list->bone[j].english.c_str(), list->bone[j].english.size());
+				if(model->bone[i].name==list->bone[j].name){
+					model->bone[i].name=list->bone[j].english;
 					j = -1;
 					break;
 				}
 			}
 			if(j != -1 && model->eng_support == 1){
-				strncpy(model->bone[i].name, model->bone[i].name_eng, NAME_LEN);
+				model->bone[i].name=model->bone[i].name_eng;
 			}
 		}
 		for(i=0; i<model->skin.size(); i++){
@@ -111,8 +111,8 @@ int translate(MODEL *model, LIST *list, short mode)
 		// 	モード3 英語名を日本語名に(ボーン、スキンのみ)
 		for(i=0; i<model->bone.size(); i++){
 			for(j=0; j<list->bone.size(); j++){
-				if(list->bone[j].english==model->bone[i].name){
-					strncpy(model->bone[i].name, list->bone[j].name.c_str(), list->bone[j].name.size());
+				if(model->bone[i].name==list->bone[j].english){
+					model->bone[i].name=list->bone[j].name;
 					j = -1;
 					break;
 				}
@@ -144,7 +144,7 @@ int sort_bone(MODEL *model, LIST *list)
 	for(i=0; i<model->bone.size(); i++){
 		index[i] = -1;	//リストに無いボーンには-1
 		for(j=0; j<list->bone.size(); j++){
-			if(list->bone[j].name==model->bone[i].name){
+			if(model->bone[i].name==list->bone[j].name){
 				index[i] = j;	//indexにリスト中の番号を代入
 				break;
 			}
@@ -176,9 +176,10 @@ int sort_bone(MODEL *model, LIST *list)
 	}
 	tmp++;
 	for(i=0; i<model->bone.size(); i++){
-		if(strcmp(model->bone[i].name, "-0") == 0){
+		if(model->bone[i].name=="-0"){
 			index[i] = model->bone.size()-1;
-		}else if(index[i] == -1){
+		}
+		else if(index[i] == -1){
 			index[i] = tmp;
 			tmp++;
 		}
@@ -191,7 +192,7 @@ int sort_bone(MODEL *model, LIST *list)
 		for(i=0;  i<model->bone.size(); i++){
 			if(model->bone[i].PBone_index != 65535 &&
 			   index[model->bone[i].PBone_index] > index[i] &&
-			   strcmp(model->bone[i].name, "-0")!=0){
+			   model->bone[i].name=="-0"){
 				
 				tmp = index[model->bone[i].PBone_index];
 				tmp_PBone_index = index[i];
@@ -209,8 +210,8 @@ int sort_bone(MODEL *model, LIST *list)
 		#ifdef DEBUG
 			printf("index[%d]=%d\n", i, index[i]);
 		#endif
-		strcpy(bone[index[i]].name, model->bone[i].name);
-		strcpy(bone[index[i]].name_eng, model->bone[i].name_eng);
+		bone[index[i]].name=model->bone[i].name;
+		bone[index[i]].name_eng=model->bone[i].name_eng;
 		if(model->bone[i].PBone_index == 65535){
 			bone[index[i]].PBone_index = 65535;
 		}else{
@@ -238,7 +239,7 @@ int sort_bone(MODEL *model, LIST *list)
 		
 	model->bone = bone;
 	
-	if(strcmp(model->bone[model->bone.size()-1].name, "-0") == 0){
+	if(model->bone[model->bone.size()-1].name=="-0"){
 		model->bone.resize(model->bone.size()-1);
 	}
 	return 0;
@@ -514,8 +515,8 @@ int rename_tail(MODEL *model){
 				}
 			}
 			if(flag == 1){
-				strncpy(model->bone[i].name, "-0", 4);
-				strncpy(model->bone[i].name_eng, "-0", 4);
+				model->bone[i].name="-0";
+				model->bone[i].name_eng="-0";
 			}
 		}
 	}
@@ -525,8 +526,8 @@ int rename_tail(MODEL *model){
 		tmp = model->bone[i].TBone_index;
 		if(tmp < model->bone.size()){
 			if(model->bone[tmp].type == 6 || model->bone[tmp].type == 7){
-				sprintf(model->bone[tmp].name, "+%s", model->bone[i].name);
-				sprintf(model->bone[tmp].name_eng, "+%s", model->bone[i].name_eng);
+				model->bone[tmp].name=std::string("+")+model->bone[i].name.c_str();
+				model->bone[tmp].name_eng=std::string("+")+model->bone[i].name_eng.c_str();
 				//printf("%s\n", model->bone[tmp].name);
 			}
 		}else{
@@ -868,7 +869,7 @@ int index_bone(MODEL *model, const char bone[])
 	int index = -1;
 	
 	for(i=0; i<model->bone.size(); i++){
-		if(strcmp(model->bone[i].name, bone)==0){
+		if(model->bone[i].name==bone){
 			index = i;
 			break;
 		}
@@ -935,7 +936,7 @@ int marge_bone(MODEL *model)
 		if(marge[i] == 0){
 			index[i] = i - tmp;
 			for(size_t j=i+1; j<model->bone.size(); j++){
-				if(strcmp(model->bone[i].name, model->bone[j].name)==0){
+				if(model->bone[i].name==model->bone[j].name){
 					if(model->bone[i].type == 7){
 						model->bone[i].TBone_index = model->bone[j].TBone_index;
 						model->bone[i].type = model->bone[j].type;
@@ -1331,7 +1332,7 @@ int adjust_joint(MODEL *model)
 	
 	for(i=0; i<model->joint_count; i++){
 		for(j=0; j<model->bone.size(); j++){
-			if(strcmp(model->joint[i].name, model->bone[j].name) == 0){
+			if(model->bone[j].name==model->joint[i].name){
 				memcpy(model->joint[i].loc, model->bone[j].loc, sizeof(float)*3);
 			}
 		}

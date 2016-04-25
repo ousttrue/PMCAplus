@@ -50,9 +50,9 @@ struct MATERIAL
 };
 
 struct BONE 
-{	/*39byte*/
-	char name[NAME_LEN];
-	char name_eng[NAME_LEN];
+{
+	fixed_string<NAME_LEN> name;
+	fixed_string<NAME_LEN> name_eng;
 	unsigned short PBone_index;
 	unsigned short TBone_index;
 	unsigned char type;

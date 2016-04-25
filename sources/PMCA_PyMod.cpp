@@ -587,8 +587,8 @@ static PyObject* setBone(PyObject *self, PyObject *args)
 	model = &g_model[num];
 	if(model->bone.size() <= i)Py_RETURN_NONE;
 	
-	strncpy(bone.name,     str[0], NAME_LEN);
-	strncpy(bone.name_eng, str[1], NAME_LEN);
+	bone.name=str[0];
+	bone.name_eng=str[1];
 	
 	PyList_to_Array_Float(bone.loc, PyTmp, 3);
 	model->bone[i] = bone;
@@ -1034,7 +1034,7 @@ static PyObject* Sort_PMD(PyObject *self, PyObject *args)
 	ret += sort_disp(&g_model[num], &list);
 		
 	//-0ƒ{[ƒ“íœ
-	if(strcmp(g_model[num].bone[g_model[num].bone.size()-1].name, "-0") == 0){
+	if(g_model[num].bone[g_model[num].bone.size()-1].name=="-0"){
 		g_model[num].bone.resize(g_model[num].bone.size()-1);
 	}
 	puts("‰pŒê‘Î‰‰»");
@@ -1071,7 +1071,7 @@ static PyObject* Resize_Bone(PyObject *self, PyObject *args)
 	double len,thi;
 	if(!PyArg_ParseTuple(args, "iydd", &num, &str, &len, &thi))return NULL;
 	for(index=0; index<g_model[num].bone.size(); index++){
-		if(strcmp(g_model[num].bone[index].name,str)==0){
+		if(g_model[num].bone[index].name==str){
 			break;
 		}
 	}
@@ -1090,7 +1090,7 @@ static PyObject* Move_Bone(PyObject *self, PyObject *args)
 	double pos[3];
 	if(!PyArg_ParseTuple(args, "iyddd", &num, &str, &pos[0], &pos[1], &pos[2]))return NULL;
 	for(index=0; index<g_model[num].bone.size(); index++){
-		if(strcmp(g_model[num].bone[index].name,str)==0){
+		if(g_model[num].bone[index].name==str){
 			break;
 		}
 	}
