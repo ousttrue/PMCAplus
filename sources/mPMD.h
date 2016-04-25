@@ -160,11 +160,8 @@ struct MODEL
 	std::vector<IK_LIST> IK_list;
 	std::vector<SKIN> skin;
 	std::vector<unsigned short> skin_index;
+	std::vector<BONE_GROUP> bone_group;
 
-	unsigned char bone_group_count;
-	//char (*bone_group)[50];
-	//char (*bone_group_eng)[50];
-	BONE_GROUP *bone_group;
 	unsigned int bone_disp_count;
 	BONE_DISP *bone_disp;
 	//extention

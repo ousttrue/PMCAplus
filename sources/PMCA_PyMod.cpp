@@ -122,7 +122,7 @@ static PyObject* getInfo(PyObject *self, PyObject *args)
 							
 							"IK_count", model->IK_list.size(),
 							"skin_count", model->skin.size(),
-							"bone_group_count", model->bone_group_count,
+							"bone_group_count", model->bone_group.size(),
 							"bone_disp_count", model->bone_disp_count,
 							
 							"eng_support", model->eng_support,
@@ -405,6 +405,8 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 	int IK_count;
 	int skin_count;
 	int skin_disp_count;
+	int bone_group_count;
+
 	if(!PyArg_ParseTuple(args, "i"
 							"yyyy"
 							"iiii"
@@ -424,7 +426,7 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 							
 							&IK_count,
 							&skin_count,
-							&model.bone_group_count,
+							&bone_group_count,
 							&model.bone_disp_count,
 							
 							&model.eng_support,
@@ -462,9 +464,7 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 	PyList_to_Array_UShort(&p->skin_index[0], PyTmp, (int)p->skin_index.size());
 	
 	//ボーン表示グループ
-	size = p->bone_group_count * sizeof(BONE_GROUP);
-	p->bone_group = (BONE_GROUP*)MALLOC(size);
-	memset(p->bone_group, 0, size);
+	p->bone_group.resize(bone_group_count);
 	
 	//表示ボーン
 	size = p->bone_disp_count * sizeof(BONE_DISP);

@@ -60,7 +60,7 @@ int translate(MODEL *model, LIST *list, short mode)
 		}
 
 		// disp
-		for(i=0; i<model->bone_group_count; i++){		
+		for(i=0; i<model->bone_group.size(); i++){		
 			j = 0;
 			for(j=0; j<list->disp.size(); j++){
 				if(model->bone_group[i].name==list->disp[j].name){
@@ -402,14 +402,14 @@ int sort_disp(MODEL *model, LIST *list)
 	
 	BONE_DISP *bone_disp;
 	
-	index = (int*)MALLOC(model->bone_group_count * sizeof(int));
-	bone_group = (BONE_GROUP*)MALLOC(model->bone_group_count * sizeof(BONE_GROUP));
+	index = (int*)MALLOC(model->bone_group.size() * sizeof(int));
+	bone_group = (BONE_GROUP*)MALLOC(model->bone_group.size() * sizeof(BONE_GROUP));
 	bone_disp = (BONE_DISP*)MALLOC(model->bone_disp_count * sizeof(BONE_DISP));
 	#ifdef MEM_DBG
 		printf("malloc %p %p %p\n", index, bone_group, bone_disp);
 	#endif
 	
-	for(i=0; i<model->bone_group_count; i++){
+	for(i=0; i<model->bone_group.size(); i++){
 		index[i] = -1;	//リストに無い枠には-1
 		tmpg = model->bone_group[i];
 		for(j=0; j<list->disp.size(); j++){
@@ -425,7 +425,7 @@ int sort_disp(MODEL *model, LIST *list)
 	
 	tmp = 0;
 	for(i=0; i<list->disp.size(); i++){
-		for(j=0; j<model->bone_group_count; j++){
+		for(j=0; j<model->bone_group.size(); j++){
 			if(index[j] == i){	//indexにiが存在したら
 				//printf("index[%d]に%dが存在します\n", j, i);
 				index[j] = index[j] - tmp;
@@ -438,27 +438,27 @@ int sort_disp(MODEL *model, LIST *list)
 		}
 	}
 	tmp = -1;
-	for(i=0; i<model->bone_group_count; i++){
+	for(i=0; i<model->bone_group.size(); i++){
 		if(tmp < index[i]){
 			tmp = index[i];	//indexの最大値を見つける
 		}
 	}
 	tmp++;
-	for(i=0; i<model->bone_group_count; i++){
+	for(i=0; i<model->bone_group.size(); i++){
 		if(index[i] == -1){
 			index[i] = tmp;
 			tmp++;
 		}
 	}
 	
-	for(i=0; i<model->bone_group_count; i++){	//表示枠並び変え
+	for(i=0; i<model->bone_group.size(); i++){	//表示枠並び変え
 		#ifdef DEBUG
 			printf("index[%d]=%d\n", i, index[i]);
 		#endif
 		bone_group[index[i]] = model->bone_group[i];
 	}
 	
-	for(i=0; i<model->bone_group_count; i++){	//表示枠コピー
+	for(i=0; i<model->bone_group.size(); i++){	//表示枠コピー
 		model->bone_group[i] = bone_group[i];
 	}
 	
@@ -467,7 +467,7 @@ int sort_disp(MODEL *model, LIST *list)
 	}
 	
 	tmp = 0;
-	for(i=1; i<=model->bone_group_count; i++){
+	for(i=1; i<=model->bone_group.size(); i++){
 		for(j=0; j<model->bone_disp_count; j++){
 			if(model->bone_disp[j].bone_group == i){
 			 	bone_disp[tmp] = model->bone_disp[j];
@@ -1115,22 +1115,22 @@ int marge_bone_disp(MODEL *model)
 	
 	//同名枠をマージ
 	#ifdef DEBUG
-		printf("%d\n", model->bone_group_count);
+		printf("%d\n", model->bone_group.size());
 	#endif
 	
-	index = (int*)MALLOC(model->bone_group_count * sizeof(int));
-	marge = (char*)MALLOC(model->bone_group_count * sizeof(char));
-	memset(marge, 0, model->bone_group_count * sizeof(char));
+	index = (int*)MALLOC(model->bone_group.size() * sizeof(int));
+	marge = (char*)MALLOC(model->bone_group.size() * sizeof(char));
+	memset(marge, 0, model->bone_group.size() * sizeof(char));
 	bone_disp = (BONE_DISP*)MALLOC(model->bone_disp_count * sizeof(BONE_DISP));
 	#ifdef MEM_DBG
 		printf("malloc %p %p\n", index, marge);
 	#endif
 	
 	tmp = 0;
-	for(i=0; i<model->bone_group_count; i++){
+	for(i=0; i<model->bone_group.size(); i++){
 		if(marge[i] == 0){
 			index[i] = i - tmp;
-			for(j=i+1; j<model->bone_group_count; j++){
+			for(j=i+1; j<model->bone_group.size(); j++){
 				if(model->bone_group[i].name==model->bone_group[j].name){
 					index[j] = i - tmp;
 					marge[j] = 1;
@@ -1145,7 +1145,7 @@ int marge_bone_disp(MODEL *model)
 	}
 	
 	
-	for(i=0; i<model->bone_group_count; i++){
+	for(i=0; i<model->bone_group.size(); i++){
 		if(marge[i] == 0 && index[i] != i){
 			model->bone_group[index[i]] = model->bone_group[i];
 		}
@@ -1158,7 +1158,7 @@ int marge_bone_disp(MODEL *model)
 	#endif
 	
 	k=0;
-	for(i=0; i<model->bone_group_count; i++){
+	for(i=0; i<model->bone_group.size(); i++){
 		for(j=0; j<model->bone_disp_count; j++){
 			if(index[model->bone_disp[j].bone_group-1] == i){
 				bone_disp[k] = model->bone_disp[j];
@@ -1171,12 +1171,10 @@ int marge_bone_disp(MODEL *model)
 				
 				k++;
 			}
-		}
-		
+		}	
 	}
 	
-	
-	model->bone_group_count = model->bone_group_count - tmp;
+	model->bone_group.resize(model->bone_group.size() - tmp);
 	model->bone_disp_count = k;
 	
 	#ifdef MEM_DBG
@@ -1344,7 +1342,7 @@ int show_detail(MODEL *model)
 	printf("IKデータ数:%d\n", model->IK_list.size());
 	printf("表情数:%d\n", model->skin.size());
 	printf("表情枠:%d\n", model->skin_index.size());
-	printf("ボーン枠:%d\n", model->bone_group_count);
+	printf("ボーン枠:%d\n", model->bone_group.size());
 	printf("表示ボーン数:%d\n", model->bone_disp_count);
 	printf("英名対応:%d\n", model->eng_support);
 	printf("剛体数:%d\n", model->rbody_count);
