@@ -18,7 +18,7 @@ inline size_t dbg_fread(void* p, size_t s, size_t n, FILE* fp) {
 	return r;
 }
 
-inline void* dbg_fgets(char* p, size_t s, FILE* fp) {
+inline void* dbg_fgets(char* p, int s, FILE* fp) {
 	void* r;
 	r = fgets(p, s, fp);
 	if (r == NULL) {

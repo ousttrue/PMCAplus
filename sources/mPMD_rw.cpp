@@ -184,7 +184,7 @@ int load_PMD(MODEL *model, const char file_name[])
 	FREAD(&skin_count, 2,  1, pmd);
 	model->skin.resize(skin_count);
 	for(i=0; i<model->skin.size(); i++){
-		FREAD(model->skin[i].name, 1, 20, pmd);
+		model->skin[i].name.fread<20>(pmd);
 		unsigned int skin_vt_count;
 		FREAD(&skin_vt_count, 4, 1, pmd);
 		FREAD(&model->skin[i].type, 1, 1, pmd);
@@ -196,8 +196,6 @@ int load_PMD(MODEL *model, const char file_name[])
 			}
 			FREAD(&model->skin[i].data[j].loc, 4, 3, pmd);
 		}
-		model->skin[i].name_eng[0] = '\0';
-		model->skin[i].name[20] = '\0';
 	}
 	
 	unsigned char skin_disp_count;
@@ -254,7 +252,6 @@ int load_PMD(MODEL *model, const char file_name[])
 	#endif
 	
 	if(model->eng_support == 1){
-		printf("‰p–¼‘Î‰žPMD\n");
 		model->header.name_eng.fread<20>(pmd);
 		model->header.comment_eng.fread<256>(pmd);
 		
@@ -263,27 +260,20 @@ int load_PMD(MODEL *model, const char file_name[])
 		}
 		
 		if(model->skin.size() > 0){
-			strcpy(model->skin[0].name_eng, "base");
+			model->skin[0].name_eng="base";
 		}
 		for(i=1; i<model->skin.size(); i++){
-			FREAD(model->skin[i].name_eng, 1,  20, pmd);
-			model->skin[i].name_eng[20] = '\0';
+			model->skin[i].name_eng.fread<20>(pmd);
 		}
 		for(i=0; i<model->bone_group_count; i++){
 			FREAD(model->bone_group[i].name_eng, 1,  50, pmd);
 			model->bone_group[i].name_eng[50] = '\0';
 		}
-	}else{
-		printf("‰p–¼”ñ‘Î‰žPMD\n");
-		
-		for(i=0; i<model->skin.size(); i++){
-			*model->skin[i].name_eng = '\0';
-		}
-		
+	}
+	else{
 		for(i=0; i<model->bone_group_count; i++){
 			*model->bone_group[i].name_eng = '\0';
-		}
-		
+		}		
 	}
 	
 	for(i=0; i<10; i++){
@@ -481,7 +471,7 @@ int write_PMD(MODEL *model, const char file_name[])
 	unsigned short skin_count = model->skin.size();
 	fwrite(&skin_count, 2,  1, pmd);	
 	for(i=0; i<model->skin.size(); i++){
-		fwrite(model->skin[i].name, 1, 20, pmd);
+		fwrite(model->skin[i].name.c_str(), 1, 20, pmd);
 		unsigned int skin_vt_count=model->skin[i].data.size();
 		fwrite(&skin_vt_count, 4, 1, pmd);
 		fwrite(&model->skin[i].type, 1, 1, pmd);
@@ -516,7 +506,7 @@ int write_PMD(MODEL *model, const char file_name[])
 			fwrite(model->bone[i].name_eng.c_str(), 1,  20, pmd);
 		}
 		for(i=1; i<model->skin.size(); i++){
-			fwrite(model->skin[i].name_eng, 1,  20, pmd);
+			fwrite(model->skin[i].name_eng.c_str(), 1,  20, pmd);
 		}
 		for(i=0; i<model->bone_group_count; i++){
 			fwrite(model->bone_group[i].name_eng, 1,  50, pmd);

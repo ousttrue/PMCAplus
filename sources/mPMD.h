@@ -65,7 +65,7 @@ struct BONE
 };
 
 struct IK_LIST 
-{	/*11+2*IK_chain_len byte*/
+{
 	unsigned short IKBone_index;
 	unsigned short IKTBone_index;
 	unsigned short iterations;
@@ -88,21 +88,25 @@ struct SKIN_DATA
 };
 
 struct SKIN 
-{	/*25+16*skin_vt_count byte*/
-	char name[NAME_LEN];
-	char name_eng[NAME_LEN];
+{
+	fixed_string<NAME_LEN> name;
+	fixed_string<NAME_LEN> name_eng;
 	unsigned char type;
 	std::vector<SKIN_DATA> data;
+
+	SKIN()
+		: type(0)
+	{}
 };
 
 struct BONE_GROUP 
-{	/*3 byte*/
+{
 	char name[NAME_LEN];
 	char name_eng[NAME_LEN];
 };
 
 struct BONE_DISP 
-{	/*3 byte*/
+{
 	unsigned short index;
 	unsigned char bone_group;
 

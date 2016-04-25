@@ -55,7 +55,7 @@ int PyList_to_Array_Float(float* output, PyObject* List, int size)
 	
 	for(i=0; i<size; i++){
 		tmp = PyList_GetItem(List, i);
-		output[i] = PyFloat_AsDouble(tmp);
+		output[i] = static_cast<float>(PyFloat_AsDouble(tmp));
 	}
 	return 0;
 }
@@ -130,7 +130,7 @@ static PyObject* getInfo(PyObject *self, PyObject *args)
 							"joint_count", model->joint_count,
 							"skin_index", (model->skin_index.empty() 
 								? PyList_New(0)
-								: Array_to_PyList_UShort(&model->skin_index[0], model->skin_index.size()))
+								: Array_to_PyList_UShort(&model->skin_index[0], (int)model->skin_index.size()))
 								);
 }
 
@@ -217,7 +217,7 @@ static PyObject* getIK(PyObject *self, PyObject *args)
 	if(!PyArg_ParseTuple(args, "ii", &num, &i))return NULL;
 	model = &g_model[num];
 	if(model->IK_list.size() <= i)Py_RETURN_NONE;
-	printf("IKchainlen :%d\n", model->IK_list[i].IKCBone_index.size());
+	printf("IKchainlen :%zd\n", model->IK_list[i].IKCBone_index.size());
 	return Py_BuildValue("{s:i,s:i,s:i,s:i,s:f,s:O}",
 							"index", (int)model->IK_list[i].IKBone_index,
 							"tail", (int)model->IK_list[i].IKTBone_index,
@@ -279,7 +279,7 @@ static PyObject* getBone_disp(PyObject *self, PyObject *args)
 
 static PyObject* getToon(PyObject *self, PyObject *args)
 {
-	int num, i;
+	int num;
 	MODEL *model;
 	if(!PyArg_ParseTuple(args, "i", &num))return NULL;
 	model = &g_model[num];
@@ -299,7 +299,7 @@ static PyObject* getToon(PyObject *self, PyObject *args)
 
 static PyObject* getToonPath(PyObject *self, PyObject *args)
 {
-	int num, i;
+	int num;
 	MODEL *model;
 	if(!PyArg_ParseTuple(args, "i", &num))return NULL;
 	model = &g_model[num];
@@ -391,7 +391,7 @@ static PyObject* getJoint(PyObject *self, PyObject *args)
 
 static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 {
-	int num, i, size;
+	int num, size;
 	MODEL model, *p;
 	PyObject *PyTmp;
 	char *str[4];
@@ -459,7 +459,7 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 	
 	//表情表示
 	p->skin_index.resize(skin_disp_count);
-	PyList_to_Array_UShort(&p->skin_index[0], PyTmp, p->skin_index.size());
+	PyList_to_Array_UShort(&p->skin_index[0], PyTmp, (int)p->skin_index.size());
 	
 	//ボーン表示グループ
 	size = p->bone_group_count * sizeof(BONE_GROUP);
@@ -617,7 +617,7 @@ static PyObject* setIK(PyObject *self, PyObject *args)
 	IK_list.IKCBone_index.resize(IK_chain_len);
 	IK_list.IKCBone_index = model->IK_list[i].IKCBone_index;
 	
-	PyList_to_Array_UShort(&IK_list.IKCBone_index[0], PyTmp, IK_list.IKCBone_index.size());
+	PyList_to_Array_UShort(&IK_list.IKCBone_index[0], PyTmp, (int)IK_list.IKCBone_index.size());
 	
 	model->IK_list[i] = IK_list;
 	return Py_BuildValue("i", 0);
@@ -625,7 +625,7 @@ static PyObject* setIK(PyObject *self, PyObject *args)
 
 static PyObject* setSkin(PyObject *self, PyObject *args)
 {
-	int num, i, size;
+	int num, i;
 	MODEL *model;
 	SKIN skin;
 	char *str[2];
@@ -640,8 +640,8 @@ static PyObject* setSkin(PyObject *self, PyObject *args)
 	model = &g_model[num];
 	if(model->skin.size() <= i)Py_RETURN_NONE;
 	
-	strncpy(skin.name,     str[0], NAME_LEN);
-	strncpy(skin.name_eng, str[1], NAME_LEN);
+	skin.name=str[0];
+	skin.name_eng=str[1];
 	
 	//メモリ確保
 	skin.data.resize(skin_vt_count);
@@ -655,7 +655,6 @@ static PyObject* setSkindata(PyObject *self, PyObject *args)
 {
 	int num, i, j;
 	MODEL *model;
-	PyObject *PyTmp;
 	SKIN_DATA data;
 	if(!PyArg_ParseTuple(args, "iiii(fff)",
 							&num, &i, &j,
@@ -920,7 +919,6 @@ static PyObject* Set_Name_Comment(PyObject *self, PyObject *args)
 	const char *name_eng;
 	const char *comment_eng;
 	int num;
-	int ret;
 	if(!PyArg_ParseTuple(args, "iyyyy", &num, &name, &comment, &name_eng, &comment_eng))return NULL;
 	g_model[num].header.name=name;
 	g_model[num].header.comment=comment;
@@ -1123,7 +1121,6 @@ static PyObject* Adjust_Joints(PyObject *self, PyObject *args)
 /*************************************************************************************************/
 static PyObject* getWHT(PyObject *self, PyObject *args)
 {
-	const char *str;
 	int num, i, j;
 	double wht[3];
 	double min[3] = {0.0,0.0,0.0};

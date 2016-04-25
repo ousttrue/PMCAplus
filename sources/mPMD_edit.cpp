@@ -48,14 +48,14 @@ int translate(MODEL *model, LIST *list, short mode)
 		// skin
 		for(i=1; i<model->skin.size(); i++){
 			for(j=1; j<list->skin.size(); j++){
-				if(list->skin[j].name==model->skin[i].name){
-					strncpy(model->skin[i].name_eng, list->skin[j].english.c_str(), list->skin[j].english.size());
+				if(model->skin[i].name==list->skin[j].name){
+					model->skin[i].name_eng=list->skin[j].english;
 					j = -1;
 					break;
 				}
 			}
 			if(j != -1){
-				strncpy(model->skin[i].name_eng, model->skin[i].name, NAME_LEN);
+				model->skin[i].name_eng=model->skin[i].name;
 			}
 		}
 
@@ -96,14 +96,14 @@ int translate(MODEL *model, LIST *list, short mode)
 		}
 		for(i=0; i<model->skin.size(); i++){
 			for(j=0; j<list->skin.size(); j++){
-				if(list->skin[j].name==model->skin[i].name){
-					strncpy(model->skin[i].name, list->skin[j].english.c_str(), list->skin[j].english.size());
+				if(model->skin[i].name==list->skin[j].name){
+					model->skin[i].name=list->skin[j].english;
 					j = -1;
 					break;
 				}
 			}
 			if(j != -1 && model->eng_support == 1){
-				strncpy(model->skin[i].name, model->skin[i].name_eng, NAME_LEN);
+				model->skin[i].name=model->skin[i].name_eng;
 			}
 		}
 	}
@@ -120,8 +120,8 @@ int translate(MODEL *model, LIST *list, short mode)
 		}
 		for(i=0; i<model->skin.size(); i++){
 			for(j=0; j<list->skin.size(); j++){
-				if(list->skin[j].english==model->skin[i].name){
-					strncpy(model->skin[i].name, list->skin[j].name.c_str(), list->skin[j].name.size());
+				if(model->skin[i].name==list->skin[j].english){
+					model->skin[i].name=list->skin[j].name.c_str();
 					j = -1;
 					break;
 				}
@@ -346,7 +346,7 @@ int sort_skin(MODEL *model, LIST *list)
 	for(size_t i=0; i<model->skin.size(); i++){
 		index[i] = -1;	//リストに無い表情には-1
 		for(size_t j=0; j<list->skin.size(); j++){
-			if(list->skin[j].name==model->skin[i].name){
+			if(model->skin[i].name==list->skin[j].name){
 				index[i] = j;	//indexにリスト中の番号を代入
 				break;
 			}
