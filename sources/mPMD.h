@@ -101,8 +101,8 @@ struct SKIN
 
 struct BONE_GROUP 
 {
-	char name[NAME_LEN];
-	char name_eng[NAME_LEN];
+	fixed_string<NAME_LEN> name;
+	fixed_string<NAME_LEN> name_eng;
 };
 
 struct BONE_DISP 
@@ -116,8 +116,8 @@ struct BONE_DISP
 };
 
 struct RIGID_BODY 
-{	//83byte
-	char name[NAME_LEN];
+{
+	fixed_string<NAME_LEN> name;
 	unsigned short bone;
 	unsigned char group;
 	unsigned short target;
@@ -134,8 +134,8 @@ struct RIGID_BODY
 };
 
 struct JOINT 
-{	//124byte
-	char name[NAME_LEN];
+{
+	fixed_string<NAME_LEN> name;
 	unsigned int rbody[2];
 	float loc[3];
 	float rot[3];	//radian
@@ -181,4 +181,3 @@ struct MODEL
         : eng_support(0)
     {}
 };
-

@@ -684,8 +684,8 @@ static PyObject* setBone_group(PyObject *self, PyObject *args)
 							&str[1]))return NULL;
 	model = &g_model[num];
 	
-	strncpy(bone_group.name,     str[0], NAME_LEN);
-	strncpy(bone_group.name_eng, str[1], NAME_LEN);
+	bone_group.name = str[0];
+	bone_group.name_eng = str[1];
 	
 	model->bone_group[i] = bone_group;
 	
@@ -795,7 +795,7 @@ static PyObject* setRb(PyObject *self, PyObject *args)
 							&rbody.type))return NULL;
 	model = &g_model[num];
 	
-	strncpy(rbody.name, str, NAME_LEN);
+	rbody.name=str;
 	
 	model->rbody[i] = rbody;
 	
@@ -840,7 +840,7 @@ static PyObject* setJoint(PyObject *self, PyObject *args)
 							&joint.spring[4],
 							&joint.spring[5]))return NULL;
 	model = &g_model[num];
-	strncpy(joint.name, str, NAME_LEN);
+	joint.name=str;
 	model->joint[i] = joint;
 	return Py_BuildValue("i", 0);
 }

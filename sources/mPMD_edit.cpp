@@ -60,21 +60,17 @@ int translate(MODEL *model, LIST *list, short mode)
 		}
 
 		// disp
-		for(i=0; i<model->bone_group_count; i++){
-			
-			strncpy(str, model->bone_group[i].name, NAME_LEN);
-			p = strchr( str, '\n' );
-			if(p != NULL)*p = '\0';
+		for(i=0; i<model->bone_group_count; i++){		
 			j = 0;
 			for(j=0; j<list->disp.size(); j++){
-				if(list->disp[j].name==str){
-					strncpy(model->bone_group[i].name_eng, list->disp[j].english.c_str(), list->disp[j].english.size());
+				if(model->bone_group[i].name==list->disp[j].name){
+					model->bone_group[i].name_eng=list->disp[j].english;
 					j = -1;
 					break;
 				}
 			}
 			if(j != -1){
-				strncpy(model->bone_group[i].name_eng, str, NAME_LEN);
+				model->bone_group[i].name_eng=model->bone_group[i].name;
 			}
 		}
 		
@@ -416,13 +412,8 @@ int sort_disp(MODEL *model, LIST *list)
 	for(i=0; i<model->bone_group_count; i++){
 		index[i] = -1;	//リストに無い枠には-1
 		tmpg = model->bone_group[i];
-		p = strchr( tmpg.name, '\n' );
-		if(p != NULL)*p = '\0';
 		for(j=0; j<list->disp.size(); j++){
-			#ifdef DEBUG
-				printf("%d %s : %s\n", j, list->disp[j], tmpg.name);
-			#endif
-			if(list->disp[j].name==tmpg.name){
+			if(tmpg.name==list->disp[j].name){
 				index[i] = j;	//indexにリスト中の番号を代入
 				break;
 			}
@@ -1140,7 +1131,7 @@ int marge_bone_disp(MODEL *model)
 		if(marge[i] == 0){
 			index[i] = i - tmp;
 			for(j=i+1; j<model->bone_group_count; j++){
-				if(strcmp(model->bone_group[i].name, model->bone_group[j].name) == 0){
+				if(model->bone_group[i].name==model->bone_group[j].name){
 					index[j] = i - tmp;
 					marge[j] = 1;
 				}
@@ -1269,7 +1260,7 @@ int marge_rb(MODEL *model)
 		if(marge[i] == 0){
 			index[i] = i - tmp;
 			for(j=i+1; j<model->rbody_count; j++){
-				if(strcmp(model->rbody[i].name, model->rbody[j].name) == 0){
+				if(model->rbody[i].name==model->rbody[j].name){
 					index[j] = i - tmp;
 					marge[j] = 1;
 				}

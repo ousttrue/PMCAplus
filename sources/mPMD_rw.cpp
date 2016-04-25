@@ -212,8 +212,7 @@ int load_PMD(MODEL *model, const char file_name[])
 	model->bone_group = (BONE_GROUP*)MALLOC(sizeof(BONE_GROUP)*(size_t)model->bone_group_count);
 	if(model->bone_group == NULL)return -1;
 	for(i=0; i<model->bone_group_count; i++){
-		FREAD(&model->bone_group[i].name, 1, 50, pmd);
-		model->bone_group[i].name_eng[0] = '\0';
+		model->bone_group[i].name.fread<50>(pmd);
 	}
 	
 	FREAD(&model->bone_disp_count, 4,  1, pmd);
@@ -266,14 +265,8 @@ int load_PMD(MODEL *model, const char file_name[])
 			model->skin[i].name_eng.fread<20>(pmd);
 		}
 		for(i=0; i<model->bone_group_count; i++){
-			FREAD(model->bone_group[i].name_eng, 1,  50, pmd);
-			model->bone_group[i].name_eng[50] = '\0';
+			model->bone_group[i].name_eng.fread<50>(pmd);
 		}
-	}
-	else{
-		for(i=0; i<model->bone_group_count; i++){
-			*model->bone_group[i].name_eng = '\0';
-		}		
 	}
 	
 	for(i=0; i<10; i++){
@@ -305,7 +298,7 @@ int load_PMD(MODEL *model, const char file_name[])
 		return 1;
 	}
 	for(i=0; i<model->rbody_count; i++){
-		FREAD(model->rbody[i].name, 1,  20, pmd);
+		model->rbody[i].name.fread<20>(pmd);
 		FREAD(&model->rbody[i].bone, 2,  1, pmd);
 		FREAD(&model->rbody[i].group, 1,  1, pmd);
 		FREAD(&model->rbody[i].target, 2,  1, pmd);
@@ -315,7 +308,6 @@ int load_PMD(MODEL *model, const char file_name[])
 		FREAD(model->rbody[i].rot, 4,  3, pmd);
 		FREAD(model->rbody[i].property, 4,  5, pmd);
 		FREAD(&model->rbody[i].type, 1,  1, pmd);
-		model->rbody[i].name[21] = '\0';
 	}
 	
 	FREAD(&model->joint_count, 4,  1, pmd);
@@ -328,13 +320,12 @@ int load_PMD(MODEL *model, const char file_name[])
 		return 1;
 	}
 	for(i=0; i<model->joint_count; i++){
-		FREAD(model->joint[i].name, 1,  20, pmd);
+		model->joint[i].name.fread<20>(pmd);
 		FREAD(model->joint[i].rbody, 4,  2, pmd);
 		FREAD(model->joint[i].loc, 4,  3, pmd);
 		FREAD(model->joint[i].rot, 4,  3, pmd);
 		FREAD(model->joint[i].limit, 4,  12, pmd);
 		FREAD(model->joint[i].spring, 4,  6, pmd);
-		model->joint[i].name[20] = '\0';
 	}
 	
 	fclose(pmd);
@@ -487,7 +478,7 @@ int write_PMD(MODEL *model, const char file_name[])
 	
 	fwrite(&model->bone_group_count, 1,  1, pmd);
 	for(i=0; i<model->bone_group_count; i++){
-		fwrite(model->bone_group[i].name, 1, 50, pmd);
+		fwrite(model->bone_group[i].name.c_str(), 1, 50, pmd);
 	}
 	
 	fwrite(&model->bone_disp_count, 4,  1, pmd);
@@ -509,7 +500,7 @@ int write_PMD(MODEL *model, const char file_name[])
 			fwrite(model->skin[i].name_eng.c_str(), 1,  20, pmd);
 		}
 		for(i=0; i<model->bone_group_count; i++){
-			fwrite(model->bone_group[i].name_eng, 1,  50, pmd);
+			fwrite(model->bone_group[i].name_eng.c_str(), 1,  50, pmd);
 		}
 	}
 	#ifdef DEBUG
@@ -523,7 +514,7 @@ int write_PMD(MODEL *model, const char file_name[])
 	fwrite(&model->rbody_count, 4,  1, pmd);
 	
 	for(i=0; i<model->rbody_count; i++){
-		fwrite(model->rbody[i].name, 1,  20, pmd);
+		fwrite(model->rbody[i].name.c_str(), 1,  20, pmd);
 		fwrite(&model->rbody[i].bone, 2,  1, pmd);
 		fwrite(&model->rbody[i].group, 1,  1, pmd);
 		fwrite(&model->rbody[i].target, 2,  1, pmd);
@@ -541,7 +532,7 @@ int write_PMD(MODEL *model, const char file_name[])
 	fwrite(&model->joint_count, 4,  1, pmd);
 	
 	for(i=0; i<model->joint_count; i++){
-		fwrite(model->joint[i].name, 1,  20, pmd);
+		fwrite(model->joint[i].name.c_str(), 1,  20, pmd);
 		fwrite(model->joint[i].rbody, 4,  2, pmd);
 		fwrite(model->joint[i].loc, 4,  3, pmd);
 		fwrite(model->joint[i].rot, 4,  3, pmd);
@@ -1229,10 +1220,7 @@ int listup_bone(MODEL *model, const char file_name[]){
 	}
 	fprintf(txt, "ƒ{[ƒ“˜g”:%d\n", model->bone_group_count);
 	for(i=0; i<model->bone_group_count; i++){
-		strcpy(str, model->bone_group[i].name);
-		p = strchr( str, '\n' );
-		if(p != NULL)*p = '\0';
-		fprintf(txt, "%s %s\n", str, model->bone_group[i].name_eng);
+		fprintf(txt, "%s %s\n", model->bone_group[i].name.c_str(), model->bone_group[i].name_eng);
 	}
 	
 	fclose(txt);
