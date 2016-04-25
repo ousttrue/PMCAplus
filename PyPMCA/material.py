@@ -44,6 +44,11 @@ class MaterialSelector:
         self.cur_mat = -1
         self.cur_color= -1
 
+    def get_texture_path(self, key):
+        if key in self.replace_map:
+            m=self.replace_map[key].sel
+            return m.get_tex_path()
+
     def force_update(self, entry=None):
         self.__update_material_entry()
 
@@ -56,9 +61,6 @@ class MaterialSelector:
     def apply_entry(self, x:MATERIAL, m:MATS_ENTRY):
         if m.tex: 
             x.tex = m.tex
-            x.tex_path = m.get_tex_path()
-            x.sph = ''
-            x.sph_path = ''
         if m.diff_rgb: x.diff_col=m.diff_rgb
         if m.spec_rgb: x.spec_col=m.spec_rgb
         if m.mirr_rgb: x.mirr_col=m.mirr_rgb
@@ -83,6 +85,7 @@ class MaterialSelector:
             m=MATERIAL(**PMCA.getMat(num, i))
             if m.tex in self.replace_map:
                 self.apply_entry(m, self.replace_map[m.tex].sel)
+                '''
                 PMCA.setMat(num, i,
                             m.diff_col, m.alpha, 
                             m.spec, m.spec_col, 
@@ -93,6 +96,7 @@ class MaterialSelector:
                             m.tex_path.encode('cp932','replace'), 
                             m.sph_path.encode('cp932','replace')
                             )
+                '''
 
     def load_material_list(self, assets_dir, lines):
         '''

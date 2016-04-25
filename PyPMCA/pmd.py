@@ -37,7 +37,7 @@ class VT:
 		self.edge = edge
 
 class MATERIAL:
-	def __init__(self, diff_col, alpha, spec, spec_col, mirr_col, toon, edge, face_count, tex, sph, tex_path, sph_path):
+	def __init__(self, diff_col, alpha, spec, spec_col, mirr_col, toon, edge, face_count, tex):
 		self.diff_col = diff_col
 		self.alpha = alpha
 		self.spec  = spec
@@ -47,9 +47,6 @@ class MATERIAL:
 		self.edge = edge
 		self.face_count = face_count
 		self.tex = tex.decode('cp932','replace')
-		self.sph = sph.decode('cp932','replace')
-		self.tex_path = tex_path.decode('cp932','replace')
-		self.sph_path = sph_path.decode('cp932','replace')
 
 	def __str__(self):
 		return "<MATERIAL:{0}>".format(self.tex)

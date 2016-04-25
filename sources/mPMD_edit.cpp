@@ -1008,10 +1008,12 @@ int marge_mat(MODEL *model)
 			index[i] = sum;
 			sum++;
 			
-			if(model->mat[i].tex[0] != '\0'){
+			if(model->mat[i].tex.size()){
 				for(size_t j=i+1; j<model->mat.size(); j++){
-					if(strcmp(model->mat[i].tex, model->mat[j].tex) == 0){
-						if( 0.0001 < abs(model->mat[i].tex - model->mat[j].tex)){
+					if(model->mat[i].tex==model->mat[j].tex){
+						//if( 0.0001 < abs(model->mat[i].tex - model->mat[j].tex))
+						{
+							/*
 							auto p = strrchr(model->mat[i].tex, '.');
 							if(p != NULL){
 								if( strcmp(p, ".sph") ==0 ||
@@ -1021,7 +1023,9 @@ int marge_mat(MODEL *model)
 									p = NULL;
 								}
 							}
-							if(p == NULL){
+							if(p == NULL)
+							*/
+							{
 								index[j] = index[i];
 								marge[j] = 1;
 							}

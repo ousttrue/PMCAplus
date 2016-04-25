@@ -472,7 +472,12 @@ class PyPMCA:
             colors.append((m['diff_col'][2] * 2 + m['mirr_col'][2]) / 2.5 + m['spec_col'][2] / 4)
             #colors.append(m['alpha'])
             colors.append(1.0)
-            paths.append(m['tex_path'])
+            tex=m['tex'].decode('cp932')
+            texture_path=self.materials.get_texture_path(tex)
+            if texture_path:
+                paths.append(texture_path)
+            else:
+                paths.append(os.path.join(os.path.dirname(info['path']), m['tex']).replace(b'\\', b'/'))
             indexCounts.append(m['face_count']*3)
 
         assert(sum(indexCounts)==len(indices))

@@ -105,7 +105,7 @@ static PyObject* getInfo(PyObject *self, PyObject *args)
 	MODEL *model;
 	if(!PyArg_ParseTuple(args, "i", &num))return NULL;
 	model = &g_model[num];
-	return Py_BuildValue("{s:y,s:y,s:y,s:y,"
+	return Py_BuildValue("{s:y,s:y,s:y,s:y,s:y,"
 							"s:i,s:i,s:i,s:i,"
 							"s:i,s:i,s:i,s:i,"
 							"s:i,s:i,s:i,s:O}",
@@ -113,6 +113,7 @@ static PyObject* getInfo(PyObject *self, PyObject *args)
 							"name_eng", model->header.name_eng.c_str(),
 							"comment", model->header.comment.c_str(),
 							"comment_eng", model->header.comment_eng.c_str(),
+							"path", model->header.path.c_str(),
 							
 							"vt_count", model->vt.size(),
 							"face_count", model->vt_index.size()/3,
@@ -173,7 +174,7 @@ static PyObject* getMat(PyObject *self, PyObject *args)
 	return Py_BuildValue("{s:O,s:f,s:f,"
 							"s:O,s:O,"
 							"s:i,s:i,s:i,"
-							"s:y,s:y,s:y,s:y}",
+							"s:y}",
 							"diff_col", Array_to_PyList_Float(model->mat[i].diffuse, 3),
 							"alpha", model->mat[i].alpha,
 							"spec", model->mat[i].spec,
@@ -183,10 +184,8 @@ static PyObject* getMat(PyObject *self, PyObject *args)
 							"toon", (int)model->mat[i].toon_index,
 							"edge", (int)model->mat[i].edge_flag,
 							"face_count", (int)model->mat[i].vt_index_count/3,
-							"tex", model->mat[i].tex,
-							"sph", model->mat[i].sph,
-							"tex_path", model->mat[i].tex_path,
-							"sph_path", model->mat[i].sph_path);
+							"tex", model->mat[i].tex
+							);
 }
 
 static PyObject* getBone(PyObject *self, PyObject *args)
@@ -562,10 +561,7 @@ static PyObject* setMat(PyObject *self, PyObject *args)
 	PyList_to_Array_Float(mat.spec_col, PyTmp[1], 3);
 	PyList_to_Array_Float(mat.mirror_col, PyTmp[2], 3);
 	
-	strncpy(mat.tex, str[0], NAME_LEN);
-	strncpy(mat.sph, str[1], NAME_LEN);
-	strncpy(mat.tex_path, str[2], PATH_LEN);
-	strncpy(mat.sph_path, str[3], PATH_LEN);
+	mat.tex=str[0];
 	model->mat[i] = mat;
 	return Py_BuildValue("i", 0);
 }

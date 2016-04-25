@@ -37,7 +37,7 @@ struct VERTEX
 };
 
 struct MATERIAL 
-{	/*70byte*/
+{
 	float diffuse[3];
 	float alpha;
 	float spec;
@@ -46,10 +46,7 @@ struct MATERIAL
 	unsigned char toon_index;
 	unsigned char edge_flag;
 	unsigned int vt_index_count;
-	char tex[NAME_LEN];
-	char sph[NAME_LEN];
-	char tex_path[PATH_LEN];
-	char sph_path[PATH_LEN];
+	fixed_string<NAME_LEN> tex;
 };
 
 struct BONE 

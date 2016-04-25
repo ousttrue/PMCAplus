@@ -126,8 +126,7 @@ int load_PMD(MODEL *model, const char file_name[])
 		FREAD(&model->mat[i].toon_index, 1, 1, pmd);
 		FREAD(&model->mat[i].edge_flag, 1, 1, pmd);
 		FREAD(&model->mat[i].vt_index_count, 4, 1, pmd);
-		FREAD(&model->mat[i].tex, 1, 20, pmd);
-		model->mat[i].tex[21] = '\0';
+		model->mat[i].tex.fread<20>(pmd);
 		
 		strcpy(str, file_name);
 		char_p = strrchr(str, '/');
@@ -137,16 +136,19 @@ int load_PMD(MODEL *model, const char file_name[])
 		}else{
 			*str = '\0';
 		}
+		/*
 		char_p = strchr(model->mat[i].tex, '*');
 		if(char_p != NULL){
 			*char_p='\0';
 			++char_p;
 			strcpy(model->mat[i].sph, char_p);
 			sprintf(model->mat[i].sph_path,"%s%s\0", str, model->mat[i].sph);
-		}else{
+		}
+		else{
 			*model->mat[i].sph='\0';
 		}
 		sprintf(model->mat[i].tex_path,"%s%s\0", str, model->mat[i].tex);
+		*/
 	}
 	
 	unsigned short bone_count;
@@ -442,15 +444,17 @@ int write_PMD(MODEL *model, const char file_name[])
 		fwrite(&model->mat[i].toon_index, 1, 1, pmd);
 		fwrite(&model->mat[i].edge_flag, 1, 1, pmd);
 		fwrite(&model->mat[i].vt_index_count, 4, 1, pmd);
-		
+		/*
 		if(*model->mat[i].sph != '\0'){
 			sprintf(str, "%s*%s\0", model->mat[i].tex, model->mat[i].sph);
 			if(strlen(str) > 20){
 				ret = 2;
 			}
 			fwrite(str, 1, 20, pmd);
-		}else{
-			fwrite(model->mat[i].tex, 1, 20, pmd);
+		}
+		else*/
+		{
+			fwrite(model->mat[i].tex.c_str(), 1, 20, pmd);
 		}
 	}
 	
@@ -1161,6 +1165,7 @@ int add_PMD(MODEL *model, MODEL *add)
 		printf("ƒWƒ‡ƒCƒ“ƒg\n");
 	#endif
 	
+	model->header = add->header;
 	model->vt = vt;	
 	model->vt_index = vt_index;	
 	model->mat = mat;
