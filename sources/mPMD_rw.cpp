@@ -79,10 +79,11 @@ int load_PMD(MODEL *model, const char file_name[])
 	//printf("%s\n", file_name);
 	strncpy(model->header.path, file_name, PATH_LEN);
 	
-	FREAD(model->header.magic, 1, 3,pmd);
-	FREAD(&model->header.version, 4, 1, pmd);
-	
-	if(memcmp(model->header.magic, "Pmd", 3) != 0 || model->header.version != 1.0){
+	char magic[4];
+	FREAD(magic, 1, 3, pmd);
+	float version;
+	FREAD(&version, 4, 1, pmd);
+	if(memcmp(magic, "Pmd", 3) != 0 || version != 1.0){
 		printf("Format error\n");
 		return -1;
 	}
@@ -411,11 +412,11 @@ int write_PMD(MODEL *model, const char file_name[])
 	}*/
 	
 	//ƒwƒbƒ_[‘‚«Š·‚¦
-	strcpy(model->header.magic, "Pmd");
-	model->header.version = 1.0;
 	
-	fwrite(model->header.magic, 3, 1,pmd);
-	fwrite(&model->header.version, 4, 1, pmd);
+	const char *magic = "Pmd";
+	fwrite(magic, 3, 1,pmd);
+	const float version = 1.0f;
+	fwrite(&version, 4, 1, pmd);
 	fwrite(model->header.name, 20, 1, pmd);
 	fwrite(model->header.comment, 256, 1, pmd);
 	
@@ -595,9 +596,7 @@ int print_PMD(MODEL *model, const char file_name[])
 		return 1;
 	}
 	
-	fprintf(txt, "%s \n %f \n %s \n %s \n",
-		model->header.magic,
-		model->header.version,
+	fprintf(txt, "%s \n %s \n",
 		model->header.name,
 		model->header.comment);
 	
@@ -1237,9 +1236,7 @@ int listup_bone(MODEL *model, const char file_name[]){
 		return 1;
 	}
 	
-	fprintf(txt, "%s \n %f \n %s \n %s \n",
-		model->header.magic,
-		model->header.version,
+	fprintf(txt, "%s \n %s \n",
 		model->header.name,
 		model->header.comment);
 	

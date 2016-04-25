@@ -439,8 +439,6 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 							&skin_disp_count,
 							&PyTmp))return NULL;
 	
-	strncpy(model.header.magic, "Pmd", 4);
-	model.header.version = 1.0;
 	strncpy(model.header.name,       str[0], NAME_LEN);
 	strncpy(model.header.comment,    str[1], 256);
 	strncpy(model.header.name_eng,   str[2], NAME_LEN);

@@ -9,10 +9,15 @@
 #define COMMENT_LEN 256
 
 
+template<int N>
+class fixed_string
+{
+	char c_str[N + 1];
+};
+
+
 struct HEADER 
 {
-	char magic[4];
-	float version;
 	char name[NAME_LEN];
 	char comment[COMMENT_LEN];
 	char name_eng[NAME_LEN];
@@ -20,9 +25,7 @@ struct HEADER
 	char path[PATH_LEN];
 
     HEADER()
-        : version(0)
     {
-        magic[0]=magic[1]=magic[2]=magic[3]=0;
         memset(name, 0, NAME_LEN);
         memset(comment, 0, COMMENT_LEN);
         memset(name_eng, 0, NAME_LEN);

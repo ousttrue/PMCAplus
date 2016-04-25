@@ -1340,9 +1340,7 @@ int adjust_joint(MODEL *model)
 
 int show_detail(MODEL *model)
 {
-	printf("%s \n %f \n %s \n %s \n",
-		model->header.magic,
-		model->header.version,
+	printf("%s \n %s \n",
 		model->header.name,
 		model->header.comment);
 	printf("’¸“_”:%d\n", model->vt.size());
