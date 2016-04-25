@@ -49,7 +49,7 @@ int load_PMD(MODEL *model, const char file_name[])
 	for(i=0; i<64; i++){
 		if(count[i]!=255){
 			//printf("%s, %s\n", cache_model[i].header.path, file_name);
-			if(strncmp(cache_model[i].header.path, file_name, PATH_LEN) == 0){
+			if(cache_model[i].header.path==file_name){
 				copy_PMD(model, &cache_model[i]);
 				count[i] = cur_count;
 				break;
@@ -72,12 +72,10 @@ int load_PMD(MODEL *model, const char file_name[])
 	
 	pmd = fopen(file_name,"rb");
 	if(pmd == NULL  ){
-		printf("Can't open file:%s\n", file_name);
 		return 1;
 	}
 	
-	//printf("%s\n", file_name);
-	strncpy(model->header.path, file_name, PATH_LEN);
+	model->header.path = file_name;
 	
 	char magic[4];
 	FREAD(magic, 1, 3, pmd);
@@ -89,7 +87,7 @@ int load_PMD(MODEL *model, const char file_name[])
 	}
 	
 	model->header.name.fread<20>(pmd);
-	FREAD(model->header.comment, 1, 256, pmd);
+	model->header.comment.fread<256>(pmd);
 	
 	int vt_count;
 	FREAD(&vt_count, 4,  1, pmd);
@@ -256,11 +254,8 @@ int load_PMD(MODEL *model, const char file_name[])
 	
 	if(model->eng_support == 1){
 		printf("‰p–¼‘Î‰žPMD\n");
-		FREAD(model->header.name_eng, 1,  20, pmd);
-		model->header.name_eng[21] = '\0';
-		
-		FREAD(model->header.comment_eng, 1,  256, pmd);
-		model->header.comment_eng[255] = '\0';
+		model->header.name_eng.fread<20>(pmd);
+		model->header.comment_eng.fread<256>(pmd);
 		
 		for(i=0; i<model->bone.size(); i++){
 			FREAD(model->bone[i].name_eng, 1,  20, pmd);
@@ -281,15 +276,6 @@ int load_PMD(MODEL *model, const char file_name[])
 	}else{
 		printf("‰p–¼”ñ‘Î‰žPMD\n");
 		
-		*model->header.name_eng = '\0';
-		*model->header.comment_eng = '\0';
-		
-		for(i=0; i<model->bone.size(); i++){
-			*model->bone[i].name_eng = '\0';
-		}
-		
-		//strncpy(model->skin[0].name_eng, "base", 20);
-		//puts(model->skin[0].name);
 		for(i=0; i<model->skin.size(); i++){
 			*model->skin[i].name_eng = '\0';
 		}
@@ -418,7 +404,7 @@ int write_PMD(MODEL *model, const char file_name[])
 	const float version = 1.0f;
 	fwrite(&version, 4, 1, pmd);
 	fwrite(model->header.name.c_str(), 20, 1, pmd);
-	fwrite(model->header.comment, 256, 1, pmd);
+	fwrite(model->header.comment.c_str(), 256, 1, pmd);
 	
 	int vt_count = model->vt.size();
 	fwrite(&vt_count, 4,  1, pmd);	
@@ -521,8 +507,8 @@ int write_PMD(MODEL *model, const char file_name[])
 	fwrite(&model->eng_support, 1,  1, pmd);
 	
 	if(model->eng_support==1){
-		fwrite(model->header.name_eng, 1,  20, pmd);
-		fwrite(model->header.comment_eng, 1,  256, pmd);
+		fwrite(model->header.name_eng.c_str(), 1,  20, pmd);
+		fwrite(model->header.comment_eng.c_str(), 1,  256, pmd);
 		for(i=0; i<model->bone.size(); i++){
 			fwrite(model->bone[i].name_eng, 1,  20, pmd);
 		}
@@ -800,7 +786,7 @@ int print_PMD(MODEL *model, const char file_name[])
 int create_PMD(MODEL *model)
 {
 	model->header.name.clear();
-	strcpy(model->header.comment, "");
+	model->header.comment.clear();
 	
 	model->vt.clear();	
 	model->vt_index.clear();	
@@ -836,7 +822,7 @@ int create_PMD(MODEL *model)
 int delete_PMD(MODEL *model)
 {
 	model->header.name.clear();
-	model->header.comment[0]='\0';
+	model->header.comment.clear();
 	
 	model->vt.clear();	
 	model->vt_index.clear();	

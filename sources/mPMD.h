@@ -42,6 +42,17 @@ public:
 		return *this;
 	}
 
+	bool operator==(const char *src)const
+	{
+		for (int i = 0; i < N; ++i) {
+			if (m_str[i] != src[i]) {
+				return false;
+			}
+			if (m_str[i] == '\0')break;
+		}
+		return true;
+	}
+
 	int capacity()const { return N; }
 
 	int size()const {
@@ -82,18 +93,10 @@ public:
 struct HEADER 
 {
 	fixed_string<NAME_LEN> name;
-	char comment[COMMENT_LEN];
-	char name_eng[NAME_LEN];
-	char comment_eng[COMMENT_LEN];
-	char path[PATH_LEN];
-
-    HEADER()
-    {
-        memset(comment, 0, COMMENT_LEN);
-        memset(name_eng, 0, NAME_LEN);
-        memset(comment_eng, 0, COMMENT_LEN);
-        memset(path, 0, PATH_LEN);
-    }
+	fixed_string<COMMENT_LEN> comment;
+	fixed_string<NAME_LEN> name_eng;
+	fixed_string<COMMENT_LEN> comment_eng;
+	fixed_string<PATH_LEN> path;
 };
 
 struct VERTEX

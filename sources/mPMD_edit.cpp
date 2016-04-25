@@ -24,8 +24,8 @@ int translate(MODEL *model, LIST *list, short mode)
 			FREE(model->skin);
 			puts("end test");
 			exit(1);*/
-			strncpy(model->header.name_eng, model->header.name.c_str(), NAME_LEN);
-			strncpy(model->header.comment_eng, model->header.comment, 256);
+			model->header.name_eng=model->header.name;
+			model->header.comment_eng=model->header.comment;
 		}
 		
 		// bone
