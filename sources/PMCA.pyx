@@ -61,10 +61,9 @@ cdef extern from "mPMD.h":
     struct IK_LIST:
         unsigned short IKBone_index;
         unsigned short IKTBone_index;
-        unsigned char IK_chain_len;
         unsigned short iterations;
         float weight;
-        unsigned short *IKCBone_index;
+        vector[unsigned short] IKCBone_index;
 
     struct SKIN_DATA:
         unsigned int index;
@@ -73,9 +72,8 @@ cdef extern from "mPMD.h":
     struct SKIN:
         char name[NAME_LEN];
         char name_eng[NAME_LEN];
-        unsigned int skin_vt_count;
         unsigned char type;
-        SKIN_DATA *data;
+        vector[SKIN_DATA] data;
 
     struct BONE_GROUP:
         char name[NAME_LEN];
@@ -107,18 +105,14 @@ cdef extern from "mPMD.h":
 
     struct MODEL:
         HEADER header;
-        unsigned int vt_count;
-        VERTEX *vt;
-        unsigned int vt_index_count;
-        unsigned short *vt_index;
-        unsigned int mat_count;
-        MATERIAL *mat;
-        unsigned short bone_count;
-        BONE *bone;
-        unsigned short IK_count;
-        IK_LIST *IK_list;
-        unsigned short skin_count;
-        SKIN *skin;
+
+        vector[VERTEX] vt;
+        vector[unsigned short] vt_index;
+        vector[MATERIAL] mat;
+        vector[BONE] bone;
+        vector[IK_LIST] IK_list;
+        vector[SKIN] skin;
+
         unsigned char skin_disp_count;
         unsigned short *skin_index;
         unsigned char bone_group_count;
@@ -214,12 +208,12 @@ def getInfo(index):
             "name_eng": model.header.name_eng,
             "comment": model.header.comment,
             "comment_eng": model.header.comment_eng,
-            "vt_count": model.vt_count,
-            "face_count": model.vt_index_count/3,
-            "mat_count": model.mat_count,
-            "bone_count": model.bone_count,
-            "IK_count": model.IK_count,
-            "skin_count": model.skin_count,
+            "vt_count": model.vt.size(),
+            "face_count": model.vt_index.size()/3,
+            "mat_count": model.mat.size(),
+            "bone_count": model.bone.size(),
+            "IK_count": model.IK_list.size(),
+            "skin_count": model.skin.size(),
             "bone_group_count": model.bone_group_count,
             "bone_disp_count": model.bone_disp_count,
 
@@ -294,10 +288,10 @@ def getIK(index, ik_index):
     return {
             "index": ik.IKBone_index,
             "tail": ik.IKTBone_index,
-            "len": ik.IK_chain_len,
+            "len": ik.IKCBone_index.size(),
             "ite": ik.iterations,
             "weight": ik.weight,
-            "child": array_slice(ik.IKCBone_index, 0, ik.IK_chain_len)
+            "child": ik.IKCBone_index
     }
 
 def getSkin(index, s_index):
@@ -308,7 +302,7 @@ def getSkin(index, s_index):
     return {
             "name": s.name,
             "name_eng": s.name_eng,
-            "count": s.skin_vt_count,
+            "count": s.data.size(),
             "type": s.type
     }
 
@@ -458,8 +452,8 @@ def Sort_PMD(index):
     sort_bone(&m, &g_list);
     sort_skin(&m, &g_list);
     sort_disp(&m, &g_list);
-    if m.bone[m.bone_count-1].name==b"-0":
-        m.bone_count-=1;
+    if m.bone[m.bone.size()-1].name==b"-0":
+        m.bone.resize(m.bone.size()-1);
     translate(&m, &g_list, 1);
 
 def Resize_Model(index, scale):
@@ -471,14 +465,14 @@ def Move_Model(index, x, y, z):
 
 def Resize_Bone(index, name, length, thickness):
     m=g_model[index]
-    for i in range(m.bone_count):
+    for i in range(m.bone.size()):
         if m.bone[i].name==name:
             return scale_bone(&m, i, thickness, length, thickness);
 
 def Move_Bone(index, name, x, y, z):
     cdef array.array v=array.array('d', [x, y, z])
     m=g_model[index]
-    for i in range(m.bone_count):
+    for i in range(m.bone.size()):
         if m.bone[i].name==name:
             return move_bone(&m, i, v.data.as_doubles);
 
@@ -492,7 +486,7 @@ def getWHT(index):
     cdef array.array min=array.array('d', [0, 0, 0])
     cdef array.array max=array.array('d', [0, 0, 0])
     m=g_model[index]
-    for i in range(m.vt_count):
+    for i in range(m.vt.size()):
         for j in range(3):
             value=m.vt[i].loc[j]
             if value<min[j]: min[j]=value
