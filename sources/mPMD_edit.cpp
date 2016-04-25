@@ -259,15 +259,13 @@ int update_bone_index(MODEL *model,int index[])
 	#endif
 	
 	
-	for(i=0; i<model->vt.size(); i++){
-		for(j=0; j<2; j++){
-			tmp_vt[i][j] = model->vt[i].bone_num[j];
-		}
+	for (i = 0; i < model->vt.size(); i++) {
+		tmp_vt[i][0] = model->vt[i].bone_num0;
+		tmp_vt[i][1] = model->vt[i].bone_num1;
 	}
 	for(i=0; i<model->vt.size(); i++){
-		for(j=0; j<2; j++){
-			model->vt[i].bone_num[j] = index[tmp_vt[i][j]];
-		}
+		model->vt[i].bone_num0 = index[tmp_vt[i][0]];
+		model->vt[i].bone_num1 = index[tmp_vt[i][1]];
 	}
 	#ifdef MEM_DBG
 		printf("FREE %p\n", tmp_vt);
@@ -625,7 +623,7 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz)
 		//•ÏŠ·‚·‚é’¸“_‚ðtmp_vt‚ÉŠi”[
 	len_vt = 0;
 	for(i=0; i<(model->vt.size()); i++){
-		if(model->vt[i].bone_num[0] == index || model->vt[i].bone_num[1] == index){
+		if(model->vt[i].bone_num0 == index || model->vt[i].bone_num1 == index){
 			len_vt++;
 		}
 	}
@@ -633,7 +631,7 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz)
 	index_vt = (unsigned int*)MALLOC(sizeof(unsigned int)*len_vt);
 	j = 0;
 	for(i=0; i<model->vt.size(); i++){
-		if(model->vt[i].bone_num[0] == index || model->vt[i].bone_num[1] == index){
+		if(model->vt[i].bone_num0 == index || model->vt[i].bone_num1 == index){
 			index_vt[j] = i;
 			for(k=0; k<3; k++){
 				tmp_vt[j][k] = model->vt[i].loc[k];
@@ -688,10 +686,10 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz)
 	for(i=0; i<len_vt; i++){
 		k = index_vt[i];
 		tmp[0] = 0.0;
-		if(model->vt[k].bone_num[0] == index){
+		if(model->vt[k].bone_num0 == index){
 			tmp[0] += (double)model->vt[k].bone_weight/100;
 		}
-		if(model->vt[k].bone_num[1] == index){
+		if(model->vt[k].bone_num1 == index){
 			tmp[0] += 1.0-(double)model->vt[k].bone_weight/100;
 		}
 		//printf("%f %f\n", tmp[0], tmp[1]);
@@ -845,11 +843,11 @@ int move_bone(MODEL *model, unsigned int index, double diff[])
 	for(i=0; i<model->vt.size(); i++){
 		k=0;
 		tmp = 0.0;
-		if(model->vt[i].bone_num[0] == index){
+		if(model->vt[i].bone_num0 == index){
 			tmp += (double)model->vt[i].bone_weight/100;
 			k=1;
 		}
-		if(model->vt[i].bone_num[1] == index){
+		if(model->vt[i].bone_num1 == index){
 			tmp += 1.0-(double)model->vt[i].bone_weight/100;
 			k=1;
 		}

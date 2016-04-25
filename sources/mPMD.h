@@ -8,86 +8,7 @@
 #define NAME_LEN 128
 #define COMMENT_LEN 256
 
-
-template<int N>
-class fixed_string
-{
-	static_assert(N > 0, "0 size");
-	char m_str[N + 1];
-
-public:
-	fixed_string()
-	{
-		memset(m_str, 0, sizeof(m_str));
-	}
-
-	fixed_string(const fixed_string &src)
-	{
-		*this = src.c_str();
-	}
-
-	fixed_string(const char *src)
-	{
-		*this = src;
-	}
-
-	fixed_string& operator=(const char *src)
-	{
-		for (int i = 0; i < N; ++i) {
-			m_str[i] = src[i];
-			if (m_str[i] == '\0') {
-				break;
-			}
-		}
-		return *this;
-	}
-
-	bool operator==(const char *src)const
-	{
-		for (int i = 0; i < N; ++i) {
-			if (m_str[i] != src[i]) {
-				return false;
-			}
-			if (m_str[i] == '\0')break;
-		}
-		return true;
-	}
-
-	int capacity()const { return N; }
-
-	int size()const {
-		int i = 0;
-		for (; i < N; ++i) {
-			if (m_str[i] == '\0') {
-				break;
-			}
-		}
-		return i;
-	}
-
-	void clear()
-	{
-		m_str[0] = '\0';
-	}
-
-	const char *c_str()const { return m_str; }
-
-	template<int M>
-	int fread(FILE *fp)
-	{
-		char buf[M];
-		int m = ::fread(buf, 1, M, fp);
-		int i = 0;
-		for (; i < std::min(N, m); ++i)
-		{
-			m_str[i] = buf[i];
-			if (m_str[i] == '\0') {
-				break;
-			}
-		}
-		return i;
-	}
-};
+#include "fixed_string.h"
 
 
 struct HEADER 
@@ -104,13 +25,14 @@ struct VERTEX
 	float loc[3];
 	float nor[3];
 	float uv[2];
-	unsigned short bone_num[2];
+	unsigned short bone_num0;
+	unsigned short bone_num1;
 	unsigned char bone_weight;
 	unsigned char edge_flag;
 
     VERTEX()
+		: bone_num0(0), bone_num1(1)
     {
-        bone_num[0]=bone_num[1]=0;
     }
 };
 

@@ -63,6 +63,7 @@ do
         "mPMD_rw.h",
         "PMCA_PyMod.cpp",
         "PMCA_PyMod.h",
+        "fixed_string.h",
     }
     includedirs {
         PYTHON_DIR.."/include",

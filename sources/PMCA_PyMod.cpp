@@ -146,8 +146,8 @@ static PyObject* getVt(PyObject *self, PyObject *args)
 							"loc", Array_to_PyList_Float(model->vt[i].loc, 3),
 							"nor", Array_to_PyList_Float(model->vt[i].nor, 3),
 							"uv" , Array_to_PyList_Float(model->vt[i].uv , 2),
-							"bone_num1", (int)model->vt[i].bone_num[0],
-							"bone_num2", (int)model->vt[i].bone_num[1],
+							"bone_num1", (int)model->vt[i].bone_num0,
+							"bone_num2", (int)model->vt[i].bone_num1,
 							"weight", (int)model->vt[i].bone_weight,
 							"edge", (int)model->vt[i].edge_flag);
 }
@@ -500,8 +500,8 @@ static PyObject* setVt(PyObject *self, PyObject *args)
 							&PyTmp[0],
 							&PyTmp[1],
 							&PyTmp[2],
-							&vt.bone_num[0],
-							&vt.bone_num[1],
+							&vt.bone_num0,
+							&vt.bone_num1,
 							&vt.bone_weight,
 							&vt.edge_flag))return NULL;
 	PyList_to_Array_Float(vt.loc, PyTmp[0], 3);

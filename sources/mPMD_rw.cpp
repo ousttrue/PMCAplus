@@ -97,7 +97,8 @@ int load_PMD(MODEL *model, const char file_name[])
 		FREAD(model->vt[i].loc, 4, 3, pmd);
 		FREAD(model->vt[i].nor, 4, 3, pmd);
 		FREAD(model->vt[i].uv, 4, 2, pmd);
-		FREAD(model->vt[i].bone_num, 2, 2, pmd);
+		FREAD(&model->vt[i].bone_num0, 2, 1, pmd);
+		FREAD(&model->vt[i].bone_num1, 2, 1, pmd);
 		FREAD(&model->vt[i].bone_weight, 1, 1, pmd);
 		FREAD(&model->vt[i].edge_flag, 1, 1, pmd);
 	}
@@ -413,7 +414,8 @@ int write_PMD(MODEL *model, const char file_name[])
 		fwrite(model->vt[i].loc, 4, 3, pmd);
 		fwrite(model->vt[i].nor, 4, 3, pmd);
 		fwrite(model->vt[i].uv, 4, 2, pmd);
-		fwrite(model->vt[i].bone_num, 2, 2, pmd);
+		fwrite(&model->vt[i].bone_num0, 2, 1, pmd);
+		fwrite(&model->vt[i].bone_num1, 2, 1, pmd);
 		fwrite(&model->vt[i].bone_weight, 1, 1, pmd);
 		fwrite(&model->vt[i].edge_flag, 1, 1, pmd);
 	}
@@ -601,9 +603,10 @@ int print_PMD(MODEL *model, const char file_name[])
 			fprintf(txt, "%f ", model->vt[i].uv[j]);
 		}
 		fprintf(txt, "\nBONE:");
-		for(j=0; j<2; j++){
-			fprintf(txt, "%d ", model->vt[i].bone_num[j]);
-		}
+
+			fprintf(txt, "%d ", model->vt[i].bone_num0);
+			fprintf(txt, "%d ", model->vt[i].bone_num1);
+
 		fprintf(txt, "\nbone_weight:%d\n", model->vt[i].bone_weight);
 		fprintf(txt, "edge_flag:%d\n\n", model->vt[i].edge_flag);
 		
@@ -965,9 +968,8 @@ int add_PMD(MODEL *model, MODEL *add)
 	j = 0;	
 	for(i=model->vt.size(); i<vt.size(); i++){
 		vt[i] = add->vt[j];
-		for(k=0; k<2; k++){
-			vt[i].bone_num[k] += model->bone.size();
-		}
+		vt[i].bone_num0 += model->bone.size();
+		vt[i].bone_num1 += model->bone.size();
 		j++;
 	}
 		
