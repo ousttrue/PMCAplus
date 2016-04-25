@@ -200,13 +200,12 @@ int load_PMD(MODEL *model, const char file_name[])
 		model->skin[i].name[20] = '\0';
 	}
 	
-	FREAD(&model->skin_disp_count, 1,  1, pmd);
-	#ifdef DEBUG
-		printf("表情枠:%d\n", model->skin_disp_count);
-	#endif
-	model->skin_index = (unsigned short*)MALLOC((size_t)model->skin_disp_count*sizeof(unsigned short));
-	if(model->skin_index==NULL)return -1;
-	FREAD(model->skin_index, 2, model->skin_disp_count, pmd);
+	unsigned char skin_disp_count;
+	FREAD(&skin_disp_count, 1,  1, pmd);
+	model->skin_index.resize(skin_disp_count);
+	if (skin_disp_count) {
+		FREAD(&model->skin_index[0], 2, model->skin_index.size(), pmd);
+	}
 	
 	FREAD(&model->bone_group_count, 1,  1, pmd);
 	#ifdef DEBUG
@@ -479,7 +478,6 @@ int write_PMD(MODEL *model, const char file_name[])
 	
 	unsigned short IK_count = model->IK_list.size();
 	fwrite(&IK_count, 2,  1, pmd);
-	
 	for(i=0; i<model->IK_list.size(); i++){
 		fwrite(&model->IK_list[i].IKBone_index, 2, 1, pmd);
 		fwrite(&model->IK_list[i].IKTBone_index, 2, 1, pmd);
@@ -489,13 +487,9 @@ int write_PMD(MODEL *model, const char file_name[])
 		fwrite(&model->IK_list[i].weight, 4, 1, pmd);
 		fwrite(&model->IK_list[i].IKCBone_index[0], 2, model->IK_list[i].IKCBone_index.size(), pmd);
 	}
-	#ifdef DEBUG
-		printf("IKリスト\n");
-	#endif
 	
 	unsigned short skin_count = model->skin.size();
-	fwrite(&skin_count, 2,  1, pmd);
-	
+	fwrite(&skin_count, 2,  1, pmd);	
 	for(i=0; i<model->skin.size(); i++){
 		fwrite(model->skin[i].name, 1, 20, pmd);
 		unsigned int skin_vt_count=model->skin[i].data.size();
@@ -506,16 +500,10 @@ int write_PMD(MODEL *model, const char file_name[])
 			fwrite(model->skin[i].data[j].loc, 4, 3, pmd);
 		}
 	}
-	#ifdef DEBUG
-		printf("表情\n");
-	#endif
 	
-	
-	fwrite(&model->skin_disp_count, 1,  1, pmd);
-	fwrite(model->skin_index, 2, model->skin_disp_count, pmd);
-	#ifdef DEBUG
-		printf("表情表示\n");
-	#endif
+	unsigned char skin_disp_count = model->skin_index.size();
+	fwrite(&skin_disp_count, 1,  1, pmd);
+	fwrite(&model->skin_index[0], 2, model->skin_index.size(), pmd);
 	
 	fwrite(&model->bone_group_count, 1,  1, pmd);
 	for(i=0; i<model->bone_group_count; i++){
@@ -711,8 +699,8 @@ int print_PMD(MODEL *model, const char file_name[])
 		fprintf(txt, "\n");
 	}
 	
-	fprintf(txt, "\n表情枠:%d\n", model->skin_disp_count);
-	for(i=0; i<model->skin_disp_count; i++){
+	fprintf(txt, "\n表情枠:%d\n", model->skin_index.size());
+	for(i=0; i<model->skin_index.size(); i++){
 		fprintf(txt, "%d\n", model->skin_index[i]);
 	}
 	
@@ -820,11 +808,10 @@ int create_PMD(MODEL *model)
 	model->vt_index.clear();	
 	model->mat.clear();
 	model->bone.clear();
-	
 	model->IK_list.clear();
 	model->skin.clear();
-	
-	model->skin_index = NULL;
+	model->skin_index.clear();
+
 	model->bone_group_count = 0;
 	model->bone_group = NULL;
 	model->bone_disp_count = 0;
@@ -861,10 +848,7 @@ int delete_PMD(MODEL *model)
 	model->bone.clear();	
 	model->IK_list.clear();
 	model->skin.clear();
-	
-	FREE(model->skin_index);
-	model->skin_disp_count = 0;
-	model->skin_index = NULL;
+	model->skin_index.clear();
 	
 	FREE(model->bone_group);
 	model->bone_group_count = 0;
@@ -909,18 +893,8 @@ int copy_PMD(MODEL *out, MODEL *model)
 	out->bone = model->bone;
 	out->IK_list = model->IK_list;
 	out->skin = model->skin;
+	out->skin_index = model->skin_index;
 	
-	//表情表示
-	out->skin_disp_count = model->skin_disp_count;
-	out->skin_index = (unsigned short*)MALLOC((size_t)model->skin_disp_count * sizeof(unsigned short));
-	if(out->skin_index==NULL)return -1;
-	for(i=0; i<model->skin_disp_count; i++){
-		out->skin_index[i] = model->skin_index[i];
-	}
-	
-	#ifdef DEBUG
-		printf("表情表示\n");
-	#endif
 	//ボーン表示グループ
 	out->bone_group_count = model->bone_group_count;
 	out->bone_group = (BONE_GROUP*)MALLOC((size_t)model->bone_group_count * sizeof(BONE_GROUP));
@@ -991,8 +965,6 @@ int add_PMD(MODEL *model, MODEL *add)
 	std::vector<IK_LIST> IK_list;
 	std::vector<SKIN> skin;
 
-	unsigned char skin_disp_count;
-	unsigned short *skin_index;
 	unsigned char bone_group_count;
 	BONE_GROUP *bone_group;
 	unsigned int bone_disp_count;
@@ -1120,27 +1092,18 @@ int add_PMD(MODEL *model, MODEL *add)
 			j++;
 		}
 	}
-	#ifdef DEBUG
-		printf("表情\n");
-	#endif
 	
 	//表情表示
-	skin_disp_count = model->skin_disp_count + add->skin_disp_count;
-	skin_index = (unsigned short*)MALLOC((size_t)skin_disp_count * sizeof(unsigned short));
-	if(skin_index == NULL)return -1;
-	//for(i=0; i<model->skin_disp_count; i++){
-	//	skin_index[i] = model->skin_index[i];
-	//}
-	memcpy(skin_index, model->skin_index, model->skin_disp_count * sizeof(unsigned short));
+	std::vector<unsigned short> skin_index(model->skin_index.size() + add->skin_index.size());
+	if (!skin_index.empty() && !model->skin_index.empty()) {
+		memcpy(&skin_index[0], &model->skin_index[0], model->skin_index.size() * sizeof(unsigned short));
+	}
 	j = 0;
-	for(i=model->skin_disp_count; i<skin_disp_count; i++){
-		skin_index[i] = add->skin_index[j] + model->skin_disp_count;
+	for(i=model->skin_index.size(); i<skin_index.size(); i++){
+		skin_index[i] = add->skin_index[j] + model->skin_index.size();
 		j++;
 	}
 	
-	#ifdef DEBUG
-		printf("表情表示\n");
-	#endif
 	//ボーン表示
 	bone_group_count = model->bone_group_count + add->bone_group_count;
 	bone_group = (BONE_GROUP*)MALLOC((size_t)bone_group_count * sizeof(BONE_GROUP));
@@ -1220,13 +1183,7 @@ int add_PMD(MODEL *model, MODEL *add)
 	model->bone = bone;
 	model->IK_list = IK_list;
 	model->skin = skin;
-	
-	#ifdef MEM_DBG
-		printf("free %p\n", model->skin_index);
-	#endif
-	FREE(model->skin_index);
 	model->skin_index = skin_index;
-	model->skin_disp_count = skin_disp_count;
 	
 	#ifdef MEM_DBG
 		printf("free %p\n", model->bone_group);

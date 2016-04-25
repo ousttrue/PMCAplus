@@ -387,7 +387,7 @@ int sort_skin(MODEL *model, LIST *list)
 		skin[index[i]] = model->skin[i];
 	}
 	
-	for(int i=0; i<model->skin_disp_count; i++){	//表情並び変え
+	for(int i=0; i<model->skin_index.size(); i++){	//表情並び変え
 		model->skin_index[i] = i+1;
 	}
 	
@@ -1351,7 +1351,7 @@ int show_detail(MODEL *model)
 	printf("ボーン数:%d\n", model->bone.size());
 	printf("IKデータ数:%d\n", model->IK_list.size());
 	printf("表情数:%d\n", model->skin.size());
-	printf("表情枠:%d\n", model->skin_disp_count);
+	printf("表情枠:%d\n", model->skin_index.size());
 	printf("ボーン枠:%d\n", model->bone_group_count);
 	printf("表示ボーン数:%d\n", model->bone_disp_count);
 	printf("英名対応:%d\n", model->eng_support);
