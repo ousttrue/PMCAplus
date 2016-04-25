@@ -88,7 +88,7 @@ int load_PMD(MODEL *model, const char file_name[])
 		return -1;
 	}
 	
-	FREAD(model->header.name, 1, 20, pmd);
+	model->header.name.fread<20>(pmd);
 	FREAD(model->header.comment, 1, 256, pmd);
 	
 	int vt_count;
@@ -417,7 +417,7 @@ int write_PMD(MODEL *model, const char file_name[])
 	fwrite(magic, 3, 1,pmd);
 	const float version = 1.0f;
 	fwrite(&version, 4, 1, pmd);
-	fwrite(model->header.name, 20, 1, pmd);
+	fwrite(model->header.name.c_str(), 20, 1, pmd);
 	fwrite(model->header.comment, 256, 1, pmd);
 	
 	int vt_count = model->vt.size();
@@ -799,8 +799,7 @@ int print_PMD(MODEL *model, const char file_name[])
 
 int create_PMD(MODEL *model)
 {
-	int i, j;
-	strcpy(model->header.name, "");
+	model->header.name.clear();
 	strcpy(model->header.comment, "");
 	
 	model->vt.clear();	
@@ -818,8 +817,8 @@ int create_PMD(MODEL *model)
 	
 	model->eng_support = 0;
 	
-	for(i=0; i<10; i++){
-		j=i+1;
+	for(int i=0; i<10; i++){
+		int j=i+1;
 		//*model->toon[i] = '\0';
 		//*model->toon_path[i] = '\0';
 		sprintf(model->toon[i], "toon%02d.bmp\0", j);
@@ -836,9 +835,7 @@ int create_PMD(MODEL *model)
 
 int delete_PMD(MODEL *model)
 {
-	int i, j;
-	
-	model->header.name[0]='\0';
+	model->header.name.clear();
 	model->header.comment[0]='\0';
 	
 	model->vt.clear();	
@@ -859,8 +856,8 @@ int delete_PMD(MODEL *model)
 	
 	model->eng_support = 0;
 	
-	for(i=0; i<10; i++){
-		j=i+1;
+	for(int i=0; i<10; i++){
+		int j=i+1;
 		/**model->toon[i] = '\0';
 		*model->toon_path[i] = '\0';
 		*/

@@ -106,7 +106,6 @@ static PyObject* getInfo(PyObject *self, PyObject *args)
 	char *name, *name_eng, *comment, *comment_eng;
 	if(!PyArg_ParseTuple(args, "i", &num))return NULL;
 	model = &g_model[num];
-	name = model->header.name;
 	name_eng = model->header.name_eng;
 	comment = model->header.comment;
 	comment_eng = model->header.comment_eng;
@@ -114,7 +113,7 @@ static PyObject* getInfo(PyObject *self, PyObject *args)
 							"s:i,s:i,s:i,s:i,"
 							"s:i,s:i,s:i,s:i,"
 							"s:i,s:i,s:i,s:O}",
-							"name", name,
+							"name", model->header.name.c_str(),
 							"name_eng", name_eng,
 							"comment", comment,
 							"comment_eng", comment_eng,
@@ -439,7 +438,7 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 							&skin_disp_count,
 							&PyTmp))return NULL;
 	
-	strncpy(model.header.name,       str[0], NAME_LEN);
+	model.header.name=str[0];
 	strncpy(model.header.comment,    str[1], 256);
 	strncpy(model.header.name_eng,   str[2], NAME_LEN);
 	strncpy(model.header.comment_eng,str[3], 256);
@@ -933,7 +932,7 @@ static PyObject* Set_Name_Comment(PyObject *self, PyObject *args)
 	int num;
 	int ret;
 	if(!PyArg_ParseTuple(args, "iyyyy", &num, &name, &comment, &name_eng, &comment_eng))return NULL;
-	strncpy(g_model[num].header.name, name, NAME_LEN);
+	g_model[num].header.name=name;
 	strncpy(g_model[num].header.comment, comment, COMMENT_LEN);
 	strncpy(g_model[num].header.name_eng, name_eng, NAME_LEN);
 	strncpy(g_model[num].header.comment_eng, comment_eng, COMMENT_LEN);

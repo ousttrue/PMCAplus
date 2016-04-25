@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
-
+#include <algorithm>
 #define USHORT_MAX 65535
 
 #define PATH_LEN 256
@@ -12,13 +12,76 @@
 template<int N>
 class fixed_string
 {
-	char c_str[N + 1];
+	static_assert(N > 0, "0 size");
+	char m_str[N + 1];
+
+public:
+	fixed_string()
+	{
+		memset(m_str, 0, sizeof(m_str));
+	}
+
+	fixed_string(const fixed_string &src)
+	{
+		*this = src.c_str();
+	}
+
+	fixed_string(const char *src)
+	{
+		*this = src;
+	}
+
+	fixed_string& operator=(const char *src)
+	{
+		for (int i = 0; i < N; ++i) {
+			m_str[i] = src[i];
+			if (m_str[i] == '\0') {
+				break;
+			}
+		}
+		return *this;
+	}
+
+	int capacity()const { return N; }
+
+	int size()const {
+		int i = 0;
+		for (; i < N; ++i) {
+			if (m_str[i] == '\0') {
+				break;
+			}
+		}
+		return i;
+	}
+
+	void clear()
+	{
+		m_str[0] = '\0';
+	}
+
+	const char *c_str()const { return m_str; }
+
+	template<int M>
+	int fread(FILE *fp)
+	{
+		char buf[M];
+		int m = ::fread(buf, 1, M, fp);
+		int i = 0;
+		for (; i < std::min(N, m); ++i)
+		{
+			m_str[i] = buf[i];
+			if (m_str[i] == '\0') {
+				break;
+			}
+		}
+		return i;
+	}
 };
 
 
 struct HEADER 
 {
-	char name[NAME_LEN];
+	fixed_string<NAME_LEN> name;
 	char comment[COMMENT_LEN];
 	char name_eng[NAME_LEN];
 	char comment_eng[COMMENT_LEN];
@@ -26,7 +89,6 @@ struct HEADER
 
     HEADER()
     {
-        memset(name, 0, NAME_LEN);
         memset(comment, 0, COMMENT_LEN);
         memset(name_eng, 0, NAME_LEN);
         memset(comment_eng, 0, COMMENT_LEN);
