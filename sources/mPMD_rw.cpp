@@ -233,8 +233,7 @@ int load_PMD(MODEL *model, const char file_name[])
 		model->eng_support = 0;
 		for(i=0; i<10; i++){
 			j=i+1;
-			sprintf(model->toon[i], "toon%02d.bmp\0", j);
-			sprintf(model->toon_path[i], "toon%02d.bmp\0", j);
+			sprintf(model->toon[i].data(), "toon%02d.bmp\0", j);
 		}
 		model->rbody_count = 0;
 		model->rbody = NULL;
@@ -267,22 +266,8 @@ int load_PMD(MODEL *model, const char file_name[])
 	}
 	
 	for(i=0; i<10; i++){
-		FREAD(model->toon[i], 1, 100, pmd);
-		strncpy(str, file_name, PATH_LEN);
-		char_p = strrchr(str, '/');
-		if(char_p!=NULL){
-			char_p++;
-			*char_p = '\0';
-		}else{
-			*str = '\0';
-		}
-		sprintf(model->toon_path[i],"%s%s\0", str, model->toon[i]);
-		#ifdef DEBUG
-		printf("%s%s\n", str, model->toon[i]);
-		#endif
+		model->toon[i].fread<100>(pmd);
 	}
-	
-	
 	
 	FREAD(&model->rbody_count, 4,  1, pmd);
 	#ifdef DEBUG
@@ -506,7 +491,7 @@ int write_PMD(MODEL *model, const char file_name[])
 	#endif
 	
 	for(i=0; i<10; i++){
-		fwrite(model->toon[i], 1, 100, pmd);
+		fwrite(model->toon[i].c_str(), 1, 100, pmd);
 	}
 	
 	fwrite(&model->rbody_count, 4,  1, pmd);
@@ -786,11 +771,7 @@ int create_PMD(MODEL *model)
 	model->eng_support = 0;
 	
 	for(int i=0; i<10; i++){
-		int j=i+1;
-		//*model->toon[i] = '\0';
-		//*model->toon_path[i] = '\0';
-		sprintf(model->toon[i], "toon%02d.bmp\0", j);
-		sprintf(model->toon_path[i], "toon%02d.bmp\0", j);
+		sprintf(model->toon[i].data(), "toon%02d.bmp\0", i+1);
 	}
 	
 	model->rbody_count = 0;
@@ -822,12 +803,7 @@ int delete_PMD(MODEL *model)
 	model->eng_support = 0;
 	
 	for(int i=0; i<10; i++){
-		int j=i+1;
-		/**model->toon[i] = '\0';
-		*model->toon_path[i] = '\0';
-		*/
-		sprintf(model->toon[i], "toon%02d.bmp\0", j);
-		sprintf(model->toon_path[i], "toon%02d.bmp\0", j);
+		sprintf(model->toon[i].data(), "toon%02d.bmp\0", i+1);
 	}
 	
 	FREE(model->rbody);
@@ -872,8 +848,7 @@ int copy_PMD(MODEL *out, MODEL *model)
 		printf("•\Ž¦ƒ{[ƒ“\n");
 	#endif
 	
-	memcpy(out->toon, model->toon, sizeof(char)*10*100);
-	memcpy(out->toon_path, model->toon_path, sizeof(char)*10*NAME_LEN);
+	out->toon=model->toon;
 	
 	//‰p–¼
 	out->eng_support = model->eng_support;

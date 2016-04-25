@@ -66,14 +66,11 @@ class MaterialSelector:
         if m.mirr_rgb: x.mirr_col=m.mirr_rgb
         if m.toon:
             toon = TOON()
-            toon.path = PMCA.getToonPath(0)
             toon.name = PMCA.getToon(0)
             tmp = m.toon.split(' ')
             tmp[0] = int(tmp[0])
-            toon.path[tmp[0]] = ('toon/' + tmp[1]).encode('cp932','replace')
             toon.name[tmp[0]] = tmp[1].encode('cp932','replace')                                              
             PMCA.setToon(0, toon.name)
-            PMCA.setToonPath(0, toon.path)
             x.toon = tmp[0]
 
     def ApplyToPmd(self, num):

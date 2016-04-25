@@ -297,27 +297,6 @@ static PyObject* getToon(PyObject *self, PyObject *args)
 							model->toon[9]);
 }
 
-static PyObject* getToonPath(PyObject *self, PyObject *args)
-{
-	int num;
-	MODEL *model;
-	if(!PyArg_ParseTuple(args, "i", &num))return NULL;
-	model = &g_model[num];
-	//printf("%s\n", model->toon_path[0]);
-	return Py_BuildValue("[y,y,y,y,y,"
-							"y,y,y,y,y]",
-							model->toon_path[0],
-							model->toon_path[1],
-							model->toon_path[2],
-							model->toon_path[3],
-							model->toon_path[4],
-							model->toon_path[5],
-							model->toon_path[6],
-							model->toon_path[7],
-							model->toon_path[8],
-							model->toon_path[9]);
-}
-
 static PyObject* getRb(PyObject *self, PyObject *args)
 {
 	int num, i;
@@ -728,41 +707,18 @@ static PyObject* setToon(PyObject *self, PyObject *args)
 							&model->toon[9]*/
 							&tmp))return NULL;
 	model = &g_model[num];
+	/*
 	for(i=0; i<10; i++){
 		p[i] = model->toon[i];
 	}
-	
 	PyList_to_Array_Str(p, tmp, 10, 100);
+	*/
 	/*
 	for(i=0; i<10; i++){
 		strncpy(model->toon[i], p[i], 100);
 		//printf("%s %s\n",model->toon[i], p[i]);
 	}*/
 	
-	return Py_BuildValue("i", 0);
-}
-
-static PyObject* setToonPath(PyObject *self, PyObject *args)
-{
-	int num, i;
-	MODEL *model;
-	PyObject *tmp;
-	char *p[10];
-	if(!PyArg_ParseTuple(args, "iO",
-							&num,
-							&tmp))return NULL;
-	model = &g_model[num];
-	for(i=0; i<10; i++){
-		p[i] = model->toon_path[i];
-	}
-	
-	PyList_to_Array_Str(p, tmp, 10, PATH_LEN);
-	/*
-	for(i=0; i<10; i++){
-		strncpy(model->toon_path[i], p[i], PATH_LEN);
-		//printf("%s %s\n",model->toon[i], p[i]);
-	}
-	*/
 	return Py_BuildValue("i", 0);
 }
 
@@ -1168,8 +1124,6 @@ static PyMethodDef PMCAMethods[] = {
 	"Get Bone_disp of PMD"},
 	{"getToon", getToon, METH_VARARGS,
 	"Get Toon textures of PMD"},
-	{"getToonPath", getToonPath, METH_VARARGS,
-	"Get Toon textures path of PMD"},
 	{"getRb", getRb, METH_VARARGS,
 	"Get Rigid bodies of PMD"},
 	{"getJoint", getJoint, METH_VARARGS,
@@ -1197,8 +1151,6 @@ static PyMethodDef PMCAMethods[] = {
 	"Set Bone_disp of PMD"},
 	{"setToon", setToon, METH_VARARGS,
 	"Set Toon textures of PMD"},
-	{"setToonPath", setToonPath, METH_VARARGS,
-	"Set Toon textures path of PMD"},
 	{"setRb", setRb, METH_VARARGS,
 	"Set Rigid bodies of PMD"},
 	{"setJoint", setJoint, METH_VARARGS,

@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <array>
 #include <algorithm>
 #define USHORT_MAX 65535
 
@@ -164,11 +165,12 @@ struct MODEL
 
 	unsigned int bone_disp_count;
 	BONE_DISP *bone_disp;
+
 	//extention
 	unsigned char eng_support;
-	//ENGLISH eng;
-	char toon[10][100];
-	char toon_path[10][PATH_LEN];
+
+	std::array<fixed_string<100>, 10> toon;
+
 	unsigned int rbody_count;
 	RIGID_BODY *rbody;
 	unsigned int joint_count;
