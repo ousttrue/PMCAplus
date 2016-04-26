@@ -64,6 +64,7 @@ class MaterialSelector:
         if m.diff_rgb: x.diff_col=m.diff_rgb
         if m.spec_rgb: x.spec_col=m.spec_rgb
         if m.mirr_rgb: x.mirr_col=m.mirr_rgb
+        '''
         if m.toon:
             toon = TOON()
             toon.name = PMCA.getToon(0)
@@ -72,6 +73,7 @@ class MaterialSelector:
             toon.name[tmp[0]] = tmp[1].encode('cp932','replace')                                              
             PMCA.setToon(0, toon.name)
             x.toon = tmp[0]
+        '''
 
     def ApplyToPmd(self, num):
         '''

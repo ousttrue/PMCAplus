@@ -1,5 +1,6 @@
 # distutils: language = c++
 # distutils: sources = [mPMD.cpp, mList.cpp, mPMD_rw.cpp, mPMD_edit.cpp]
+# cython: c_string_type=bytes, c_string_encoding=cp932
 
 from libcpp.string cimport string
 from libcpp.vector cimport vector
