@@ -1,69 +1,63 @@
 PMCA sample1
 PMCAv0.0.6 sample1
 
-
 PARTS
 [Name] セーラー服上半身01(スカート,半袖)
-[Path] ./parts/ub_mt_slr001_s_sk.pmd
+[Path] assets\basic\parts\ub_mt_slr001_s_sk.pmd
 [Child]
-[Name] 顔f01
-[Path] ./parts/head_mt001_1.pmd
-[Child]
-[Name] 前髪01
-[Path] ./parts/hair_mf1_mt001.pmd
-[Child]
-[Name] 後髪02
-[Path] ./parts/hair_mr1_mt002.pmd
-[Child]
-None
-[Parent]
-[Parent]
-None
-None
-[Parent]
-[Name] 腕01b
-[Path] ./parts/arm1_mt001b.pmd
-[Child]
-None
-[Parent]
-[Name] スカート下半身01(スカート)
-[Path] ./parts/lb_sk_mt001.pmd
-[Child]
-[Name] 靴_ローポリ
-[Path] ./parts/shoes1_mt01.pmd
-[Child]
-None
-[Parent]
-[Parent]
-None
+  [Name] 顔f01
+  [Path] assets\basic\parts\head_mt001_1.pmd
+  [Child]
+    [Name] 前髪01
+    [Path] assets\basic\parts\hair_mf1_mt001.pmd
+    [Child]
+      [Name] 後髪02
+      [Path] assets\basic\parts\hair_mr1_mt002.pmd
+      [Child]
+      [Parent]
+    [Parent]
+    None
+    None
+  [Parent]
+  [Name] 腕01b
+  [Path] assets\basic\parts\arm1_mt001b.pmd
+  [Child]
+    None
+  [Parent]
+  [Name] スカート下半身01(スカート)
+  [Path] assets\basic\parts\lb_sk_mt001.pmd
+  [Child]
+    [Name] 靴_ローポリ
+    [Path] assets\basic\parts\shoes1_mt01.pmd
+    [Child]
+    [Parent]
+  [Parent]
+  None
 [Parent]
 MATERIAL
-[Name] mt_shoes1
-[Sel] 外履き
-NEXT
-[Name] mt_sock1
-[Sel] 白
-NEXT
-[Name] mt_hair
-[Sel] 青色01 
+[Name] mt_ribbon1
+[Sel] 赤
 NEXT
 [Name] mt_slr1_s
 [Sel] 紺色
 NEXT
-[Name] mt_ribbon1
-[Sel] 赤
-NEXT
-[Name] mt_slr1_l
-[Sel] 黒地白襟
-NEXT
 [Name] mt_eye
 [Sel] 青
+NEXT
+[Name] mt_hair
+[Sel] 青色01
+NEXT
+[Name] mt_skirt1
+[Sel] 紺色
 NEXT
 [Name] mt_pants
 [Sel] ブルマ
 NEXT
-[Name] mt_skirt1
-[Sel] 紺色
+[Name] mt_sock1
+[Sel] 白
+NEXT
+[Name] mt_shoes1
+[Sel] 外履き
 NEXT
 TRANSFORM
 [Scale] 1.000000

@@ -8,7 +8,11 @@
 #include "mPMD.h"
 
 
-int translate(MODEL *model, LIST *list, short mode)
+int translate(MODEL *model, short mode
+	, int b_count, char **b, char **be
+	, int s_count, char **s, char **se
+	, int d_count, char **d, char **de
+	)
 {
 	int i,j;
 	char str[NAME_LEN], *p;
@@ -29,9 +33,9 @@ int translate(MODEL *model, LIST *list, short mode)
 		
 		// bone
 		for(i=0; i<model->bone.size(); i++){
-			for(j=0; j<list->bone.size(); j++){
-				if(model->bone[i].name==list->bone[j].name){
-					model->bone[i].name_eng=list->bone[j].english;
+			for(j=0; j<b_count; j++){
+				if(model->bone[i].name==b[j]){
+					model->bone[i].name_eng=be[j];
 					j = -1;
 					break;
 				}
@@ -46,9 +50,9 @@ int translate(MODEL *model, LIST *list, short mode)
 		
 		// skin
 		for(i=1; i<model->skin.size(); i++){
-			for(j=1; j<list->skin.size(); j++){
-				if(model->skin[i].name==list->skin[j].name){
-					model->skin[i].name_eng=list->skin[j].english;
+			for(j=1; j<s_count; j++){
+				if(model->skin[i].name==s[j]){
+					model->skin[i].name_eng=se[j];
 					j = -1;
 					break;
 				}
@@ -61,9 +65,9 @@ int translate(MODEL *model, LIST *list, short mode)
 		// disp
 		for(i=0; i<model->bone_group.size(); i++){		
 			j = 0;
-			for(j=0; j<list->disp.size(); j++){
-				if(model->bone_group[i].name==list->disp[j].name){
-					model->bone_group[i].name_eng=list->disp[j].english;
+			for(j=0; j<d_count; j++){
+				if(model->bone_group[i].name==d[j]){
+					model->bone_group[i].name_eng=de[j];
 					j = -1;
 					break;
 				}
@@ -78,9 +82,9 @@ int translate(MODEL *model, LIST *list, short mode)
 		// 	モード2 日本語名を英語名に(ボーン、スキンのみ)
 
 		for(i=0; i<model->bone.size(); i++){
-			for(j=0; j<list->bone.size(); j++){
-				if(model->bone[i].name==list->bone[j].name){
-					model->bone[i].name=list->bone[j].english;
+			for(j=0; j<b_count; j++){
+				if(model->bone[i].name==b[j]){
+					model->bone[i].name=be[j];
 					j = -1;
 					break;
 				}
@@ -90,9 +94,9 @@ int translate(MODEL *model, LIST *list, short mode)
 			}
 		}
 		for(i=0; i<model->skin.size(); i++){
-			for(j=0; j<list->skin.size(); j++){
-				if(model->skin[i].name==list->skin[j].name){
-					model->skin[i].name=list->skin[j].english;
+			for(j=0; j<s_count; j++){
+				if(model->skin[i].name==s[j]){
+					model->skin[i].name=se[j];
 					j = -1;
 					break;
 				}
@@ -105,18 +109,18 @@ int translate(MODEL *model, LIST *list, short mode)
 	else if(mode == 3){
 		// 	モード3 英語名を日本語名に(ボーン、スキンのみ)
 		for(i=0; i<model->bone.size(); i++){
-			for(j=0; j<list->bone.size(); j++){
-				if(model->bone[i].name==list->bone[j].english){
-					model->bone[i].name=list->bone[j].name;
+			for(j=0; j<b_count; j++){
+				if(model->bone[i].name==be[j]){
+					model->bone[i].name=b[j];
 					j = -1;
 					break;
 				}
 			}
 		}
 		for(i=0; i<model->skin.size(); i++){
-			for(j=0; j<list->skin.size(); j++){
-				if(model->skin[i].name==list->skin[j].english){
-					model->skin[i].name=list->skin[j].name.c_str();
+			for(j=0; j<s_count; j++){
+				if(model->skin[i].name==se[j]){
+					model->skin[i].name=s[j];
 					j = -1;
 					break;
 				}
@@ -129,7 +133,68 @@ int translate(MODEL *model, LIST *list, short mode)
 	return 0;
 }
 
-int sort_bone(MODEL *model, LIST *list)
+static int update_bone_index(MODEL *model, int index[])
+{
+	//頂点のボーン番号を書き換え
+	{
+		std::vector<unsigned short[2]> tmp_vt(model->vt.size());
+		for (size_t i = 0; i < model->vt.size(); i++) {
+			tmp_vt[i][0] = model->vt[i].bone_num0;
+			tmp_vt[i][1] = model->vt[i].bone_num1;
+		}
+		for (size_t i = 0; i < model->vt.size(); i++) {
+			model->vt[i].bone_num0 = index[tmp_vt[i][0]];
+			model->vt[i].bone_num1 = index[tmp_vt[i][1]];
+		}
+	}
+
+	//IKリストのボーン番号を書き換え
+	{
+		auto tmp_ik = model->IK_list;
+		for (size_t i = 0; i < model->IK_list.size(); i++) {
+			model->IK_list[i].IKBone_index = index[tmp_ik[i].IKBone_index];
+			model->IK_list[i].IKTBone_index = index[tmp_ik[i].IKTBone_index];
+			for (size_t j = 0; j < tmp_ik[i].IKCBone_index.size(); j++) {
+				model->IK_list[i].IKCBone_index[j] = index[tmp_ik[i].IKCBone_index[j]];
+			}
+		}
+	}
+
+	//表示ボーン番号を書き換え
+	{
+		std::vector<unsigned short> tmp_disp(model->bone_disp.size());
+		for (size_t i = 0; i < model->bone_disp.size(); i++) {
+			tmp_disp[i] = model->bone_disp[i].index;
+		}
+		for (size_t i = 0; i < model->bone_disp.size(); i++) {
+			model->bone_disp[i].index = index[tmp_disp[i]];
+		}
+	}
+
+	//剛体ボーン番号を書き換え
+	{
+		std::vector<unsigned short> tmp_rb(model->rbody.size());
+		for (size_t i = 0; i < model->rbody.size(); i++) {
+			tmp_rb[i] = model->rbody[i].bone;
+		}
+		for (size_t i = 0; i < model->rbody.size(); i++) {
+			if (tmp_rb[i] == USHORT_MAX) {
+				model->rbody[i].bone = USHORT_MAX;
+			}
+			else {
+				model->rbody[i].bone = index[tmp_rb[i]];
+			}
+		}
+	}
+
+	return 0;
+}
+
+int sort_bone(MODEL *model
+	, int b_count, char **b, char **be
+	, int s_count, char **s, char **se
+	, int d_count, char **d, char **de
+	)
 {
 	int i, j;
 	int tmp;
@@ -138,8 +203,8 @@ int sort_bone(MODEL *model, LIST *list)
 		
 	for(i=0; i<model->bone.size(); i++){
 		index[i] = -1;	//リストに無いボーンには-1
-		for(j=0; j<list->bone.size(); j++){
-			if(model->bone[i].name==list->bone[j].name){
+		for(j=0; j<b_count; j++){
+			if(model->bone[i].name==b[j]){
 				index[i] = j;	//indexにリスト中の番号を代入
 				break;
 			}
@@ -147,7 +212,7 @@ int sort_bone(MODEL *model, LIST *list)
 	}
 	
 	tmp = 0;
-	for(i=0; i<list->bone.size(); i++){
+	for(i=0; i<b_count; i++){
 		for(j=0; j<model->bone.size(); j++){
 			if(index[j] == i){	//indexにiが存在したら
 				//printf("index[%d]に%dが存在します\n", j, i);
@@ -234,72 +299,19 @@ int sort_bone(MODEL *model, LIST *list)
 	return 0;
 }
 
-int update_bone_index(MODEL *model,int index[])
-{
-	//頂点のボーン番号を書き換え
-	{
-		std::vector<unsigned short[2]> tmp_vt(model->vt.size());
-		for (size_t i = 0; i < model->vt.size(); i++) {
-			tmp_vt[i][0] = model->vt[i].bone_num0;
-			tmp_vt[i][1] = model->vt[i].bone_num1;
-		}
-		for (size_t i = 0; i < model->vt.size(); i++) {
-			model->vt[i].bone_num0 = index[tmp_vt[i][0]];
-			model->vt[i].bone_num1 = index[tmp_vt[i][1]];
-		}
-	}
-	
-	//IKリストのボーン番号を書き換え
-	{
-		auto tmp_ik = model->IK_list;
-		for (size_t i = 0; i < model->IK_list.size(); i++) {
-			model->IK_list[i].IKBone_index = index[tmp_ik[i].IKBone_index];
-			model->IK_list[i].IKTBone_index = index[tmp_ik[i].IKTBone_index];
-			for (size_t j = 0; j < tmp_ik[i].IKCBone_index.size(); j++) {
-				model->IK_list[i].IKCBone_index[j] = index[tmp_ik[i].IKCBone_index[j]];
-			}
-		}
-	}
-	
-	//表示ボーン番号を書き換え
-	{
-		std::vector<unsigned short> tmp_disp(model->bone_disp.size());
-		for (size_t i = 0; i < model->bone_disp.size(); i++) {
-			tmp_disp[i] = model->bone_disp[i].index;
-		}
-		for (size_t i = 0; i < model->bone_disp.size(); i++) {
-			model->bone_disp[i].index = index[tmp_disp[i]];
-		}
-	}
-
-	//剛体ボーン番号を書き換え
-	{
-		std::vector<unsigned short> tmp_rb(model->rbody.size());
-		for (size_t i = 0; i < model->rbody.size(); i++) {
-			tmp_rb[i] = model->rbody[i].bone;
-		}
-		for (size_t i = 0; i < model->rbody.size(); i++) {
-			if (tmp_rb[i] == USHORT_MAX) {
-				model->rbody[i].bone = USHORT_MAX;
-			}
-			else {
-				model->rbody[i].bone = index[tmp_rb[i]];
-			}
-		}
-	}
-	
-	return 0;
-}
-
-int sort_skin(MODEL *model, LIST *list)
+int sort_skin(MODEL *model
+	, int b_count, char **b, char **be
+	, int s_count, char **s, char **se
+	, int d_count, char **d, char **de
+	)
 {
 	std::vector<int> index(model->skin.size());
 	std::vector<SKIN> skin(model->skin.size());
 	
 	for(size_t i=0; i<model->skin.size(); i++){
 		index[i] = -1;	//リストに無い表情には-1
-		for(size_t j=0; j<list->skin.size(); j++){
-			if(model->skin[i].name==list->skin[j].name){
+		for(size_t j=0; j<s_count; j++){
+			if(model->skin[i].name==s[j]){
 				index[i] = j;	//indexにリスト中の番号を代入
 				break;
 			}
@@ -307,7 +319,7 @@ int sort_skin(MODEL *model, LIST *list)
 	}	
 
 	int tmp = 0;
-	for(size_t i=0; i<list->skin.size(); i++){
+	for(size_t i=0; i<s_count; i++){
 		size_t j = 0;
 		for(; j<model->skin.size(); j++){
 			if(index[j] == i){	//indexにiが存在したら
@@ -348,7 +360,11 @@ int sort_skin(MODEL *model, LIST *list)
 	return 0;
 }
 
-int sort_disp(MODEL *model, LIST *list)
+int sort_disp(MODEL *model
+	, int b_count, char **b, char **be
+	, int s_count, char **s, char **se
+	, int d_count, char **d, char **de
+	)
 {
 	std::vector<int> index(model->bone_group.size());
 	std::vector<BONE_GROUP> bone_group(model->bone_group.size());
@@ -356,8 +372,8 @@ int sort_disp(MODEL *model, LIST *list)
 	for(size_t i=0; i<model->bone_group.size(); i++){
 		index[i] = -1;	//リストに無い枠には-1
 		auto tmpg = model->bone_group[i];
-		for(size_t j=0; j<list->disp.size(); j++){
-			if(tmpg.name==list->disp[j].name){
+		for(size_t j=0; j<d_count; j++){
+			if(tmpg.name==d[j]){
 				index[i] = j;	//indexにリスト中の番号を代入
 				break;
 			}
@@ -366,7 +382,7 @@ int sort_disp(MODEL *model, LIST *list)
 
 	{
 		int tmp = 0;
-		for (size_t i = 0; i < list->disp.size(); i++) {
+		for (size_t i = 0; i < d_count; i++) {
 			size_t j = 0;
 			for (; j < model->bone_group.size(); j++) {
 				if (index[j] == i) {	//indexにiが存在したら

@@ -1,13 +1,29 @@
 #pragma once
 #include "mPMD.h"
-#include "mList.h"
 
-int translate(MODEL *model, LIST *list, short mode);
 
-int sort_bone(MODEL *model, LIST *list);
-int update_bone_index(MODEL *model,int index[]);
-int sort_skin(MODEL *model, LIST *list);
-int sort_disp(MODEL *model, LIST *list);
+int translate(MODEL *model, short mode
+	, int b_count, char **b, char **be
+	, int s_count, char **s, char **se
+	, int d_count, char **d, char **de
+	);
+
+int sort_bone(MODEL *model
+	, int b_count, char **b, char **be
+	, int s_count, char **s, char **se
+	, int d_count, char **d, char **de
+	);
+//int update_bone_index(MODEL *model,int index[]);
+int sort_skin(MODEL *model
+	, int b_count, char **b, char **be
+	, int s_count, char **s, char **se
+	, int d_count, char **d, char **de
+	);
+int sort_disp(MODEL *model
+	, int b_count, char **b, char **be
+	, int s_count, char **s, char **se
+	, int d_count, char **d, char **de
+	);
 int rename_tail(MODEL *model);
 
 

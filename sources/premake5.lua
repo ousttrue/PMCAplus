@@ -53,8 +53,6 @@ do
         --"WinMain" 
     }
     files { 
-        "mList.h",
-        "mList.cpp",
         "mPMD.h",
         "mPMD.cpp",
         "mPMD_edit.cpp",

@@ -117,7 +117,7 @@ class PyPMCA:
         if self.update_level==0:
             logger.info('Parts.Build')
             assembler=Assembler()
-            assembler.assemble(self.parts_tree.root)
+            assembler.assemble(self.parts_tree.root, self.LIST)
             PMCA.Copy_PMD(0, 1)
             self.materials.replace()
             PMCA.Copy_PMD(0, 2)
@@ -146,8 +146,7 @@ class PyPMCA:
         '''
 
         with open('./assets/list.txt', 'r', encoding = 'utf-8-sig') as fp:
-            LIST = load_list(fp)
-            PMCA.Set_List(len(LIST['b'][0]), LIST['b'][0], LIST['b'][1], len(LIST['s'][0]), LIST['s'][0], LIST['s'][1], len(LIST['g'][0]), LIST['g'][0], LIST['g'][1])   
+            self.LIST = load_list(fp)
             logger.info('load list.txt')
 
         for x in os.listdir('./assets/'):

@@ -6,7 +6,7 @@
 #define PMCA_MODULE
 #define MODEL_COUNT 16
 MODEL g_model[MODEL_COUNT];
-LIST list;
+
 static PyObject *PMCAError;
 
 //int* zero;
@@ -14,6 +14,33 @@ static PyObject *PMCAError;
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+	static PyObject* Set_List(PyObject *self, PyObject *args)
+	{
+		PyObject *bn, *bne, *sn, *sne, *gn, *gne;
+		int bone_count;
+		int skin_count;
+		int disp_count;
+		if (!PyArg_ParseTuple(args, "iOOiOOiOO",
+			&bone_count, &bn, &bne,
+			&skin_count, &sn, &sne,
+			&disp_count, &gn, &gne))return NULL;
+
+		// ボーン
+		for (int i = 0; i < bone_count; i++) {
+			char *p = NULL;
+			PyObject *tmp;
+			Py_ssize_t len = NAME_LEN;
+
+			tmp = PyList_GetItem(bn, i);
+			PyBytes_AsStringAndSize(tmp, &p, &len);
+
+			tmp = PyList_GetItem(bne, i);
+			PyBytes_AsStringAndSize(tmp, &p, &len);
+		}
+	}
+
+	/*******************************************************************************/
 
 /*データ変換Utils*/
 PyObject* Array_to_PyList_UShort(const unsigned short* input, int count)
@@ -769,72 +796,6 @@ static PyObject* setJoint(PyObject *self, PyObject *args)
 	return Py_BuildValue("i", 0);
 }
 /*******************************************************************************/
-static PyObject* Set_List(PyObject *self, PyObject *args)
-{
-	PyObject *bn, *bne, *sn, *sne, *gn, *gne;
-	int bone_count;
-	int skin_count;
-	int disp_count;
-	if (!PyArg_ParseTuple(args, "iOOiOOiOO",
-		&bone_count, &bn, &bne,
-		&skin_count, &sn, &sne,
-		&disp_count, &gn, &gne))return NULL;
-
-	list.clear();
-
-
-	// ボーン
-	for (int i = 0; i < bone_count; i++) {
-		list.bone.push_back(NameWithEnglish());
-		char *p = NULL;
-		PyObject *tmp;
-		Py_ssize_t len = NAME_LEN;
-
-		tmp = PyList_GetItem(bn, i);
-		PyBytes_AsStringAndSize(tmp, &p, &len);
-		list.bone.back().name = p;
-
-		tmp = PyList_GetItem(bne, i);
-		PyBytes_AsStringAndSize(tmp, &p, &len);
-		list.bone.back().english = p;
-	}
-
-	// 表情
-	for (int i = 0; i < skin_count; i++) {
-		list.skin.push_back(NameWithEnglish());
-		char *p = NULL;
-		PyObject *tmp;
-		Py_ssize_t len = NAME_LEN;
-
-		tmp = PyList_GetItem(sn, i);
-		PyBytes_AsStringAndSize(tmp, &p, &len);
-		list.skin.back().name = p;
-
-		tmp = PyList_GetItem(sne, i);
-		PyBytes_AsStringAndSize(tmp, &p, &len);
-		list.skin.back().english = p;
-	}
-
-	// ボーングループ
-	for (int i = 0; i < disp_count; i++) {
-		list.disp.push_back(NameWithEnglish());
-		char *p = NULL;
-		PyObject *tmp;
-		Py_ssize_t len = NAME_LEN;
-
-		tmp = PyList_GetItem(gn, i);
-		PyBytes_AsStringAndSize(tmp, &p, &len);
-		list.disp.back().name = p;
-
-		tmp = PyList_GetItem(gne, i);
-		PyBytes_AsStringAndSize(tmp, &p, &len);
-		list.disp.back().english = p;
-	}
-
-	return Py_BuildValue("i", 0);
-}
-
-/*******************************************************************************/
 
 static PyObject* Set_Name_Comment(PyObject *self, PyObject *args)
 {
@@ -924,19 +885,70 @@ static PyObject* Marge_PMD(PyObject *self, PyObject *args)
 static PyObject* Sort_PMD(PyObject *self, PyObject *args)
 {
 	int num;
-	if(!PyArg_ParseTuple(args, "i", &num))return NULL;
-	
+	PyObject *bn, *bne, *sn, *sne, *gn, *gne;
+	int bone_count;
+	int skin_count;
+	int disp_count;
+	if (!PyArg_ParseTuple(args, "iiOOiOOiOO", &num,
+		&bone_count, &bn, &bne,
+		&skin_count, &sn, &sne,
+		&disp_count, &gn, &gne))return NULL;
+
 	rename_tail(&g_model[num]);
 	auto ret = marge_bone(&g_model[num]);
-	ret = sort_bone(&g_model[num], &list);
-	ret += sort_skin(&g_model[num], &list);
-	ret += sort_disp(&g_model[num], &list);
+
+	std::vector<char*> b(bone_count);
+	std::vector<char*> be(bone_count);
+	for (int i = 0; i < bone_count; i++) {
+		PyBytes_AsStringAndSize(PyList_GetItem(bn, i), &b[i], NULL);
+		PyBytes_AsStringAndSize(PyList_GetItem(bne, i), &be[i], NULL);
+	}
+	auto pb = bone_count ? &b[0] : NULL;
+	auto pbe = bone_count ? &be[0] : NULL;
+
+	std::vector<char*> s(skin_count);
+	std::vector<char*> se(skin_count);
+	for (int i = 0; i < skin_count; i++) {
+		PyBytes_AsStringAndSize(PyList_GetItem(sn, i), &s[i], NULL);
+		PyBytes_AsStringAndSize(PyList_GetItem(sne, i), &se[i], NULL);
+	}
+	auto ps = skin_count ? &s[0] : NULL;
+	auto pse = skin_count ? &se[0] : NULL;
+
+	std::vector<char*> d(disp_count);
+	std::vector<char*> de(disp_count);
+	for (int i = 0; i < disp_count; i++) {
+		PyBytes_AsStringAndSize(PyList_GetItem(gn, i), &d[i], NULL);
+		PyBytes_AsStringAndSize(PyList_GetItem(gne, i), &de[i], NULL);
+	}
+	auto pd = disp_count ? &d[0] : NULL;
+	auto pde = disp_count ? &de[0] : NULL;
+
+	ret = sort_bone(&g_model[num]
+		, bone_count, pb, pbe
+		, skin_count, ps, pse
+		, disp_count, pd, pde
+		);
+	ret += sort_skin(&g_model[num]
+		, bone_count, pb, pbe
+		, skin_count, ps, pse
+		, disp_count, pd, pde
+		);
+	ret += sort_disp(&g_model[num]
+		, bone_count, pb, pbe
+		, skin_count, ps, pse
+		, disp_count, pd, pde
+		);
 		
 	//-0ボーン削除
 	if(g_model[num].bone[g_model[num].bone.size()-1].name=="-0"){
 		g_model[num].bone.resize(g_model[num].bone.size()-1);
 	}
-	translate(&g_model[num], &list, 1);
+	translate(&g_model[num], 1
+		, bone_count, pb, pbe
+		, skin_count, ps, pse
+		, disp_count, pd, pde
+		);
 	return Py_BuildValue("i", ret);
 }
 /*************************************************************************************************/
@@ -1099,9 +1111,6 @@ static PyMethodDef PMCAMethods[] = {
 	"Set Rigid bodies of PMD"},
 	{"setJoint", setJoint, METH_VARARGS,
 	"Set Joints of PMD"},
-	/***********************************************************************/
-	{"Set_List", Set_List, METH_VARARGS,
-	"Set List of bone or things"},
 	/***********************************************************************/
 	{"Set_Name_Comment", Set_Name_Comment, METH_VARARGS,
 	"Set Name and Comment"},
