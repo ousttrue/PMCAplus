@@ -173,4 +173,7 @@ struct MODEL
     MODEL()
         : eng_support(0)
     {}
+
+	bool load(const std::string &path);
+	bool save(const std::string &path)const;
 };

@@ -659,11 +659,8 @@ static PyObject* setBone_disp(PyObject *self, PyObject *args)
 
 static PyObject* setToon(PyObject *self, PyObject *args)
 {
-	int num, i;
-	MODEL *model;
+	int num;
 	PyObject *tmp;
-	char *p[10];
-	
 	if(!PyArg_ParseTuple(args, "iO",
 							&num,/*
 							&model->toon[0],
@@ -677,6 +674,7 @@ static PyObject* setToon(PyObject *self, PyObject *args)
 							&model->toon[8],
 							&model->toon[9]*/
 							&tmp))return NULL;
+	MODEL *model;
 	model = &g_model[num];
 	/*
 	for(i=0; i<10; i++){
@@ -869,7 +867,7 @@ static PyObject* Load_PMD(PyObject *self, PyObject *args)
 	int num;
 	if(!PyArg_ParseTuple(args, "iy", &num, &str))return NULL;
 	g_model[num]=MODEL();
-	auto ret = load_PMD(&g_model[num], str);
+	auto ret = g_model[num].load(str);
 	return Py_BuildValue("i", ret);
 }
 
@@ -877,9 +875,8 @@ static PyObject* Write_PMD(PyObject *self, PyObject *args)
 {
 	const char *str;
 	int num;
-	int ret;
 	if(!PyArg_ParseTuple(args, "iy", &num, &str))return NULL;
-	ret = write_PMD(&g_model[num], str);
+	auto ret = g_model[num].save(str);
 	return Py_BuildValue("i", ret);
 }
 
