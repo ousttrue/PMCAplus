@@ -9,33 +9,42 @@ from cpython cimport array
 cdef array_slice(unsigned short *p, offset, count):
     return [p[i] for i in range(offset, offset+count)]
 
+
 ##############################################################################
 # mPMD
 ##############################################################################
+cdef extern from "fixed_string.h":
+    cdef cppclass fixed_string100:
+        const char* c_str();
+    cdef cppclass fixed_string128:
+        const char* c_str();
+    cdef cppclass fixed_string256:
+        const char* c_str();
+
+
 cdef extern from "mPMD.h":
     enum:
-            NAME_LEN=128
-            COMMENT_LEN=256
-            PATH_LEN=256
+        NAME_LEN=128
+        COMMENT_LEN=256
+        PATH_LEN=256
 
-    struct HEADER:
-        char magic[4];
-        float version;
-        char name[NAME_LEN];
-        char comment[COMMENT_LEN];
-        char name_eng[NAME_LEN];
-        char comment_eng[COMMENT_LEN];
-        char path[PATH_LEN];
+    cdef cppclass HEADER:
+        fixed_string128 name;
+        fixed_string256 comment;
+        fixed_string128 name_eng;
+        fixed_string256 comment_eng;
+        fixed_string256 path;
 
-    struct VERTEX:
+    cdef cppclass VERTEX:
         float loc[3];
         float nor[3];
         float uv[2];
-        unsigned short bone_num[2];
+        unsigned short bone_num0;
+        unsigned short bone_num1;
         unsigned char bone_weight;
         unsigned char edge_flag;
 
-    struct MATERIAL:
+    cdef cppclass MATERIAL:
         float diffuse[3];
         float alpha;
         float spec;
@@ -44,92 +53,79 @@ cdef extern from "mPMD.h":
         unsigned char toon_index;
         unsigned char edge_flag;
         unsigned int vt_index_count;
-        char tex[NAME_LEN];
-        char sph[NAME_LEN];
-        char tex_path[PATH_LEN];
-        char sph_path[PATH_LEN];
+        fixed_string128 tex;
 
-    struct BONE:
-        char name[NAME_LEN];
-        char name_eng[NAME_LEN];
+    cdef cppclass BONE:
+        fixed_string128 name;
+        fixed_string128 name_eng;
         unsigned short PBone_index;
         unsigned short TBone_index;
         unsigned char type;
         unsigned short IKBone_index;
         float loc[3];
 
-    struct IK_LIST:
+    cdef cppclass IK_LIST:
         unsigned short IKBone_index;
         unsigned short IKTBone_index;
         unsigned short iterations;
         float weight;
         vector[unsigned short] IKCBone_index;
 
-    struct SKIN_DATA:
+    cdef cppclass SKIN_DATA:
         unsigned int index;
         float loc[3];
 
-    struct SKIN:
-        char name[NAME_LEN];
-        char name_eng[NAME_LEN];
+    cdef cppclass SKIN:
+        fixed_string128 name;
+        fixed_string128 name_eng;
         unsigned char type;
         vector[SKIN_DATA] data;
 
-    struct BONE_GROUP:
-        char name[NAME_LEN];
-        char name_eng[NAME_LEN];
+    cdef cppclass BONE_GROUP:
+        fixed_string128 name;
+        fixed_string128 name_eng;
 
-    struct BONE_DISP:
+    cdef cppclass BONE_DISP:
         unsigned short index;
         unsigned char bone_group;
 
-    struct RIGID_BODY:
-        char name[NAME_LEN];
+    cdef cppclass RIGID_BODY:
+        fixed_string128 name;
         unsigned short bone;
         unsigned char group;
         unsigned short target;
         unsigned char shape;
-        float size[3];	#w h d
+        float size[3];
         float loc[3];
-        float rot[3];	#radian
-        float property[5];	#mass damp rotdamp restitution friction
+        float rot[3];
+        float property[5];
         unsigned char type;
 
-    struct JOINT:
-        char name[NAME_LEN];
+    cdef cppclass JOINT:
+        fixed_string128 name;
         unsigned int rbody[2];
         float loc[3];
-        float rot[3];	#radian
-        float limit[12];	#lower_limit_loc upper_limit_loc lower_limit_rot upper_limit_rot
-        float spring[6];	#loc rot
+        float rot[3];
+        float limit[12];
+        float spring[6];
 
-    struct MODEL:
+    cdef cppclass MODEL:
         HEADER header;
-
         vector[VERTEX] vt;
         vector[unsigned short] vt_index;
         vector[MATERIAL] mat;
         vector[BONE] bone;
         vector[IK_LIST] IK_list;
         vector[SKIN] skin;
-
-        unsigned char skin_disp_count;
-        unsigned short *skin_index;
-        unsigned char bone_group_count;
-        #char (*bone_group)[50];
-        #char (*bone_group_eng)[50];
-        BONE_GROUP *bone_group;
-        unsigned int bone_disp_count;
-        BONE_DISP *bone_disp;
-        #extention
+        vector[unsigned short] skin_index;
+        vector[BONE_GROUP] bone_group;
+        vector[BONE_DISP] bone_disp;
         unsigned char eng_support;
-        #ENGLISH eng;
-        char toon[10][100];
-        char toon_path[10][PATH_LEN];
-        unsigned int rbody_count;
-        RIGID_BODY *rbody;
-        unsigned int joint_count;
-        JOINT *joint;
+        fixed_string100 toon[10];
+        vector[RIGID_BODY] rbody;
+        vector[JOINT] joint;
+        bool load(const string &path);
+        bool save(const string &path);
 
 
 ##############################################################################
@@ -147,18 +143,6 @@ cdef extern from "mList.h":
         vector[NameWithEnglish] disp;
         bool load(const string &dir);
         void clear();
-
-
-##############################################################################
-# mPMD_rw
-##############################################################################
-cdef extern from "mPMD_rw.h":
-    cdef int load_PMD(MODEL *model, const char *path);
-    cdef int write_PMD(MODEL *model, const char *path);
-    cdef int print_PMD(MODEL *model, const char *path);
-    cdef int create_PMD(MODEL *model);
-    cdef int delete_PMD(MODEL *model);
-    cdef int copy_PMD(MODEL *dst, MODEL *src);
 
 
 ##############################################################################
@@ -203,23 +187,24 @@ def getInfo(index):
         return
     model=g_model[index]
     return {
-            "name": model.header.name,
-            "name_eng": model.header.name_eng,
-            "comment": model.header.comment,
-            "comment_eng": model.header.comment_eng,
+            "name": model.header.name.c_str(),
+            "name_eng": model.header.name_eng.c_str(),
+            "comment": model.header.comment.c_str(),
+            "comment_eng": model.header.comment_eng.c_str(),
+            "path": model.header.path.c_str(),
             "vt_count": model.vt.size(),
             "face_count": model.vt_index.size()/3,
             "mat_count": model.mat.size(),
             "bone_count": model.bone.size(),
             "IK_count": model.IK_list.size(),
             "skin_count": model.skin.size(),
-            "bone_group_count": model.bone_group_count,
-            "bone_disp_count": model.bone_disp_count,
+            "bone_group_count": model.bone_group.size(),
+            "bone_disp_count": model.bone_disp.size(),
 
             "eng_support": model.eng_support,
-            "rb_count": model.rbody_count,
-            "joint_count": model.joint_count,
-            "skin_index": array_slice(model.skin_index, 0, model.skin_disp_count)
+            "rb_count": model.rbody.size(),
+            "joint_count": model.joint.size(),
+            "skin_index": model.skin_index,
     }
 
 def getVt(index, v_index):
@@ -231,8 +216,8 @@ def getVt(index, v_index):
             "loc": v.loc,
             "nor": v.nor,
             "uv": v.uv,
-            "bone_num1": v.bone_num[0],
-            "bone_num2": v.bone_num[1],
+            "bone_num1": v.bone_num0,
+            "bone_num2": v.bone_num1,
             "weight": v.bone_weight,
             "edge": v.edge_flag
     }
@@ -258,10 +243,7 @@ def getMat(index, m_index):
             "toon": m.toon_index,
             "edge": m.edge_flag,
             "face_count": m.vt_index_count/3,
-            "tex": m.tex,
-            "sph": m.sph,
-            "tex_path": m.tex_path,
-            "sph_path": m.sph_path
+            "tex": m.tex.c_str(),
     }
 
 def getBone(index, b_index):
@@ -270,8 +252,8 @@ def getBone(index, b_index):
     model = g_model[index];
     b=model.bone[b_index]
     return {
-            "name": b.name,
-            "name_eng": b.name_eng,
+            "name": b.name.c_str(),
+            "name_eng": b.name_eng.c_str(),
             "parent": b.PBone_index,
             "tail": b.TBone_index,
             "type": b.type,
@@ -299,8 +281,8 @@ def getSkin(index, s_index):
     model = g_model[index];
     cdef SKIN* s=&model.skin[s_index]
     return {
-            "name": s.name,
-            "name_eng": s.name_eng,
+            "name": s.name.c_str(),
+            "name_eng": s.name_eng.c_str(),
             "count": s.data.size(),
             "type": s.type
     }
@@ -321,8 +303,8 @@ def getBone_group(index, g_index):
     model = g_model[index];
     g=model.bone_group[g_index]
     return {
-            "name": g.name,
-            "name_eng": g.name_eng
+            "name": g.name.c_str(),
+            "name_eng": g.name_eng.c_str()
     }
 
 def getBone_disp(index, d_index):
@@ -339,13 +321,7 @@ def getToon(index):
     if index<0 or index>=g_model.size():
         return
     model = g_model[index];
-    return model.toon
-
-def getToonPath(index):
-    if index<0 or index>=g_model.size():
-        return
-    model = g_model[index];
-    return model.toon_path
+    #return [x.c_str() for x in model.toon]
 
 def getRb(index, rb_index):
     if index<0 or index>=g_model.size():
@@ -353,7 +329,7 @@ def getRb(index, rb_index):
     model = g_model[index];
     rb=model.rbody[rb_index]
     return {
-            "name": rb.name,
+            "name": rb.name.c_str(),
             "bone": rb.bone,
             "group": rb.group,
             "target": rb.target,
@@ -371,7 +347,7 @@ def getJoint(index, j_index):
     model = g_model[index];
     j=model.joint[j_index]
     return {
-            "name": j.name,
+            "name": j.name.c_str(),
             "rbody": j.rbody,
             "loc": j.loc,
             "rot": j.rot,
@@ -402,9 +378,6 @@ def setMat(index, m_index,
     model.mat[m_index] = mat;
 
 def setToon(index, toon):
-    pass
-
-def setToonPath(index, toon):
     pass
 
 
@@ -443,42 +416,39 @@ def Set_Name_Comment(index, name, comment, name_english, comment_english):
 
 def Init_PMD():
     g_model.resize(16)
+    cdef MODEL model;
     for i in range(g_model.size()):
-        create_PMD(&g_model[i]);
+        g_model[i]=model
 
 def Load_PMD(index, path):
     if index<0 or index>=g_model.size():
         return
-    delete_PMD(&g_model[index]);
-    return load_PMD(&g_model[index], path);
+    return g_model[index].load(path);
 
 def Write_PMD(index, path):
     if index<0 or index>=g_model.size():
         return
-    return write_PMD(&g_model[index], path);
+    return g_model[index].save(path);
 
 def Add_PMD(dst, src):
     if src<0 or src>=g_model.size():
         return
     if dst<0 or dst>=g_model.size():
         return
-    cdef MODEL model;
-    create_PMD(&model);
     add_PMD(&g_model[dst], &g_model[src]);
-    delete_PMD(&model);
 
 def Copy_PMD(src, dst):
     if src<0 or src>=g_model.size():
         return
     if dst<0 or dst>=g_model.size():
         return
-    delete_PMD(&g_model[dst]);
-    return copy_PMD(&g_model[dst], &g_model[src]);
+    g_model[dst]=g_model[src]
 
 def Create_PMD(index):
     if index<0 or index>=g_model.size():
         return
-    return delete_PMD(&g_model[index]);
+    cdef MODEL model;
+    g_model[index]=model
 
 def Marge_PMD(index):
     if index<0 or index>=g_model.size():
@@ -499,7 +469,7 @@ def Sort_PMD(index):
     sort_bone(&m, &g_list);
     sort_skin(&m, &g_list);
     sort_disp(&m, &g_list);
-    if m.bone[m.bone.size()-1].name==b"-0":
+    if m.bone[m.bone.size()-1].name.c_str()==b"-0":
         m.bone.resize(m.bone.size()-1);
     translate(&m, &g_list, 1);
 
@@ -519,7 +489,7 @@ def Resize_Bone(index, name, length, thickness):
         return
     m=g_model[index]
     for i in range(m.bone.size()):
-        if m.bone[i].name==name:
+        if m.bone[i].name.c_str()==name:
             return scale_bone(&m, i, thickness, length, thickness);
 
 def Move_Bone(index, name, x, y, z):
@@ -528,7 +498,7 @@ def Move_Bone(index, name, x, y, z):
     cdef array.array v=array.array('d', [x, y, z])
     m=g_model[index]
     for i in range(m.bone.size()):
-        if m.bone[i].name==name:
+        if m.bone[i].name.c_str()==name:
             return move_bone(&m, i, v.data.as_doubles);
 
 def Update_Skin(index):

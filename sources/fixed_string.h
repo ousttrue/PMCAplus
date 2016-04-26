@@ -119,3 +119,8 @@ public:
 		return 0;
 	}
 };
+
+typedef fixed_string<100> fixed_string100;
+typedef fixed_string<128> fixed_string128;
+typedef fixed_string<256> fixed_string256;
+
