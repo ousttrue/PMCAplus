@@ -246,8 +246,6 @@ int update_bone_index(MODEL *model,int index[])
 	int i, j;
 
 	unsigned short *tmp_disp;
-	char (*tmp_eng)[20];
-	unsigned short *tmp_rb;
 	
 	//頂点のボーン番号を書き換え
 	auto tmp_vt = (unsigned short(*)[2])malloc(sizeof(unsigned short)*2*model->vt.size());
@@ -296,24 +294,12 @@ int update_bone_index(MODEL *model,int index[])
 	#endif
 	FREE(tmp_disp);
 	
-	
-	#ifdef DEBUG
-		puts("剛体書き換え");
-	#endif
-	
 	//剛体ボーン番号を書き換え
-	tmp_rb = (unsigned short*)malloc(sizeof(unsigned short)*model->rbody_count);
-	#ifdef MEM_DBG
-		printf("malloc %p\n", tmp_rb);
-	#endif
-	
-	for(i=0; i<model->rbody_count; i++){
-		#ifdef DEBUG
-			printf("%d %d\n", i, model->rbody[i].bone);
-		#endif
+	std::vector<unsigned short> tmp_rb(model->rbody.size());	
+	for(i=0; i<model->rbody.size(); i++){
 		tmp_rb[i] = model->rbody[i].bone;
 	}
-	for(i=0; i<model->rbody_count; i++){
+	for(i=0; i<model->rbody.size(); i++){
 		#ifdef DEBUG
 			printf("%d\n", i);
 		#endif
@@ -323,13 +309,6 @@ int update_bone_index(MODEL *model,int index[])
 			model->rbody[i].bone = index[tmp_rb[i]];
 		}
 	}
-	#ifdef MEM_DBG
-		printf("FREE %p\n", tmp_rb);
-	#endif
-	FREE(tmp_rb);
-	#ifdef DEBUG
-		puts("ボーンインデックス更新完了");
-	#endif
 	
 	return 0;
 }
@@ -1239,25 +1218,16 @@ int marge_bone_disp(MODEL *model)
 
 int marge_rb(MODEL *model)
 {
-	int i, j, tmp;
-	int *index;
-	char *marge;
-	
 	//同名の剛体を削除
 	
-	index = (int*)MALLOC(model->rbody_count * sizeof(int));
-	marge = (char*)MALLOC(model->rbody_count * sizeof(char));
-	memset(marge, 0, model->rbody_count * sizeof(char));
-	#ifdef MEM_DBG
-		printf("malloc %p %p\n", index, marge);
-	#endif
-	
-	
-	tmp = 0;
-	for(i=0; i<model->rbody_count; i++){
+	std::vector<int> index(model->rbody.size(), 0);
+	std::vector<char> marge(model->rbody.size(), 0);
+
+	int tmp = 0;
+	for(size_t i=0; i<model->rbody.size(); i++){
 		if(marge[i] == 0){
 			index[i] = i - tmp;
-			for(j=i+1; j<model->rbody_count; j++){
+			for(size_t j=i+1; j<model->rbody.size(); j++){
 				if(model->rbody[i].name==model->rbody[j].name){
 					index[j] = i - tmp;
 					marge[j] = 1;
@@ -1266,37 +1236,24 @@ int marge_rb(MODEL *model)
 		}else{
 			tmp++;
 		}
-		#ifdef DEBUG
-			printf("%d:%d %d\n", i, index[i], marge[i]);
-		#endif
 	}
 	
 	//ジョイント書き換え
-	for(i=0; i<model->joint_count; i++){
-		for(j=0; j<2; j++){
+	for(size_t i=0; i<model->joint.size(); i++){
+		for(size_t j=0; j<2; j++){
 			model->joint[i].rbody[j] = index[model->joint[i].rbody[j]];
-			
 		}
 	}
 	
 	//重複削除
 	
-	for(i=0; i<model->rbody_count; i++){
+	for(size_t i=0; i<model->rbody.size(); i++){
 		if(marge[i] == 0 && index[i] != i){
 			model->rbody[index[i]] = model->rbody[i];
 		}
 	}
-	model->rbody_count = model->rbody_count - tmp;
-	
-	#ifdef MEM_DBG
-		printf("FREE %p %p\n", index, marge);
-	#endif
-	
-	FREE(index);
-	FREE(marge);
-	
-	
-	
+	model->rbody.resize(model->rbody.size() - tmp);
+		
 	return 0;
 }
 
@@ -1316,11 +1273,10 @@ int update_skin(MODEL *model)
 
 int adjust_joint(MODEL *model)
 {
-	int i, j;
 	//同じ名前のボーンにジョイントの位置を合わせる
 	
-	for(i=0; i<model->joint_count; i++){
-		for(j=0; j<model->bone.size(); j++){
+	for(size_t i=0; i<model->joint.size(); i++){
+		for(size_t j=0; j<model->bone.size(); j++){
 			if(model->bone[j].name==model->joint[i].name){
 				memcpy(model->joint[i].loc, model->bone[j].loc, sizeof(float)*3);
 			}
@@ -1345,7 +1301,7 @@ int show_detail(MODEL *model)
 	printf("ボーン枠:%d\n", model->bone_group.size());
 	printf("表示ボーン数:%d\n", model->bone_disp_count);
 	printf("英名対応:%d\n", model->eng_support);
-	printf("剛体数:%d\n", model->rbody_count);
-	printf("ジョイント数:%d\n\n", model->joint_count);
+	printf("剛体数:%d\n", model->rbody.size());
+	printf("ジョイント数:%d\n\n", model->joint.size());
 	return 0;
 }

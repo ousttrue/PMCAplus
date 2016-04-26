@@ -171,10 +171,8 @@ struct MODEL
 
 	std::array<fixed_string<100>, 10> toon;
 
-	unsigned int rbody_count;
-	RIGID_BODY *rbody;
-	unsigned int joint_count;
-	JOINT *joint;
+	std::vector<RIGID_BODY> rbody;
+	std::vector<JOINT> joint;
 
     MODEL()
         : eng_support(0)

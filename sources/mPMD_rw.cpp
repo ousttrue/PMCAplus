@@ -227,18 +227,13 @@ int load_PMD(MODEL *model, const char file_name[])
 	FREAD(&model->eng_support, 1,  1, pmd);
 	
 	if(feof(pmd)!=0){
-		#ifdef DEBUG
-			printf("拡張部分なし\n");
-		#endif
 		model->eng_support = 0;
 		for(i=0; i<10; i++){
 			j=i+1;
 			sprintf(model->toon[i].data(), "toon%02d.bmp\0", j);
 		}
-		model->rbody_count = 0;
-		model->rbody = NULL;
-		model->joint_count = 0;
-		model->joint = NULL;
+		model->rbody.clear();
+		model->joint.clear();
 		return 0;
 	}
 	
@@ -268,18 +263,11 @@ int load_PMD(MODEL *model, const char file_name[])
 	for(i=0; i<10; i++){
 		model->toon[i].fread<100>(pmd);
 	}
-	
-	FREAD(&model->rbody_count, 4,  1, pmd);
-	#ifdef DEBUG
-		printf("剛体数:%d\n", model->rbody_count);
-	#endif
-	model->rbody =(RIGID_BODY *) MALLOC((size_t)model->rbody_count*sizeof(RIGID_BODY));
-	
-	if(model->rbody == NULL  ){
-		printf("配列を確保できません\n");
-		return 1;
-	}
-	for(i=0; i<model->rbody_count; i++){
+
+	int rbody_count;
+	FREAD(&rbody_count, 4,  1, pmd);
+	model->rbody.resize(rbody_count);	
+	for(i=0; i<model->rbody.size(); i++){
 		model->rbody[i].name.fread<20>(pmd);
 		FREAD(&model->rbody[i].bone, 2,  1, pmd);
 		FREAD(&model->rbody[i].group, 1,  1, pmd);
@@ -291,17 +279,11 @@ int load_PMD(MODEL *model, const char file_name[])
 		FREAD(model->rbody[i].property, 4,  5, pmd);
 		FREAD(&model->rbody[i].type, 1,  1, pmd);
 	}
-	
-	FREAD(&model->joint_count, 4,  1, pmd);
-	#ifdef DEBUG
-		printf("ジョイント数:%d\n", model->joint_count);
-	#endif
-	model->joint =(JOINT *) MALLOC((size_t)model->joint_count*sizeof(JOINT));
-	if(model->joint == NULL  ){
-		printf("配列を確保できません\n");
-		return 1;
-	}
-	for(i=0; i<model->joint_count; i++){
+
+	int joint_count;
+	FREAD(&joint_count, 4,  1, pmd);
+	model->joint.resize(joint_count);
+	for(i=0; i<joint_count; i++){
 		model->joint[i].name.fread<20>(pmd);
 		FREAD(model->joint[i].rbody, 4,  2, pmd);
 		FREAD(model->joint[i].loc, 4,  3, pmd);
@@ -311,10 +293,6 @@ int load_PMD(MODEL *model, const char file_name[])
 	}
 	
 	fclose(pmd);
-	
-	//dbg_0check(check,1000);
-	
-	//FREE(check);
 	
 	//モデルをキャッシュに保存
 	for(i=0; i<64; i++){
@@ -494,9 +472,9 @@ int write_PMD(MODEL *model, const char file_name[])
 		fwrite(model->toon[i].c_str(), 1, 100, pmd);
 	}
 	
-	fwrite(&model->rbody_count, 4,  1, pmd);
-	
-	for(i=0; i<model->rbody_count; i++){
+	int rbody_count = model->rbody.size();
+	fwrite(&rbody_count, 4,  1, pmd);
+	for(i=0; i<model->rbody.size(); i++){
 		fwrite(model->rbody[i].name.c_str(), 1,  20, pmd);
 		fwrite(&model->rbody[i].bone, 2,  1, pmd);
 		fwrite(&model->rbody[i].group, 1,  1, pmd);
@@ -508,13 +486,10 @@ int write_PMD(MODEL *model, const char file_name[])
 		fwrite(model->rbody[i].property, 4,  5, pmd);
 		fwrite(&model->rbody[i].type, 1,  1, pmd);
 	}
-	#ifdef DEBUG
-		printf("剛体\n");
-	#endif
 	
-	fwrite(&model->joint_count, 4,  1, pmd);
-	
-	for(i=0; i<model->joint_count; i++){
+	int joint_count = model->joint.size();
+	fwrite(&joint_count, 4,  1, pmd);	
+	for(i=0; i<model->joint.size(); i++){
 		fwrite(model->joint[i].name.c_str(), 1,  20, pmd);
 		fwrite(model->joint[i].rbody, 4,  2, pmd);
 		fwrite(model->joint[i].loc, 4,  3, pmd);
@@ -522,9 +497,6 @@ int write_PMD(MODEL *model, const char file_name[])
 		fwrite(model->joint[i].limit, 4,  12, pmd);
 		fwrite(model->joint[i].spring, 4,  6, pmd);
 	}
-	#ifdef DEBUG
-		printf("ジョイント\n");
-	#endif
 	
 	fclose(pmd);
 	printf("%sへ出力しました。\n",file_name);
@@ -688,11 +660,10 @@ int print_PMD(MODEL *model, const char file_name[])
 	for(i=0; i<10; i++){
 		fprintf(txt, "%s\n", model->toon[i]);
 	}
+		
+	fprintf(txt,"剛体数:%d\n", model->rbody.size());
 	
-	
-	fprintf(txt,"剛体数:%d\n", model->rbody_count);
-	
-	for(i=0; i<model->rbody_count; i++){
+	for(i=0; i<model->rbody.size(); i++){
 		fprintf(txt, "%s\n", model->rbody[i].name);
 		fprintf(txt, "ボーン:%d\n", model->rbody[i].bone);
 		fprintf(txt, "グループ:%d\n", model->rbody[i].group);
@@ -718,9 +689,9 @@ int print_PMD(MODEL *model, const char file_name[])
 		fprintf(txt, "タイプ:%d\n\n",model->rbody[i].type);
 	}
 	
-	fprintf(txt,"ジョイント数:%d\n", model->joint_count);
+	fprintf(txt,"ジョイント数:%d\n", model->joint.size());
 	
-	for(i=0; i<model->joint_count; i++){
+	for(i=0; i<model->joint.size(); i++){
 		fprintf(txt, "%s\n", model->joint[i].name);
 		fprintf(txt, "剛体:");
 		for(j=0; j<2; j++){
@@ -774,10 +745,8 @@ int create_PMD(MODEL *model)
 		sprintf(model->toon[i].data(), "toon%02d.bmp\0", i+1);
 	}
 	
-	model->rbody_count = 0;
-	model->rbody = NULL;
-	model->joint_count = 0;
-	model->joint = NULL;
+	model->rbody.clear();
+	model->joint.clear();
 	
 	return 0;
 }
@@ -806,13 +775,8 @@ int delete_PMD(MODEL *model)
 		sprintf(model->toon[i].data(), "toon%02d.bmp\0", i+1);
 	}
 	
-	FREE(model->rbody);
-	model->rbody_count = 0;
-	model->rbody = NULL;
-	
-	FREE(model->joint);
-	model->joint_count = 0;
-	model->joint = NULL;
+	model->rbody.clear();
+	model->joint.clear();
 	
 	return 0;
 }
@@ -850,32 +814,10 @@ int copy_PMD(MODEL *out, MODEL *model)
 	
 	out->toon=model->toon;
 	
-	//英名
-	out->eng_support = model->eng_support;
-	#ifdef DEBUG
-		printf("英名\n");
-	#endif
-	
-	//剛体
-	out->rbody_count = model->rbody_count;
-	out->rbody = (RIGID_BODY*)MALLOC((size_t)model->rbody_count * sizeof(RIGID_BODY));
-	if(out->rbody==NULL)return -1;
-	for(i=0; i<model->rbody_count; i++){
-		out->rbody[i] = model->rbody[i];
-	}
-	#ifdef DEBUG
-		printf("剛体\n");
-	#endif
-	//ジョイント
-	out->joint_count = model->joint_count;
-	out->joint = (JOINT*)MALLOC((size_t)model->joint_count * sizeof(JOINT));
-	if(out->joint==NULL)return -1;
-	for(i=0; i<model->joint_count; i++){
-		out->joint[i] = model->joint[i];
-	}
-	#ifdef DEBUG
-		printf("ジョイント\n");
-	#endif
+	out->eng_support = model->eng_support;	
+
+	out->rbody = model->rbody;
+	out->joint = model->joint;
 	
 	return 0;
 }
@@ -894,10 +836,6 @@ int add_PMD(MODEL *model, MODEL *add)
 	unsigned int bone_disp_count;
 	BONE_DISP *bone_disp;
 	//ENGLISH eg;
-	unsigned int rbody_count;
-	RIGID_BODY *rbody;
-	unsigned int joint_count;
-	JOINT *joint;
 	
 	//頂点
 	std::vector<VERTEX> vt(model->vt.size() + add->vt.size());
@@ -1063,41 +1001,31 @@ int add_PMD(MODEL *model, MODEL *add)
 	#endif
 	
 	//剛体
-	rbody_count = model->rbody_count + add->rbody_count;
-	rbody = (RIGID_BODY*)MALLOC((size_t)rbody_count * sizeof(RIGID_BODY));
-	
-	for(i=0; i<model->rbody_count; i++){
+	std::vector<RIGID_BODY> rbody(model->rbody.size() + add->rbody.size());
+	for(i=0; i<model->rbody.size(); i++){
 		rbody[i] = model->rbody[i];
 	}
 	j=0;
-	for(i=model->rbody_count; i<rbody_count; i++){
+	for(i=model->rbody.size(); i<rbody.size(); i++){
 		rbody[i] = add->rbody[j];
 		rbody[i].bone = rbody[i].bone + model->bone.size();
 		j++;
 	}
-	#ifdef DEBUG
-		printf("剛体\n");
-	#endif
+
 	//ジョイント
-	joint_count = model->joint_count + add->joint_count;
-	joint = (JOINT*)MALLOC((size_t)joint_count * sizeof(JOINT));
-	
-	for(i=0; i<model->joint_count; i++){
+	std::vector<JOINT> joint(model->joint.size() + add->joint.size());
+	for(i=0; i<model->joint.size(); i++){
 		joint[i] = model->joint[i];
 	}
 	j=0;
-	for(i=model->joint_count; i<joint_count; i++){
+	for(i=model->joint.size(); i<joint.size(); i++){
 		joint[i] = add->joint[j];
 		for(k=0; k<2; k++){
-			joint[i].rbody[k] = joint[i].rbody[k] + model->rbody_count;
+			joint[i].rbody[k] = joint[i].rbody[k] + model->rbody.size();
 		}
 		j++;
 	}
-	
-	#ifdef DEBUG
-		printf("ジョイント\n");
-	#endif
-	
+		
 	model->header = add->header;
 	model->vt = vt;	
 	model->vt_index = vt_index;	
@@ -1115,19 +1043,8 @@ int add_PMD(MODEL *model, MODEL *add)
 	model->bone_disp = bone_disp;
 	model->bone_disp_count = bone_disp_count;
 	
-	#ifdef MEM_DBG
-		printf("free %p\n", model->rbody);
-	#endif
-	FREE(model->rbody);
 	model->rbody = rbody;
-	model->rbody_count = rbody_count;
-	
-	#ifdef MEM_DBG
-		printf("free %p\n", model->joint);
-	#endif
-	FREE(model->joint);
 	model->joint = joint;
-	model->joint_count = joint_count;
 	
 	return 0;
 }

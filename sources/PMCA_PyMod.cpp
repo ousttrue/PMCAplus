@@ -126,8 +126,8 @@ static PyObject* getInfo(PyObject *self, PyObject *args)
 							"bone_disp_count", model->bone_disp_count,
 							
 							"eng_support", model->eng_support,
-							"rb_count", model->rbody_count,
-							"joint_count", model->joint_count,
+							"rb_count", model->rbody.size(),
+							"joint_count", model->joint.size(),
 							"skin_index", (model->skin_index.empty() 
 								? PyList_New(0)
 								: Array_to_PyList_UShort(&model->skin_index[0], (int)model->skin_index.size()))
@@ -385,6 +385,8 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 	int skin_count;
 	int skin_disp_count;
 	int bone_group_count;
+	int rbody_count;
+	int joint_count;
 
 	if(!PyArg_ParseTuple(args, "i"
 							"yyyy"
@@ -409,8 +411,8 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 							&model.bone_disp_count,
 							
 							&model.eng_support,
-							&model.rbody_count,
-							&model.joint_count,
+							&rbody_count,
+							&joint_count,
 							&skin_disp_count,
 							&PyTmp))return NULL;
 	
@@ -450,16 +452,9 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 	p->bone_disp = (BONE_DISP*)MALLOC(size);
 	memset(p->bone_disp, 0, size);
 	
-	//„‘Ì
-	size = p->rbody_count * sizeof(RIGID_BODY);
-	p->rbody = (RIGID_BODY*)MALLOC(size);
-	memset(p->rbody, 0, size);
-	
-	//ƒWƒ‡ƒCƒ“ƒg
-	size = p->joint_count * sizeof(JOINT);
-	p->joint = (JOINT*)MALLOC(size);
-	memset(p->joint, 0, size);
-	
+	p->rbody.resize(rbody_count);
+	p->joint.resize(joint_count);
+		
 	return Py_BuildValue("i", 0);
 }
 
