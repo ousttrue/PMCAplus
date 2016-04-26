@@ -5,10 +5,6 @@
 #include <memory.h>
 #include <string.h>
 #include "mPMD.h"
-#include "debug_io.h"
-
-
-
 
 
 int add_PMD(MODEL *model, MODEL *add)

@@ -1,5 +1,4 @@
 #include "mPmd.h"
-#include "debug_io.h"
 
 
 bool MODEL::load(const std::string &path)
@@ -62,9 +61,9 @@ bool MODEL::load(const std::string &path)
 	header.path = path;
 
 	char magic[4];
-	FREAD(magic, 1, 3, pmd);
+	fread(magic, 1, 3, pmd);
 	float version;
-	FREAD(&version, 4, 1, pmd);
+	fread(&version, 4, 1, pmd);
 	if (memcmp(magic, "Pmd", 3) != 0 || version != 1.0) {
 		return false;
 	}
@@ -73,114 +72,114 @@ bool MODEL::load(const std::string &path)
 	header.comment.fread<256>(pmd);
 
 	int vt_count;
-	FREAD(&vt_count, 4, 1, pmd);
+	fread(&vt_count, 4, 1, pmd);
 	vt.resize(vt_count);
 	for (i = 0; i<(vt.size()); i++) {
 		//fseek(pmd, 38, SEEK_CUR);
-		FREAD(vt[i].loc, 4, 3, pmd);
-		FREAD(vt[i].nor, 4, 3, pmd);
-		FREAD(vt[i].uv, 4, 2, pmd);
-		FREAD(&vt[i].bone_num0, 2, 1, pmd);
-		FREAD(&vt[i].bone_num1, 2, 1, pmd);
-		FREAD(&vt[i].bone_weight, 1, 1, pmd);
-		FREAD(&vt[i].edge_flag, 1, 1, pmd);
+		fread(vt[i].loc, 4, 3, pmd);
+		fread(vt[i].nor, 4, 3, pmd);
+		fread(vt[i].uv, 4, 2, pmd);
+		fread(&vt[i].bone_num0, 2, 1, pmd);
+		fread(&vt[i].bone_num1, 2, 1, pmd);
+		fread(&vt[i].bone_weight, 1, 1, pmd);
+		fread(&vt[i].edge_flag, 1, 1, pmd);
 	}
 
 	int vt_index_count;
-	FREAD(&vt_index_count, 4, 1, pmd);
+	fread(&vt_index_count, 4, 1, pmd);
 	vt_index.resize(vt_index_count);
 	for (i = 0; i<vt_index.size(); i++) {
-		FREAD(&vt_index[i], 2, 1, pmd);
+		fread(&vt_index[i], 2, 1, pmd);
 		if (vt_index[i] >= vt.size()) {
 			return false;
 		}
 	}
 
 	int mat_count;
-	FREAD(&mat_count, 4, 1, pmd);
+	fread(&mat_count, 4, 1, pmd);
 	mat.resize(mat_count);
 	for (i = 0; i<mat.size(); i++) {
-		FREAD(mat[i].diffuse, 4, 3, pmd);
-		FREAD(&mat[i].alpha, 4, 1, pmd);
-		FREAD(&mat[i].spec, 4, 1, pmd);
-		FREAD(&mat[i].spec_col, 4, 3, pmd);
-		FREAD(&mat[i].mirror_col, 4, 3, pmd);
-		FREAD(&mat[i].toon_index, 1, 1, pmd);
-		FREAD(&mat[i].edge_flag, 1, 1, pmd);
-		FREAD(&mat[i].vt_index_count, 4, 1, pmd);
+		fread(mat[i].diffuse, 4, 3, pmd);
+		fread(&mat[i].alpha, 4, 1, pmd);
+		fread(&mat[i].spec, 4, 1, pmd);
+		fread(&mat[i].spec_col, 4, 3, pmd);
+		fread(&mat[i].mirror_col, 4, 3, pmd);
+		fread(&mat[i].toon_index, 1, 1, pmd);
+		fread(&mat[i].edge_flag, 1, 1, pmd);
+		fread(&mat[i].vt_index_count, 4, 1, pmd);
 		mat[i].tex.fread<20>(pmd);
 	}
 
 	unsigned short bone_count;
-	FREAD(&bone_count, 2, 1, pmd);
+	fread(&bone_count, 2, 1, pmd);
 	bone.resize(bone_count);
 	for (i = 0; i<bone.size(); i++) {
 		bone[i].name.fread<20>(pmd);
-		FREAD(&bone[i].PBone_index, 2, 1, pmd);
-		FREAD(&bone[i].TBone_index, 2, 1, pmd);
-		FREAD(&bone[i].type, 1, 1, pmd);
-		FREAD(&bone[i].IKBone_index, 2, 1, pmd);
-		FREAD(bone[i].loc, 4, 3, pmd);
+		fread(&bone[i].PBone_index, 2, 1, pmd);
+		fread(&bone[i].TBone_index, 2, 1, pmd);
+		fread(&bone[i].type, 1, 1, pmd);
+		fread(&bone[i].IKBone_index, 2, 1, pmd);
+		fread(bone[i].loc, 4, 3, pmd);
 	}
 
 	unsigned short IK_count;
-	FREAD(&IK_count, 2, 1, pmd);
+	fread(&IK_count, 2, 1, pmd);
 
 	IK_list.resize(IK_count);
 	for (i = 0; i<IK_list.size(); i++) {
-		FREAD(&IK_list[i].IKBone_index, 2, 1, pmd);
-		FREAD(&IK_list[i].IKTBone_index, 2, 1, pmd);
+		fread(&IK_list[i].IKBone_index, 2, 1, pmd);
+		fread(&IK_list[i].IKTBone_index, 2, 1, pmd);
 		unsigned char IK_chain_len;
-		FREAD(&IK_chain_len, 1, 1, pmd);
-		FREAD(&IK_list[i].iterations, 2, 1, pmd);
-		FREAD(&IK_list[i].weight, 4, 1, pmd);
+		fread(&IK_chain_len, 1, 1, pmd);
+		fread(&IK_list[i].iterations, 2, 1, pmd);
+		fread(&IK_list[i].weight, 4, 1, pmd);
 		IK_list[i].IKCBone_index.resize(IK_chain_len);
 		if (IK_chain_len > 0) {
-			FREAD(&IK_list[i].IKCBone_index[0], 2, IK_chain_len, pmd);
+			fread(&IK_list[i].IKCBone_index[0], 2, IK_chain_len, pmd);
 		}
 	}
 
 	unsigned short skin_count;
-	FREAD(&skin_count, 2, 1, pmd);
+	fread(&skin_count, 2, 1, pmd);
 	skin.resize(skin_count);
 	for (i = 0; i<skin.size(); i++) {
 		skin[i].name.fread<20>(pmd);
 		unsigned int skin_vt_count;
-		FREAD(&skin_vt_count, 4, 1, pmd);
-		FREAD(&skin[i].type, 1, 1, pmd);
+		fread(&skin_vt_count, 4, 1, pmd);
+		fread(&skin[i].type, 1, 1, pmd);
 		skin[i].data.resize(skin_vt_count);
 		for (j = 0; j<skin[i].data.size(); j++) {
-			FREAD(&skin[i].data[j].index, 4, 1, pmd);
+			fread(&skin[i].data[j].index, 4, 1, pmd);
 			if (skin[i].data[j].index > vt.size()) {
 				exit(1);
 			}
-			FREAD(&skin[i].data[j].loc, 4, 3, pmd);
+			fread(&skin[i].data[j].loc, 4, 3, pmd);
 		}
 	}
 
 	unsigned char skin_disp_count;
-	FREAD(&skin_disp_count, 1, 1, pmd);
+	fread(&skin_disp_count, 1, 1, pmd);
 	skin_index.resize(skin_disp_count);
 	if (skin_disp_count) {
-		FREAD(&skin_index[0], 2, skin_index.size(), pmd);
+		fread(&skin_index[0], 2, skin_index.size(), pmd);
 	}
 
 	unsigned char bone_group_count;
-	FREAD(&bone_group_count, 1, 1, pmd);
+	fread(&bone_group_count, 1, 1, pmd);
 	bone_group.resize(bone_group_count);
 	for (i = 0; i<bone_group_count; i++) {
 		bone_group[i].name.fread<50>(pmd);
 	}
 
 	int bone_disp_count;
-	FREAD(&bone_disp_count, 4, 1, pmd);
+	fread(&bone_disp_count, 4, 1, pmd);
 	bone_disp.resize(bone_disp_count);
 	for (i = 0; i<bone_disp_count; i++) {
-		FREAD(&bone_disp[i].index, 2, 1, pmd);
-		FREAD(&bone_disp[i].bone_group, 1, 1, pmd);
+		fread(&bone_disp[i].index, 2, 1, pmd);
+		fread(&bone_disp[i].bone_group, 1, 1, pmd);
 	}
 
-	FREAD(&eng_support, 1, 1, pmd);
+	fread(&eng_support, 1, 1, pmd);
 
 	if (feof(pmd) != 0) {
 		eng_support = 0;
@@ -217,31 +216,31 @@ bool MODEL::load(const std::string &path)
 	}
 
 	int rbody_count;
-	FREAD(&rbody_count, 4, 1, pmd);
+	fread(&rbody_count, 4, 1, pmd);
 	rbody.resize(rbody_count);
 	for (i = 0; i<rbody.size(); i++) {
 		rbody[i].name.fread<20>(pmd);
-		FREAD(&rbody[i].bone, 2, 1, pmd);
-		FREAD(&rbody[i].group, 1, 1, pmd);
-		FREAD(&rbody[i].target, 2, 1, pmd);
-		FREAD(&rbody[i].shape, 1, 1, pmd);
-		FREAD(rbody[i].size, 4, 3, pmd);
-		FREAD(rbody[i].loc, 4, 3, pmd);
-		FREAD(rbody[i].rot, 4, 3, pmd);
-		FREAD(rbody[i].property, 4, 5, pmd);
-		FREAD(&rbody[i].type, 1, 1, pmd);
+		fread(&rbody[i].bone, 2, 1, pmd);
+		fread(&rbody[i].group, 1, 1, pmd);
+		fread(&rbody[i].target, 2, 1, pmd);
+		fread(&rbody[i].shape, 1, 1, pmd);
+		fread(rbody[i].size, 4, 3, pmd);
+		fread(rbody[i].loc, 4, 3, pmd);
+		fread(rbody[i].rot, 4, 3, pmd);
+		fread(rbody[i].property, 4, 5, pmd);
+		fread(&rbody[i].type, 1, 1, pmd);
 	}
 
 	int joint_count;
-	FREAD(&joint_count, 4, 1, pmd);
+	fread(&joint_count, 4, 1, pmd);
 	joint.resize(joint_count);
 	for (i = 0; i<joint_count; i++) {
 		joint[i].name.fread<20>(pmd);
-		FREAD(joint[i].rbody, 4, 2, pmd);
-		FREAD(joint[i].loc, 4, 3, pmd);
-		FREAD(joint[i].rot, 4, 3, pmd);
-		FREAD(joint[i].limit, 4, 12, pmd);
-		FREAD(joint[i].spring, 4, 6, pmd);
+		fread(joint[i].rbody, 4, 2, pmd);
+		fread(joint[i].loc, 4, 3, pmd);
+		fread(joint[i].rot, 4, 3, pmd);
+		fread(joint[i].limit, 4, 12, pmd);
+		fread(joint[i].spring, 4, 6, pmd);
 	}
 
 	fclose(pmd);

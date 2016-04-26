@@ -6,7 +6,6 @@
 #include <memory.h>
 #include <string.h>
 #include "mPMD.h"
-#include "debug_io.h"
 
 
 int translate(MODEL *model, LIST *list, short mode)
@@ -481,10 +480,8 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz)
 	double tmp[3];
 	
 	unsigned int len_vt;
-	unsigned int *index_vt;
 	
 	unsigned int len_bone;
-	unsigned int *index_bone;
 	
 	//ベクトルがY軸に沿う向きになるようにする
 	if(bone_vec(model, index, loc, vec) < 0)return -1;
@@ -554,8 +551,8 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz)
 			len_vt++;
 		}
 	}
-	auto tmp_vt = (double(*)[3])MALLOC(sizeof(double) * len_vt * 3);
-	index_vt = (unsigned int*)MALLOC(sizeof(unsigned int)*len_vt);
+	std::vector<double[3]> tmp_vt(len_vt);
+	std::vector<unsigned int> index_vt(len_vt);
 	j = 0;
 	for(i=0; i<model->vt.size(); i++){
 		if(model->vt[i].bone_num0 == index || model->vt[i].bone_num1 == index){
@@ -566,73 +563,75 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz)
 			j++;
 		}
 	}
-		//変換するボーンの子をtmp_boneに格納
-	len_bone = 0;
-	for(i=0; i<(model->bone.size()); i++){
-		if(model->bone[i].PBone_index == index){
-			len_bone++;
-		}
-	}
-	auto tmp_bone = (double(*)[3])MALLOC(sizeof(double) * len_bone * 3);
-	auto diff_bone = (double(*)[3])MALLOC(sizeof(double) * len_bone * 3);
-	index_bone = (unsigned int*)MALLOC(sizeof(unsigned int)*len_bone);
-	j = 0;
-	for(i=0; i<model->bone.size(); i++){
-		if(model->bone[i].PBone_index == index){
-			index_bone[j] = i;
-			for(k=0; k<3; k++){
-				tmp_bone[j][k] = model->bone[i].loc[k];
-				diff_bone[j][k] = tmp_bone[j][k];
-			}
-			j++;
-			
-		}
-	}
-		//変換
-	coordtrans(tmp_vt, len_vt, loc, mtr);
-	coordtrans(tmp_bone, len_bone, loc, mtr);
-	
-	
-	//変形
-	for(i=0; i<len_vt; i++){
-		tmp_vt[i][0] = sx * tmp_vt[i][0];
-		tmp_vt[i][1] = sy * tmp_vt[i][1];
-		tmp_vt[i][2] = sz * tmp_vt[i][2];
-	}
-	for(i=0; i<len_bone; i++){
-		tmp_bone[i][0] = sx * tmp_bone[i][0];
-		tmp_bone[i][1] = sy * tmp_bone[i][1];
-		tmp_bone[i][2] = sz * tmp_bone[i][2];
-	}
-	//逆変換
-	coordtrans_inv(tmp_vt, len_vt, loc, mtr);
-	coordtrans_inv(tmp_bone, len_bone, loc, mtr);
-	
-	//変換結果を元のデータに書き込む
-		//頂点
-	for(i=0; i<len_vt; i++){
-		k = index_vt[i];
-		tmp[0] = 0.0;
-		if(model->vt[k].bone_num0 == index){
-			tmp[0] += (double)model->vt[k].bone_weight/100;
-		}
-		if(model->vt[k].bone_num1 == index){
-			tmp[0] += 1.0-(double)model->vt[k].bone_weight/100;
-		}
-		//printf("%f %f\n", tmp[0], tmp[1]);
 		
-		tmp[1] = 1-tmp[0];
-		for(j=0; j<3; j++){
-			model->vt[k].loc[j] = model->vt[k].loc[j]*tmp[1] + tmp_vt[i][j]*tmp[0];
-		}
-	}
 	
-		//ボーン
-	for(i=0; i<len_bone; i++){
-		for(j=0; j<3; j++){
-			diff_bone[i][j] = tmp_bone[i][j] - diff_bone[i][j];
+		//変換するボーンの子をtmp_boneに格納
+		len_bone = 0;
+		for (i = 0; i < (model->bone.size()); i++) {
+			if (model->bone[i].PBone_index == index) {
+				len_bone++;
+			}
 		}
-	}
+		std::vector<double[3]> tmp_bone(len_bone);
+		std::vector<double[3]> diff_bone(len_bone);
+		std::vector<unsigned int> index_bone(len_bone, 0);
+		j = 0;
+		for (i = 0; i < model->bone.size(); i++) {
+			if (model->bone[i].PBone_index == index) {
+				index_bone[j] = i;
+				for (k = 0; k < 3; k++) {
+					tmp_bone[j][k] = model->bone[i].loc[k];
+					diff_bone[j][k] = tmp_bone[j][k];
+				}
+				j++;
+
+			}
+		}
+		//変換
+		coordtrans(&tmp_vt[0], len_vt, loc, mtr);
+		coordtrans(&tmp_bone[0], len_bone, loc, mtr);
+
+		//変形
+		for (i = 0; i < len_vt; i++) {
+			tmp_vt[i][0] = sx * tmp_vt[i][0];
+			tmp_vt[i][1] = sy * tmp_vt[i][1];
+			tmp_vt[i][2] = sz * tmp_vt[i][2];
+		}
+		for (i = 0; i < len_bone; i++) {
+			tmp_bone[i][0] = sx * tmp_bone[i][0];
+			tmp_bone[i][1] = sy * tmp_bone[i][1];
+			tmp_bone[i][2] = sz * tmp_bone[i][2];
+		}
+		//逆変換
+		coordtrans_inv(&tmp_vt[0], len_vt, loc, mtr);
+		coordtrans_inv(&tmp_bone[0], len_bone, loc, mtr);
+
+
+		//変換結果を元のデータに書き込む
+			//頂点
+		for (i = 0; i < len_vt; i++) {
+			k = index_vt[i];
+			tmp[0] = 0.0;
+			if (model->vt[k].bone_num0 == index) {
+				tmp[0] += (double)model->vt[k].bone_weight / 100;
+			}
+			if (model->vt[k].bone_num1 == index) {
+				tmp[0] += 1.0 - (double)model->vt[k].bone_weight / 100;
+			}
+			//printf("%f %f\n", tmp[0], tmp[1]);
+
+			tmp[1] = 1 - tmp[0];
+			for (j = 0; j < 3; j++) {
+				model->vt[k].loc[j] = model->vt[k].loc[j] * tmp[1] + tmp_vt[i][j] * tmp[0];
+			}
+		}
+
+		//ボーン
+		for (i = 0; i < len_bone; i++) {
+			for (j = 0; j < 3; j++) {
+				diff_bone[i][j] = tmp_bone[i][j] - diff_bone[i][j];
+			}
+		}
 	
 	for(i=0; i<model->bone.size(); i++){
 		l = i;
@@ -1180,15 +1179,15 @@ int update_skin(MODEL *model)
 int adjust_joint(MODEL *model)
 {
 	//同じ名前のボーンにジョイントの位置を合わせる
-	
-	for(size_t i=0; i<model->joint.size(); i++){
-		for(size_t j=0; j<model->bone.size(); j++){
-			if(model->bone[j].name==model->joint[i].name){
-				memcpy(model->joint[i].loc, model->bone[j].loc, sizeof(float)*3);
+
+	for (size_t i = 0; i < model->joint.size(); i++) {
+		for (size_t j = 0; j < model->bone.size(); j++) {
+			if (model->bone[j].name == model->joint[i].name) {
+				memcpy(model->joint[i].loc, model->bone[j].loc, sizeof(float) * 3);
 			}
 		}
 	}
-	
+
 	return 0;
 }
 

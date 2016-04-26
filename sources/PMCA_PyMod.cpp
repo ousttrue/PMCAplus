@@ -1,7 +1,6 @@
 #include "PMCA_PyMod.h"
 #include "mPMD_rw.h"
 #include "mPMD_edit.h"
-#include "debug_io.h"
 
 
 #define PMCA_MODULE
