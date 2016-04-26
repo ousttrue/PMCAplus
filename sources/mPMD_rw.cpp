@@ -30,7 +30,7 @@ int load_PMD(MODEL *model, const char file_name[])
 	if(cur_count == 255){
 		for(i=0; i<64; i++){
 			count[i] = 255;
-			create_PMD(&cache_model[i]);
+			cache_model[i] = MODEL();
 		}
 		cur_count = 0;
 	}
@@ -50,7 +50,7 @@ int load_PMD(MODEL *model, const char file_name[])
 		if(count[i]!=255){
 			//printf("%s, %s\n", cache_model[i].header.path, file_name);
 			if(cache_model[i].header.path==file_name){
-				copy_PMD(model, &cache_model[i]);
+				*model=cache_model[i];
 				count[i] = cur_count;
 				break;
 			}
@@ -62,7 +62,7 @@ int load_PMD(MODEL *model, const char file_name[])
 	for(j=0; j<64; j++){
 		if(count[i] == tmp){
 			count[i] = 255;
-			delete_PMD(&cache_model[i]);
+			cache_model[i]=MODEL();
 		}
 	}
 	if(i != 64){
@@ -293,7 +293,7 @@ int load_PMD(MODEL *model, const char file_name[])
 	//モデルをキャッシュに保存
 	for(i=0; i<64; i++){
 		if(count[i]==255){
-			copy_PMD(&cache_model[i],model);
+			cache_model[i]=*model;
 			count[i] = cur_count;
 			break;
 		}

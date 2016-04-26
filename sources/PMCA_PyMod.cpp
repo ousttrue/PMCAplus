@@ -371,12 +371,8 @@ static PyObject* getJoint(PyObject *self, PyObject *args)
 static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 {
 	int num;
-	MODEL model;
 	PyObject *PyTmp;
 	char *str[4];
-	
-	create_PMD(&model);
-	
 	int vt_count;
 	int vt_index_count;
 	int mat_count;
@@ -388,6 +384,7 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 	int rbody_count;
 	int joint_count;
 	int bone_disp_count;
+	int eng_support;
 	if(!PyArg_ParseTuple(args, "i"
 							"yyyy"
 							"iiii"
@@ -410,34 +407,30 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 							&bone_group_count,
 							&bone_disp_count,
 							
-							&model.eng_support,
+							&eng_support,
 							&rbody_count,
 							&joint_count,
 							&skin_disp_count,
 							&PyTmp))return NULL;
 	
+	MODEL model;
 	model.header.name=str[0];
 	model.header.comment=str[1];
 	model.header.name_eng=str[2];
 	model.header.comment_eng=str[3];
-	
-	auto p = &g_model[num];
-	
-	delete_PMD(p);
-	*p = model;
-	
-	p->vt.resize(vt_count);
-	p->vt_index.resize(vt_index_count * 3);
-	p->mat.resize(mat_count);
-	p->bone.resize(bone_count);
-	p->IK_list.resize(IK_count);
-	p->skin.resize(skin_count);
-	p->skin_index.resize(skin_disp_count);
-	p->bone_group.resize(bone_group_count);
-	p->bone_disp.resize(bone_disp_count);
-	p->rbody.resize(rbody_count);
-	p->joint.resize(joint_count);
-		
+	model.vt.resize(vt_count);
+	model.vt_index.resize(vt_index_count * 3);
+	model.mat.resize(mat_count);
+	model.bone.resize(bone_count);
+	model.IK_list.resize(IK_count);
+	model.skin.resize(skin_count);
+	model.skin_index.resize(skin_disp_count);
+	model.bone_group.resize(bone_group_count);
+	model.bone_disp.resize(bone_disp_count);
+	model.rbody.resize(rbody_count);
+	model.joint.resize(joint_count);
+	g_model[num] = model;
+
 	return Py_BuildValue("i", 0);
 }
 
@@ -864,10 +857,8 @@ static PyObject* Set_Name_Comment(PyObject *self, PyObject *args)
 /*******************************************************************************/
 static PyObject* Init_PMD(PyObject *self, PyObject *args)
 {
-	int i;
-	
-	for(i=0; i<MODEL_COUNT; i++){
-		create_PMD(&g_model[i]);
+	for(int i=0; i<MODEL_COUNT; i++){
+		g_model[i]=MODEL();
 	}
 	return Py_BuildValue("i", 0);
 }
@@ -876,12 +867,9 @@ static PyObject* Load_PMD(PyObject *self, PyObject *args)
 {
 	const char *str;
 	int num;
-	int ret;
-	
 	if(!PyArg_ParseTuple(args, "iy", &num, &str))return NULL;
-	delete_PMD(&g_model[num]);
-	ret = load_PMD(&g_model[num], str);
-	
+	g_model[num]=MODEL();
+	auto ret = load_PMD(&g_model[num], str);
 	return Py_BuildValue("i", ret);
 }
 
@@ -897,37 +885,26 @@ static PyObject* Write_PMD(PyObject *self, PyObject *args)
 
 static PyObject* Add_PMD(PyObject *self, PyObject *args)
 {
-	int num,add;
-	int ret=1;
-	MODEL model;
-	create_PMD(&model);
+	int num, add;
 	if(!PyArg_ParseTuple(args, "ii", &num, &add))return NULL;
-	
 	add_PMD(&g_model[num], &g_model[add]);
-	delete_PMD(&model);
-	return Py_BuildValue("i", ret);
+	return Py_BuildValue("i", 1);
 }
 
 static PyObject* Copy_PMD(PyObject *self, PyObject *args)
 {
 	int src, dst;
-	int ret=1;
 	if(!PyArg_ParseTuple(args, "ii", &src, &dst))return NULL;
-	delete_PMD(&g_model[dst]);
-	ret = copy_PMD(&g_model[dst], &g_model[src]);
-	if(ret != 0){
-		return Py_BuildValue("i", ret);
-	}
+	auto ret = g_model[dst]=g_model[src];
 	return Py_BuildValue("i", ret);
 }
 
 static PyObject* Create_PMD(PyObject *self, PyObject *args)
 {
 	int num;
-	int ret;
 	if(!PyArg_ParseTuple(args, "i", &num))return NULL;
-	ret = delete_PMD(&g_model[num]);
-	return Py_BuildValue("i", ret);
+	g_model[num]=MODEL();
+	return Py_None;
 }
 
 static PyObject* Marge_PMD(PyObject *self, PyObject *args)
