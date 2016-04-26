@@ -925,25 +925,18 @@ static PyObject* Marge_PMD(PyObject *self, PyObject *args)
 static PyObject* Sort_PMD(PyObject *self, PyObject *args)
 {
 	int num;
-	int ret;
 	if(!PyArg_ParseTuple(args, "i", &num))return NULL;
 	
 	rename_tail(&g_model[num]);
-	puts("ボーンマージ");
-	ret = marge_bone(&g_model[num]);
-	
-	puts("ボーンソート");
+	auto ret = marge_bone(&g_model[num]);
 	ret = sort_bone(&g_model[num], &list);
-	puts("表情ソート");
 	ret += sort_skin(&g_model[num], &list);
-	puts("ボーングループソート");
 	ret += sort_disp(&g_model[num], &list);
 		
 	//-0ボーン削除
 	if(g_model[num].bone[g_model[num].bone.size()-1].name=="-0"){
 		g_model[num].bone.resize(g_model[num].bone.size()-1);
 	}
-	puts("英語対応化");
 	translate(&g_model[num], &list, 1);
 	return Py_BuildValue("i", ret);
 }

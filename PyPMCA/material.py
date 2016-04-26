@@ -167,7 +167,7 @@ class MaterialSelector:
         '''
         for v in self.replace_map.values():
             random.seed()
-            val=random.randint(0, len(x[1].mat.entries)-1)
+            val=random.randint(0, len(v.mat.entries)-1)
             v.sel = v.mat.entries[val]
         self.color_select_observable.notify()
 
