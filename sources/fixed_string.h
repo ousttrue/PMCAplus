@@ -97,7 +97,7 @@ public:
 	int fread(FILE *fp)
 	{
 		char buf[M];
-		int m = ::fread(buf, 1, M, fp);
+		int m = (int)::fread(buf, 1, M, fp);
 		int i = 0;
 		for (; i < std::min(N, m); ++i)
 		{

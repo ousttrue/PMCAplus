@@ -18,11 +18,12 @@ int add_PMD(MODEL *model, MODEL *add)
 	for(size_t i=0; i<model->vt.size(); i++){
 		vt[i] = model->vt[i];
 	}
-	size_t j = 0;	
+	size_t j = 0;
+	auto bone_offset = (unsigned short)model->bone.size();
 	for(size_t i=model->vt.size(); i<vt.size(); i++){
 		vt[i] = add->vt[j];
-		vt[i].bone_num0 += model->bone.size();
-		vt[i].bone_num1 += model->bone.size();
+		vt[i].bone_num0 += bone_offset;
+		vt[i].bone_num1 += bone_offset;
 		j++;
 	}
 		
@@ -32,8 +33,9 @@ int add_PMD(MODEL *model, MODEL *add)
 		vt_index[i] = model->vt_index[i];
 	}
 	j = 0;
+	auto vertex_offset = (unsigned short)model->vt.size();
 	for(size_t i=model->vt_index.size(); i<vt_index.size(); i++){
-		vt_index[i] = add->vt_index[j] + model->vt.size();
+		vt_index[i] = add->vt_index[j] + vertex_offset;
 		j++;
 	}
 		
@@ -57,11 +59,11 @@ int add_PMD(MODEL *model, MODEL *add)
 	for(size_t i=model->bone.size(); i<bone.size(); i++){
 		bone[i] = add->bone[j];
 		if(bone[i].PBone_index != USHORT_MAX)
-		bone[i].PBone_index = bone[i].PBone_index + model->bone.size();
+		bone[i].PBone_index = bone[i].PBone_index + bone_offset;
 		if(bone[i].TBone_index != 0)
-		bone[i].TBone_index = bone[i].TBone_index + model->bone.size();
+		bone[i].TBone_index = bone[i].TBone_index + bone_offset;
 		if(bone[i].IKBone_index != 0)
-		bone[i].IKBone_index = bone[i].IKBone_index + model->bone.size();
+		bone[i].IKBone_index = bone[i].IKBone_index + bone_offset;
 		j++;
 	}
 
@@ -73,10 +75,10 @@ int add_PMD(MODEL *model, MODEL *add)
 	j = 0;
 	for(size_t i=model->IK_list.size(); i<IK_list.size(); i++){
 		IK_list[i] = add->IK_list[j];
-		IK_list[i].IKBone_index = IK_list[i].IKBone_index + model->bone.size();
-		IK_list[i].IKTBone_index = IK_list[i].IKTBone_index + model->bone.size();
+		IK_list[i].IKBone_index = IK_list[i].IKBone_index + bone_offset;
+		IK_list[i].IKTBone_index = IK_list[i].IKTBone_index + bone_offset;
 		for(size_t k=0; k<IK_list[i].IKCBone_index.size(); k++){
-			IK_list[i].IKCBone_index[k] = IK_list[i].IKCBone_index[k] + model->bone.size();
+			IK_list[i].IKCBone_index[k] = IK_list[i].IKCBone_index[k] + bone_offset;
 		}
 		j++;
 	}
@@ -105,7 +107,7 @@ int add_PMD(MODEL *model, MODEL *add)
 		j = 0;
 		for(size_t i = model->skin[0].data.size(); i < skin[0].data.size(); i++){
 			//printf("%d \n", i);
-			skin[0].data[i].index = add->skin[0].data[j].index + model->vt.size();
+			skin[0].data[i].index = add->skin[0].data[j].index + vertex_offset;
 			j++;
 		}
 		//表情追加
@@ -117,7 +119,7 @@ int add_PMD(MODEL *model, MODEL *add)
 			//printf("%d\n", j);
 			skin[i] = add->skin[j];
 			for(size_t k=0; k < skin[i].data.size(); k++){
-				skin[i].data[k].index = skin[i].data[k].index + model->skin[0].data.size();
+				skin[i].data[k].index = skin[i].data[k].index + (unsigned int)model->skin[0].data.size();
 			}
 			j++;
 		}
@@ -130,7 +132,7 @@ int add_PMD(MODEL *model, MODEL *add)
 	}
 	j = 0;
 	for(size_t i=model->skin_index.size(); i<skin_index.size(); i++){
-		skin_index[i] = add->skin_index[j] + model->skin_index.size();
+		skin_index[i] = add->skin_index[j] + (unsigned short)model->skin_index.size();
 		j++;
 	}
 	
@@ -151,8 +153,8 @@ int add_PMD(MODEL *model, MODEL *add)
 	}
 	j = 0;
 	for(size_t i=model->bone_disp.size(); i<bone_disp.size(); i++){
-		bone_disp[i].index = add->bone_disp[j].index + model->bone.size();
-		bone_disp[i].bone_group = add->bone_disp[j].bone_group + model->bone_group.size();
+		bone_disp[i].index = add->bone_disp[j].index + bone_offset;
+		bone_disp[i].bone_group = add->bone_disp[j].bone_group + (unsigned char)model->bone_group.size();
 		j++;
 		//printf("%d %d %d %d\n", add->bone_disp[j].index, add->bone_disp[j].bone_group, bone_disp[i].index, bone_disp[i].bone_group);
 	}
@@ -168,7 +170,7 @@ int add_PMD(MODEL *model, MODEL *add)
 	j=0;
 	for(size_t i=model->rbody.size(); i<rbody.size(); i++){
 		rbody[i] = add->rbody[j];
-		rbody[i].bone = rbody[i].bone + model->bone.size();
+		rbody[i].bone = rbody[i].bone + bone_offset;
 		j++;
 	}
 
@@ -181,7 +183,7 @@ int add_PMD(MODEL *model, MODEL *add)
 	for(size_t i=model->joint.size(); i<joint.size(); i++){
 		joint[i] = add->joint[j];
 		for(size_t k=0; k<2; k++){
-			joint[i].rbody[k] = joint[i].rbody[k] + model->rbody.size();
+			joint[i].rbody[k] = joint[i].rbody[k] + (int)model->rbody.size();
 		}
 		j++;
 	}
@@ -201,52 +203,6 @@ int add_PMD(MODEL *model, MODEL *add)
 	
 	return 0;
 }
-
-int listup_bone(MODEL *model, const char file_name[]){
-	int i;
-	char str[64], *p;
-	
-	FILE *txt;
-	
-	if(strcmp(file_name, "") == 0){
-		printf("ファイル名がありません\n");
-		return 1;
-	}
-	txt = fopen(file_name,"w");
-	if(txt == NULL  ){
-		fprintf(txt, "出力テキストファイルを開けません\n");
-		return 1;
-	}
-	
-	if(model->eng_support == 0){
-		printf("リスト出力ができるのは英名対応モデルのみです\n");
-		return 1;
-	}
-	
-	fprintf(txt, "%s \n %s \n",
-		model->header.name,
-		model->header.comment);
-	
-	fprintf(txt, "ボーン数:%d\n", model->bone.size());
-	
-	for(i=0; i<model->bone.size(); i++){
-		fprintf(txt, "%s %s\n", model->bone[i].name, model->bone[i].name_eng);
-	}
-	
-	fprintf(txt, "表情数:%d\n", model->skin.size());
-	for(i=0; i<model->skin.size(); i++){
-		fprintf(txt, "%s %s\n", model->skin[i].name, model->skin[i].name_eng);
-	}
-	fprintf(txt, "ボーン枠数:%d\n", model->bone_group.size());
-	for(i=0; i<model->bone_group.size(); i++){
-		fprintf(txt, "%s %s\n", model->bone_group[i].name.c_str(), model->bone_group[i].name_eng);
-	}
-	
-	fclose(txt);
-	
-	return 0;
-}
-
 
 int get_file_name(char file_name[])
 {

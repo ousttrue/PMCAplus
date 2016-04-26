@@ -907,18 +907,18 @@ static PyObject* Create_PMD(PyObject *self, PyObject *args)
 static PyObject* Marge_PMD(PyObject *self, PyObject *args)
 {
 	int num;
-	int ret;
 	if(!PyArg_ParseTuple(args, "i", &num))return NULL;
-	puts("ボーンマージ");
-	ret = marge_bone(&g_model[num]);
-	puts("材質マージ");
+
+	int ret = marge_bone(&g_model[num]);
+
 	ret += marge_mat(&g_model[num]);
-	puts("IKマージ");
+
 	ret += marge_IK(&g_model[num]);
-	puts("ボーングループマージ");
+
 	ret += marge_bone_disp(&g_model[num]);
-	puts("剛体マージ");
+
 	ret += marge_rb(&g_model[num]);
+
 	return Py_BuildValue("i", ret);
 }
 

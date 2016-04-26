@@ -145,9 +145,6 @@ int sort_bone(MODEL *model, LIST *list)
 				break;
 			}
 		}
-		#ifdef DEBUG
-			printf("index[%d]=%d\n", i, index[i]);
-		#endif
 	}
 	
 	tmp = 0;
@@ -203,9 +200,6 @@ int sort_bone(MODEL *model, LIST *list)
 	}
 	
 	for(i=0; i<model->bone.size(); i++){	//ボーン並び変え
-		#ifdef DEBUG
-			printf("index[%d]=%d\n", i, index[i]);
-		#endif
 		bone[index[i]].name=model->bone[i].name;
 		bone[index[i]].name_eng=model->bone[i].name_eng;
 		if(model->bone[i].PBone_index == 65535){
@@ -892,9 +886,6 @@ int marge_bone(MODEL *model)
 			if(model->bone[i].PBone_index >= model->bone.size()){
 				bone[index[i]].PBone_index = 65535;
 			}else{
-				#ifdef DEBUG
-				printf("%d :%d %d \n", i, model->bone[i].PBone_index, bone[index[i]].PBone_index);
-				#endif
 				bone[index[i]].PBone_index = index[model->bone[i].PBone_index];
 			}
 			if(model->bone[i].TBone_index == 0 || model->bone[i].TBone_index >= model->bone.size()){
@@ -969,9 +960,6 @@ int marge_mat(MODEL *model)
 		}else{
 			tmp++;
 		}
-		#ifdef DEBUG
-			printf("%d:%d %d\n", i, index[i], marge[i]);
-		#endif
 	}
 	
 	//面頂点リスト並び替え
@@ -985,7 +973,7 @@ int marge_mat(MODEL *model)
 				auto size = model->mat[j].vt_index_count * sizeof(unsigned short);
 				memcpy(&vt_index[k], &model->vt_index[sum], size);
 				#ifdef DEBUG
-					printf("%d <- %d  %d\n", i, j, k);
+					//printf("%d <- %d  %d\n", i, j, k);
 				#endif
 				k = k + model->mat[j].vt_index_count;
 				vt_index_count = vt_index_count + model->mat[j].vt_index_count;
@@ -994,7 +982,7 @@ int marge_mat(MODEL *model)
 		}
 		tmp_count[i] = vt_index_count;
 		#ifdef DEBUG
-			printf("%d %d %d\n", i, vt_index_count, model->mat[i].vt_index_count);
+			//printf("%d %d %d\n", i, vt_index_count, model->mat[i].vt_index_count);
 		#endif
 	}
 	
@@ -1033,7 +1021,7 @@ int marge_IK(MODEL *model)
 			tmp++;
 		}
 		#ifdef DEBUG
-			printf("%d:%d %d\n", i, index[i], marge[i]);
+			//printf("%d:%d %d\n", i, index[i], marge[i]);
 		#endif
 	}
 	

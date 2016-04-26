@@ -50,7 +50,7 @@ bool MODEL::load(const std::string &path)
 		}
 	}
 	if (i != 64) {
-		printf("Use Cache\n");
+		//printf("Use Cache\n");
 		return true;
 	}
 
@@ -192,10 +192,6 @@ bool MODEL::load(const std::string &path)
 		joint.clear();
 		return true;
 	}
-
-#ifdef DEBUG
-	printf("‰p–¼‘Î‰ž:%d\n", eng_support);
-#endif
 
 	if (eng_support == 1) {
 		header.name_eng.fread<20>(pmd);
