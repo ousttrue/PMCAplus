@@ -123,7 +123,7 @@ static PyObject* getInfo(PyObject *self, PyObject *args)
 							"IK_count", model->IK_list.size(),
 							"skin_count", model->skin.size(),
 							"bone_group_count", model->bone_group.size(),
-							"bone_disp_count", model->bone_disp_count,
+							"bone_disp_count", model->bone_disp.size(),
 							
 							"eng_support", model->eng_support,
 							"rb_count", model->rbody.size(),
@@ -370,8 +370,8 @@ static PyObject* getJoint(PyObject *self, PyObject *args)
 
 static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 {
-	int num, size;
-	MODEL model, *p;
+	int num;
+	MODEL model;
 	PyObject *PyTmp;
 	char *str[4];
 	
@@ -387,7 +387,7 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 	int bone_group_count;
 	int rbody_count;
 	int joint_count;
-
+	int bone_disp_count;
 	if(!PyArg_ParseTuple(args, "i"
 							"yyyy"
 							"iiii"
@@ -408,7 +408,7 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 							&IK_count,
 							&skin_count,
 							&bone_group_count,
-							&model.bone_disp_count,
+							&bone_disp_count,
 							
 							&model.eng_support,
 							&rbody_count,
@@ -421,37 +421,20 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 	model.header.name_eng=str[2];
 	model.header.comment_eng=str[3];
 	
-	p = &g_model[num];
-	
-
+	auto p = &g_model[num];
 	
 	delete_PMD(p);
 	*p = model;
 	
-	/*メモリ確保************************************************************************/
 	p->vt.resize(vt_count);
 	p->vt_index.resize(vt_index_count * 3);
 	p->mat.resize(mat_count);
 	p->bone.resize(bone_count);
-	
-	//IKリスト
 	p->IK_list.resize(IK_count);
-	
-	//表情
 	p->skin.resize(skin_count);
-	
-	//表情表示
 	p->skin_index.resize(skin_disp_count);
-	PyList_to_Array_UShort(&p->skin_index[0], PyTmp, (int)p->skin_index.size());
-	
-	//ボーン表示グループ
 	p->bone_group.resize(bone_group_count);
-	
-	//表示ボーン
-	size = p->bone_disp_count * sizeof(BONE_DISP);
-	p->bone_disp = (BONE_DISP*)MALLOC(size);
-	memset(p->bone_disp, 0, size);
-	
+	p->bone_disp.resize(bone_disp_count);
 	p->rbody.resize(rbody_count);
 	p->joint.resize(joint_count);
 		

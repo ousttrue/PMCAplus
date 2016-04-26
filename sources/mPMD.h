@@ -162,15 +162,11 @@ struct MODEL
 	std::vector<SKIN> skin;
 	std::vector<unsigned short> skin_index;
 	std::vector<BONE_GROUP> bone_group;
+	std::vector<BONE_DISP> bone_disp;
 
-	unsigned int bone_disp_count;
-	BONE_DISP *bone_disp;
-
-	//extention
 	unsigned char eng_support;
 
 	std::array<fixed_string<100>, 10> toon;
-
 	std::vector<RIGID_BODY> rbody;
 	std::vector<JOINT> joint;
 

@@ -211,18 +211,14 @@ int load_PMD(MODEL *model, const char file_name[])
 	for(i=0; i<bone_group_count; i++){
 		model->bone_group[i].name.fread<50>(pmd);
 	}
-	
-	FREAD(&model->bone_disp_count, 4,  1, pmd);
-	#ifdef DEBUG
-		printf("表示ボーン数:%d\n", model->bone_disp_count);
-	#endif
-	model->bone_disp = (BONE_DISP*)MALLOC((size_t)model->bone_disp_count*sizeof(BONE_DISP));
-	if(model->bone_disp==NULL)return -1;
-	for(i=0; i<model->bone_disp_count; i++){
+
+	int bone_disp_count;
+	FREAD(&bone_disp_count, 4,  1, pmd);
+	model->bone_disp.resize(bone_disp_count);
+	for(i=0; i<bone_disp_count; i++){
 		FREAD(&model->bone_disp[i].index, 2,  1, pmd);
 		FREAD(&model->bone_disp[i].bone_group, 1,  1, pmd);
 	}
-	
 	
 	FREAD(&model->eng_support, 1,  1, pmd);
 	
@@ -442,8 +438,9 @@ int write_PMD(MODEL *model, const char file_name[])
 		fwrite(model->bone_group[i].name.c_str(), 1, 50, pmd);
 	}
 	
-	fwrite(&model->bone_disp_count, 4,  1, pmd);
-	for(i=0; i<model->bone_disp_count; i++){
+	int bone_disp_count = model->bone_disp.size();
+	fwrite(&bone_disp_count, 4,  1, pmd);
+	for(i=0; i<model->bone_disp.size(); i++){
 		fwrite(&model->bone_disp[i].index, 2,  1, pmd);
 		fwrite(&model->bone_disp[i].bone_group, 1,  1, pmd);
 	}
@@ -635,9 +632,9 @@ int print_PMD(MODEL *model, const char file_name[])
 		fprintf(txt, "%d %s", i,model->bone_group[i].name);
 	}
 	
-	fprintf(txt, "\n表示ボーン数:%d\n", model->bone_disp_count);
+	fprintf(txt, "\n表示ボーン数:%d\n", model->bone_disp.size());
 	
-	for(i=0; i<model->bone_disp_count; i++){
+	for(i=0; i<model->bone_disp.size(); i++){
 		fprintf(txt, "ボーン番号:%d\n", model->bone_disp[i].index);
 		fprintf(txt, "表示番号:%d\n", model->bone_disp[i].bone_group);
 	}
@@ -735,9 +732,7 @@ int create_PMD(MODEL *model)
 	model->skin.clear();
 	model->skin_index.clear();
 	model->bone_group.clear();
-
-	model->bone_disp_count = 0;
-	model->bone_disp = NULL;
+	model->bone_disp.clear();
 	
 	model->eng_support = 0;
 	
@@ -764,10 +759,7 @@ int delete_PMD(MODEL *model)
 	model->skin.clear();
 	model->skin_index.clear();
 	model->bone_group.clear();
-	
-	FREE(model->bone_disp);
-	model->bone_disp_count = 0;
-	model->bone_disp = NULL;
+	model->bone_disp.clear();
 	
 	model->eng_support = 0;
 	
@@ -783,10 +775,6 @@ int delete_PMD(MODEL *model)
 
 int copy_PMD(MODEL *out, MODEL *model)
 {
-	int i;
-	size_t size;
-	int tmp[3];
-	
 	out->header =model->header;
 	out->vt = model->vt;
 	out->vt_index = model->vt_index;
@@ -796,26 +784,9 @@ int copy_PMD(MODEL *out, MODEL *model)
 	out->skin = model->skin;
 	out->skin_index = model->skin_index;
 	out->bone_group = model->bone_group;
-	
-	//表示ボーン
-	size = (size_t)model->bone_disp_count * sizeof(BONE_DISP);
-	out->bone_disp_count = model->bone_disp_count;
-	out->bone_disp = (BONE_DISP*)MALLOC(size);
-	if(out->bone_disp==NULL)return -1;
-	memcpy(out->bone_disp, model->bone_disp, size);
-	/*
-	for(i=0; i<model->bone_disp_count; i++){
-		out->bone_disp[i] = model->bone_disp[i];
-	}
-	*/
-	#ifdef DEBUG
-		printf("表示ボーン\n");
-	#endif
-	
-	out->toon=model->toon;
-	
+	out->bone_disp = model->bone_disp;
+	out->toon=model->toon;	
 	out->eng_support = model->eng_support;	
-
 	out->rbody = model->rbody;
 	out->joint = model->joint;
 	
@@ -824,26 +795,13 @@ int copy_PMD(MODEL *out, MODEL *model)
 
 int add_PMD(MODEL *model, MODEL *add)
 {
-	
-	int i, j, k;
-	int size;
-	int tmp[3];
-	
-
-	std::vector<IK_LIST> IK_list;
-	std::vector<SKIN> skin;
-
-	unsigned int bone_disp_count;
-	BONE_DISP *bone_disp;
-	//ENGLISH eg;
-	
 	//頂点
 	std::vector<VERTEX> vt(model->vt.size() + add->vt.size());
-	for(i=0; i<model->vt.size(); i++){
+	for(size_t i=0; i<model->vt.size(); i++){
 		vt[i] = model->vt[i];
 	}
-	j = 0;	
-	for(i=model->vt.size(); i<vt.size(); i++){
+	size_t j = 0;	
+	for(size_t i=model->vt.size(); i<vt.size(); i++){
 		vt[i] = add->vt[j];
 		vt[i].bone_num0 += model->bone.size();
 		vt[i].bone_num1 += model->bone.size();
@@ -852,33 +810,33 @@ int add_PMD(MODEL *model, MODEL *add)
 		
 	//面頂点
 	std::vector<unsigned short> vt_index(model->vt_index.size() + add->vt_index.size());
-	for(i=0; i<model->vt_index.size(); i++){
+	for(size_t i=0; i<model->vt_index.size(); i++){
 		vt_index[i] = model->vt_index[i];
 	}
 	j = 0;
-	for(i=model->vt_index.size(); i<vt_index.size(); i++){
+	for(size_t i=model->vt_index.size(); i<vt_index.size(); i++){
 		vt_index[i] = add->vt_index[j] + model->vt.size();
 		j++;
 	}
 		
 	//材質
 	std::vector<MATERIAL> mat(model->mat.size() + add->mat.size());
-	for(i=0; i<model->mat.size(); i++){
+	for(size_t i=0; i<model->mat.size(); i++){
 		mat[i] = model->mat[i];
 	}
 	j = 0;	
-	for(i=model->mat.size(); i<mat.size(); i++){
+	for(size_t i=model->mat.size(); i<mat.size(); i++){
 		mat[i] = add->mat[j];
 		j++;
 	}
 		
 	//ボーン
 	std::vector<BONE> bone(model->bone.size() + add->bone.size());
-	for(i=0; i<model->bone.size(); i++){
+	for(size_t i=0; i<model->bone.size(); i++){
 		bone[i] = model->bone[i];
 	}
 	j=0;
-	for(i=model->bone.size(); i<bone.size(); i++){
+	for(size_t i=model->bone.size(); i<bone.size(); i++){
 		bone[i] = add->bone[j];
 		if(bone[i].PBone_index != USHORT_MAX)
 		bone[i].PBone_index = bone[i].PBone_index + model->bone.size();
@@ -888,32 +846,25 @@ int add_PMD(MODEL *model, MODEL *add)
 		bone[i].IKBone_index = bone[i].IKBone_index + model->bone.size();
 		j++;
 	}
-	#ifdef DEBUG
-		printf("ボーン\n");
-	#endif
+
 	//IKリスト
-	IK_list.resize(model->IK_list.size() + add->IK_list.size());
-	for(i=0; i<model->IK_list.size(); i++){
+	std::vector<IK_LIST> IK_list(model->IK_list.size() + add->IK_list.size());
+	for(size_t i=0; i<model->IK_list.size(); i++){
 		IK_list[i] = model->IK_list[i];
 	}
 	j = 0;
-	for(i=model->IK_list.size(); i<IK_list.size(); i++){
+	for(size_t i=model->IK_list.size(); i<IK_list.size(); i++){
 		IK_list[i] = add->IK_list[j];
 		IK_list[i].IKBone_index = IK_list[i].IKBone_index + model->bone.size();
 		IK_list[i].IKTBone_index = IK_list[i].IKTBone_index + model->bone.size();
-		for(k=0; k<IK_list[i].IKCBone_index.size(); k++){
+		for(size_t k=0; k<IK_list[i].IKCBone_index.size(); k++){
 			IK_list[i].IKCBone_index[k] = IK_list[i].IKCBone_index[k] + model->bone.size();
 		}
 		j++;
 	}
 	
-	#ifdef DEBUG
-		printf("IKリスト\n");
-	#endif
-	
 	//表情
-	skin.resize(model->skin.size() + add->skin.size());
-	
+	std::vector<SKIN> skin(model->skin.size() + add->skin.size());	
 	if(add->skin.size() == 0){
 		skin = model->skin;
 	}
@@ -924,30 +875,30 @@ int add_PMD(MODEL *model, MODEL *add)
 		skin.resize(skin.size()-1);
 		skin[0] = model->skin[0];
 		skin[0].data.resize(model->skin[0].data.size() + add->skin[0].data.size());
-		tmp[0] = model->skin[0].data.size();
-		memcpy(&skin[0].data[0], &model->skin[0].data[0], tmp[0] * sizeof(SKIN_DATA));
-		memcpy(&skin[0].data[tmp[0]], &add->skin[0].data[0], add->skin[0].data.size() * sizeof(SKIN_DATA));
+		auto x = model->skin[0].data.size();
+		memcpy(&skin[0].data[0], &model->skin[0].data[0], x * sizeof(SKIN_DATA));
+		memcpy(&skin[0].data[x], &add->skin[0].data[0], add->skin[0].data.size() * sizeof(SKIN_DATA));
 		//baseの合成
 		
-		for(i=0; i < model->skin[0].data.size(); i++){
+		for(size_t i=0; i < model->skin[0].data.size(); i++){
 			skin[0].data[i].index = model->skin[0].data[i].index;
 		}
 		//printf("%d %d %d\n", skin[0].skin_vt_count, model->skin[0].skin_vt_count, add->skin[0].skin_vt_count);
 		j = 0;
-		for(i = model->skin[0].data.size(); i < skin[0].data.size(); i++){
+		for(size_t i = model->skin[0].data.size(); i < skin[0].data.size(); i++){
 			//printf("%d \n", i);
 			skin[0].data[i].index = add->skin[0].data[j].index + model->vt.size();
 			j++;
 		}
 		//表情追加
-		for(i=1; i<model->skin.size(); i++){
+		for(size_t i=1; i<model->skin.size(); i++){
 			skin[i] = model->skin[i];
 		}
 		j = 1;
-		for(i=model->skin.size(); i<skin.size(); i++){
+		for(size_t i=model->skin.size(); i<skin.size(); i++){
 			//printf("%d\n", j);
 			skin[i] = add->skin[j];
-			for(k=0; k < skin[i].data.size(); k++){
+			for(size_t k=0; k < skin[i].data.size(); k++){
 				skin[i].data[k].index = skin[i].data[k].index + model->skin[0].data.size();
 			}
 			j++;
@@ -960,53 +911,44 @@ int add_PMD(MODEL *model, MODEL *add)
 		memcpy(&skin_index[0], &model->skin_index[0], model->skin_index.size() * sizeof(unsigned short));
 	}
 	j = 0;
-	for(i=model->skin_index.size(); i<skin_index.size(); i++){
+	for(size_t i=model->skin_index.size(); i<skin_index.size(); i++){
 		skin_index[i] = add->skin_index[j] + model->skin_index.size();
 		j++;
 	}
 	
 	//ボーン表示
 	std::vector<BONE_GROUP> bone_group(model->bone_group.size() + add->bone_group.size());
-	for(i=0; i<model->bone_group.size(); i++){
+	for(size_t i=0; i<model->bone_group.size(); i++){
 		bone_group[i] = model->bone_group[i];
 	}
 	j = 0;
-	for(i=model->bone_group.size(); i<bone_group.size(); i++){
+	for(size_t i=model->bone_group.size(); i<bone_group.size(); i++){
 		bone_group[i] = add->bone_group[j];
 		j++;
 	}
 	
-	bone_disp_count = model->bone_disp_count + add->bone_disp_count;
-	bone_disp = (BONE_DISP*)MALLOC((size_t)bone_disp_count * sizeof(BONE_DISP));
-	for(i=0; i<model->bone_disp_count; i++){
+	std::vector<BONE_DISP> bone_disp(model->bone_disp.size() + add->bone_disp.size());
+	for(size_t i=0; i<model->bone_disp.size(); i++){
 		bone_disp[i] = model->bone_disp[i];
 	}
 	j = 0;
-	for(i=model->bone_disp_count; i<bone_disp_count; i++){
+	for(size_t i=model->bone_disp.size(); i<bone_disp.size(); i++){
 		bone_disp[i].index = add->bone_disp[j].index + model->bone.size();
 		bone_disp[i].bone_group = add->bone_disp[j].bone_group + model->bone_group.size();
 		j++;
 		//printf("%d %d %d %d\n", add->bone_disp[j].index, add->bone_disp[j].bone_group, bone_disp[i].index, bone_disp[i].bone_group);
 	}
-	
-	#ifdef DEBUG
-		printf("ボーン表示\n");
-	#endif
-	
+		
 	//英名
 	model->eng_support = add->eng_support;
-	
-	#ifdef DEBUG
-		printf("英名\n");
-	#endif
-	
+		
 	//剛体
 	std::vector<RIGID_BODY> rbody(model->rbody.size() + add->rbody.size());
-	for(i=0; i<model->rbody.size(); i++){
+	for(size_t i=0; i<model->rbody.size(); i++){
 		rbody[i] = model->rbody[i];
 	}
 	j=0;
-	for(i=model->rbody.size(); i<rbody.size(); i++){
+	for(size_t i=model->rbody.size(); i<rbody.size(); i++){
 		rbody[i] = add->rbody[j];
 		rbody[i].bone = rbody[i].bone + model->bone.size();
 		j++;
@@ -1014,13 +956,13 @@ int add_PMD(MODEL *model, MODEL *add)
 
 	//ジョイント
 	std::vector<JOINT> joint(model->joint.size() + add->joint.size());
-	for(i=0; i<model->joint.size(); i++){
+	for(size_t i=0; i<model->joint.size(); i++){
 		joint[i] = model->joint[i];
 	}
 	j=0;
-	for(i=model->joint.size(); i<joint.size(); i++){
+	for(size_t i=model->joint.size(); i<joint.size(); i++){
 		joint[i] = add->joint[j];
-		for(k=0; k<2; k++){
+		for(size_t k=0; k<2; k++){
 			joint[i].rbody[k] = joint[i].rbody[k] + model->rbody.size();
 		}
 		j++;
@@ -1035,14 +977,7 @@ int add_PMD(MODEL *model, MODEL *add)
 	model->skin = skin;
 	model->skin_index = skin_index;
 	model->bone_group = bone_group;
-	
-	#ifdef MEM_DBG
-		printf("free %p\n", model->bone_disp);
-	#endif
-	FREE(model->bone_disp);
 	model->bone_disp = bone_disp;
-	model->bone_disp_count = bone_disp_count;
-	
 	model->rbody = rbody;
 	model->joint = joint;
 	
