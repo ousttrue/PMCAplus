@@ -604,8 +604,12 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz)
 			}
 		}
 		//変換
-		coordtrans(&tmp_vt[0], len_vt, loc, mtr);
-		coordtrans(&tmp_bone[0], len_bone, loc, mtr);
+		if (tmp_vt.size()) {
+			coordtrans(&tmp_vt[0], len_vt, loc, mtr);
+		}
+		if (tmp_bone.size()) {
+			coordtrans(&tmp_bone[0], len_bone, loc, mtr);
+		}
 
 		//変形
 		for (i = 0; i < len_vt; i++) {
@@ -619,8 +623,12 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz)
 			tmp_bone[i][2] = sz * tmp_bone[i][2];
 		}
 		//逆変換
-		coordtrans_inv(&tmp_vt[0], len_vt, loc, mtr);
-		coordtrans_inv(&tmp_bone[0], len_bone, loc, mtr);
+		if (tmp_vt.size()) {
+			coordtrans_inv(&tmp_vt[0], len_vt, loc, mtr);
+		}
+		if (tmp_bone.size()) {
+			coordtrans_inv(&tmp_bone[0], len_bone, loc, mtr);
+		}
 
 
 		//変換結果を元のデータに書き込む

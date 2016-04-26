@@ -37,10 +37,8 @@ class ListModel(QtCore.QAbstractListModel):
         self.dataChanged.emit(self.get(0), self.get(-1))
 
     def get(self, index):
-        if len(self.rows)==0:
+        if index<0 or index>=len(self.rows):
             return self.createIndex(0, 0, None)
-        elif index<0:
-            return self.createIndex(len(self.rows)+index, 0, self.rows[index])
         else:
             return self.createIndex(index, 0, self.rows[index])
 
@@ -67,7 +65,7 @@ class PartsTab(QtGui.QWidget):
     def bind_pmca(self, parts_tree: PyPMCA.PartsTree):
         # pmca to gui
         def on_tree_entry(entry, sel):
-            logger.debug('on_tree_entry %s, %d', entry, sel)
+            logger.debug('on_tree_entry %d', sel)
             self.tree_model.setEntries(entry)
             if sel>=0:
                 self.tree_list.selectionModel().select(
@@ -75,7 +73,7 @@ class PartsTab(QtGui.QWidget):
         parts_tree.tree_entry_observable.add(on_tree_entry)
 
         def on_parts_entry(entry, sel):
-            logger.debug('on_parts_entry %s, %d', entry, sel)
+            logger.debug('on_parts_entry %d', sel)
             self.parts_model.setEntries(entry)
             if sel>=0:
                 self.parts_list.selectionModel().select(

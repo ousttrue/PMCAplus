@@ -15,10 +15,8 @@ class MATS_ENTRY:
         self.author=None
 
     def get_tex_path(self):
-        return str(self.parts_dir.joinpath(self.tex))
-
-    def get_sph_path(self):
-        return str(self.parts_dir.joinpath(self.sph))
+        if self.tex:
+            return str(self.parts_dir.joinpath(self.tex))
 
 
 class MATS:    

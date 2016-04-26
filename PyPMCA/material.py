@@ -123,12 +123,13 @@ class MaterialSelector:
         self.cur_mat=sel_t
         self.cur_color=0
         self.mat_entry=[]
-        #for i in range(info.data["mat_count"]):
-        #    m=MATERIAL(**PMCA.getMat(0, i))
-        #    for x in self.mats_list:
-        #        if x.name==m.tex:
-        #            self.mat_entry.append(x.name)
-        self.mat_entry=[x for x in self.replace_map.keys()]
+        for i in range(info.data["mat_count"]):
+            m=MATERIAL(**PMCA.getMat(0, i))
+            for x in self.mats_list:
+                if x.name==m.tex:
+                    self.mat_entry.append(x.name)
+        self.mat_entry.sort()
+        #self.mat_entry=[x for x in self.replace_map.keys()]
         self.material_entry_observable.notify(self.mat_entry, self.cur_mat)
 
     def __update_color_entry(self, sel_t=0):
