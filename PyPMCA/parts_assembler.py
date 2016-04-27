@@ -33,13 +33,13 @@ class Assembler:
         '''
         モデル0を初期化
         '''
-        PMCA.Create_PMD(0)
+        PMCA.g_model[0]=PMCA.Model()
         for x in root.traverse():
             if x.part:
-                PMCA.Create_PMD(4)
-                PMCA.Load_PMD(4, str(x.part.path).encode(fsenc, 'replace'))
+                model=PMCA.Model()
+                model.Load_PMD(str(x.part.path).encode(fsenc, 'replace'))
 
-                info_data = PMCA.getInfo(4)
+                info_data = model.getInfo()
                 info = INFO(info_data)
                 line = info.comment.split('\n')
                 flag_author=False
@@ -83,9 +83,12 @@ class Assembler:
                         else:
                             app.licenses.append('Nonfree')
 
-                PMCA.Add_PMD(0, 4)
-                PMCA.Marge_PMD(0)
-        PMCA.Sort_PMD(0,
+                PMCA.g_model[0].Add_PMD(model)
+                PMCA.g_model[0].Marge_PMD()
+                info=PMCA.g_model[0].getInfo()
+                pass
+        PMCA.g_model[0].Sort_PMD(
             LIST['b'][0], LIST['b'][1], 
             LIST['s'][0], LIST['s'][1], 
             LIST['g'][0], LIST['g'][1])
+        pass

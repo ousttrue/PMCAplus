@@ -118,26 +118,26 @@ class PyPMCA:
             logger.info('Parts.Build')
             assembler=Assembler()
             assembler.assemble(self.parts_tree.root, self.LIST)
-            PMCA.Copy_PMD(0, 1)
-            self.materials.replace()
-            PMCA.Copy_PMD(0, 2)
+            PMCA.g_model[0].CopyTo(PMCA.g_model[1])
+            self.materials.ApplyToPmd(PMCA.g_model[0])
+            PMCA.g_model[0].CopyTo(PMCA.g_model[2])
         elif self.update_level==1:
             logger.debug('update_material_select')
-            PMCA.Copy_PMD(1, 0)
-            self.materials.replace()
-            PMCA.Copy_PMD(0, 2)
+            PMCA.g_model[1].CopyTo(PMCA.g_model[0])
+            self.materials.ApplyToPmd(PMCA.g_model[0])  
+            PMCA.g_model[0].CopyTo(PMCA.g_model[2])
         elif self.update_level==2:
             logger.debug('update_transform')
-            PMCA.Copy_PMD(2,0)
+            PMCA.g_model[2].CopyTo(PMCA.g_model[0])
         else:
             raise Exception("unknown update_level: " + self.update_level)
 
-        self.transform.update()
-        PMCA.Copy_PMD(0,3)
+        self.transform.update(PMCA.g_model[0])
+        PMCA.g_model[0].CopyTo(PMCA.g_model[3])
         self.update_level=-1
-        self.name_update()       
+        self.name_update(PMCA.g_model[0])
         self.model_update_observable.notify()
-        wht = PMCA.getWHT(0)
+        wht = PMCA.g_model[0].getWHT()
         self.model_bb_observable.notify(wht)
 
     def init(self):
@@ -172,17 +172,17 @@ class PyPMCA:
                     else:
                         logger.warn('unknown line: %s %s', x, lines[0])
 
-    def name_update(self):
+    def name_update(self, model):
         #str1, str2=self.get_license()
         str1='author'
         str2='license'
         #self.modelinfo.name = self.info_tab.frame.name.get()
         #self.modelinfo.name_l = self.info_tab.frame.name_l.get()
         #self.modelinfo.comment = self.info_tab.frame.comment.get('1.0',END)
-        Set_Name_Comment(name=self.modelinfo.name,
-            comment='%s\nAuthor:%s\nLicense:%s\n%s'%(self.modelinfo.name_l,str1,str2,self.modelinfo.comment), 
-            name_eng=self.modelinfo.name_eng,
-            comment_eng='%s\nAuthor:%s\nLicense:%s\n%s'%(self.modelinfo.name_l_eng,str1,str2,self.modelinfo.comment_eng))
+        model.Set_Name_Comment(self.modelinfo.name,
+            '%s\nAuthor:%s\nLicense:%s\n%s'%(self.modelinfo.name_l,str1,str2,self.modelinfo.comment), 
+            self.modelinfo.name_eng,
+            '%s\nAuthor:%s\nLicense:%s\n%s'%(self.modelinfo.name_l_eng,str1,str2,self.modelinfo.comment_eng))
 
     def load_CNL_File(self, path):
         name, long_name, tree, replace_map, transform_data=cnl.load_CNL_File(
@@ -195,9 +195,9 @@ class PyPMCA:
         self.transform.transform_data=transform_data
 
     def get_materials(self):
-        info = INFO(PMCA.getInfo(0))       
+        info = INFO(PMCA.g_model[0].getInfo())       
         for i in range(info.data["mat_count"]):
-            yield MATERIAL(**PMCA.getMat(0, i))
+            yield MATERIAL(**PMCA.g_model[0].getMat(i))
         
     def save_CNL_File(self, path):
         cnl.save_CNL_File(path, self.modelinfo, 
@@ -205,7 +205,7 @@ class PyPMCA:
                           self.get_materials(), self.materials.replace_map,
                           self.transform.transform_data[0])
 
-    def save_PMD(self, name):
+    def save_PMD(self, name, model):
         if self.settings.export2folder:
             dirc = name[0:-4]
             os.mkdir(dirc)
@@ -213,13 +213,13 @@ class PyPMCA:
             name = "%s/%s/%s"%(tmp[0] ,dirc.rsplit('/', 1)[1] ,tmp[1])
             
         logger.info('Write_PMD %s', name)
-        if PMCA.Write_PMD(0, name.encode(fsenc,'replace')) == 0:    
+        if model.Write_PMD(name.encode(fsenc,'replace')) == 0:    
             #テクスチャコピー
             dirc = os.path.dirname(name)
-            info_data = PMCA.getInfo(0)
+            info_data = model.getInfo()
             info = INFO(info_data)
             for i in range(info.data["mat_count"]):
-                mat = MATERIAL(**PMCA.getMat(0, i))
+                mat = MATERIAL(**model.getMat(i))
                 if mat.tex != '':
                     try:
                         shutil.copy(mat.tex_path, dirc)
@@ -231,8 +231,8 @@ class PyPMCA:
                     except IOError:
                         logger.warning('コピー失敗:%s', mat.sph_path)
     
-            toon = PMCA.getToon(0)
-            for i,x in enumerate(PMCA.getToonPath(0)):
+            toon = model.getToon()
+            for i,x in enumerate(model.getToonPath()):
                 toon[i] = toon[i].decode('cp932','replace')
                 #logger.debug(toon[i], x)
                 if toon[i] != '':
@@ -260,7 +260,7 @@ class PyPMCA:
                 name_PMD = name_PMD[:-4] + '.pmd'
             else:
                 name_PMD += '.pmd'
-            self.save_PMD(name_PMD)
+            self.save_PMD(name_PMD, PMCA.g_model[0])
         self.load_CNL_File('./last.cnl')
         #self.refresh()
         self.target_dir = name.rsplit('/',1)[0]
@@ -448,24 +448,24 @@ class PyPMCA:
         return string
 
     def get_model(self):
-        info=PMCA.getInfo(0)
+        info=PMCA.g_model[0].getInfo()
 
         # vertices
         vertices=[]
         uvs=[]
-        for v in (PMCA.getVt(0, i) for i in range(info['vt_count'])):
+        for v in (PMCA.g_model[0].getVt(i) for i in range(info['vt_count'])):
             loc=v['loc']
             vertices.append(loc[0])
             vertices.append(loc[1])
             vertices.append(-loc[2])
             uvs+=v['uv']
         # indices
-        indices=list(chain.from_iterable((PMCA.getFace(0, i) for i in range(info['face_count']))))
+        indices=list(chain.from_iterable((PMCA.g_model[0].getFace(i) for i in range(info['face_count']))))
         # materials
         colors=[]
         paths=[]
         indexCounts=[]
-        for m in (PMCA.getMat(0, i) for i in range(info['mat_count'])):
+        for m in (PMCA.g_model[0].getMat(i) for i in range(info['mat_count'])):
             colors.append((m['diff_col'][0] * 2 + m['mirr_col'][0]) / 2.5 + m['spec_col'][0] / 4)
             colors.append((m['diff_col'][1] * 2 + m['mirr_col'][1]) / 2.5 + m['spec_col'][1] / 4)
             colors.append((m['diff_col'][2] * 2 + m['mirr_col'][2]) / 2.5 + m['spec_col'][2] / 4)

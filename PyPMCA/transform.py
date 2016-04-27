@@ -169,13 +169,13 @@ class BodyTransform:
                 self.data.bones[i].rot[j] = y * var
         self.transform_observable.notify()
 
-    def update(self):
-        info_data = PMCA.getInfo(0)
+    def update(self, model: PMCA.Model):
+        info_data = model.getInfo()
         info = INFO(info_data)
             
         tmpbone = []
         for i in range(info_data["bone_count"]):
-            tmp = PMCA.getBone(0, i)
+            tmp = model.getBone(i)
             tmpbone.append(BONE(tmp['name'], tmp['name_eng'], tmp['parent'], tmp['tail'], tmp['type'], tmp['IK'], tmp['loc']))
         refbone = None
         refbone_index = None
@@ -186,14 +186,14 @@ class BodyTransform:
                 break
             
         for y in self.transform_data:
-            PMCA.Resize_Model(0,y.scale)
+            model.Resize_Model(y.scale)
             for x in y.bones:
-                PMCA.Resize_Bone(0, x.name.encode('cp932','replace'), x.length, x.thick)
-                PMCA.Move_Bone(0, x.name.encode('cp932','replace'),x.pos[0], x.pos[1], x.pos[2])
+                model.Resize_Bone(x.name.encode('cp932','replace'), x.length, x.thick)
+                model.Move_Bone(x.name.encode('cp932','replace'),x.pos[0], x.pos[1], x.pos[2])
             
         if refbone!=None:
             newbone=None
-            tmp = PMCA.getBone(0, refbone_index)
+            tmp = model.getBone(refbone_index)
             newbone = BONE(tmp['name'], tmp['name_eng'], tmp['parent'], tmp['tail'], tmp['type'], tmp['IK'], tmp['loc'])
                 
             dy = refbone.loc[1] - newbone.loc[1]
@@ -202,16 +202,16 @@ class BodyTransform:
                 count = 0
                 while i < info_data["bone_count"] and count < info_data["bone_count"]:
                     if tmpbone[i].name == 'センター':
-                        PMCA.Move_Bone(0, x.name.encode('cp932','replace'), 0, dy, 0)
+                        model.Move_Bone(x.name.encode('cp932','replace'), 0, dy, 0)
                         break
                     i=tmpbone[i].parent
                     count += 1
                 
-            PMCA.Move_Bone(0, 'センター'.encode('cp932','replace'), 0, dy, 0)
-            PMCA.Move_Bone(0, '+センター'.encode('cp932','replace'), 0, -dy, 0)
+            model.Move_Bone('センター'.encode('cp932','replace'), 0, dy, 0)
+            model.Move_Bone('+センター'.encode('cp932','replace'), 0, -dy, 0)
             
         for y in self.transform_data:
-            PMCA.Move_Model(0,y.pos[0],y.pos[1],y.pos[2])
+            model.Move_Model(y.pos[0],y.pos[1],y.pos[2])
             
-        PMCA.Update_Skin(0)
-        PMCA.Adjust_Joints(0)
+        model.Update_Skin()
+        model.Adjust_Joints()

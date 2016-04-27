@@ -75,13 +75,13 @@ class MaterialSelector:
             x.toon = tmp[0]
         '''
 
-    def ApplyToPmd(self, num):
+    def ApplyToPmd(self, model: PMCA.Model):
         '''
         PMDに反映する
         '''
-        info = INFO(PMCA.getInfo(num))       
+        info = INFO(model.getInfo())       
         for i in range(info.data["mat_count"]):
-            m=MATERIAL(**PMCA.getMat(num, i))
+            m=MATERIAL(**model.getMat(i))
             if m.tex in self.replace_map:
                 self.apply_entry(m, self.replace_map[m.tex].sel)
                 '''
@@ -119,12 +119,12 @@ class MaterialSelector:
         '''
         マテリアルリストを更新する(ツリーが変化した時など)
         '''
-        info = INFO(PMCA.getInfo(0))       
+        info = INFO(PMCA.g_model[0].getInfo())       
         self.cur_mat=sel_t
         self.cur_color=0
         self.mat_entry=[]
         for i in range(info.data["mat_count"]):
-            m=MATERIAL(**PMCA.getMat(0, i))
+            m=MATERIAL(**PMCA.g_model[0].getMat(i))
             for x in self.mats_list:
                 if x.name==m.tex:
                     self.mat_entry.append(x.name)
@@ -173,10 +173,3 @@ class MaterialSelector:
             val=random.randint(0, len(v.mat.entries)-1)
             v.sel = v.mat.entries[val]
         self.color_select_observable.notify()
-
-    def replace(self):
-        '''
-        マテリアル置き換えを実行する        
-        '''
-        logger.info("Material.Replace")
-        self.ApplyToPmd(0)

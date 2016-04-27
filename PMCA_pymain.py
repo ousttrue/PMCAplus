@@ -29,7 +29,6 @@ for h in logging.getLogger().handlers:
 
 
 if __name__ == "__main__":
-    PMCA.Init_PMD()
 
     pmca=PyPMCA.PyPMCA()
     scene=PMCA_GL.Scene()

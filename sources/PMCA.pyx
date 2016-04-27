@@ -179,344 +179,264 @@ cdef extern from "mPMD_edit.h":
 ##############################################################################
 # definition
 ##############################################################################
-cdef vector[MODEL] g_model;
+cdef class Model:
+    cdef MODEL *_thisptr;
 
-def getInfo(index):
-    if index<0 or index>=g_model.size():
-        return
-    model=g_model[index]
-    return {
-            "name": model.header.name.c_str(),
-            "name_eng": model.header.name_eng.c_str(),
-            "comment": model.header.comment.c_str(),
-            "comment_eng": model.header.comment_eng.c_str(),
-            "path": model.header.path.c_str(),
-            "vt_count": model.vt.size(),
-            "face_count": model.vt_index.size()/3,
-            "mat_count": model.mat.size(),
-            "bone_count": model.bone.size(),
-            "IK_count": model.IK_list.size(),
-            "skin_count": model.skin.size(),
-            "bone_group_count": model.bone_group.size(),
-            "bone_disp_count": model.bone_disp.size(),
+    def __cinit__(self):
+        self._thisptr=new MODEL()
 
-            "eng_support": model.eng_support,
-            "rb_count": model.rbody.size(),
-            "joint_count": model.joint.size(),
-            "skin_index": model.skin_index,
-    }
+    def __dealloc__(self):
+        if self._thisptr != NULL:
+            del self._thisptr
 
-def getVt(index, v_index):
-    if index<0 or index>=g_model.size():
-        return
-    model = g_model[index];
-    v=model.vt[v_index]
-    return {
-            "loc": v.loc,
-            "nor": v.nor,
-            "uv": v.uv,
-            "bone_num1": v.bone_num0,
-            "bone_num2": v.bone_num1,
-            "weight": v.bone_weight,
-            "edge": v.edge_flag
-    }
+    def getInfo(self):
+        return {
+                "name": self._thisptr.header.name.c_str(),
+                "name_eng": self._thisptr.header.name_eng.c_str(),
+                "comment": self._thisptr.header.comment.c_str(),
+                "comment_eng": self._thisptr.header.comment_eng.c_str(),
+                "path": self._thisptr.header.path.c_str(),
+                "vt_count": self._thisptr.vt.size(),
+                "face_count": self._thisptr.vt_index.size()/3,
+                "mat_count": self._thisptr.mat.size(),
+                "bone_count": self._thisptr.bone.size(),
+                "IK_count": self._thisptr.IK_list.size(),
+                "skin_count": self._thisptr.skin.size(),
+                "bone_group_count": self._thisptr.bone_group.size(),
+                "bone_disp_count": self._thisptr.bone_disp.size(),
 
-def getFace(index, i_index):
-    if index<0 or index>=g_model.size():
-        return
-    model = g_model[index];
-    i=i_index*3
-    return model.vt_index[i], model.vt_index[i+1], model.vt_index[i+2]
+                "eng_support": self._thisptr.eng_support,
+                "rb_count": self._thisptr.rbody.size(),
+                "joint_count": self._thisptr.joint.size(),
+                "skin_index": self._thisptr.skin_index,
+        }
 
-def getMat(index, m_index):
-    if index<0 or index>=g_model.size():
-        return
-    model = g_model[index];
-    m=model.mat[m_index]
-    return {
-            "diff_col": m.diffuse,
-            "alpha": m.alpha,
-            "spec": m.spec,
-            "spec_col": m.spec_col,
-            "mirr_col": m.mirror_col,
-            "toon": m.toon_index,
-            "edge": m.edge_flag,
-            "face_count": m.vt_index_count/3,
-            "tex": m.tex.c_str(),
-    }
+    def getVt(self, v_index):
+        v=self._thisptr.vt[v_index]
+        return {
+                "loc": v.loc,
+                "nor": v.nor,
+                "uv": v.uv,
+                "bone_num1": v.bone_num0,
+                "bone_num2": v.bone_num1,
+                "weight": v.bone_weight,
+                "edge": v.edge_flag
+        }
 
-def getBone(index, b_index):
-    if index<0 or index>=g_model.size():
-        return
-    model = g_model[index];
-    b=model.bone[b_index]
-    return {
-            "name": b.name.c_str(),
-            "name_eng": b.name_eng.c_str(),
-            "parent": b.PBone_index,
-            "tail": b.TBone_index,
-            "type": b.type,
-            "IK": b.IKBone_index,
-            "loc": b.loc
-    }
+    def getFace(self, i_index):
+        i=i_index*3
+        return self._thisptr.vt_index[i], self._thisptr.vt_index[i+1], self._thisptr.vt_index[i+2]
 
-def getIK(index, ik_index):
-    if index<0 or index>=g_model.size():
-        return
-    model = g_model[index];
-    cdef IK_LIST* ik=&model.IK_list[ik_index]
-    return {
-            "index": ik.IKBone_index,
-            "tail": ik.IKTBone_index,
-            "len": ik.IKCBone_index.size(),
-            "ite": ik.iterations,
-            "weight": ik.weight,
-            "child": ik.IKCBone_index
-    }
+    def getMat(self, m_index):
+        m=self._thisptr.mat[m_index]
+        return {
+                "diff_col": m.diffuse,
+                "alpha": m.alpha,
+                "spec": m.spec,
+                "spec_col": m.spec_col,
+                "mirr_col": m.mirror_col,
+                "toon": m.toon_index,
+                "edge": m.edge_flag,
+                "face_count": m.vt_index_count/3,
+                "tex": m.tex.c_str(),
+        }
 
-def getSkin(index, s_index):
-    if index<0 or index>=g_model.size():
-        return
-    model = g_model[index];
-    cdef SKIN* s=&model.skin[s_index]
-    return {
-            "name": s.name.c_str(),
-            "name_eng": s.name_eng.c_str(),
-            "count": s.data.size(),
-            "type": s.type
-    }
+    def getBone(self, b_index):
+        b=self._thisptr.bone[b_index]
+        return {
+                "name": b.name.c_str(),
+                "name_eng": b.name_eng.c_str(),
+                "parent": b.PBone_index,
+                "tail": b.TBone_index,
+                "type": b.type,
+                "IK": b.IKBone_index,
+                "loc": b.loc
+        }
 
-def getSkindata(index, s_index, offset_index):
-    if index<0 or index>=g_model.size():
-        return
-    model = g_model[index];
-    sd=model.skin[s_index].data[offset_index]
-    return {
-            "index": sd.index,
-            "loc": sd.loc,
-    }
+    def getIK(self, ik_index):
+        ik=self._thisptr.IK_list[ik_index]
+        return {
+                "index": ik.IKBone_index,
+                "tail": ik.IKTBone_index,
+                "len": ik.IKCBone_index.size(),
+                "ite": ik.iterations,
+                "weight": ik.weight,
+                "child": ik.IKCBone_index
+        }
 
-def getBone_group(index, g_index):
-    if index<0 or index>=g_model.size():
-        return
-    model = g_model[index];
-    g=model.bone_group[g_index]
-    return {
-            "name": g.name.c_str(),
-            "name_eng": g.name_eng.c_str()
-    }
+    def getSkin(self, s_index):
+        s=self._thisptr.skin[s_index]
+        return {
+                "name": s.name.c_str(),
+                "name_eng": s.name_eng.c_str(),
+                "count": s.data.size(),
+                "type": s.type
+        }
 
-def getBone_disp(index, d_index):
-    if index<0 or index>=g_model.size():
-        return
-    model = g_model[index];
-    d=model.bone_disp[d_index]
-    return {
-            "index": d.index,
-            "bone_group": d.bone_group
-    }
+    def getSkindata(self, s_index, offset_index):
+        sd=self._thisptr.skin[s_index].data[offset_index]
+        return {
+                "index": sd.index,
+                "loc": sd.loc,
+        }
 
-def getToon(index):
-    if index<0 or index>=g_model.size():
-        return
-    model = g_model[index];
-    #return [x.c_str() for x in model.toon]
+    def getBone_group(self, g_index):
+        g=self._thisptr.bone_group[g_index]
+        return {
+                "name": g.name.c_str(),
+                "name_eng": g.name_eng.c_str()
+        }
 
-def getRb(index, rb_index):
-    if index<0 or index>=g_model.size():
-        return
-    model = g_model[index];
-    rb=model.rbody[rb_index]
-    return {
-            "name": rb.name.c_str(),
-            "bone": rb.bone,
-            "group": rb.group,
-            "target": rb.target,
-            "shape": rb.shape,
-            "size": rb.size,
-            "loc": rb.loc,
-            "rot": rb.rot,
-            "prop": rb.property,
-            "t": rb.type
-            }
+    def getBone_disp(self, d_index):
+        d=self._thisptr.bone_disp[d_index]
+        return {
+                "index": d.index,
+                "bone_group": d.bone_group
+        }
 
-def getJoint(index, j_index):
-    if index<0 or index>=g_model.size():
-        return
-    model = g_model[index];
-    j=model.joint[j_index]
-    return {
-            "name": j.name.c_str(),
-            "rbody": j.rbody,
-            "loc": j.loc,
-            "rot": j.rot,
-            "limit": j.limit,
-            "spring": j.spring,
-            }
+    def getToon(self):
+        #return [x.c_str() for x in self._thisptr.toon]
+        pass
 
-def setMat(index, m_index, 
-        diffuse, alpha, 
-        specularity, specular,
-        ambient, toon_index,
-        edge_flag, vt_index_count,
-        name, comment, name_english, comment_english
-        ):
-    if index<0 or index>=g_model.size():
-        return
-    model = &g_model[index];
+    def getRb(self, rb_index):
+        rb=self._thisptr.rbody[rb_index]
+        return {
+                "name": rb.name.c_str(),
+                "bone": rb.bone,
+                "group": rb.group,
+                "target": rb.target,
+                "shape": rb.shape,
+                "size": rb.size,
+                "loc": rb.loc,
+                "rot": rb.rot,
+                "prop": rb.property,
+                "t": rb.type
+                }
 
-    cdef MATERIAL mat;
-    mat.vt_index_count = vt_index_count*3;
-    mat.diffuse=diffuse
-    #mat.specular=specular
-    #mat.ambient=ambient
-    #strncpy(mat.tex, str[0], NAME_LEN);
-    #strncpy(mat.sph, str[1], NAME_LEN);
-    #strncpy(mat.tex_path, str[2], PATH_LEN);
-    #strncpy(mat.sph_path, str[3], PATH_LEN);
-    model.mat[m_index] = mat;
+    def getJoint(self, j_index):
+        j=self._thisptr.joint[j_index]
+        return {
+                "name": j.name.c_str(),
+                "rbody": j.rbody,
+                "loc": j.loc,
+                "rot": j.rot,
+                "limit": j.limit,
+                "spring": j.spring,
+                }
 
-def setToon(index, toon):
-    pass
+    def setMat(self, m_index, 
+            diffuse, alpha, 
+            specularity, specular,
+            ambient, toon_index,
+            edge_flag, vt_index_count,
+            name, comment, name_english, comment_english
+            ):
+        cdef MATERIAL mat;
+        mat.vt_index_count = vt_index_count*3;
+        mat.diffuse=diffuse
+        #mat.specular=specular
+        #mat.ambient=ambient
+        #strncpy(mat.tex, str[0], NAME_LEN);
+        #strncpy(mat.sph, str[1], NAME_LEN);
+        #strncpy(mat.tex_path, str[2], PATH_LEN);
+        #strncpy(mat.sph_path, str[3], PATH_LEN);
+        self._thisptr.mat[m_index] = mat;
 
+    def setToon(self, toon):
+        pass
+        #for i, t in enumerate(toon):
+        #    self._thisptr.toon[i]=t
 
-def Set_Name_Comment(index, name, comment, name_english, comment_english):
-    if index<0 or index>=g_model.size():
-        return
-    model = g_model[index]
-    #model.header.name= name
-    #model.header.comment= comment
-    #model.header.name_eng= name_english
-    #model.header.comment_eng= comment_english
+    def Set_Name_Comment(self, name, comment, name_english, comment_english):
+        #model.header.name= name
+        #model.header.comment= comment
+        #model.header.name_eng= name_english
+        #model.header.comment_eng= comment_english
+        pass
 
-def Init_PMD():
-    g_model.resize(16)
-    cdef MODEL model;
-    for i in range(g_model.size()):
-        g_model[i]=model
+    def Load_PMD(self, path):
+        return self._thisptr.load(path);
 
-def Load_PMD(index, path):
-    if index<0 or index>=g_model.size():
-        return
-    return g_model[index].load(path);
+    def Write_PMD(self, path):
+        return self._thisptr.save(path);
 
-def Write_PMD(index, path):
-    if index<0 or index>=g_model.size():
-        return
-    return g_model[index].save(path);
+    def Add_PMD(self, Model src):
+        add_PMD(self._thisptr, src._thisptr);
 
-def Add_PMD(dst, src):
-    if src<0 or src>=g_model.size():
-        return
-    if dst<0 or dst>=g_model.size():
-        return
-    add_PMD(&g_model[dst], &g_model[src]);
+    def CopyTo(self, Model dst):
+        dst._thisptr[0]=self._thisptr[0]
 
-def Copy_PMD(src, dst):
-    if src<0 or src>=g_model.size():
-        return
-    if dst<0 or dst>=g_model.size():
-        return
-    g_model[dst]=g_model[src]
+    def Marge_PMD(self):
+        marge_bone(self._thisptr);
+        marge_mat(self._thisptr);
+        marge_IK(self._thisptr);
+        marge_bone_disp(self._thisptr);
+        marge_rb(self._thisptr);
 
-def Create_PMD(index):
-    if index<0 or index>=g_model.size():
-        return
-    cdef MODEL model;
-    g_model[index]=model
-
-def Marge_PMD(index):
-    if index<0 or index>=g_model.size():
-        return
-    m=g_model[index]
-    marge_bone(&m);
-    marge_mat(&m);
-    marge_IK(&m);
-    marge_bone_disp(&m);
-    marge_rb(&m);
-
-def Sort_PMD(index
-        , bones, english_bones
-        , skins, english_skins
-        , disps, english_disps
-        ):
-    if index<0 or index>=g_model.size():
-        return
-    m=g_model[index]
-    rename_tail(&m);
-    marge_bone(&m);
-    sort_bone(&m
+    def Sort_PMD(self
             , bones, english_bones
             , skins, english_skins
             , disps, english_disps
-            );
-    sort_skin(&m
-            , bones, english_bones
-            , skins, english_skins
-            , disps, english_disps
-            );
-    sort_disp(&m
-            , bones, english_bones
-            , skins, english_skins
-            , disps, english_disps
-            );
-    if m.bone[m.bone.size()-1].name.c_str()==b"-0":
-        m.bone.resize(m.bone.size()-1);
-    translate(&m, 1
-            , bones, english_bones
-            , skins, english_skins
-            , disps, english_disps
-            );
+            ):
+        rename_tail(self._thisptr);
+        marge_bone(self._thisptr);
+        sort_bone(self._thisptr
+                , bones, english_bones
+                , skins, english_skins
+                , disps, english_disps
+                );
+        sort_skin(self._thisptr
+                , bones, english_bones
+                , skins, english_skins
+                , disps, english_disps
+                );
+        sort_disp(self._thisptr
+                , bones, english_bones
+                , skins, english_skins
+                , disps, english_disps
+                );
+        if self._thisptr.bone[self._thisptr.bone.size()-1].name.c_str()==b"-0":
+            self._thisptr.bone.resize(self._thisptr.bone.size()-1);
+        translate(self._thisptr, 1
+                , bones, english_bones
+                , skins, english_skins
+                , disps, english_disps
+                );
 
-def Resize_Model(index, scale):
-    if index<0 or index>=g_model.size():
-        return
-    return resize_model(&g_model[index], scale);
+    def Resize_Model(self, scale):
+        return resize_model(self._thisptr, scale);
 
-def Move_Model(index, x, y, z):
-    if index<0 or index>=g_model.size():
-        return
-    cdef array.array v=array.array('d', [x, y, z])
-    return move_model(&g_model[index], v.data.as_doubles);
+    def Move_Model(self, x, y, z):
+        cdef array.array v=array.array('d', [x, y, z])
+        return move_model(self._thisptr, v.data.as_doubles);
 
-def Resize_Bone(index, name, length, thickness):
-    if index<0 or index>=g_model.size():
-        return
-    m=g_model[index]
-    for i in range(m.bone.size()):
-        if m.bone[i].name.c_str()==name:
-            return scale_bone(&m, i, thickness, length, thickness);
+    def Resize_Bone(self, name, length, thickness):
+        for i in range(self._thisptr.bone.size()):
+            if self._thisptr.bone[i].name.c_str()==name:
+                return scale_bone(self._thisptr, i, thickness, length, thickness);
 
-def Move_Bone(index, name, x, y, z):
-    if index<0 or index>=g_model.size():
-        return
-    cdef array.array v=array.array('d', [x, y, z])
-    m=g_model[index]
-    for i in range(m.bone.size()):
-        if m.bone[i].name.c_str()==name:
-            return move_bone(&m, i, v.data.as_doubles);
+    def Move_Bone(self, name, x, y, z):
+        cdef array.array v=array.array('d', [x, y, z])
+        for i in range(self._thisptr.bone.size()):
+            if self._thisptr.bone[i].name.c_str()==name:
+                return move_bone(self._thisptr, i, v.data.as_doubles);
 
-def Update_Skin(index):
-    if index<0 or index>=g_model.size():
-        return
-    return update_skin(&g_model[index]);
+    def Update_Skin(self):
+        return update_skin(self._thisptr);
 
-def Adjust_Joints(index):
-    if index<0 or index>=g_model.size():
-        return
-    return adjust_joint(&g_model[index]);
+    def Adjust_Joints(self):
+        return adjust_joint(self._thisptr);
 
-def getWHT(index):
-    if index<0 or index>=g_model.size():
-        return
-    cdef array.array min=array.array('d', [0, 0, 0])
-    cdef array.array max=array.array('d', [0, 0, 0])
-    m=g_model[index]
-    for i in range(m.vt.size()):
-        for j in range(3):
-            value=m.vt[i].loc[j]
-            if value<min[j]: min[j]=value
-            elif value>max[j]: max[j]=value
+    def getWHT(self):
+        cdef array.array min=array.array('d', [0, 0, 0])
+        cdef array.array max=array.array('d', [0, 0, 0])
+        for i in range(self._thisptr.vt.size()):
+            for j in range(3):
+                value=self._thisptr.vt[i].loc[j]
+                if value<min[j]: min[j]=value
+                elif value>max[j]: max[j]=value
 
-    return [max[0]-min[0], max[1]-min[1], max[2]-min[2]]
+        return [max[0]-min[0], max[1]-min[1], max[2]-min[2]]
+
+g_model=[Model() for x in range(16)]
 
