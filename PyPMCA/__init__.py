@@ -117,7 +117,12 @@ class PyPMCA:
         if self.update_level==0:
             logger.info('Parts.Build')
             assembler=Assembler()
-            assembler.assemble(self.parts_tree.root, self.LIST)
+            new_model=assembler.assemble(self.parts_tree.root)
+            new_model.Sort_PMD(
+                self.LIST['b'][0], self.LIST['b'][1], 
+                self.LIST['s'][0], self.LIST['s'][1], 
+                self.LIST['g'][0], self.LIST['g'][1])
+            PMCA.g_model[0]=new_model
             PMCA.g_model[0].CopyTo(PMCA.g_model[1])
             self.materials.ApplyToPmd(PMCA.g_model[0])
             PMCA.g_model[0].CopyTo(PMCA.g_model[2])

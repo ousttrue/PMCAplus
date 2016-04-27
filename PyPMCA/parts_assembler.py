@@ -16,7 +16,7 @@ for x in line:
         app.licenses = tmp[1].split(' ')
 '''
 
-import PMCA
+
 from PyPMCA.pmd import *
 from logging import getLogger
 logger = getLogger(__name__)
@@ -29,11 +29,8 @@ class Assembler:
         self.authors=[]
         self.licenses=[]
 
-    def assemble(self, root, LIST):
-        '''
-        モデル0を初期化
-        '''
-        PMCA.g_model[0]=PMCA.Model()
+    def assemble(self, root):
+        new_model=PMCA.Model()
         for x in root.traverse():
             if x.part:
                 model=PMCA.Model()
@@ -83,12 +80,6 @@ class Assembler:
                         else:
                             app.licenses.append('Nonfree')
 
-                PMCA.g_model[0].Add_PMD(model)
-                PMCA.g_model[0].Marge_PMD()
-                info=PMCA.g_model[0].getInfo()
-                pass
-        PMCA.g_model[0].Sort_PMD(
-            LIST['b'][0], LIST['b'][1], 
-            LIST['s'][0], LIST['s'][1], 
-            LIST['g'][0], LIST['g'][1])
-        pass
+                new_model.Add_PMD(model)
+                new_model.Marge_PMD()
+        return new_model
