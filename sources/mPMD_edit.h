@@ -3,26 +3,26 @@
 
 
 int translate(MODEL *model, short mode
-	, int b_count, char **b, char **be
-	, int s_count, char **s, char **se
-	, int d_count, char **d, char **de
+	, const std::vector<std::string> &b, const std::vector<std::string> &be
+	, const std::vector<std::string> &s, const std::vector<std::string> &se
+	, const std::vector<std::string> &d, const std::vector<std::string> &de
 	);
 
 int sort_bone(MODEL *model
-	, int b_count, char **b, char **be
-	, int s_count, char **s, char **se
-	, int d_count, char **d, char **de
+	, const std::vector<std::string> &b, const std::vector<std::string> &be
+	, const std::vector<std::string> &s, const std::vector<std::string> &se
+	, const std::vector<std::string> &d, const std::vector<std::string> &de
 	);
 //int update_bone_index(MODEL *model,int index[]);
 int sort_skin(MODEL *model
-	, int b_count, char **b, char **be
-	, int s_count, char **s, char **se
-	, int d_count, char **d, char **de
+	, const std::vector<std::string> &b, const std::vector<std::string> &be
+	, const std::vector<std::string> &s, const std::vector<std::string> &se
+	, const std::vector<std::string> &d, const std::vector<std::string> &de
 	);
 int sort_disp(MODEL *model
-	, int b_count, char **b, char **be
-	, int s_count, char **s, char **se
-	, int d_count, char **d, char **de
+	, const std::vector<std::string> &b, const std::vector<std::string> &be
+	, const std::vector<std::string> &s, const std::vector<std::string> &se
+	, const std::vector<std::string> &d, const std::vector<std::string> &de
 	);
 int rename_tail(MODEL *model);
 

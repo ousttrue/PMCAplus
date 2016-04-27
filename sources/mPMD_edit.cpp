@@ -9,9 +9,9 @@
 
 
 int translate(MODEL *model, short mode
-	, int b_count, char **b, char **be
-	, int s_count, char **s, char **se
-	, int d_count, char **d, char **de
+	, const std::vector<std::string> &b, const std::vector<std::string> &be
+	, const std::vector<std::string> &s, const std::vector<std::string> &se
+	, const std::vector<std::string> &d, const std::vector<std::string> &de
 	)
 {
 	int i,j;
@@ -33,7 +33,7 @@ int translate(MODEL *model, short mode
 		
 		// bone
 		for(i=0; i<model->bone.size(); i++){
-			for(j=0; j<b_count; j++){
+			for(j=0; j<b.size(); j++){
 				if(model->bone[i].name==b[j]){
 					model->bone[i].name_eng=be[j];
 					j = -1;
@@ -50,7 +50,7 @@ int translate(MODEL *model, short mode
 		
 		// skin
 		for(i=1; i<model->skin.size(); i++){
-			for(j=1; j<s_count; j++){
+			for(j=1; j<s.size(); j++){
 				if(model->skin[i].name==s[j]){
 					model->skin[i].name_eng=se[j];
 					j = -1;
@@ -65,7 +65,7 @@ int translate(MODEL *model, short mode
 		// disp
 		for(i=0; i<model->bone_group.size(); i++){		
 			j = 0;
-			for(j=0; j<d_count; j++){
+			for(j=0; j<d.size(); j++){
 				if(model->bone_group[i].name==d[j]){
 					model->bone_group[i].name_eng=de[j];
 					j = -1;
@@ -82,7 +82,7 @@ int translate(MODEL *model, short mode
 		// 	モード2 日本語名を英語名に(ボーン、スキンのみ)
 
 		for(i=0; i<model->bone.size(); i++){
-			for(j=0; j<b_count; j++){
+			for(j=0; j<b.size(); j++){
 				if(model->bone[i].name==b[j]){
 					model->bone[i].name=be[j];
 					j = -1;
@@ -94,7 +94,7 @@ int translate(MODEL *model, short mode
 			}
 		}
 		for(i=0; i<model->skin.size(); i++){
-			for(j=0; j<s_count; j++){
+			for(j=0; j<s.size(); j++){
 				if(model->skin[i].name==s[j]){
 					model->skin[i].name=se[j];
 					j = -1;
@@ -109,7 +109,7 @@ int translate(MODEL *model, short mode
 	else if(mode == 3){
 		// 	モード3 英語名を日本語名に(ボーン、スキンのみ)
 		for(i=0; i<model->bone.size(); i++){
-			for(j=0; j<b_count; j++){
+			for(j=0; j<b.size(); j++){
 				if(model->bone[i].name==be[j]){
 					model->bone[i].name=b[j];
 					j = -1;
@@ -118,7 +118,7 @@ int translate(MODEL *model, short mode
 			}
 		}
 		for(i=0; i<model->skin.size(); i++){
-			for(j=0; j<s_count; j++){
+			for(j=0; j<s.size(); j++){
 				if(model->skin[i].name==se[j]){
 					model->skin[i].name=s[j];
 					j = -1;
@@ -191,9 +191,9 @@ static int update_bone_index(MODEL *model, int index[])
 }
 
 int sort_bone(MODEL *model
-	, int b_count, char **b, char **be
-	, int s_count, char **s, char **se
-	, int d_count, char **d, char **de
+	, const std::vector<std::string> &b, const std::vector<std::string> &be
+	, const std::vector<std::string> &s, const std::vector<std::string> &se
+	, const std::vector<std::string> &d, const std::vector<std::string> &de
 	)
 {
 	int i, j;
@@ -203,7 +203,7 @@ int sort_bone(MODEL *model
 		
 	for(i=0; i<model->bone.size(); i++){
 		index[i] = -1;	//リストに無いボーンには-1
-		for(j=0; j<b_count; j++){
+		for(j=0; j<b.size(); j++){
 			if(model->bone[i].name==b[j]){
 				index[i] = j;	//indexにリスト中の番号を代入
 				break;
@@ -212,7 +212,7 @@ int sort_bone(MODEL *model
 	}
 	
 	tmp = 0;
-	for(i=0; i<b_count; i++){
+	for(i=0; i<b.size(); i++){
 		for(j=0; j<model->bone.size(); j++){
 			if(index[j] == i){	//indexにiが存在したら
 				//printf("index[%d]に%dが存在します\n", j, i);
@@ -300,9 +300,9 @@ int sort_bone(MODEL *model
 }
 
 int sort_skin(MODEL *model
-	, int b_count, char **b, char **be
-	, int s_count, char **s, char **se
-	, int d_count, char **d, char **de
+	, const std::vector<std::string> &b, const std::vector<std::string> &be
+	, const std::vector<std::string> &s, const std::vector<std::string> &se
+	, const std::vector<std::string> &d, const std::vector<std::string> &de
 	)
 {
 	std::vector<int> index(model->skin.size());
@@ -310,7 +310,7 @@ int sort_skin(MODEL *model
 	
 	for(size_t i=0; i<model->skin.size(); i++){
 		index[i] = -1;	//リストに無い表情には-1
-		for(size_t j=0; j<s_count; j++){
+		for(size_t j=0; j<s.size(); j++){
 			if(model->skin[i].name==s[j]){
 				index[i] = j;	//indexにリスト中の番号を代入
 				break;
@@ -319,7 +319,7 @@ int sort_skin(MODEL *model
 	}	
 
 	int tmp = 0;
-	for(size_t i=0; i<s_count; i++){
+	for(size_t i=0; i<s.size(); i++){
 		size_t j = 0;
 		for(; j<model->skin.size(); j++){
 			if(index[j] == i){	//indexにiが存在したら
@@ -361,9 +361,9 @@ int sort_skin(MODEL *model
 }
 
 int sort_disp(MODEL *model
-	, int b_count, char **b, char **be
-	, int s_count, char **s, char **se
-	, int d_count, char **d, char **de
+	, const std::vector<std::string> &b, const std::vector<std::string> &be
+	, const std::vector<std::string> &s, const std::vector<std::string> &se
+	, const std::vector<std::string> &d, const std::vector<std::string> &de
 	)
 {
 	std::vector<int> index(model->bone_group.size());
@@ -372,7 +372,7 @@ int sort_disp(MODEL *model
 	for(size_t i=0; i<model->bone_group.size(); i++){
 		index[i] = -1;	//リストに無い枠には-1
 		auto tmpg = model->bone_group[i];
-		for(size_t j=0; j<d_count; j++){
+		for(size_t j=0; j<d.size(); j++){
 			if(tmpg.name==d[j]){
 				index[i] = j;	//indexにリスト中の番号を代入
 				break;
@@ -382,7 +382,7 @@ int sort_disp(MODEL *model
 
 	{
 		int tmp = 0;
-		for (size_t i = 0; i < d_count; i++) {
+		for (size_t i = 0; i < d.size(); i++) {
 			size_t j = 0;
 			for (; j < model->bone_group.size(); j++) {
 				if (index[j] == i) {	//indexにiが存在したら

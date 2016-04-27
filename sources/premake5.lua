@@ -59,8 +59,7 @@ do
         "mPMD_edit.h",
         "mPMD_rw.cpp",
         "mPMD_rw.h",
-        "PMCA_PyMod.cpp",
-        "PMCA_PyMod.h",
+        "PMCA.cpp",
         "fixed_string.h",
     }
     includedirs {

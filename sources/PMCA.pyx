@@ -1,5 +1,5 @@
 # distutils: language = c++
-# distutils: sources = [mPMD.cpp, mList.cpp, mPMD_rw.cpp, mPMD_edit.cpp]
+# distutils: sources = [mPMD.cpp, mPMD_rw.cpp, mPMD_edit.cpp]
 # cython: c_string_type=bytes, c_string_encoding=cp932
 
 from libcpp.string cimport string
@@ -130,23 +130,6 @@ cdef extern from "mPMD.h":
 
 
 ##############################################################################
-# mList
-##############################################################################
-cdef extern from "mList.h":
-
-    cdef struct NameWithEnglish:
-        string name;
-        string english;
-
-    cdef cppclass LIST:
-        vector[NameWithEnglish] bone;
-        vector[NameWithEnglish] skin;
-        vector[NameWithEnglish] disp;
-        bool load(const string &dir);
-        void clear();
-
-
-##############################################################################
 # mPMD_edit
 ##############################################################################
 cdef extern from "mPMD_edit.h":
@@ -156,11 +139,26 @@ cdef extern from "mPMD_edit.h":
     cdef int marge_IK(MODEL *model);
     cdef int marge_bone_disp(MODEL *model);
     cdef int marge_rb(MODEL *model);
-    cdef int translate(MODEL *model, LIST *list, short mode);
-    cdef int sort_bone(MODEL *model, LIST *list);
-    cdef int update_bone_index(MODEL *model, int *index);
-    cdef int sort_skin(MODEL *model, LIST *list);
-    cdef int sort_disp(MODEL *model, LIST *list);
+    cdef int translate(MODEL *model, short mode
+            , vector[string] &b, vector[string] &be
+            , vector[string] &s, vector[string] &se
+            , vector[string] &d, vector[string] &de
+            );
+    cdef int sort_bone(MODEL *model
+            , vector[string] &b, vector[string] &be
+            , vector[string] &s, vector[string] &se
+            , vector[string] &d, vector[string] &de
+            );
+    cdef int sort_skin(MODEL *model
+            , vector[string] &b, vector[string] &be
+            , vector[string] &s, vector[string] &se
+            , vector[string] &d, vector[string] &de
+            );
+    cdef int sort_disp(MODEL *model
+            , vector[string] &b, vector[string] &be
+            , vector[string] &s, vector[string] &se
+            , vector[string] &d, vector[string] &de
+            );
     cdef int rename_tail(MODEL *model);
     cdef int scale_bone(MODEL *model, int index, double sx, double sy, double sz);
     cdef int bone_vec(MODEL *model, int index, double loc[], double vec[]);
@@ -382,30 +380,6 @@ def setToon(index, toon):
     pass
 
 
-cdef LIST g_list
-
-
-def Set_List(bone_count, bone_names, bone_english_names,
-        skin_count, skin_names, skin_english_names,
-        disp_count, disp_names, disp_english_names):
-
-    g_list.clear();
-
-    g_list.bone.resize(bone_count)
-    for i in range(bone_count):
-        g_list.bone[i].name=bone_names[i]
-        g_list.bone[i].english=bone_english_names[i]
-
-    g_list.skin.resize(skin_count)
-    for i in range(skin_count):
-        g_list.skin[i].name=skin_names[i]
-        g_list.skin[i].english=skin_english_names[i]
-
-    g_list.disp.resize(disp_count)
-    for i in range(disp_count):
-        g_list.disp[i].name=disp_names[i]
-        g_list.disp[i].english=disp_english_names[i]
-
 def Set_Name_Comment(index, name, comment, name_english, comment_english):
     if index<0 or index>=g_model.size():
         return
@@ -461,18 +435,38 @@ def Marge_PMD(index):
     marge_bone_disp(&m);
     marge_rb(&m);
 
-def Sort_PMD(index):
+def Sort_PMD(index
+        , bones, english_bones
+        , skins, english_skins
+        , disps, english_disps
+        ):
     if index<0 or index>=g_model.size():
         return
     m=g_model[index]
     rename_tail(&m);
     marge_bone(&m);
-    sort_bone(&m, &g_list);
-    sort_skin(&m, &g_list);
-    sort_disp(&m, &g_list);
+    sort_bone(&m
+            , bones, english_bones
+            , skins, english_skins
+            , disps, english_disps
+            );
+    sort_skin(&m
+            , bones, english_bones
+            , skins, english_skins
+            , disps, english_disps
+            );
+    sort_disp(&m
+            , bones, english_bones
+            , skins, english_skins
+            , disps, english_disps
+            );
     if m.bone[m.bone.size()-1].name.c_str()==b"-0":
         m.bone.resize(m.bone.size()-1);
-    translate(&m, &g_list, 1);
+    translate(&m, 1
+            , bones, english_bones
+            , skins, english_skins
+            , disps, english_disps
+            );
 
 def Resize_Model(index, scale):
     if index<0 or index>=g_model.size():

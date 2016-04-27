@@ -86,6 +86,6 @@ class Assembler:
                 PMCA.Add_PMD(0, 4)
                 PMCA.Marge_PMD(0)
         PMCA.Sort_PMD(0,
-            len(LIST['b'][0]), LIST['b'][0], LIST['b'][1], 
-            len(LIST['s'][0]), LIST['s'][0], LIST['s'][1], 
-            len(LIST['g'][0]), LIST['g'][0], LIST['g'][1])
+            LIST['b'][0], LIST['b'][1], 
+            LIST['s'][0], LIST['s'][1], 
+            LIST['g'][0], LIST['g'][1])
