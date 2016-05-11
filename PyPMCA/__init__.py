@@ -453,6 +453,9 @@ class PyPMCA:
         return string
 
     def get_model(self):
+        '''
+        OpenGLにデータを渡す
+        '''
         info=PMCA.g_model[0].getInfo()
 
         # vertices
@@ -486,3 +489,51 @@ class PyPMCA:
 
         assert(sum(indexCounts)==len(indices))
         return vertices, uvs, indices, colors, paths, indexCounts
+
+    def get_vertices(self):
+        info=PMCA.g_model[0].getInfo()
+        vertices=(PMCA.g_model[0].getVt(i) for i in range(info['vt_count']))
+        return [-n if i % 3 == 2 else n
+                for v in vertices
+                for i, n in enumerate(v['loc'])]
+
+    def get_uvs(self):
+        info=PMCA.g_model[0].getInfo()
+        vertices=(PMCA.g_model[0].getVt(i) for i in range(info['vt_count']))
+        return [n
+                for v in vertices
+                for n in v['uv']]
+
+    def get_indices(self):
+        info=PMCA.g_model[0].getInfo()
+        return list(chain.from_iterable((PMCA.g_model[0].getFace(i) for i in range(info['face_count']))))
+
+    def get_material_diffuse_list(self):
+        info=PMCA.g_model[0].getInfo()
+        colors=[]
+        for m in (PMCA.g_model[0].getMat(i) for i in range(info['mat_count'])):
+            colors.append((m['diff_col'][0] * 2 + m['mirr_col'][0]) / 2.5 + m['spec_col'][0] / 4)
+            colors.append((m['diff_col'][1] * 2 + m['mirr_col'][1]) / 2.5 + m['spec_col'][1] / 4)
+            colors.append((m['diff_col'][2] * 2 + m['mirr_col'][2]) / 2.5 + m['spec_col'][2] / 4)
+            #colors.append(m['alpha'])
+            colors.append(1.0)
+        return colors
+
+    def get_material_path_list(self):
+        info=PMCA.g_model[0].getInfo()
+        paths=[]
+        for m in (PMCA.g_model[0].getMat(i) for i in range(info['mat_count'])):
+            tex=m['tex'].decode('cp932')
+            texture_path=self.materials.get_texture_path(tex)
+            if texture_path:
+                paths.append(texture_path)
+            else:
+                paths.append(os.path.join(os.path.dirname(info['path']), m['tex']).replace(b'\\', b'/'))
+        return paths
+
+    def get_material_indexcount_list(self):
+        info=PMCA.g_model[0].getInfo()
+        indexCounts=[]
+        for m in (PMCA.g_model[0].getMat(i) for i in range(info['mat_count'])):
+            indexCounts.append(m['face_count']*3)
+        return indexCounts
