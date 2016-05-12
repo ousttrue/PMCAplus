@@ -154,6 +154,7 @@ struct MODEL
 {
 	HEADER header;
 
+    std::vector<float> vertices;
 	std::vector<VERTEX> vt;
 	std::vector<unsigned short> vt_index;
 	std::vector<MATERIAL> mat;
@@ -176,4 +177,17 @@ struct MODEL
 
 	bool load(const std::string &path);
 	bool save(const std::string &path)const;
+
+    float* getVertices()
+    {
+        vertices.reserve(vt.size() * 3);
+        vertices.clear();
+        for(size_t i=0; i<vt.size(); ++i){
+            vertices.push_back(vt[i].loc[0]);
+            vertices.push_back(vt[i].loc[1]);
+            vertices.push_back(-vt[i].loc[2]);
+        }
+        return vertices.empty() ? nullptr : &vertices[0];
+    }
 };
+

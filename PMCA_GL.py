@@ -131,7 +131,7 @@ class ModelVBO:
         self.buffers = glGenBuffers(3)
         # vertices
         glBindBuffer(GL_ARRAY_BUFFER, self.buffers[0])
-        glBufferData(GL_ARRAY_BUFFER, len(self.vertices)*4, (ctypes.c_float*len(self.vertices))(*self.vertices), GL_STATIC_DRAW)
+        glBufferData(GL_ARRAY_BUFFER, len(self.vertices)*4, self.vertices, GL_STATIC_DRAW)
         # uv
         glBindBuffer(GL_ARRAY_BUFFER, self.buffers[1])
         glBufferData(GL_ARRAY_BUFFER, len(self.uvs)*4, (ctypes.c_float*len(self.uvs))(*self.uvs), GL_STATIC_DRAW)

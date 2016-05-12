@@ -4,6 +4,7 @@ import shutil
 import sys
 import os
 import io
+import ctypes
 sys.path.append('%s/converter'%(os.getcwd()))
 import pathlib
 import converter
@@ -491,11 +492,16 @@ class PyPMCA:
         return vertices, uvs, indices, colors, paths, indexCounts
 
     def get_vertices(self):
+        '''
         info=PMCA.g_model[0].getInfo()
         vertices=(PMCA.g_model[0].getVt(i) for i in range(info['vt_count']))
-        return [-n if i % 3 == 2 else n
+        vertices=[-n if i % 3 == 2 else n
                 for v in vertices
                 for i, n in enumerate(v['loc'])]
+        return (ctypes.c_float*len(vertices))(*vertices)
+        '''
+        vertices=PMCA.g_model[0].getVertices()
+        return (ctypes.c_float * len(vertices)).from_buffer(vertices)
 
     def get_uvs(self):
         info=PMCA.g_model[0].getInfo()

@@ -6,6 +6,8 @@ from libcpp.string cimport string
 from libcpp.vector cimport vector
 from libcpp cimport bool
 from cpython cimport array
+import ctypes
+
 
 cdef array_slice(unsigned short *p, offset, count):
     return [p[i] for i in range(offset, offset+count)]
@@ -128,6 +130,8 @@ cdef extern from "mPMD.h":
         bool load(const string &path);
         bool save(const string &path);
 
+        float* getVertices();
+
 
 ##############################################################################
 # mPMD_edit
@@ -222,6 +226,10 @@ cdef class Model:
                 "weight": v.bone_weight,
                 "edge": v.edge_flag
         }
+
+    def getVertices(self):
+        cdef float[:] vertices=<float[:self._thisptr.vt.size()*3]>self._thisptr.getVertices()
+        return vertices
 
     def getFace(self, i_index):
         i=i_index*3
