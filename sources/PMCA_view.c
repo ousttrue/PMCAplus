@@ -1,4 +1,9 @@
+#include <Windows.h>
+
+#include <GL/GL.h>
+
 #include "PMCA.h"
+#include <SDL.h>
 
 #define WM_TITLE "PMCA 3D View"
 

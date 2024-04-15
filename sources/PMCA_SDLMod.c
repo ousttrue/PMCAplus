@@ -1,4 +1,7 @@
+#include "PMCA_SDLMod.h"
 #include "PMCA.h"
+#include <SDL.h>
+
 
 MODEL g_model[MODEL_COUNT];
 LIST list;

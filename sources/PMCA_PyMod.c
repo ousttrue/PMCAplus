@@ -1,5 +1,9 @@
+#include "PMCA_SDLMod.h"
 #include "PMCA.h"
 #define PMCA_MODULE
+
+#undef _DEBUG
+#include <Python.h>
 
 static PyObject *PMCAError;
 
@@ -7,6 +11,10 @@ int* zero;
 
 /************************************************************/
 
+PyMODINIT_FUNC PyInit_PMCA(void);
+/*PythonAPIA*/
+
+PyMODINIT_FUNC PyInit_PMCA(void);
 
 /************************************************************/
 /*データ変換Utils*/

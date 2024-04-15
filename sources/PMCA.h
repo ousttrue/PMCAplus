@@ -1,17 +1,4 @@
-#include <Python.h>
-
-
-#include <stdio.h>
-#include <stdlib.h>
 #include <memory.h>
-#include <math.h>
-
-#include <SDL/SDL.h>
-#include <SDL/SDL_image.h>
-#include <SDL/SDL_thread.h>
-
-#include <GL/gl.h>
-#include <GL/glu.h>
 
 #include "mPMD.h"
 #define SCALE (2.0 * 3.14159265358979323846)
@@ -21,7 +8,7 @@ typedef struct{
 	float col[4];
 	char texname[128];
 	int texsize[2];
-	GLubyte *texbits;
+	unsigned char *texbits;
 }DSP_MAT;
 
 typedef struct{
@@ -31,7 +18,7 @@ typedef struct{
 	//unsigned int *index;
 	int mats_c;
 	DSP_MAT *mats;
-	GLuint *texid;
+	unsigned int *texid;
 }DSP_MODEL;
 
 typedef struct{
@@ -79,18 +66,9 @@ int load_texture(MODEL *model);
 int load_tex(MODEL *model, DSP_MODEL *dsp_model);
 int make_dsp_model(MODEL *model, DSP_MODEL *dsp_model);
 
-PyObject* CreateViewerThread(PyObject *self, PyObject *args);
-PyObject* WaitViewerThread(PyObject *self, PyObject *args);
-PyObject* QuitViewerThread(PyObject *self, PyObject *args);
-PyObject* KillViewerThread(PyObject *self, PyObject *args);
-PyObject* GetViewerThreadState(PyObject *self, PyObject *args);
-PyObject* show3Dview(PyObject *self, PyObject *args);
-
 extern FLAGS myflags;
 
 /*****************************************************************/
-/*PythonAPIA*/
-PyMODINIT_FUNC PyInit_PMCA(void);
 extern MODEL g_model[16];
 extern LIST list;
 

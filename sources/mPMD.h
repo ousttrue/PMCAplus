@@ -15,6 +15,7 @@
 #endif
 */
 
+#include <stdio.h>
 #define DLL
 //#define DEBUG
 
