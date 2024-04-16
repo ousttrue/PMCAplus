@@ -8,7 +8,7 @@ gl_dep = dependency('gl', required: true)
 # glu_dep = dependency('glu', required: true)
 glu_dep = cc.find_library('glu32')
 
-deps = [py_dep, sdl_dep, gl_dep, glu_dep]
+deps = [py_dep, glfw_dep, gl_dep, glu_dep]
 
 # if get_option('buildtype') == 'debug'
 #     python_debug_dep = cc.find_library(

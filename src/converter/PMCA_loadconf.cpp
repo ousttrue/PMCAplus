@@ -1,17 +1,12 @@
-/*PMD Mob Character Assembler
-Version 0.0.5 by mato
-PMDモブキャラクタアセンブラ
-*/
+// PMD Mob Character Assembler
+// Version 0.0.5 by mato
+// PMDモブキャラクタアセンブラ
 
 #include "PMCA_loadconf.h"
-
 #include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <SDL.h>
-
-// #include "mPMD.h"
+#include <string.h>
 
 int load_parts_list(PARTS parts[], unsigned short *parts_max, FILE *list);
 int load_textures_list(TEXTURES textures[], unsigned short *textures_max,

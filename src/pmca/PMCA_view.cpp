@@ -1,11 +1,14 @@
 #include "PMCA.h"
+#include <GLFW/glfw3.h>
 
 #include <Windows.h>
 
 #include <GL/GL.h>
 #include <GL/GLU.h>
-#include <SDL.h>
 #include <math.h>
+
+#include <chrono>
+#include <thread>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -18,71 +21,70 @@ VIEW_STATE vs;
 static int createwindow();
 static int setup_opengl(int width, int height);
 static void draw_screen(void);
-static void handle_key_down(SDL_keysym *keysym);
+// static void handle_key_down(SDL_keysym *keysym);
 static void process_events(void);
 
 /* 現在のビデオ設定についての情報 */
-const SDL_VideoInfo *info = NULL;
+// const SDL_VideoInfo *info = NULL;
 /* ウィンドウの色のピクセル深度 */
 int bpp = 0;
 /* SDL_SetVideoMode に渡すフラグ */
 int flags = 0;
 
-int viewer_thread(void *) {
-  SDL_Event event;
-
+int viewer_thread() {
   myflags.model_lock = 0;
 
   createwindow();
-  SDL_Quit();
+
   return 0;
 }
 
 static int createwindow() {
-  if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-    fprintf(stderr, "ビデオの初期化に失敗しました: %s\n", SDL_GetError());
-    SDL_Quit();
-    return 1;
+
+  /* Initialize the library */
+  if (!glfwInit())
+    return -1;
+
+  /* Create a windowed mode window and its OpenGL context */
+  auto window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+  if (!window) {
+    glfwTerminate();
+    return -1;
   }
 
-  info = SDL_GetVideoInfo();
+  /* Make the window's context current */
+  glfwMakeContextCurrent(window);
 
-  if (!info) {
-    fprintf(stderr, "ビデオの問い合わせに失敗しました: %s\n", SDL_GetError());
-    SDL_Quit();
-    return 1;
-  }
-
-  vs.width = 640;
-  vs.height = 480;
-  bpp = info->vfmt->BitsPerPixel;
-
-  SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
-  SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 5);
-  SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);
-  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
-  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-
-  flags = SDL_OPENGL | SDL_RESIZABLE;
-
-  if (SDL_SetVideoMode(vs.width, vs.height, bpp, flags) == 0) {
-    fprintf(stderr, "ビデオモードのセットに失敗しました: %s\n", SDL_GetError());
-    SDL_Quit();
-    return 1;
-  }
-
+  glfwGetFramebufferSize(window, &vs.width, &vs.height);
   setup_opengl(vs.width, vs.height);
-  SDL_WM_SetCaption(WM_TITLE, NULL);
 
-  /*MODEL* model;
-  model = model_mgr(1,0,NULL);
-  load_texture(model, "");
-  */
-  while (myflags.quit != 1) {
-    process_events();
+  /* Loop until the user closes the window */
+  while (!glfwWindowShouldClose(window)) {
+    /* Poll for and process events */
+    glfwPollEvents();
+
+    glfwGetFramebufferSize(window, &vs.width, &vs.height);
+
+    /* Render here */
+    // glClear(GL_COLOR_BUFFER_BIT);
+
     draw_screen();
+
+    /* Swap front and back buffers */
+    glfwSwapBuffers(window);
   }
 
+  glfwTerminate();
+
+  // /*MODEL* model;
+  // model = model_mgr(1,0,NULL);
+  // load_texture(model, "");
+  // */
+  // while (myflags.quit != 1) {
+  //   process_events();
+  //   draw_screen();
+  // }
+  //
   return 0;
 }
 
@@ -133,7 +135,7 @@ static void draw_screen(void) {
   double asp = (double)vs.width / (double)vs.height;
 
   while (myflags.model_lock != 0) {
-    SDL_Delay(30);
+    std::this_thread::sleep_for(std::chrono::minutes(30));
   }
   myflags.model_lock = 1;
   /*座標軸表示*/
@@ -174,132 +176,130 @@ static void draw_screen(void) {
   render_model(0);
   glFinish();
   myflags.model_lock = 0;
-  SDL_GL_SwapBuffers();
-  SDL_Delay(30);
 }
 
-static void handle_key_down(SDL_keysym *keysym) {
-  switch (keysym->sym) {
-  case SDLK_ESCAPE:
-    myflags.quit = 1;
-    break;
-  default:
-    break;
-  }
-}
+// static void handle_key_down(SDL_keysym *keysym) {
+//   switch (keysym->sym) {
+//   case SDLK_ESCAPE:
+//     myflags.quit = 1;
+//     break;
+//   default:
+//     break;
+//   }
+// }
 
-static void process_events(void) {
-  /* SDL イベントの置き場 */
-  SDL_Event event;
-
-  /* すべてのイベントをキューからつかみ取る */
-  while (SDL_PollEvent(&event)) {
-
-    switch (event.type) {
-    case SDL_KEYDOWN:
-      /* キー押下を処理 */
-      handle_key_down(&event.key.keysym);
-      break;
-    case SDL_MOUSEBUTTONDOWN:
-      switch (event.button.button) {
-      case SDL_BUTTON_LEFT:
-        myflags.button1 = 1;
-        break;
-      case SDL_BUTTON_RIGHT:
-        myflags.button2 = 1;
-        break;
-      case SDL_BUTTON_MIDDLE:
-        myflags.button3 = 1;
-        break;
-      }
-      vs.sx = event.button.x;
-      vs.sy = event.button.y;
-      break;
-    case SDL_MOUSEBUTTONUP:
-      switch (event.button.button) {
-      case SDL_BUTTON_LEFT:
-        myflags.button1 = 0;
-        break;
-      case SDL_BUTTON_RIGHT:
-        myflags.button2 = 0;
-        break;
-      case SDL_BUTTON_MIDDLE:
-        myflags.button3 = 0;
-        break;
-      }
-      memcpy(vs.cq, vs.tq, 4 * sizeof(double));
-      break;
-    case SDL_MOUSEMOTION:
-      if (myflags.button1 == 1) {
-        double dx, dy;
-        double a;
-        dx = (event.motion.xrel) / 10.0;
-        dy = (event.motion.yrel) / 10.0;
-        a = sqrt(dx * dx + dy * dy);
-        if (a != 0.0) {
-          int i, j;
-          double tmp[3];
-          tmp[0] = dx;
-          tmp[1] = dy;
-          tmp[2] = 0.0;
-          // 変換行列から移動ベクトルを回転
-          for (i = 0; i < 3; i++) {
-            for (j = 0; j < 3; j++) {
-              if (i == 0) {
-                vs.move[i] += tmp[j] * vs.rt[j * 4 + i];
-              } else {
-                vs.move[i] -= tmp[j] * vs.rt[j * 4 + i];
-              }
-            }
-          }
-        }
-      }
-      if (myflags.button2 == 1) {
-        double dx, dy;
-        double a;
-
-        dx = (event.motion.x - vs.sx) / (double)vs.width;
-        dy = (event.motion.y - vs.sy) / (double)vs.height;
-        a = sqrt(dx * dx + dy * dy);
-        if (a != 0.0) {
-          // マウスのドラッグに伴う回転のクォータニオン dq を求める
-          double ar = a * SCALE * 0.5;
-          double as = sin(ar) / a;
-          double dq[4] = {cos(ar), dy * as, dx * as, 0.0};
-
-          // 回転の初期値 cq に dq を掛けて回転を合成
-          qmul(vs.tq, dq, vs.cq);
-
-          // クォータニオンから回転の変換行列を求める
-          qrot(vs.rt, vs.tq);
-        }
-      }
-      if (myflags.button3 == 1) {
-        vs.scale -= event.motion.yrel * 0.1;
-        if (vs.scale < 0) {
-          vs.scale = 0.001;
-        }
-      }
-      break;
-    case SDL_VIDEORESIZE:
-      vs.width = event.resize.w;
-      vs.height = event.resize.h;
-      if (SDL_SetVideoMode(vs.width, vs.height, bpp, flags) == 0) {
-        fprintf(stderr, "ビデオモードのセットに失敗しました: %s\n",
-                SDL_GetError());
-        SDL_Quit();
-        return;
-      }
-      setup_opengl(vs.width, vs.height);
-      break;
-    case SDL_QUIT:
-      /* 終了要求 (Ctrl-c など) を処理 */
-      myflags.quit = 1;
-
-      return;
-    }
-  }
-}
+// static void process_events(void) {
+//   /* SDL イベントの置き場 */
+//   SDL_Event event;
+//
+//   /* すべてのイベントをキューからつかみ取る */
+//   while (SDL_PollEvent(&event)) {
+//
+//     switch (event.type) {
+//     case SDL_KEYDOWN:
+//       /* キー押下を処理 */
+//       handle_key_down(&event.key.keysym);
+//       break;
+//     case SDL_MOUSEBUTTONDOWN:
+//       switch (event.button.button) {
+//       case SDL_BUTTON_LEFT:
+//         myflags.button1 = 1;
+//         break;
+//       case SDL_BUTTON_RIGHT:
+//         myflags.button2 = 1;
+//         break;
+//       case SDL_BUTTON_MIDDLE:
+//         myflags.button3 = 1;
+//         break;
+//       }
+//       vs.sx = event.button.x;
+//       vs.sy = event.button.y;
+//       break;
+//     case SDL_MOUSEBUTTONUP:
+//       switch (event.button.button) {
+//       case SDL_BUTTON_LEFT:
+//         myflags.button1 = 0;
+//         break;
+//       case SDL_BUTTON_RIGHT:
+//         myflags.button2 = 0;
+//         break;
+//       case SDL_BUTTON_MIDDLE:
+//         myflags.button3 = 0;
+//         break;
+//       }
+//       memcpy(vs.cq, vs.tq, 4 * sizeof(double));
+//       break;
+//     case SDL_MOUSEMOTION:
+//       if (myflags.button1 == 1) {
+//         double dx, dy;
+//         double a;
+//         dx = (event.motion.xrel) / 10.0;
+//         dy = (event.motion.yrel) / 10.0;
+//         a = sqrt(dx * dx + dy * dy);
+//         if (a != 0.0) {
+//           int i, j;
+//           double tmp[3];
+//           tmp[0] = dx;
+//           tmp[1] = dy;
+//           tmp[2] = 0.0;
+//           // 変換行列から移動ベクトルを回転
+//           for (i = 0; i < 3; i++) {
+//             for (j = 0; j < 3; j++) {
+//               if (i == 0) {
+//                 vs.move[i] += tmp[j] * vs.rt[j * 4 + i];
+//               } else {
+//                 vs.move[i] -= tmp[j] * vs.rt[j * 4 + i];
+//               }
+//             }
+//           }
+//         }
+//       }
+//       if (myflags.button2 == 1) {
+//         double dx, dy;
+//         double a;
+//
+//         dx = (event.motion.x - vs.sx) / (double)vs.width;
+//         dy = (event.motion.y - vs.sy) / (double)vs.height;
+//         a = sqrt(dx * dx + dy * dy);
+//         if (a != 0.0) {
+//           // マウスのドラッグに伴う回転のクォータニオン dq を求める
+//           double ar = a * SCALE * 0.5;
+//           double as = sin(ar) / a;
+//           double dq[4] = {cos(ar), dy * as, dx * as, 0.0};
+//
+//           // 回転の初期値 cq に dq を掛けて回転を合成
+//           qmul(vs.tq, dq, vs.cq);
+//
+//           // クォータニオンから回転の変換行列を求める
+//           qrot(vs.rt, vs.tq);
+//         }
+//       }
+//       if (myflags.button3 == 1) {
+//         vs.scale -= event.motion.yrel * 0.1;
+//         if (vs.scale < 0) {
+//           vs.scale = 0.001;
+//         }
+//       }
+//       break;
+//     case SDL_VIDEORESIZE:
+//       vs.width = event.resize.w;
+//       vs.height = event.resize.h;
+//       if (SDL_SetVideoMode(vs.width, vs.height, bpp, flags) == 0) {
+//         fprintf(stderr, "ビデオモードのセットに失敗しました: %s\n",
+//                 SDL_GetError());
+//         SDL_Quit();
+//         return;
+//       }
+//       setup_opengl(vs.width, vs.height);
+//       break;
+//     case SDL_QUIT:
+//       /* 終了要求 (Ctrl-c など) を処理 */
+//       myflags.quit = 1;
+//
+//       return;
+//     }
+//   }
+// }
 
 /*描画用のモデルを管理する関数*/
 void *model_mgr(int flag, int num, void *p) {
@@ -461,14 +461,15 @@ int load_tex(MODEL *model, DSP_MODEL *dsp_model) {
 
     // STBIDEF stbi_uc *stbi_load            (char const *filename, int *x, int
     // *y, int *channels_in_file, int desired_channels);
-    auto texbits = stbi_load(model->mat[i].tex_path, &mat.texsize[0], &mat.texsize[1], nullptr, 4);
+    auto texbits = stbi_load(model->mat[i].tex_path, &mat.texsize[0],
+                             &mat.texsize[1], nullptr, 4);
     // image = IMG_Load(model->mat[i].tex_path);
     // GLubyte *texbits = NULL;
     if (texbits == NULL) {
       memset(mat.texsize, 0, 2 * sizeof(int));
       texbits = NULL;
       printf("画像が読み込めません %s\n", model->mat[i].tex_path);
-    } 
+    }
     // else {
     //   texbits = (GLubyte *)MALLOC(mat.texsize[0] * mat.texsize[1] *
     //                               sizeof(GLubyte) * 4);
@@ -478,9 +479,8 @@ int load_tex(MODEL *model, DSP_MODEL *dsp_model) {
     //     printf("メモリ確保失敗 %d\n", i);
     // }
 
-    // if (texbits != NULL) 
-    else
-    {
+    // if (texbits != NULL)
+    else {
       // char *p;
       // SDL_PixelFormat *fm;
       // p = (char *)image->pixels;
@@ -522,12 +522,14 @@ int load_tex(MODEL *model, DSP_MODEL *dsp_model) {
       // printf("%d x %d  %d\n", image->w, image->h, image->pitch);
       // printf("BitsPerPixel:%d\n", image->format->BitsPerPixel);
       // printf("BytesPerPixel:%d\n", image->format->BytesPerPixel);
-      // printf("Mask:%x %x %x %x\n", image->format->Rmask, image->format->Gmask,
+      // printf("Mask:%x %x %x %x\n", image->format->Rmask,
+      // image->format->Gmask,
       //        image->format->Bmask, image->format->Amask);
       // printf("Shift:%d %d %d %d\n", image->format->Rshift,
       //        image->format->Gshift, image->format->Bshift,
       //        image->format->Ashift);
-      // printf("Loss:%d %d %d %d\n\n", image->format->Rloss, image->format->Gloss,
+      // printf("Loss:%d %d %d %d\n\n", image->format->Rloss,
+      // image->format->Gloss,
       //        image->format->Bloss, image->format->Aloss);
       // #endif
       {
@@ -549,8 +551,8 @@ int load_tex(MODEL *model, DSP_MODEL *dsp_model) {
             puts("メモリ確保失敗");
 
           auto tmp = gluScaleImage(GL_RGBA, mat.texsize[0], mat.texsize[1],
-                              GL_UNSIGNED_BYTE, texbits, w, h, GL_UNSIGNED_BYTE,
-                              tmp_bits);
+                                   GL_UNSIGNED_BYTE, texbits, w, h,
+                                   GL_UNSIGNED_BYTE, tmp_bits);
           mat.texsize[0] = w;
           mat.texsize[1] = h;
 #ifdef DEBUG

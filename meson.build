@@ -1,6 +1,9 @@
 project('PMCA', 'c', 'cpp')
 
-sdl_dep = subproject('SDL-1.2').get_variable('sdl_dep')
+glfw_dep = dependency(
+    'glfw3',
+    default_options: ['default_library=static'],
+)
 
 subdir('src/converter')
 subdir('src/pmca')

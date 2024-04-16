@@ -5,5 +5,4 @@ executable(
         'PMCA_loadconf.cpp',
     ],
     install: true,
-    dependencies: [sdl_dep],
 )
