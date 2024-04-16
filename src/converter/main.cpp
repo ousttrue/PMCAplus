@@ -14,7 +14,7 @@
 #define NODE_MAX 32
 
 #define NAME_LEN 128
-typedef struct {
+struct LIST {
   unsigned int bone_count;
   char (*bone)[NAME_LEN];
   char (*bone_eng)[NAME_LEN];
@@ -24,7 +24,7 @@ typedef struct {
   unsigned int disp_count;
   char (*disp)[NAME_LEN];
   char (*disp_eng)[NAME_LEN];
-} LIST;
+};
 
 LIST list;
 PARTS parts[PARTS_MAX];

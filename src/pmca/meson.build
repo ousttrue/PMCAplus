@@ -22,10 +22,11 @@ deps = [py_dep, glfw_dep, gl_dep, glu_dep]
 py.extension_module(
     'PMCA',
     'PMCA_PyMod.cpp',
-    'PMCA_SDLMod.cpp',
-    'PMCA_view.cpp',
+    'PMCA_glfw.cpp',
+    'PMCA_renderer.cpp',
     'mlib_PMD_edit01.cpp',
     'mlib_PMD_rw01.cpp',
+    'quat.cpp',
     install: true,
     install_dir: 'bin',
     dependencies: deps,

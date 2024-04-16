@@ -20,7 +20,7 @@ PMDモブキャラクタアセンブラ
 //
 // #define MENU_BTN_MAX 3
 
-typedef struct { /*1616byte*/
+struct PARTS { /*1616byte*/
   char name[64];
   char comment[256];
   char type[32];
@@ -28,18 +28,18 @@ typedef struct { /*1616byte*/
   char join[CHILD_MAX][8][16];
   char pic[96];
   void *ext;
-} PARTS;
+};
 
-typedef struct { /*1125byte*/
+struct TEXTURES { /*1125byte*/
   char name[21];
   char comment[256];
   char tex[16][21];
   char tex_comment[16][64];
   char pic[16][96];
   void *ext;
-} TEXTURES;
+};
 
-typedef struct {
+struct MAT_CONF {
   char tex[21];
   char comment[64];
   float dif[3];
@@ -48,19 +48,19 @@ typedef struct {
   int toon_num;
   char toon_name[100];
   char pic[96];
-} MAT_CONF;
+};
 
-typedef struct {
+struct MATERIALS {
   char name[21];
   char comment[256];
   MAT_CONF mat[16];
   void *ext;
-} MATERIALS;
+};
 
-typedef struct { /*384byte*/
+struct BONE_GROUP_CONF { /*384byte*/
   char name[64];
   char bone_name[16][20];
-} BONE_GROUP_CONF;
+};
 
 // loadconf
 int load_config(char str[], PARTS parts[], unsigned short *parts_max,

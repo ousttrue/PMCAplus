@@ -1,6 +1,9 @@
-#include "PMCA.h"
-#include "PMCA_SDLMod.h"
+#include "mPMD.h"
+#include "PMCA_glfw.h"
+#include "PMCA_renderer.h"
+
 #define PMCA_MODULE
+#define MODEL_COUNT 16
 
 #ifdef _DEBUG
 #undef _DEBUG
@@ -881,12 +884,10 @@ static PyObject *Set_Name_Comment(PyObject *self, PyObject *args) {
 
 /*******************************************************************************/
 static PyObject *Init_PMD(PyObject *self, PyObject *args) {
-  int i;
-
-  for (i = 0; i < MODEL_COUNT; i++) {
+  for (int i = 0; i < MODEL_COUNT; i++) {
     create_PMD(&g_model[i]);
   }
-  model_mgr(-1, 0, NULL);
+  model_mgr(Mode::Init, 0, NULL);
   return Py_BuildValue("i", 0);
 }
 
@@ -1077,7 +1078,7 @@ static PyObject *PMD_view_set(PyObject *self, PyObject *args) {
   if (!PyArg_ParseTuple(args, "is", &num, &str))
     return NULL;
   if (strcmp(str, "replace") == 0) {
-    model_mgr(0, 0, &g_model[num]);
+    model_mgr(Mode::Write, 0, &g_model[num]);
   } else {
     printf("unexpected string '%s'\n", str);
     ret = 1;
