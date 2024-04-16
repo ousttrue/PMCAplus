@@ -2,6 +2,7 @@
 #include "PMCA.h"
 #include <SDL.h>
 
+int viewer_thread(void*);
 
 MODEL g_model[MODEL_COUNT];
 LIST list;

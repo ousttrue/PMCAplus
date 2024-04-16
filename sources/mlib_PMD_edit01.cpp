@@ -1,9 +1,12 @@
 /*PMD関係のライブラリ、PMD編集など */
 
 #include <stdio.h>
+#define _USE_MATH_DEFINES
+
 #include <stdlib.h>
 #include <math.h>
 #include <memory.h>
+#include <string.h>
 
 //#define DLLExport edit
 #include "mPMD.h"
@@ -154,8 +157,8 @@ int sort_bone(MODEL *model, LIST *list)
 	
 	
 	
-	index = malloc(model->bone_count * sizeof(int));
-	bone = malloc(model->bone_count * sizeof(BONE));
+	index = (int*)malloc(model->bone_count * sizeof(int));
+	bone = (BONE*)malloc(model->bone_count * sizeof(BONE));
 	
 	#ifdef MEM_DBG
 		printf("malloc %p %p\n", index, bone);
@@ -280,7 +283,7 @@ int update_bone_index(MODEL *model,int index[])
 	unsigned short *tmp_rb;
 	
 	//頂点のボーン番号を書き換え
-	tmp_vt = malloc(sizeof(unsigned short)*2*model->vt_count);
+	tmp_vt = (unsigned short (*)[2])malloc(sizeof(unsigned short)*2*model->vt_count);
 	#ifdef MEM_DBG
 		printf("malloc %p\n", tmp_vt);
 	#endif
@@ -703,7 +706,7 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz)
 			len_vt++;
 		}
 	}
-	tmp_vt = (double*)MALLOC(sizeof(double) * len_vt * 3);
+	tmp_vt = (double (*)[3])MALLOC(sizeof(double) * len_vt * 3);
 	index_vt = (unsigned int*)MALLOC(sizeof(unsigned int)*len_vt);
 	j = 0;
 	for(i=0; i<model->vt_count; i++){
@@ -722,8 +725,8 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz)
 			len_bone++;
 		}
 	}
-	tmp_bone = (double*)MALLOC(sizeof(double) * len_bone * 3);
-	diff_bone = (double*)MALLOC(sizeof(double) * len_bone * 3);
+	tmp_bone = (double (*)[3])MALLOC(sizeof(double) * len_bone * 3);
+	diff_bone = (double (*)[3])MALLOC(sizeof(double) * len_bone * 3);
 	index_bone = (unsigned int*)MALLOC(sizeof(unsigned int)*len_bone);
 	j = 0;
 	for(i=0; i<model->bone_count; i++){

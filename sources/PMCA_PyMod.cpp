@@ -1,5 +1,6 @@
 #include "PMCA_SDLMod.h"
 #include "PMCA.h"
+#include <SDL.h>
 #define PMCA_MODULE
 
 #undef _DEBUG
@@ -454,56 +455,56 @@ static PyObject* Create_FromInfo(PyObject *self, PyObject *args)
 	/*メモリ確保************************************************************************/
 	//頂点
 	size = p->vt_count * sizeof(VERTEX);
-	p->vt = MALLOC(size);
+	p->vt = (VERTEX *)MALLOC(size);
 	memset(p->vt, 0, size);
 	//面頂点
 	size = p->vt_index_count * sizeof(unsigned short);
-	p->vt_index = MALLOC(size);
+	p->vt_index = (unsigned short*)MALLOC(size);
 	memset(p->vt_index, 0, size);
 	
 	//材質
 	size = p->mat_count * sizeof(MATERIAL);
-	p->mat = MALLOC(size);
+	p->mat = (MATERIAL*)MALLOC(size);
 	memset(p->mat, 0, size);
 	
 	//ボーン
 	size = p->bone_count * sizeof(BONE);
-	p->bone = MALLOC(size);
+	p->bone = (BONE*)MALLOC(size);
 	memset(p->bone, 0, size);
 	
 	//IKリスト
 	size = p->IK_count * sizeof(IK_LIST);
-	p->IK_list = MALLOC(size);
+	p->IK_list = (IK_LIST*)MALLOC(size);
 	memset(p->IK_list, 0, size);
 	
 	//表情
 	size = p->skin_count * sizeof(SKIN);
-	p->skin = MALLOC(size);
+	p->skin = (SKIN*)MALLOC(size);
 	memset(p->skin, 0, size);
 	
 	//表情表示
 	size = p->skin_disp_count * sizeof(unsigned short);
-	p->skin_index = MALLOC(size);
+	p->skin_index = (unsigned short*)MALLOC(size);
 	PyList_to_Array_UShort(p->skin_index, PyTmp, p->skin_disp_count);
 	
 	//ボーン表示グループ
 	size = p->bone_group_count * sizeof(BONE_GROUP);
-	p->bone_group = MALLOC(size);
+	p->bone_group = (BONE_GROUP*)MALLOC(size);
 	memset(p->bone_group, 0, size);
 	
 	//表示ボーン
 	size = p->bone_disp_count * sizeof(BONE_DISP);
-	p->bone_disp = MALLOC(size);
+	p->bone_disp = (BONE_DISP*)MALLOC(size);
 	memset(p->bone_disp, 0, size);
 	
 	//剛体
 	size = p->rbody_count * sizeof(RIGID_BODY);
-	p->rbody = MALLOC(size);
+	p->rbody = (RIGID_BODY*)MALLOC(size);
 	memset(p->rbody, 0, size);
 	
 	//ジョイント
 	size = p->joint_count * sizeof(JOINT);
-	p->joint = MALLOC(size);
+	p->joint = (JOINT*)MALLOC(size);
 	memset(p->joint, 0, size);
 	
 	return Py_BuildValue("i", 0);
@@ -687,7 +688,7 @@ static PyObject* setSkin(PyObject *self, PyObject *args)
 		model->skin[i].data == NULL;
 	}
 	if(model->skin[i].data == NULL){
-		skin.data = MALLOC(size);
+		skin.data = (SKIN_DATA*)MALLOC(size);
 	}else{
 		skin.data = model->skin[i].data;
 	}
@@ -906,12 +907,12 @@ static PyObject* Set_List(PyObject *self, PyObject *args)
 							&list.skin_count, &sn, &sne,
 							&list.disp_count, &gn, &gne))return NULL;
 	
-	list.bone = MALLOC(list.bone_count * sizeof(char)*NAME_LEN);
-	list.bone_eng = MALLOC(list.bone_count * sizeof(char)*NAME_LEN);
-	list.skin = MALLOC(list.skin_count * sizeof(char)*NAME_LEN);
-	list.skin_eng = MALLOC(list.skin_count * sizeof(char)*NAME_LEN);
-	list.disp = MALLOC(list.disp_count * sizeof(char)*NAME_LEN);
-	list.disp_eng = MALLOC(list.disp_count * sizeof(char)*NAME_LEN);
+	list.bone = (char (*)[NAME_LEN])MALLOC(list.bone_count * sizeof(char)*NAME_LEN);
+	list.bone_eng = (char (*)[NAME_LEN])MALLOC(list.bone_count * sizeof(char)*NAME_LEN);
+	list.skin = (char (*)[NAME_LEN])MALLOC(list.skin_count * sizeof(char)*NAME_LEN);
+	list.skin_eng = (char (*)[NAME_LEN])MALLOC(list.skin_count * sizeof(char)*NAME_LEN);
+	list.disp = (char (*)[NAME_LEN])MALLOC(list.disp_count * sizeof(char)*NAME_LEN);
+	list.disp_eng = (char (*)[NAME_LEN])MALLOC(list.disp_count * sizeof(char)*NAME_LEN);
 	
 	p = NULL;
 	

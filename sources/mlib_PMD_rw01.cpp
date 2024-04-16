@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <memory.h>
+#include <string.h>
 
 #include "mPMD.h"
 
@@ -44,7 +45,7 @@ void* dbg_malloc(size_t s){
 
 void dbg_free(void* p){
 	//printf("free:%p\n", p);
-	if(p==NULL)return 0;
+	if(p==NULL)return;
 	free(p);
 	p = NULL;
 	//exit(1);
@@ -100,12 +101,12 @@ int load_list(LIST *list, const char file_name[])
 	printf("リスト表情数:%d\n", list->skin_count);
 	printf("リスト表示枠数:%d\n", list->disp_count);
 	
-	list->bone = MALLOC((size_t)list->bone_count * sizeof(char)* NAME_LEN);
-	list->bone_eng = MALLOC((size_t)list->bone_count * sizeof(char)*NAME_LEN);
-	list->skin = MALLOC((size_t)list->skin_count * sizeof(char)*NAME_LEN);
-	list->skin_eng = MALLOC((size_t)list->skin_count * sizeof(char)*NAME_LEN);
-	list->disp = MALLOC((size_t)list->disp_count * sizeof(char)*NAME_LEN);
-	list->disp_eng = MALLOC((size_t)list->disp_count * sizeof(char)*NAME_LEN);
+	list->bone = (char (*)[NAME_LEN])MALLOC((size_t)list->bone_count * sizeof(char)* NAME_LEN);
+	list->bone_eng = (char (*)[NAME_LEN])MALLOC((size_t)list->bone_count * sizeof(char)*NAME_LEN);
+	list->skin = (char (*)[NAME_LEN])MALLOC((size_t)list->skin_count * sizeof(char)*NAME_LEN);
+	list->skin_eng = (char (*)[NAME_LEN])MALLOC((size_t)list->skin_count * sizeof(char)*NAME_LEN);
+	list->disp = (char (*)[NAME_LEN])MALLOC((size_t)list->disp_count * sizeof(char)*NAME_LEN);
+	list->disp_eng = (char (*)[NAME_LEN])MALLOC((size_t)list->disp_count * sizeof(char)*NAME_LEN);
 	if(list->bone == NULL)return -1;
 	if(list->bone_eng == NULL)return -1;
 	if(list->skin == NULL)return -1;
@@ -1765,7 +1766,7 @@ int get_file_name(char file_name[])
 	int i;
 	char input[256];
 	printf("ファイル名:");
-	gets(input);
+	gets_s(input);
 	if(input[0] == '\"'){
 		for(i=1; i<256; i++){
 			file_name[i-1] = input[i];

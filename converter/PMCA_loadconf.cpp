@@ -1,6 +1,6 @@
 /*PMD Mob Character Assembler
 Version 0.0.5 by mato
-PMDƒ‚ƒuƒLƒƒƒ‰ƒNƒ^ƒAƒZƒ“ƒuƒ‰
+PMDãƒ¢ãƒ–ã‚­ãƒ£ãƒ©ã‚¯ã‚¿ã‚¢ã‚»ãƒ³ãƒ–ãƒ©
 */
 
 #include <stdio.h>
@@ -52,7 +52,7 @@ int load_config(char str[],
 		
 		fclose(list);
 	}else{
-		puts("ƒtƒ@ƒCƒ‹‚ªŠJ‚¯‚Ü‚¹‚ñ‚Å‚µ‚½");
+		puts("ãƒ•ã‚¡ã‚¤ãƒ«ãŒé–‹ã‘ã¾ã›ã‚“ã§ã—ãŸ");
 	}
 	
 	return 0;
@@ -94,7 +94,7 @@ int load_parts_list(PARTS parts[], unsigned short *parts_max, FILE *list)
 		puts("");
 	}
 	
-	if(strcmp(str, "PMCA Parts list v1.0") != 0)return max;	//ƒtƒ@ƒCƒ‹‚ªw’è‚Ì•¶š—ñ‚Ån‚Ü‚Á‚Ä‚¢‚é‚©
+	if(strcmp(str, "PMCA Parts list v1.0") != 0)return max;	//ãƒ•ã‚¡ã‚¤ãƒ«ãŒæŒ‡å®šã®æ–‡å­—åˆ—ã§å§‹ã¾ã£ã¦ã„ã‚‹ã‹
 	
 	while(fgets(str, 256, list) != NULL){
 		p = strchr( str, '\n' );
@@ -163,21 +163,21 @@ int load_parts_list(PARTS parts[], unsigned short *parts_max, FILE *list)
 	}
 	
 	/*
-	ƒp[ƒcƒŠƒXƒg‘®
-	PMCA Parts list v1.0	#ƒtƒ@ƒCƒ‹æ“ª‚É
+	ãƒ‘ãƒ¼ãƒ„ãƒªã‚¹ãƒˆæ›¸å¼
+	PMCA Parts list v1.0	#ãƒ•ã‚¡ã‚¤ãƒ«å…ˆé ­ã«
 	
-	#‹ó”’s
+	#ç©ºç™½è¡Œ
 	
-	ƒp[ƒc–¼(char[64]) ƒRƒƒ“ƒg(char[256])
-	ƒ^ƒCƒv(char[16])
-	ƒtƒ@ƒCƒ‹–¼
-	ƒsƒNƒ`ƒƒ–¼
-	Ú‡‰Â”\ƒ^ƒCƒv(char[8][8][16])
+	ãƒ‘ãƒ¼ãƒ„å(char[64]) ã‚³ãƒ¡ãƒ³ãƒˆ(char[256])
+	ã‚¿ã‚¤ãƒ—(char[16])
+	ãƒ•ã‚¡ã‚¤ãƒ«å
+	ãƒ”ã‚¯ãƒãƒ£å
+	æ¥åˆå¯èƒ½ã‚¿ã‚¤ãƒ—(char[8][8][16])
 	
-	—á
+	ä¾‹
 	PMCA Parts list v1.0
 	
-	ƒZ[ƒ‰[•ã”¼g01(ƒXƒJ[ƒg,’·‘³) •’Ê‚Ì’·‘³ƒZ[ƒ‰[•AcƒŠƒ{ƒ“
+	ã‚»ãƒ¼ãƒ©ãƒ¼æœä¸ŠåŠèº«01(ã‚¹ã‚«ãƒ¼ãƒˆ,é•·è¢–) æ™®é€šã®é•·è¢–ã‚»ãƒ¼ãƒ©ãƒ¼æœã€ç¸¦ãƒªãƒœãƒ³
 	root
 	ub_slr001_l_sk.pmd
 	ub_slr001_l_sk.bmp
@@ -185,7 +185,7 @@ int load_parts_list(PARTS parts[], unsigned short *parts_max, FILE *list)
 	hand
 	lb
 	
-	Šçf01 ¡‚Ü‚ÅƒZ[ƒ‰[•‚³‚ñ‚Æ“¯‚¶—l‚ÈŠç
+	é¡”f01 ä»Šã¾ã§ã‚»ãƒ¼ãƒ©ãƒ¼æœã•ã‚“ã¨åŒã˜æ§˜ãªé¡”
 	head
 	head_mato001_1.pmd
 	head_mato001_1.bmp
@@ -215,7 +215,7 @@ int load_textures_list(TEXTURES textures[], unsigned short *textures_max, FILE *
 	#ifdef DEBUG
 		printf("%s\n", str);
 	#endif
-	if(strcmp(str, "PMCA Textures list v1.0") != 0)return 1;	//ƒtƒ@ƒCƒ‹‚ªw’è‚Ì•¶š—ñ‚Ån‚Ü‚Á‚Ä‚¢‚é‚©
+	if(strcmp(str, "PMCA Textures list v1.0") != 0)return 1;	//ãƒ•ã‚¡ã‚¤ãƒ«ãŒæŒ‡å®šã®æ–‡å­—åˆ—ã§å§‹ã¾ã£ã¦ã„ã‚‹ã‹
 	
 	max = *textures_max;
 	
@@ -241,7 +241,7 @@ int load_textures_list(TEXTURES textures[], unsigned short *textures_max, FILE *
 			#endif
 			
 			
-			//‘½d’è‹`‚Ìƒ`ƒFƒbƒN
+			//å¤šé‡å®šç¾©ã®ãƒã‚§ãƒƒã‚¯
 			tmp = 0;
 			for(i=0; i<max; i++){
 				if(strcmp(textures[max].name, textures[i].name) == 0){
@@ -285,27 +285,27 @@ int load_textures_list(TEXTURES textures[], unsigned short *textures_max, FILE *
 	}
 	
 	/*
-	ƒeƒNƒXƒ`ƒƒƒŠƒXƒg‘®
-	PMCA Textures list v1.0	#ƒtƒ@ƒCƒ‹æ“ª‚É
+	ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒªã‚¹ãƒˆæ›¸å¼
+	PMCA Textures list v1.0	#ãƒ•ã‚¡ã‚¤ãƒ«å…ˆé ­ã«
 	
-	#‹ó”’s
+	#ç©ºç™½è¡Œ
 	
 	Texture
-	ƒeƒNƒXƒ`ƒƒ’uŠ·–¼(char[21]) ƒRƒƒ“ƒg(char[256])
-	ƒeƒNƒXƒ`ƒƒ–¼(char[16][21]) ƒeƒNƒXƒ`ƒƒƒRƒƒ“ƒg(char[16][32]) ƒsƒNƒ`ƒƒ–¼(char[16][96])
+	ãƒ†ã‚¯ã‚¹ãƒãƒ£ç½®æ›å(char[21]) ã‚³ãƒ¡ãƒ³ãƒˆ(char[256])
+	ãƒ†ã‚¯ã‚¹ãƒãƒ£å(char[16][21]) ãƒ†ã‚¯ã‚¹ãƒãƒ£ã‚³ãƒ¡ãƒ³ãƒˆ(char[16][32]) ãƒ”ã‚¯ãƒãƒ£å(char[16][96])
 	
-	—á
+	ä¾‹
 	PMCA Textures list v1.0
 	
 	texture
-	cloth_slr1_l ’·‘³•
-	cl_slr1_l_bl.png ® cl_slr1_l_bl.bmp
-	cl_slr1_l_bk.png • cl_slr1_l_bk.bmp
+	cloth_slr1_l é•·è¢–æœ
+	cl_slr1_l_bl.png ç´º cl_slr1_l_bl.bmp
+	cl_slr1_l_bk.png é»’ cl_slr1_l_bk.bmp
 	
 	texture
-	cloth_bzr1_l ƒuƒŒƒU[
-	cl_bzr1_l_bk_b.png ÂƒlƒNƒ^ƒC cl_bzr1_l_bk_b.bmp
-	cl_bzr1_l_bk_r.png ÔƒlƒNƒ^ƒC cl_bzr1_l_bk_r.bmp
+	cloth_bzr1_l ãƒ–ãƒ¬ã‚¶ãƒ¼
+	cl_bzr1_l_bk_b.png é’ãƒã‚¯ã‚¿ã‚¤ cl_bzr1_l_bk_b.bmp
+	cl_bzr1_l_bk_r.png èµ¤ãƒã‚¯ã‚¿ã‚¤ cl_bzr1_l_bk_r.bmp
 	
 	EOF
 	*/
@@ -331,7 +331,7 @@ int load_materials_list(MATERIALS materials[], unsigned short *materials_max, FI
 		printf("%s\n", str);
 	#endif
 	if(strcmp(str, "PMCA Materials list v1.0") != 0
-	&& strcmp(str, "PMCA Materials list v1.1") != 0)return 1;	//ƒtƒ@ƒCƒ‹‚ªw’è‚Ì•¶š—ñ‚Ån‚Ü‚Á‚Ä‚¢‚é‚©
+	&& strcmp(str, "PMCA Materials list v1.1") != 0)return 1;	//ãƒ•ã‚¡ã‚¤ãƒ«ãŒæŒ‡å®šã®æ–‡å­—åˆ—ã§å§‹ã¾ã£ã¦ã„ã‚‹ã‹
 	
 	max = *materials_max;
 	
@@ -357,7 +357,7 @@ int load_materials_list(MATERIALS materials[], unsigned short *materials_max, FI
 			#ifdef DEBUG
 				printf("\n%d name:%s\ncomment:%s\n",  max,materials[max].name, materials[max].comment);
 			#endif
-			//‘½d’è‹`‚Ìƒ`ƒFƒbƒN
+			//å¤šé‡å®šç¾©ã®ãƒã‚§ãƒƒã‚¯
 			tmp = 0;
 			for(i=0; i<max; i++){
 				if(strcmp(materials[max].name, materials[i].name) == 0){
@@ -451,29 +451,29 @@ int load_materials_list(MATERIALS materials[], unsigned short *materials_max, FI
 	}
 	
 	/*
-	ƒ}ƒeƒŠƒAƒ‹ƒŠƒXƒg‘®
-	PMCA Materials list v1.0	#ƒtƒ@ƒCƒ‹æ“ª‚É
+	ãƒãƒ†ãƒªã‚¢ãƒ«ãƒªã‚¹ãƒˆæ›¸å¼
+	PMCA Materials list v1.0	#ãƒ•ã‚¡ã‚¤ãƒ«å…ˆé ­ã«
 	
-	#‹ó”’s
+	#ç©ºç™½è¡Œ
 	
 	material
-	ƒeƒNƒXƒ`ƒƒ’uŠ·–¼(char[21]) ƒRƒƒ“ƒg(char[256])
+	ãƒ†ã‚¯ã‚¹ãƒãƒ£ç½®æ›å(char[21]) ã‚³ãƒ¡ãƒ³ãƒˆ(char[256])
 	struct[16]
-		ƒeƒNƒXƒ`ƒƒ–¼(char[21]) ƒRƒƒ“ƒg(char[64])) ƒsƒNƒ`ƒƒ–¼(char[96])
+		ãƒ†ã‚¯ã‚¹ãƒãƒ£å(char[21]) ã‚³ãƒ¡ãƒ³ãƒˆ(char[64])) ãƒ”ã‚¯ãƒãƒ£å(char[96])
 		dif(float[3])
 		spec(float[3])
 		mir(float[3])
 	
-	—á
+	ä¾‹
 	PMCA Materials list v1.0
 	
 	material
-	hair ”¯
-	hair_01.png Â hair_01.bmp
+	hair é«ª
+	hair_01.png é’ hair_01.bmp
 	0.5 0.5 0.1
 	0.0 0.0 0.0
 	0.2 0.2 0.2
-	hair_02.png ’ƒ”¯ hair_01.bmp
+	hair_02.png èŒ¶é«ª hair_01.bmp
 	0.8 0.8 0.8
 	0.0 0.0 0.0
 	0.2 0.2 0.2
@@ -500,7 +500,7 @@ int load_bone_group_list(BONE_GROUP bone_group[], unsigned short *bone_group_max
 	#ifdef DEBUG
 		printf("%s\n", str);
 	#endif
-	if(strcmp(str, "PMCA Bone_Group list v1.0") != 0)return 1;	//ƒtƒ@ƒCƒ‹‚ªw’è‚Ì•¶š—ñ‚Ån‚Ü‚Á‚Ä‚¢‚é‚©
+	if(strcmp(str, "PMCA Bone_Group list v1.0") != 0)return 1;	//ãƒ•ã‚¡ã‚¤ãƒ«ãŒæŒ‡å®šã®æ–‡å­—åˆ—ã§å§‹ã¾ã£ã¦ã„ã‚‹ã‹
 	
 	max = *bone_group_max;
 	
@@ -525,15 +525,15 @@ int load_bone_group_list(BONE_GROUP bone_group[], unsigned short *bone_group_max
 	*bone_group_max = max;
 	
 	/*
-	pmca_conf.txt‚Ì‘®
+	pmca_conf.txtã®æ›¸å¼
 	basic_parts_list.txt
 	neta_parts_list.txt
 	
 	bone_group list
-	upper_body ã”¼g
-	arm ‰E˜r ‰E‚Ğ‚¶ ¶˜r ¶‚Ğ‚¶
-	lower_body ‰º”¼g ‰E‘« ‰E‚Ğ‚´ ¶‘« ¶‚Ğ‚´
-	skirt ‰EƒXƒJ[ƒg‘O ‰EƒXƒJ[ƒgŒã ¶ƒXƒJ[ƒg‘O ¶ƒXƒJ[ƒgŒã
+	upper_body ä¸ŠåŠèº«
+	arm å³è…• å³ã²ã˜ å·¦è…• å·¦ã²ã˜
+	lower_body ä¸‹åŠèº« å³è¶³ å³ã²ã– å·¦è¶³ å·¦ã²ã–
+	skirt å³ã‚¹ã‚«ãƒ¼ãƒˆå‰ å³ã‚¹ã‚«ãƒ¼ãƒˆå¾Œ å·¦ã‚¹ã‚«ãƒ¼ãƒˆå‰ å·¦ã‚¹ã‚«ãƒ¼ãƒˆå¾Œ
 	
 	*/
 	
@@ -600,19 +600,19 @@ int load_rc()
 	
 	rc = fopen("pmcarc.txt", "r");
 	if(rc == NULL){
-		puts("pmcarc‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñAƒfƒtƒHƒ‹ƒg‚Ìİ’è‚ğg—p‚µ‚Ü‚·");
+		puts("pmcarcãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ã€ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã®è¨­å®šã‚’ä½¿ç”¨ã—ã¾ã™");
 		return -1;
 	}
 	
 	while(fgets(str, 1024, rc) != NULL){
 		
-		p = strchr( str, '#');	//ƒRƒƒ“ƒgƒAƒEƒg
+		p = strchr( str, '#');	//ã‚³ãƒ¡ãƒ³ãƒˆã‚¢ã‚¦ãƒˆ
 		if(p != NULL)*p = '\0';
 		p = strchr( str, '\n' );
-		if(p != NULL)*p = '\0';	//‰üsíœ
+		if(p != NULL)*p = '\0';	//æ”¹è¡Œå‰Šé™¤
 		if(str[0] == '\0')continue;
 		
-		if(strcmp(str, "comment") == 0){	//ƒRƒƒ“ƒg‚Í”ò‚Î‚·
+		if(strcmp(str, "comment") == 0){	//ã‚³ãƒ¡ãƒ³ãƒˆã¯é£›ã°ã™
 			while(fgets(str, 1024, rc) != NULL){
 				if(strcmp(str, "/comment\n") == 0)break;
 			}
@@ -673,12 +673,12 @@ int load_rc()
 			if(strcmp(buf, "axis")  == 0)pc = &g_ui2.show_axis;
 			else if(strcmp(buf, "grid")  == 0)pc = &g_ui2.show_grid;
 			else continue;
-			if(strchr(p, 'x') != NULL)*pc = *pc | 0x01;	//‘S‚Ä‰ÁZ‚µ‚Ä‘‚¢‚Ä‚ ‚é•”•ª‘S‚Ä‚ğ1‚É‚·‚é
+			if(strchr(p, 'x') != NULL)*pc = *pc | 0x01;	//å…¨ã¦åŠ ç®—ã—ã¦æ›¸ã„ã¦ã‚ã‚‹éƒ¨åˆ†å…¨ã¦ã‚’1ã«ã™ã‚‹
 			if(strchr(p, 'y') != NULL)*pc = *pc | 0x02;
 			if(strchr(p, 'z') != NULL)*pc = *pc | 0x04;
 			if(strchr(p, 'b') != NULL)*pc = *pc | 0x08;
 			p = strchr(p, '-');
-			if(p != NULL){	//-‚ÅœŠO‚·‚é•”•ªˆÈ~‚ğ”½“]‚µ‚Ä0‚É‚·‚é
+			if(p != NULL){	//-ã§é™¤å¤–ã™ã‚‹éƒ¨åˆ†ä»¥é™ã‚’åè»¢ã—ã¦0ã«ã™ã‚‹
 				if(strchr(p, 'x') != NULL)*pc = *pc ^ 0x01;
 				if(strchr(p, 'y') != NULL)*pc = *pc ^ 0x02;
 				if(strchr(p, 'z') != NULL)*pc = *pc ^ 0x04;

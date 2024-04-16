@@ -21,11 +21,11 @@ deps = [py_dep, sdl_dep, sdl_image_dep, gl_dep, glu_dep]
 
 py.extension_module(
     'PMCA',
-    'PMCA_PyMod.c',
-    'PMCA_SDLMod.c',
-    'PMCA_view.c',
-    'mlib_PMD_rw01.c',
-    'mlib_PMD_edit01.c',
+    'PMCA_PyMod.cpp',
+    'PMCA_SDLMod.cpp',
+    'PMCA_view.cpp',
+    'mlib_PMD_rw01.cpp',
+    'mlib_PMD_edit01.cpp',
     install: true,
     install_dir: 'bin',
     dependencies: deps,
