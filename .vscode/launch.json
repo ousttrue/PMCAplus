@@ -10,7 +10,7 @@
             "request": "launch",
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
-            "program": "${workspaceFolder}\\PMCA_pymain.py",
+            "program": "${workspaceFolder}\\PMCA\\__main__.py",
             "args": [],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}\\prefix\\bin",
