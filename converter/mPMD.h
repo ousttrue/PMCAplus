@@ -1,4 +1,4 @@
-/*PMCA用のヘッダーファイル*/
+/*PMCA逕ｨ縺ｮ繝倥ャ繝繝ｼ繝輔ぃ繧､繝ｫ*/
 
 //#define DEBUG
 //#define MEM_DBG

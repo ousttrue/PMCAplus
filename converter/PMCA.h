@@ -1,10 +1,10 @@
 /*PMD Mob Character Assembler
-PMDƒ‚ƒuƒLƒƒƒ‰ƒNƒ^ƒAƒZƒ“ƒuƒ‰
-ƒwƒbƒ_ƒtƒ@ƒCƒ‹
+PMDãƒ¢ãƒ–ã‚­ãƒ£ãƒ©ã‚¯ã‚¿ã‚¢ã‚»ãƒ³ãƒ–ãƒ©
+ãƒ˜ãƒƒãƒ€ãƒ•ã‚¡ã‚¤ãƒ«
 */
 
 
-#define MODEL_MAX 3	//0:ƒ‚ƒfƒ‹ 1:‘g‚Ý—§‚Ä—pˆêŽžƒ‚ƒfƒ‹ 2:•\Ž¦—pƒ‚ƒfƒ‹
+#define MODEL_MAX 3	//0:ãƒ¢ãƒ‡ãƒ« 1:çµ„ã¿ç«‹ã¦ç”¨ä¸€æ™‚ãƒ¢ãƒ‡ãƒ« 2:è¡¨ç¤ºç”¨ãƒ¢ãƒ‡ãƒ«
 #define PARTS_MAX 256
 #define TEXTURES_MAX 64
 #define MATERIALS_MAX 32

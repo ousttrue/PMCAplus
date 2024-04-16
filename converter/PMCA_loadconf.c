@@ -8,8 +8,8 @@ PMDモブキャラクタアセンブラ
 #include <memory.h>
 
 
-#include <SDL/SDL.h>
-#include <SDL/SDL_image.h>
+#include <SDL.h>
+#include <SDL_image.h>
 
 #include "mPMD.h"
 #include "PMCA.h"

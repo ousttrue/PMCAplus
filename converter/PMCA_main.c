@@ -1,5 +1,5 @@
 /*PMD Mob Character Assembler
-PMDƒ‚ƒuƒLƒƒƒ‰ƒNƒ^ƒAƒZƒ“ƒuƒ‰
+PMDãƒ¢ãƒ–ã‚­ãƒ£ãƒ©ã‚¯ã‚¿ã‚¢ã‚»ãƒ³ãƒ–ãƒ©
 */
 
 #include <stdio.h>
@@ -22,16 +22,16 @@ int main(int argc, char *argv[])
 	int i, j, k;
 	char out[256];
 	FILE *fp;
-	printf("PMD Character Assembler Ý’èƒtƒ@ƒCƒ‹ƒRƒ“ƒo[ƒ^[\n");
+	printf("PMD Character Assembler è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«ã‚³ãƒ³ãƒãƒ¼ã‚¿ãƒ¼\n");
 	printf("v1.0 -> v2.0\n");
 	
 	//load_list(&list, "list.txt");
 	
 	if(argc < 2){
-		printf("“ü—Íƒtƒ@ƒCƒ‹‚ª‚ ‚è‚Ü‚¹‚ñ\n‚±‚ÌŽÀsƒtƒ@ƒCƒ‹‚É•ÏŠ·‚µ‚½‚¢ƒtƒ@ƒCƒ‹‚ðƒhƒ‰ƒbƒO•ƒhƒƒbƒv‚µ‚Ä‚­‚¾‚³‚¢\n");
+		printf("å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ãŒã‚ã‚Šã¾ã›ã‚“\nã“ã®å®Ÿè¡Œãƒ•ã‚¡ã‚¤ãƒ«ã«å¤‰æ›ã—ãŸã„ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ãƒ‰ãƒ©ãƒƒã‚°ï¼†ãƒ‰ãƒ­ãƒƒãƒ—ã—ã¦ãã ã•ã„\n");
 	}
 	
-	for(i=1; i<argc; ++i)  /* ƒRƒ}ƒ“ƒhƒ‰ƒCƒ“ˆø”‚ðo—Í‚·‚éƒ‹[ƒv */
+	for(i=1; i<argc; ++i)  /* ã‚³ãƒžãƒ³ãƒ‰ãƒ©ã‚¤ãƒ³å¼•æ•°ã‚’å‡ºåŠ›ã™ã‚‹ãƒ«ãƒ¼ãƒ— */
 	{
 		puts( argv[i] );
 		parts_max = 0;
@@ -40,10 +40,10 @@ int main(int argc, char *argv[])
 		bone_group_max = 0;
 		load_config(argv[i], parts, &parts_max, textures, &textures_max, materials, &materials_max, bone_group, &bone_group_max);
 		
-		printf("ƒp[ƒc”:%d\n", parts_max);
-		printf("Ý’èƒ}ƒeƒŠƒAƒ‹”:%d\n", materials_max);
-		printf("Ý’èƒeƒNƒXƒ`ƒƒ”:%d\n", textures_max);
-		printf("ƒ{[ƒ“ƒZƒbƒg”:%d\n\n", bone_group_max);
+		printf("ãƒ‘ãƒ¼ãƒ„æ•°:%d\n", parts_max);
+		printf("è¨­å®šãƒžãƒ†ãƒªã‚¢ãƒ«æ•°:%d\n", materials_max);
+		printf("è¨­å®šãƒ†ã‚¯ã‚¹ãƒãƒ£æ•°:%d\n", textures_max);
+		printf("ãƒœãƒ¼ãƒ³ã‚»ãƒƒãƒˆæ•°:%d\n\n", bone_group_max);
 		
 		sprintf(out, "%s", argv[i]);
 		fp = fopen(out, "w");
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
 					fprintf(fp, "[pic] %s\n", parts[j].pic);
 				}
 			}
-			printf("ƒp[ƒcƒŠƒXƒg '%s' ‚ð•ÏŠ·‚µ‚Ü‚µ‚½\n", argv[i]);
+			printf("ãƒ‘ãƒ¼ãƒ„ãƒªã‚¹ãƒˆ '%s' ã‚’å¤‰æ›ã—ã¾ã—ãŸ\n", argv[i]);
 		}else if(textures_max != 0){
 			fprintf(fp, "PMCA Materials list v2.0\n\n");
 			fprintf(fp, "SETDIR ./parts/\n\n");
@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
 					}
 				}
 			}
-			printf("ƒeƒNƒXƒ`ƒƒƒŠƒXƒg '%s' ‚ð•ÏŠ·‚µ‚Ü‚µ‚½\n", argv[i]);
+			printf("ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒªã‚¹ãƒˆ '%s' ã‚’å¤‰æ›ã—ã¾ã—ãŸ\n", argv[i]);
 		}else if(materials_max != 0){
 			fprintf(fp, "PMCA Materials list v2.0\n\n");
 			fprintf(fp, "SETDIR ./parts/\n\n");
@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
 					}
 				}
 			}
-			printf("ƒ}ƒeƒŠƒAƒ‹ƒŠƒXƒg '%s' ‚ð•ÏŠ·‚µ‚Ü‚µ‚½\n", argv[i]);
+			printf("ãƒžãƒ†ãƒªã‚¢ãƒ«ãƒªã‚¹ãƒˆ '%s' ã‚’å¤‰æ›ã—ã¾ã—ãŸ\n", argv[i]);
 		}
 		fclose(fp);
 	}
@@ -116,11 +116,11 @@ int main(int argc, char *argv[])
 	
 	
 	/*
-	puts("\nÝ’è“Ç‚Ýž‚ÝŠ®—¹");
-	printf("ƒp[ƒc”:%d\n", parts_max);
-	printf("Ý’èƒ}ƒeƒŠƒAƒ‹”:%d\n", materials_max);
-	printf("Ý’èƒeƒNƒXƒ`ƒƒ”:%d\n", textures_max);
-	printf("ƒ{[ƒ“ƒZƒbƒg”:%d\n\n", bone_group_max);
+	puts("\nè¨­å®šèª­ã¿è¾¼ã¿å®Œäº†");
+	printf("ãƒ‘ãƒ¼ãƒ„æ•°:%d\n", parts_max);
+	printf("è¨­å®šãƒžãƒ†ãƒªã‚¢ãƒ«æ•°:%d\n", materials_max);
+	printf("è¨­å®šãƒ†ã‚¯ã‚¹ãƒãƒ£æ•°:%d\n", textures_max);
+	printf("ãƒœãƒ¼ãƒ³ã‚»ãƒƒãƒˆæ•°:%d\n\n", bone_group_max);
 	*/
 	
 	return 0;
