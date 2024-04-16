@@ -1,7 +1,7 @@
 executable(
     'PMCA_converter',
     [
-        'PMCA_main.cpp',
+        'main.cpp',
         'PMCA_loadconf.cpp',
     ],
     install: true,
