@@ -4,3 +4,5 @@ __pycache__
 prefix
 subprojects/*
 !subprojects/glfw.wrap
+!subprojects/imgui.wrap
+imgui.ini

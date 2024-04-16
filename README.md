@@ -17,6 +17,8 @@ PMD組み立てツールです。
 
 - [x] meson でビルドできるように修正 Python-3.12(64bit)
 - [x] 動作
+- [x] SDL_image => stb_image
+- [x] SDL => glfw
 
 # 内容物
 
