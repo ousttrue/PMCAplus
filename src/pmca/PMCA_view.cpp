@@ -5,8 +5,10 @@
 #include <GL/GL.h>
 #include <GL/GLU.h>
 #include <SDL.h>
-#include <SDL_image.h>
 #include <math.h>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 #define WM_TITLE "PMCA 3D View"
 
@@ -363,10 +365,10 @@ int render_model(int num) {
   static float *uv;
   static DSP_MAT *mats;
 
-  model = (MODEL*)model_mgr(1, num, NULL);
+  model = (MODEL *)model_mgr(1, num, NULL);
   if (model == NULL)
     return -1;
-  dsp_model = (DSP_MODEL*)model_mgr(2, num, NULL);
+  dsp_model = (DSP_MODEL *)model_mgr(2, num, NULL);
 
   loc = dsp_model->loc;
   nor = dsp_model->nor;
@@ -425,24 +427,13 @@ int render_model(int num) {
 // テクスチャ読み込み
 int load_tex(MODEL *model, DSP_MODEL *dsp_model) {
 
-  DSP_MAT *mats;
+  // DSP_MAT *mats;
 
-  char tex_name[128];
-  int i, j, tmp;
-  SDL_Surface *image = NULL;
-  GLubyte *texbits = NULL;
-  /*
-  printf("LockstateA %d\n", myflags.model_lock);
-  while(myflags.model_lock != 0){
-          SDL_Delay(30);
-          //printf("A");
-  }
-  myflags.model_lock=1;
-  */
+  // char tex_name[128];
+  // int i, j, tmp;
+  // SDL_Surface *image = NULL;
 
-  // printf("tex読み込み\n");
-
-  mats = dsp_model->mats;
+  // mats = dsp_model->mats;
 
   if (dsp_model->mats_c != model->mat_count) {
     return -1;
@@ -450,133 +441,136 @@ int load_tex(MODEL *model, DSP_MODEL *dsp_model) {
 
   glDeleteTextures(model->mat_count, dsp_model->texid);
 
-  for (i = 0; i < dsp_model->mats_c; i++) {
-    for (j = 0; j < 3; j++) {
+  for (int i = 0; i < dsp_model->mats_c; i++) {
+    auto &mat = dsp_model->mats[i];
+    for (int j = 0; j < 3; j++) {
       printf("%f %f %f\n", model->mat[i].diffuse[j],
              model->mat[i].mirror_col[j], model->mat[i].spec_col[j]);
-      mats[i].col[j] =
+      mat.col[j] =
           (model->mat[i].diffuse[j] * 2 + model->mat[i].mirror_col[j]) / 2.5 +
           model->mat[i].spec_col[j] / 4;
     }
-    printf("col %f %f %f %f\n", mats[i].col[0], mats[i].col[1], mats[i].col[2],
-           mats[i].col[3]);
-    mats[i].col[3] = model->mat[i].alpha;
-    mats[i].texname[0] = '\0';
-    memset(mats[i].texsize, 0, 2 * sizeof(int));
-    if (mats[i].texbits != NULL) {
-      FREE(mats[i].texbits);
-      mats[i].texbits = NULL;
+    printf("col %f %f %f %f\n", mat.col[0], mat.col[1], mat.col[2], mat.col[3]);
+    mat.col[3] = model->mat[i].alpha;
+    mat.texname[0] = '\0';
+    memset(mat.texsize, 0, 2 * sizeof(int));
+    if (mat.texbits != NULL) {
+      FREE(mat.texbits);
+      mat.texbits = NULL;
     }
 
-    image = IMG_Load(model->mat[i].tex_path);
-    // image = NULL;
-
-    if (image == NULL) {
-      memset(mats[i].texsize, 0, 2 * sizeof(int));
+    // STBIDEF stbi_uc *stbi_load            (char const *filename, int *x, int
+    // *y, int *channels_in_file, int desired_channels);
+    auto texbits = stbi_load(model->mat[i].tex_path, &mat.texsize[0], &mat.texsize[1], nullptr, 4);
+    // image = IMG_Load(model->mat[i].tex_path);
+    // GLubyte *texbits = NULL;
+    if (texbits == NULL) {
+      memset(mat.texsize, 0, 2 * sizeof(int));
       texbits = NULL;
       printf("画像が読み込めません %s\n", model->mat[i].tex_path);
-    } else {
-      mats[i].texsize[0] = image->w;
-      mats[i].texsize[1] = image->h;
-      texbits =
-          (GLubyte*)MALLOC(mats[i].texsize[0] * mats[i].texsize[1] * sizeof(GLubyte) * 4);
-      // printf("\nsize(byte):%d\n", mats[i].texsize[0] * mats[i].texsize[1] *
-      // sizeof(GLubyte) * 4);
+    } 
+    // else {
+    //   texbits = (GLubyte *)MALLOC(mat.texsize[0] * mat.texsize[1] *
+    //                               sizeof(GLubyte) * 4);
+    //   printf("\nsize(byte):%d\n", mats[i].texsize[0] * mats[i].texsize[1] *
+    //   sizeof(GLubyte) * 4);
+    //   if (texbits == NULL)
+    //     printf("メモリ確保失敗 %d\n", i);
+    // }
 
-      if (texbits == NULL)
-        printf("メモリ確保失敗 %d\n", i);
-    }
+    // if (texbits != NULL) 
+    else
+    {
+      // char *p;
+      // SDL_PixelFormat *fm;
+      // p = (char *)image->pixels;
+      // fm = image->format;
+      // int li, lj;
+      // int lk = 0;
+      // SDL_LockSurface(image);
+      // Uint8 r, g, b, a;
+      //
+      // for (li = 0; li < mats[i].texsize[1]; li++) {
+      //   for (lj = 0; lj < mats[i].texsize[0]; lj++) {
+      //
+      //     r = p[fm->Rshift / 8] << fm->Rloss;
+      //     g = p[fm->Gshift / 8] << fm->Gloss;
+      //     b = p[fm->Bshift / 8] << fm->Bloss;
+      //     a = p[fm->Ashift / 8] << fm->Aloss;
+      //     // printf("%x%x%x%x ", r, g, b, a);
+      //
+      //     texbits[lk++] = (GLubyte)r;
+      //     texbits[lk++] = (GLubyte)g;
+      //     texbits[lk++] = (GLubyte)b;
+      //     texbits[lk++] = (GLubyte)a;
+      //     // lk += 4;
+      //     p += fm->BytesPerPixel;
+      //   }
+      // }
 
-    if (texbits != NULL) {
-      char *p;
-      SDL_PixelFormat *fm;
-      p = (char*)image->pixels;
-      fm = image->format;
-      int li, lj;
-      int lk = 0;
-      SDL_LockSurface(image);
-      Uint8 r, g, b, a;
-
-      for (li = 0; li < mats[i].texsize[1]; li++) {
-        for (lj = 0; lj < mats[i].texsize[0]; lj++) {
-
-          r = p[fm->Rshift / 8] << fm->Rloss;
-          g = p[fm->Gshift / 8] << fm->Gloss;
-          b = p[fm->Bshift / 8] << fm->Bloss;
-          a = p[fm->Ashift / 8] << fm->Aloss;
-          // printf("%x%x%x%x ", r, g, b, a);
-
-          texbits[lk++] = (GLubyte)r;
-          texbits[lk++] = (GLubyte)g;
-          texbits[lk++] = (GLubyte)b;
-          texbits[lk++] = (GLubyte)a;
-          // lk += 4;
-          p += fm->BytesPerPixel;
-        }
-      }
-
-      if (fm->Amask == 0) {
-        lk = 0;
-        for (li = 0; li < (mats[i].texsize[0] * mats[i].texsize[1]); li++) {
-          texbits[lk + 3] = (GLubyte)255;
-          lk += 4;
-        }
-      }
-      SDL_UnlockSurface(image);
+      // if (fm->Amask == 0) {
+      //   lk = 0;
+      //   for (li = 0; li < (mats[i].texsize[0] * mats[i].texsize[1]); li++) {
+      //     texbits[lk + 3] = (GLubyte)255;
+      //     lk += 4;
+      //   }
+      // }
+      // SDL_UnlockSurface(image);
       // #ifdef DEBUG
       printf("texture %d\n", i);
       printf("%s\n", model->mat[i].tex);
-      printf("%d x %d  %d\n", image->w, image->h, image->pitch);
-      printf("BitsPerPixel:%d\n", image->format->BitsPerPixel);
-      printf("BytesPerPixel:%d\n", image->format->BytesPerPixel);
-      printf("Mask:%x %x %x %x\n", image->format->Rmask, image->format->Gmask,
-             image->format->Bmask, image->format->Amask);
-      printf("Shift:%d %d %d %d\n", image->format->Rshift,
-             image->format->Gshift, image->format->Bshift,
-             image->format->Ashift);
-      printf("Loss:%d %d %d %d\n\n", image->format->Rloss, image->format->Gloss,
-             image->format->Bloss, image->format->Aloss);
+      // printf("%d x %d  %d\n", image->w, image->h, image->pitch);
+      // printf("BitsPerPixel:%d\n", image->format->BitsPerPixel);
+      // printf("BytesPerPixel:%d\n", image->format->BytesPerPixel);
+      // printf("Mask:%x %x %x %x\n", image->format->Rmask, image->format->Gmask,
+      //        image->format->Bmask, image->format->Amask);
+      // printf("Shift:%d %d %d %d\n", image->format->Rshift,
+      //        image->format->Gshift, image->format->Bshift,
+      //        image->format->Ashift);
+      // printf("Loss:%d %d %d %d\n\n", image->format->Rloss, image->format->Gloss,
+      //        image->format->Bloss, image->format->Aloss);
       // #endif
       {
-        double log_w = log(mats[i].texsize[0]) / log(2);
-        double log_h = log(mats[i].texsize[1]) / log(2);
+        double log_w = log(mat.texsize[0]) / log(2);
+        double log_h = log(mat.texsize[1]) / log(2);
         if (ceil(log_w) != floor(log_w) || ceil(log_h) != floor(log_h)) {
           GLubyte *tmp_bits;
           int w, h;
           w = 2;
           h = 2;
-          for (j = 0; j < floor(log_w); j++) {
+          for (int j = 0; j < floor(log_w); j++) {
             w = w * 2;
           }
-          for (j = 0; j < floor(log_h); j++) {
+          for (int j = 0; j < floor(log_h); j++) {
             h = h * 2;
           }
-          tmp_bits = (GLubyte*)MALLOC(h * w * sizeof(GLubyte) * 6);
+          tmp_bits = (GLubyte *)MALLOC(h * w * sizeof(GLubyte) * 6);
           if (tmp_bits == NULL)
             puts("メモリ確保失敗");
 
-          tmp = gluScaleImage(GL_RGBA, mats[i].texsize[0], mats[i].texsize[1],
+          auto tmp = gluScaleImage(GL_RGBA, mat.texsize[0], mat.texsize[1],
                               GL_UNSIGNED_BYTE, texbits, w, h, GL_UNSIGNED_BYTE,
                               tmp_bits);
-          mats[i].texsize[0] = w;
-          mats[i].texsize[1] = h;
+          mat.texsize[0] = w;
+          mat.texsize[1] = h;
 #ifdef DEBUG
           printf("log %f x %f\n", log_w, log_h);
           printf("リサイズ %d x %d  %x %s\n", w, h, tmp, gluErrorString(tmp));
 #endif
-          FREE(texbits);
+          // FREE(texbits);
+          stbi_image_free(texbits);
           texbits = tmp_bits;
         }
       }
     }
-    if (image != NULL)
-      SDL_FreeSurface(image);
-    mats[i].texbits = texbits;
+    // if (image != NULL)
+    //   SDL_FreeSurface(image);
+    mat.texbits = texbits;
   }
   glGenTextures(model->mat_count, dsp_model->texid);
 
-  for (i = 0; i < model->mat_count; i++) {
-    if (mats[i].texbits != NULL) {
+  for (int i = 0; i < model->mat_count; i++) {
+    if (dsp_model->mats[i].texbits != NULL) {
       glBindTexture(GL_TEXTURE_2D, dsp_model->texid[i]);
     }
   }
@@ -622,12 +616,12 @@ int make_dsp_model(MODEL *model, DSP_MODEL *dsp_model) {
   dsp_model->mats = NULL;
   dsp_model->texid = NULL;
 
-  loc = (float*)MALLOC(model->vt_count * 3 * sizeof(float));
-  nor = (float*)MALLOC(model->vt_count * 3 * sizeof(float));
-  uv = (float*)MALLOC(model->vt_count * 2 * sizeof(float));
-  mats = (DSP_MAT*)MALLOC(model->mat_count * sizeof(DSP_MAT));
+  loc = (float *)MALLOC(model->vt_count * 3 * sizeof(float));
+  nor = (float *)MALLOC(model->vt_count * 3 * sizeof(float));
+  uv = (float *)MALLOC(model->vt_count * 2 * sizeof(float));
+  mats = (DSP_MAT *)MALLOC(model->mat_count * sizeof(DSP_MAT));
   memset(mats, 0, model->mat_count * sizeof(DSP_MAT));
-  texid = (GLuint*)MALLOC(model->mat_count * sizeof(GLuint));
+  texid = (GLuint *)MALLOC(model->mat_count * sizeof(GLuint));
   if (loc == NULL || nor == NULL || uv == NULL || mats == NULL) {
     // myflags.model_lock=0;
     return -1;
