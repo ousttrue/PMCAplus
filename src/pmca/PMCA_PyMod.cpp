@@ -124,7 +124,7 @@ static PyObject *getInfo(PyObject *self, PyObject *args) {
       "vt_count", model->vt.size(), "face_count", model->vt_index.size() / 3,
       "mat_count", model->mat.size(), "bone_count", model->bone.size(),
 
-      "IK_count", model->IK_count, "skin_count", model->skin_count,
+      "IK_count", model->IK.size(), "skin_count", model->skin_count,
       "bone_group_count", model->bone_group_count, "bone_disp_count",
       model->bone_disp_count,
 
@@ -213,22 +213,21 @@ static PyObject *getBone(PyObject *self, PyObject *args) {
 
 static PyObject *getIK(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
-
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
     return NULL;
-  model = &g_model[num];
-  if (model->IK_count <= i)
+
+  auto model = &g_model[num];
+  if (model->IK.size() <= i)
     Py_RETURN_NONE;
-  printf("IKchainlen :%d\n", model->IK_list[i].IK_chain_len);
+
+  printf("IKchainlen :%d\n", model->IK[i].IK_chain_len);
   return Py_BuildValue(
-      "{s:i,s:i,s:i,s:i,s:f,s:O}", "index", (int)model->IK_list[i].IKBone_index,
-      "tail", (int)model->IK_list[i].IKTBone_index, "len",
-      (int)model->IK_list[i].IK_chain_len, "ite",
-      (int)model->IK_list[i].iterations, "weight",
-      (float)model->IK_list[i].weight, "child",
-      Array_to_PyList_UShort(model->IK_list[i].IKCBone_index,
-                             (int)model->IK_list[i].IK_chain_len));
+      "{s:i,s:i,s:i,s:i,s:f,s:O}", "index", (int)model->IK[i].IKBone_index,
+      "tail", (int)model->IK[i].IKTBone_index, "len",
+      (int)model->IK[i].IK_chain_len, "ite", (int)model->IK[i].iterations,
+      "weight", (float)model->IK[i].weight, "child",
+      Array_to_PyList_UShort(model->IK[i].IKCBone_index,
+                             (int)model->IK[i].IK_chain_len));
 }
 
 static PyObject *getSkin(PyObject *self, PyObject *args) {
@@ -371,6 +370,7 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
   int vt_index_count;
   int mat_count;
   int bone_count;
+  int IK_count;
   if (!PyArg_ParseTuple(args,
                         "i"
                         "yyyy"
@@ -382,8 +382,8 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
 
                         &vt_count, &vt_index_count, &mat_count, &bone_count,
 
-                        &model.IK_count, &model.skin_count,
-                        &model.bone_group_count, &model.bone_disp_count,
+                        &IK_count, &model.skin_count, &model.bone_group_count,
+                        &model.bone_disp_count,
 
                         &model.eng_support, &model.rbody_count,
                         &model.joint_count, &model.skin_disp_count, &PyTmp))
@@ -398,9 +398,9 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
 
   p = &g_model[num];
 
-  if (p->IK_count > 0) {
-    FREE(p->IK_list[0].IKCBone_index);
-    p->IK_list[0].IKCBone_index = NULL;
+  if (IK_count > 0) {
+    FREE(p->IK[0].IKCBone_index);
+    p->IK[0].IKCBone_index = NULL;
   }
 
   delete_PMD(p);
@@ -411,11 +411,7 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
   p->vt_index.resize(vt_index_count * 3);
   p->mat.resize(mat_count);
   p->bone.resize(bone_count);
-
-  // IKリスト
-  size = p->IK_count * sizeof(IK_LIST);
-  p->IK_list = (IK_LIST *)MALLOC(size);
-  memset(p->IK_list, 0, size);
+  p->IK.resize(IK_count);
 
   // 表情
   size = p->skin_count * sizeof(SKIN);
@@ -546,36 +542,36 @@ static PyObject *setBone(PyObject *self, PyObject *args) {
 
 static PyObject *setIK(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
-  PyObject *PyTmp;
   IK_LIST IK_list;
+  PyObject *PyTmp;
   if (!PyArg_ParseTuple(args, "iiiiiifO", &num, &i, &IK_list.IKBone_index,
                         &IK_list.IKTBone_index, &IK_list.IK_chain_len,
                         &IK_list.iterations, &IK_list.weight, &PyTmp))
     return NULL;
-  model = &g_model[num];
-  if (model->IK_count <= i)
+
+  auto model = &g_model[num];
+  if (model->IK.size() <= i)
     Py_RETURN_NONE;
 
-  printf("%d %d\n", IK_list.IK_chain_len, model->IK_list[i].IK_chain_len);
+  printf("%d %d\n", IK_list.IK_chain_len, model->IK[i].IK_chain_len);
 
-  if (IK_list.IK_chain_len != model->IK_list[i].IK_chain_len) {
-    FREE(model->IK_list[i].IKCBone_index);
-    model->IK_list[i].IKCBone_index = NULL;
+  if (IK_list.IK_chain_len != model->IK[i].IK_chain_len) {
+    FREE(model->IK[i].IKCBone_index);
+    model->IK[i].IKCBone_index = NULL;
   }
-  if (model->IK_list[i].IKCBone_index == NULL) {
+  if (model->IK[i].IKCBone_index == NULL) {
     IK_list.IKCBone_index =
         (unsigned short *)MALLOC(IK_list.IK_chain_len * sizeof(unsigned short));
     if (IK_list.IKCBone_index == NULL)
       Py_RETURN_NONE;
 
   } else {
-    IK_list.IKCBone_index = model->IK_list[i].IKCBone_index;
+    IK_list.IKCBone_index = model->IK[i].IKCBone_index;
   }
 
   PyList_to_Array_UShort(IK_list.IKCBone_index, PyTmp, IK_list.IK_chain_len);
 
-  model->IK_list[i] = IK_list;
+  model->IK[i] = IK_list;
   return Py_BuildValue("i", 0);
 }
 

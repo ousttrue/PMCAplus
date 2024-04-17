@@ -1,10 +1,10 @@
 #pragma once
 #include "list.h"
+#include <span>
 #include <stdint.h>
 #include <stdio.h>
 #include <string>
 #include <vector>
-#include <span>
 
 #define USHORT_MAX 65535
 
@@ -127,9 +127,8 @@ struct MODEL {
   std::vector<unsigned short> vt_index;
   std::vector<MATERIAL> mat;
   std::vector<BONE> bone;
+  std::vector<IK_LIST> IK;
 
-  unsigned short IK_count;
-  IK_LIST *IK_list;
   unsigned short skin_count;
   SKIN *skin;
   unsigned char skin_disp_count;
