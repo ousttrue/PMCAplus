@@ -2,7 +2,8 @@
 #include <fstream>
 
 namespace ioutil {
-static std::vector<uint8_t> readfile(const std::string &filename) {
+
+std::vector<uint8_t> readfile(const std::string &filename) {
   std::ifstream ifs(filename.c_str(), std::ios::binary | std::ios::ate);
   if (!ifs) {
     return {};
@@ -14,4 +15,5 @@ static std::vector<uint8_t> readfile(const std::string &filename) {
   ifs.read((char *)buffer.data(), pos);
   return buffer;
 }
+
 } // namespace ioutil

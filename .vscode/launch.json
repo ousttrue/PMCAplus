@@ -5,6 +5,24 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "(Windows) Launch",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "C:/Python312/python.exe",
+            "args": [
+                "PMCA/__main__.py"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "PYTHONPATH",
+                    "value": "${workspaceFolder}\\prefix\\bin"
+                }
+            ],
+            "console": "externalTerminal"
+        },
+        {
             "name": "PMCA",
             "type": "debugpy",
             "request": "launch",
