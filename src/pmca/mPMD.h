@@ -1,4 +1,5 @@
 #pragma once
+#include "list.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string>
@@ -152,18 +153,6 @@ struct MODEL {
   JOINT *joint;
 };
 
-struct LIST {
-  unsigned int bone_count;
-  char (*bone)[NAME_LEN];
-  char (*bone_eng)[NAME_LEN];
-  unsigned int skin_count;
-  char (*skin)[NAME_LEN];
-  char (*skin_eng)[NAME_LEN];
-  unsigned int disp_count;
-  char (*disp)[NAME_LEN];
-  char (*disp_eng)[NAME_LEN];
-};
-
 int translate(MODEL *model, LIST *list, short mode);
 
 int sort_bone(MODEL *model, LIST *list);
@@ -194,8 +183,6 @@ int marge_rb(MODEL *model);
 int update_skin(MODEL *model);
 int adjust_joint(MODEL *model);
 
-int load_list(LIST *list, const char dir[]);
-int delete_list(LIST *list);
 int show_detail(MODEL *model);
 
 int load_PMD(MODEL *model, const std::string &file_name);

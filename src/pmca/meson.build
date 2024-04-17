@@ -38,6 +38,7 @@ py.extension_module(
     'quat.cpp',
     'ioutil.cpp',
     'dbg.cpp',
+    'list.cpp',
     install: true,
     install_dir: 'bin',
     dependencies: deps,

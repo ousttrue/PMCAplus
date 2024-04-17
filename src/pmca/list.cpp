@@ -25,14 +25,14 @@ int LIST::load(const std::string &file_name) {
       break;
     i++;
   }
-  list->bone_count = i;
+  this->bone_count = i;
   i = 0;
   while (FGETS(str, 256, lst_file) != NULL) {
     if (strcmp(str, "bone_disp\n") == 0)
       break;
     i++;
   }
-  list->skin_count = i;
+  this->skin_count = i;
 
   i = 0;
   while (FGETS(str, 256, lst_file) != NULL) {
@@ -40,62 +40,85 @@ int LIST::load(const std::string &file_name) {
       break;
     i++;
   }
-  list->disp_count = i;
+  this->disp_count = i;
 
   fclose(lst_file);
-  lst_file = fopen(file_name, "r");
+  lst_file = fopen(file_name.c_str(), "r");
   if (lst_file == NULL) {
-    printf("ファイル %s を開けません\n", file_name);
+    PLOG_ERROR << "ファイルを開けません" << file_name;
     return 1;
   }
 
-  printf("リストボーン数:%d\n", list->bone_count);
-  printf("リスト表情数:%d\n", list->skin_count);
-  printf("リスト表示枠数:%d\n", list->disp_count);
+  printf("リストボーン数:%d\n", this->bone_count);
+  printf("リスト表情数:%d\n", this->skin_count);
+  printf("リスト表示枠数:%d\n", this->disp_count);
 
-  list->bone = (char(*)[NAME_LEN])MALLOC((size_t)list->bone_count *
+  this->bone = (char(*)[NAME_LEN])MALLOC((size_t)this->bone_count *
                                          sizeof(char) * NAME_LEN);
-  list->bone_eng = (char(*)[NAME_LEN])MALLOC((size_t)list->bone_count *
+  this->bone_eng = (char(*)[NAME_LEN])MALLOC((size_t)this->bone_count *
                                              sizeof(char) * NAME_LEN);
-  list->skin = (char(*)[NAME_LEN])MALLOC((size_t)list->skin_count *
+  this->skin = (char(*)[NAME_LEN])MALLOC((size_t)this->skin_count *
                                          sizeof(char) * NAME_LEN);
-  list->skin_eng = (char(*)[NAME_LEN])MALLOC((size_t)list->skin_count *
+  this->skin_eng = (char(*)[NAME_LEN])MALLOC((size_t)this->skin_count *
                                              sizeof(char) * NAME_LEN);
-  list->disp = (char(*)[NAME_LEN])MALLOC((size_t)list->disp_count *
+  this->disp = (char(*)[NAME_LEN])MALLOC((size_t)this->disp_count *
                                          sizeof(char) * NAME_LEN);
-  list->disp_eng = (char(*)[NAME_LEN])MALLOC((size_t)list->disp_count *
+  this->disp_eng = (char(*)[NAME_LEN])MALLOC((size_t)this->disp_count *
                                              sizeof(char) * NAME_LEN);
-  if (list->bone == NULL)
+  if (this->bone == NULL)
     return -1;
-  if (list->bone_eng == NULL)
+  if (this->bone_eng == NULL)
     return -1;
-  if (list->skin == NULL)
+  if (this->skin == NULL)
     return -1;
-  if (list->skin_eng == NULL)
+  if (this->skin_eng == NULL)
     return -1;
-  if (list->disp == NULL)
+  if (this->disp == NULL)
     return -1;
-  if (list->disp_eng == NULL)
+  if (this->disp_eng == NULL)
     return -1;
 
   FGETS(str, 256, lst_file);
-  for (i = 0; i < list->bone_count; i++) {
+  for (i = 0; i < this->bone_count; i++) {
     FGETS(str, 256, lst_file);
-    sscanf(str, "%s %s\n", list->bone[i], list->bone_eng[i]);
+    sscanf(str, "%s %s\n", this->bone[i], this->bone_eng[i]);
   }
 
   FGETS(str, 256, lst_file);
-  for (i = 0; i < list->skin_count; i++) {
+  for (i = 0; i < this->skin_count; i++) {
     FGETS(str, 256, lst_file);
-    sscanf(str, "%s %s\n", list->skin[i], list->skin_eng[i]);
+    sscanf(str, "%s %s\n", this->skin[i], this->skin_eng[i]);
   }
 
   FGETS(str, 256, lst_file);
-  for (i = 0; i < list->disp_count; i++) {
+  for (i = 0; i < this->disp_count; i++) {
     FGETS(str, 256, lst_file);
-    sscanf(str, "%s %s\n", list->disp[i], list->disp_eng[i]);
+    sscanf(str, "%s %s\n", this->disp[i], this->disp_eng[i]);
   }
   fclose(lst_file);
+
+  return 0;
+}
+
+int delete_list(LIST *list) {
+
+  list->bone_count = 0;
+  list->skin_count = 0;
+  list->disp_count = 0;
+
+  FREE(list->bone);
+  FREE(list->bone_eng);
+  FREE(list->skin);
+  FREE(list->skin_eng);
+  FREE(list->disp);
+  FREE(list->disp_eng);
+
+  list->bone = NULL;
+  list->bone_eng = NULL;
+  list->skin = NULL;
+  list->skin_eng = NULL;
+  list->disp = NULL;
+  list->disp_eng = NULL;
 
   return 0;
 }

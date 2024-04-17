@@ -16,3 +16,5 @@ struct LIST {
 
   int load(const std::string &file_name);
 };
+
+// int delete_list(LIST *list);

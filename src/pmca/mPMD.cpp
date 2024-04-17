@@ -10,30 +10,6 @@
 #include "dbg.h"
 #include "mPMD.h"
 
-
-int delete_list(LIST *list) {
-
-  list->bone_count = 0;
-  list->skin_count = 0;
-  list->disp_count = 0;
-
-  FREE(list->bone);
-  FREE(list->bone_eng);
-  FREE(list->skin);
-  FREE(list->skin_eng);
-  FREE(list->disp);
-  FREE(list->disp_eng);
-
-  list->bone = NULL;
-  list->bone_eng = NULL;
-  list->skin = NULL;
-  list->skin_eng = NULL;
-  list->disp = NULL;
-  list->disp_eng = NULL;
-
-  return 0;
-}
-
 int load_PMD(MODEL *model, const std::string &file_name) {
   int i, j, tmp;
 
