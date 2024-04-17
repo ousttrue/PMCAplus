@@ -1,19 +1,14 @@
 #pragma once
 #include <stdint.h>
 #include <stdio.h>
-#include <vector>
 #include <string>
+#include <vector>
 
 #define USHORT_MAX 65535
 
 #define PATH_LEN 256
 #define NAME_LEN 128
 #define COMMENT_LEN 256
-
-#define FREAD dbg_fread
-#define FGETS dbg_fgets
-#define MALLOC dbg_malloc
-#define FREE dbg_free
 
 struct HEADER { /*283byte*/
   std::string magic = "Pmd";
@@ -22,7 +17,6 @@ struct HEADER { /*283byte*/
   char comment[COMMENT_LEN];
   char name_eng[NAME_LEN];
   char comment_eng[COMMENT_LEN];
-  char path[PATH_LEN];
 };
 
 struct VERTEX { /*38byte*/
@@ -124,6 +118,7 @@ struct JOINT { // 124byte
 };
 
 struct MODEL {
+  std::string path;
   HEADER header;
   unsigned int vt_count;
   VERTEX *vt;
@@ -203,7 +198,7 @@ int load_list(LIST *list, const char dir[]);
 int delete_list(LIST *list);
 int show_detail(MODEL *model);
 
-int load_PMD(MODEL *model, const char file_name[]);
+int load_PMD(MODEL *model, const std::string &file_name);
 int write_PMD(MODEL *model, const char file_name[]);
 int print_PMD(MODEL *model, const char file_name[]);
 int create_PMD(MODEL *model);

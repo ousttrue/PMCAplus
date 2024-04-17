@@ -4,6 +4,7 @@
 #include "PMCA_PyMod.h"
 #include "PMCA_renderer.h"
 #include "mPMD.h"
+#include "dbg.h"
 
 #define PMCA_MODULE
 #define MODEL_COUNT 16

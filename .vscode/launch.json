@@ -20,7 +20,7 @@
                     "value": "${workspaceFolder}\\prefix\\bin"
                 }
             ],
-            "console": "externalTerminal"
+            "console": "integratedTerminal"
         },
         {
             "name": "PMCA",

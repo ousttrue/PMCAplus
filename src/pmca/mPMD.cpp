@@ -1,56 +1,14 @@
-/*PMD関係のライブラリ、読み込み書き込み系*/
+// PMD関係のライブラリ、読み込み書き込み系
 
 #include <math.h>
 #include <memory.h>
+#include <plog/Log.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "dbg.h"
 #include "mPMD.h"
-
-size_t dbg_fread(void *p, size_t s, size_t n, FILE *fp) {
-  size_t r;
-  if (s * n == 0)
-    return 0;
-  r = fread(p, s, n, fp);
-  if (r < n) {
-    printf("ファイル読み込みに失敗\nFILE:%p\nn:%d < %d\n", fp, (int)r, (int)n);
-    exit(1);
-  }
-
-  return r;
-}
-
-void *dbg_fgets(char *p, size_t s, FILE *fp) {
-  void *r;
-  r = fgets(p, s, fp);
-  if (r == NULL) {
-    printf("ファイル読み込みに失敗\nFILE:%p %p\n", fp, r);
-    exit(1);
-  }
-
-  return r;
-}
-
-void *dbg_malloc(size_t s) {
-  void *p;
-  p = malloc(s);
-  if (p == NULL) {
-    puts("メモリの確保に失敗しました");
-    exit(-1);
-  }
-  // printf("malloc:%p\n", p);
-  return p;
-}
-
-void dbg_free(void *p) {
-  // printf("free:%p\n", p);
-  if (p == NULL)
-    return;
-  free(p);
-  p = NULL;
-  // exit(1);
-}
 
 int load_list(LIST *list, const char file_name[]) {
   int i;
@@ -172,10 +130,8 @@ int delete_list(LIST *list) {
   return 0;
 }
 
-int load_PMD(MODEL *model, const char file_name[]) {
+int load_PMD(MODEL *model, const std::string &file_name) {
   int i, j, tmp;
-  char *char_p, str[PATH_LEN];
-  FILE *pmd;
 
   static MODEL cache_model[64];
   static unsigned char count[64];
@@ -198,8 +154,8 @@ int load_PMD(MODEL *model, const char file_name[]) {
     cur_count = 0;
   }
 
-  if (strcmp(file_name, "") == 0) {
-    printf("ファイル名がありません\n");
+  if (file_name.empty()) {
+    PLOG_WARNING << "ファイル名がありません";
     return 1;
   }
 
@@ -212,7 +168,7 @@ int load_PMD(MODEL *model, const char file_name[]) {
   for (i = 0; i < 64; i++) {
     if (count[i] != 255) {
       // printf("%s, %s\n", cache_model[i].header.path, file_name);
-      if (strncmp(cache_model[i].header.path, file_name, PATH_LEN) == 0) {
+      if (cache_model[i].path == file_name) {
         copy_PMD(model, &cache_model[i]);
         count[i] = cur_count;
         break;
@@ -234,14 +190,14 @@ int load_PMD(MODEL *model, const char file_name[]) {
     return 0;
   }
 
-  pmd = fopen(file_name, "rb");
+  auto pmd = fopen(file_name.c_str(), "rb");
   if (pmd == NULL) {
-    printf("Can't open file:%s\n", file_name);
+    PLOG_ERROR << "Can't open file:" << file_name;
     return 1;
   }
 
-  // printf("%s\n", file_name);
-  strncpy(model->header.path, file_name, PATH_LEN);
+  PLOG_DEBUG << file_name;
+  model->path = file_name;
 
   char magic[4] = {0};
   FREAD(magic, 1, 3, pmd);
@@ -320,24 +276,29 @@ int load_PMD(MODEL *model, const char file_name[]) {
     FREAD(&model->mat[i].tex, 1, 20, pmd);
     model->mat[i].tex[21] = '\0';
 
-    strcpy(str, file_name);
-    char_p = strrchr(str, '/');
-    if (char_p != NULL) {
-      char_p++;
-      *char_p = '\0';
-    } else {
-      *str = '\0';
+    auto str = file_name;
+    {
+      auto char_p = str.rfind('/');
+      if (char_p != std::string::npos) {
+        str = str.substr(0, char_p + 1);
+      } else {
+        str = {};
+      }
     }
-    char_p = strchr(model->mat[i].tex, '*');
-    if (char_p != NULL) {
-      *char_p = '\0';
-      ++char_p;
-      strcpy(model->mat[i].sph, char_p);
-      sprintf(model->mat[i].sph_path, "%s%s\0", str, model->mat[i].sph);
-    } else {
-      *model->mat[i].sph = '\0';
+
+    {
+      auto char_p = strchr(model->mat[i].tex, '*');
+      if (char_p != NULL) {
+        *char_p = '\0';
+        ++char_p;
+        strcpy(model->mat[i].sph, char_p);
+        sprintf(model->mat[i].sph_path, "%s%s\0", str.c_str(),
+                model->mat[i].sph);
+      } else {
+        *model->mat[i].sph = '\0';
+      }
     }
-    sprintf(model->mat[i].tex_path, "%s%s\0", str, model->mat[i].tex);
+    sprintf(model->mat[i].tex_path, "%s%s\0", str.c_str(), model->mat[i].tex);
   }
 
   FREAD(&model->bone_count, 2, 1, pmd);
@@ -520,15 +481,14 @@ int load_PMD(MODEL *model, const char file_name[]) {
 
   for (i = 0; i < 10; i++) {
     FREAD(model->toon[i], 1, 100, pmd);
-    strncpy(str, file_name, PATH_LEN);
-    char_p = strrchr(str, '/');
-    if (char_p != NULL) {
-      char_p++;
-      *char_p = '\0';
+    auto str = file_name;
+    auto char_p = str.rfind('/');
+    if (char_p != std::string::npos) {
+      str = str.substr(0, char_p + 1);
     } else {
-      *str = '\0';
+      str = {};
     }
-    sprintf(model->toon_path[i], "%s%s\0", str, model->toon[i]);
+    sprintf(model->toon_path[i], "%s%s\0", str.c_str(), model->toon[i]);
 #ifdef DEBUG
     printf("%s%s\n", str, model->toon[i]);
 #endif

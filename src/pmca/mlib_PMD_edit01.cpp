@@ -1,5 +1,6 @@
-/*PMD関係のライブラリ、PMD編集など */
+// PMD関係のライブラリ、PMD編集など
 
+#include "dbg.h"
 #include <stdio.h>
 #define _USE_MATH_DEFINES
 #include <plog/Log.h>
@@ -1501,8 +1502,8 @@ int adjust_joint(MODEL *model) {
 }
 
 int show_detail(MODEL *model) {
-  printf("%s \n %f \n %s \n %s \n", model->header.magic, model->header.version,
-         model->header.name, model->header.comment);
+  printf("%s \n %f \n %s \n %s \n", model->header.magic.c_str(),
+         model->header.version, model->header.name, model->header.comment);
   printf("頂点数:%d\n", model->vt_count);
   printf("面頂点数:%d\n", model->vt_index_count);
   printf("材質数:%d\n", model->mat_count);

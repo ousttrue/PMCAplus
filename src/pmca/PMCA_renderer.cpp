@@ -1,6 +1,7 @@
 #include "PMCA_renderer.h"
 #include "mPMD.h"
 #include "quat.h"
+#include "dbg.h"
 
 #include <Windows.h>
 

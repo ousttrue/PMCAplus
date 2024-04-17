@@ -37,6 +37,7 @@ py.extension_module(
     'mPMD.cpp',
     'quat.cpp',
     'ioutil.cpp',
+    'dbg.cpp',
     install: true,
     install_dir: 'bin',
     dependencies: deps,
