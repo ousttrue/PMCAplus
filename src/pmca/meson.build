@@ -34,7 +34,7 @@ py.extension_module(
     'PMCA_glfw.cpp',
     'PMCA_renderer.cpp',
     'mlib_PMD_edit01.cpp',
-    'mlib_PMD_rw01.cpp',
+    'mPMD.cpp',
     'quat.cpp',
     'ioutil.cpp',
     install: true,
