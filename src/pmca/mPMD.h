@@ -58,10 +58,9 @@ struct BONE { /*39byte*/
 struct IK_LIST { /*11+2*IK_chain_len byte*/
   unsigned short IKBone_index;
   unsigned short IKTBone_index;
-  unsigned char IK_chain_len;
   unsigned short iterations;
   float weight;
-  unsigned short *IKCBone_index;
+  std::vector<unsigned short> IK_chain;
 };
 
 struct SKIN_DATA { /*16byte*/

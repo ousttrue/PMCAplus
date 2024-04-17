@@ -177,15 +177,13 @@ int load_PMD(MODEL *model, const std::string &file_name) {
   for (int i = 0; i < model->IK.size(); i++) {
     FREAD(&model->IK[i].IKBone_index, 2, 1, pmd);
     FREAD(&model->IK[i].IKTBone_index, 2, 1, pmd);
-    FREAD(&model->IK[i].IK_chain_len, 1, 1, pmd);
+    char IK_chain_len;
+    FREAD(&IK_chain_len, 1, 1, pmd);
     FREAD(&model->IK[i].iterations, 2, 1, pmd);
     FREAD(&model->IK[i].weight, 4, 1, pmd);
-    model->IK[i].IKCBone_index = (unsigned short *)MALLOC(
-        (size_t)model->IK[i].IK_chain_len * sizeof(unsigned short));
-    if (model->IK[i].IKCBone_index == NULL)
-      return -1;
-    if (model->IK[i].IK_chain_len > 0) {
-      FREAD(model->IK[i].IKCBone_index, 2, model->IK[i].IK_chain_len, pmd);
+    model->IK[i].IK_chain.resize(IK_chain_len);
+    if (IK_chain_len > 0) {
+      FREAD(model->IK[i].IK_chain.data(), 2, IK_chain_len, pmd);
     }
   }
 
@@ -496,10 +494,11 @@ int write_PMD(MODEL *model, const char file_name[]) {
   for (int i = 0; i < model->IK.size(); i++) {
     fwrite(&model->IK[i].IKBone_index, 2, 1, pmd);
     fwrite(&model->IK[i].IKTBone_index, 2, 1, pmd);
-    fwrite(&model->IK[i].IK_chain_len, 1, 1, pmd);
+    uint8_t IK_chain_len = model->IK[i].IK_chain.size();
+    fwrite(&IK_chain_len, 1, 1, pmd);
     fwrite(&model->IK[i].iterations, 2, 1, pmd);
     fwrite(&model->IK[i].weight, 4, 1, pmd);
-    fwrite(model->IK[i].IKCBone_index, 2, model->IK[i].IK_chain_len, pmd);
+    fwrite(model->IK[i].IK_chain.data(), 2, model->IK[i].IK_chain.size(), pmd);
   }
   PLOG_DEBUG << "IKリスト";
 
@@ -686,11 +685,11 @@ int print_PMD(MODEL *model, const char file_name[]) {
   for (int i = 0; i < model->IK.size(); i++) {
     fprintf(txt, "IKボーン:%d\n", model->IK[i].IKBone_index);
     fprintf(txt, "IKテイルボーン:%d\n", model->IK[i].IKTBone_index);
-    fprintf(txt, "IKチェーン長:%d\n", model->IK[i].IK_chain_len);
+    fprintf(txt, "IKチェーン長:%zu\n", model->IK[i].IK_chain.size());
     fprintf(txt, "iteration:%d\n", model->IK[i].iterations);
     fprintf(txt, "ウエイト:%f\n", model->IK[i].weight);
-    for (int j = 0; j < model->IK[i].IK_chain_len; j++) {
-      fprintf(txt, "IK子 %d:%d\n", j, model->IK[i].IKCBone_index[j]);
+    for (int j = 0; j < model->IK[i].IK_chain.size(); j++) {
+      fprintf(txt, "IK子 %d:%d\n", j, model->IK[i].IK_chain[j]);
     }
     fprintf(txt, "\n");
   }
@@ -852,16 +851,10 @@ int delete_PMD(MODEL *model) {
   model->vt_index.clear();
   model->mat.clear();
   model->bone.clear();
-  for (int i = 0; i < model->IK.size(); i++) {
-    FREE(model->IK[i].IKCBone_index);
-    model->IK[i].IKCBone_index = NULL;
-  }
   model->IK.clear();
 
   for (int i = 0; i < model->skin_count; i++) {
-#ifdef DEBUG
-    printf("%d \n", i);
-#endif
+    PLOG_DEBUG << i;
     FREE(model->skin[i].data);
     model->skin[i].data = NULL;
   }
@@ -913,13 +906,6 @@ int copy_PMD(MODEL *out, MODEL *model) {
   out->mat = model->mat;
   out->bone = model->bone;
   out->IK = model->IK;
-  for (int i = 0; i < model->IK.size(); i++) {
-    auto size = (size_t)model->IK[i].IK_chain_len * sizeof(unsigned short);
-    out->IK[i].IKCBone_index = (unsigned short *)MALLOC(size);
-    if (out->IK[i].IKCBone_index == NULL)
-      return -1;
-    memcpy(out->IK[i].IKCBone_index, model->IK[i].IKCBone_index, size);
-  }
 
   // 表情
   out->skin_count = model->skin_count;
@@ -1094,24 +1080,14 @@ int add_PMD(MODEL *model, MODEL *add) {
   std::vector<IK_LIST> IK(model->IK.size() + add->IK.size());
   for (int i = 0; i < model->IK.size(); i++) {
     IK[i] = model->IK[i];
-    size = IK[i].IK_chain_len * sizeof(unsigned short);
-    IK[i].IKCBone_index = (unsigned short *)MALLOC(size);
-    if (IK[i].IKCBone_index == NULL)
-      return -1;
-    memcpy(IK[i].IKCBone_index, model->IK[i].IKCBone_index, size);
   }
   j = 0;
   for (i = model->IK.size(); i < IK.size(); i++) {
     IK[i] = add->IK[j];
     IK[i].IKBone_index = IK[i].IKBone_index + model->bone.size();
     IK[i].IKTBone_index = IK[i].IKTBone_index + model->bone.size();
-    size = IK[i].IK_chain_len * sizeof(unsigned short);
-    IK[i].IKCBone_index = (unsigned short *)MALLOC(size);
-    if (IK[i].IKCBone_index == NULL)
-      return -1;
-    memcpy(IK[i].IKCBone_index, add->IK[j].IKCBone_index, size);
-    for (k = 0; k < IK[i].IK_chain_len; k++) {
-      IK[i].IKCBone_index[k] = IK[i].IKCBone_index[k] + model->bone.size();
+    for (k = 0; k < IK[i].IK_chain.size(); k++) {
+      IK[i].IK_chain[k] = IK[i].IK_chain[k] + model->bone.size();
     }
     j++;
   }
@@ -1303,10 +1279,6 @@ int add_PMD(MODEL *model, MODEL *add) {
   std::swap(model->vt_index, vt_index);
   std::swap(model->mat, mat);
   std::swap(model->bone, bone);
-  for (int i = 0; i < model->IK.size(); i++) {
-    FREE(model->IK[i].IKCBone_index);
-    model->IK[i].IKCBone_index = NULL;
-  }
   std::swap(model->IK, IK);
 
   for (i = 0; i < model->skin_count; i++) {

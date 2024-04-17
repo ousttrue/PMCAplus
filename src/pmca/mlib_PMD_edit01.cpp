@@ -256,10 +256,6 @@ int sort_bone(MODEL *model, LIST *list) {
 }
 
 int update_bone_index(MODEL *model, std::span<int> index) {
-  unsigned short *tmp_disp;
-  // char(*tmp_eng)[20];
-  unsigned short *tmp_rb;
-
   // 頂点のボーン番号を書き換え
   {
     std::vector<std::array<unsigned short, 2>> tmp_vt(model->vt.size());
@@ -278,23 +274,16 @@ int update_bone_index(MODEL *model, std::span<int> index) {
   // IKリストのボーン番号を書き換え
   std::vector<IK_LIST> tmp_ik = model->IK;
   for (int i = 0; i < model->IK.size(); i++) {
-    tmp_ik[i].IKCBone_index = (unsigned short *)malloc(sizeof(unsigned short) *
-                                                       tmp_ik[i].IK_chain_len);
-    memcpy(tmp_ik[i].IKCBone_index, model->IK[i].IKCBone_index,
-           sizeof(unsigned short) * tmp_ik[i].IK_chain_len);
-  }
-  for (int i = 0; i < model->IK.size(); i++) {
     PLOG_DEBUG << i;
     model->IK[i].IKBone_index = index[tmp_ik[i].IKBone_index];
     model->IK[i].IKTBone_index = index[tmp_ik[i].IKTBone_index];
-    for (int j = 0; j < tmp_ik[i].IK_chain_len; j++) {
-      model->IK[i].IKCBone_index[j] = index[tmp_ik[i].IKCBone_index[j]];
+    for (int j = 0; j < tmp_ik[i].IK_chain.size(); j++) {
+      model->IK[i].IK_chain[j] = index[tmp_ik[i].IK_chain[j]];
     }
-    FREE(tmp_ik[i].IKCBone_index);
   }
 
   // 表示ボーン番号を書き換え
-  tmp_disp =
+  auto tmp_disp =
       (unsigned short *)malloc(sizeof(unsigned short) * model->bone_disp_count);
   for (int i = 0; i < model->bone_disp_count; i++) {
     tmp_disp[i] = model->bone_disp[i].index;
@@ -310,7 +299,7 @@ int update_bone_index(MODEL *model, std::span<int> index) {
 #endif
 
   // 剛体ボーン番号を書き換え
-  tmp_rb =
+  auto tmp_rb =
       (unsigned short *)malloc(sizeof(unsigned short) * model->rbody_count);
 #ifdef MEM_DBG
   printf("malloc %p\n", tmp_rb);
