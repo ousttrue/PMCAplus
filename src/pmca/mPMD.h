@@ -20,7 +20,8 @@ struct HEADER { /*283byte*/
   std::array<char, COMMENT_LEN> comment_eng = {0};
 };
 
-struct VERTEX { /*38byte*/
+#pragma pack(push, r1, 1)
+struct VERTEX {
   float loc[3];
   float nor[3];
   float uv[2];
@@ -28,8 +29,11 @@ struct VERTEX { /*38byte*/
   unsigned char bone_weight;
   unsigned char edge_flag;
 };
+#pragma pack(pop)
+static_assert(sizeof(VERTEX) == 38, "sizeof VERTEX");
 
-struct MATERIAL { /*70byte*/
+#pragma pack(push, r1, 1)
+struct MATERIAL {
   float diffuse[3];
   float alpha;
   float spec;
@@ -43,6 +47,8 @@ struct MATERIAL { /*70byte*/
   char tex_path[PATH_LEN];
   char sph_path[PATH_LEN];
 };
+#pragma pack(pop)
+static_assert(offsetof(MATERIAL, tex) == 50, "sizeof MATERIAL");
 
 struct BONE { /*39byte*/
   char name[NAME_LEN];
@@ -84,15 +90,6 @@ struct BONE_DISP { /*3 byte*/
   unsigned char bone_group;
 };
 
-/*
-struct ENGLISH{
-        //char name[20];
-        //char comment[256];
-        //char (*bone_name)[20];
-        //char (*skin_name)[20];
-        //char (*bone_group)[50];
-};
-*/
 struct RIGID_BODY { // 83byte
   char name[NAME_LEN];
   unsigned short bone;
@@ -132,14 +129,14 @@ struct MODEL {
 
   // extention
   unsigned char eng_support;
-  // ENGLISH eng;
+
   char toon[10][100];
   char toon_path[10][PATH_LEN];
-  unsigned int rbody_count;
-  RIGID_BODY *rbody;
 
-  unsigned int joint_count;
-  JOINT *joint;
+  std::vector<RIGID_BODY> rbody;
+  std::vector<JOINT> joint;
+
+  bool load(std::span<uint8_t> bytes, const std::string &file_name);
 };
 
 int translate(MODEL *model, LIST *list, short mode);

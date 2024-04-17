@@ -127,8 +127,8 @@ static PyObject *getInfo(PyObject *self, PyObject *args) {
       "bone_group_count", model->bone_group.size(), "bone_disp_count",
       model->bone_disp.size(),
 
-      "eng_support", model->eng_support, "rb_count", model->rbody_count,
-      "joint_count", model->joint_count, "skin_index",
+      "eng_support", model->eng_support, "rb_count", model->rbody.size(),
+      "joint_count", model->joint.size(), "skin_index",
       Array_to_PyList_UShort(model->skin_disp.data(), model->skin_disp.size()));
 }
 
@@ -375,6 +375,8 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
   int skin_disp_count;
   int bone_group_count;
   int bone_disp_count;
+  int rbody_count;
+  int joint_count;
   if (!PyArg_ParseTuple(args,
                         "i"
                         "yyyy"
@@ -389,8 +391,8 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
                         &IK_count, &skin_count, &bone_group_count,
                         &bone_disp_count,
 
-                        &model.eng_support, &model.rbody_count,
-                        &model.joint_count, &skin_disp_count, &PyTmp))
+                        &model.eng_support, &rbody_count, &joint_count,
+                        &skin_disp_count, &PyTmp))
     return NULL;
 
   model.header.magic = {'P', 'm', 'd', '\0'};
@@ -416,16 +418,8 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
   PyList_to_Array_UShort(p->skin_disp.data(), PyTmp, p->skin_disp.size());
   p->bone_group.resize(bone_group_count);
   p->bone_disp.resize(bone_disp_count);
-
-  // 剛体
-  size = p->rbody_count * sizeof(RIGID_BODY);
-  p->rbody = (RIGID_BODY *)MALLOC(size);
-  memset(p->rbody, 0, size);
-
-  // ジョイント
-  size = p->joint_count * sizeof(JOINT);
-  p->joint = (JOINT *)MALLOC(size);
-  memset(p->joint, 0, size);
+  p->rbody.resize(rbody_count);
+  p->joint.resize(joint_count);
 
   return Py_BuildValue("i", 0);
 }

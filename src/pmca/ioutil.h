@@ -18,6 +18,8 @@ class binaryreader {
 public:
   binaryreader(std::span<uint8_t> data) : _data(data) {}
 
+  bool isend() const { return _pos >= _data.size(); }
+
   void read(void *buf, int size) {
     if (_pos + size > _data.size()) {
       PLOG_ERROR << _pos << "+" << size << "out of range";
@@ -58,8 +60,9 @@ public:
   }
 
   float f32() { return value<float>(); }
-  uint8_t uint8() { return value<uint8_t>(); }
-  int32_t int32() { return value<int32_t>(); }
+  uint8_t u8() { return value<uint8_t>(); }
+  uint8_t u16() { return value<uint16_t>(); }
+  int32_t i32() { return value<int32_t>(); }
 };
 
 } // namespace ioutil

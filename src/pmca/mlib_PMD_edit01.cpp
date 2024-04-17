@@ -261,7 +261,7 @@ int update_bone_index(MODEL *model, std::span<int> index) {
   // IKリストのボーン番号を書き換え
   std::vector<IK_LIST> tmp_ik = model->IK;
   for (int i = 0; i < model->IK.size(); i++) {
-    PLOG_DEBUG << i;
+    // PLOG_DEBUG << i;
     model->IK[i].IKBone_index = index[tmp_ik[i].IKBone_index];
     model->IK[i].IKTBone_index = index[tmp_ik[i].IKTBone_index];
     for (int j = 0; j < tmp_ik[i].IK_chain.size(); j++) {
@@ -275,40 +275,20 @@ int update_bone_index(MODEL *model, std::span<int> index) {
     model->bone_disp[i].index = index[tmp_disp[i].index];
   }
 
-#ifdef DEBUG
-  puts("剛体書き換え");
-#endif
-
   // 剛体ボーン番号を書き換え
-  auto tmp_rb =
-      (unsigned short *)malloc(sizeof(unsigned short) * model->rbody_count);
-#ifdef MEM_DBG
-  printf("malloc %p\n", tmp_rb);
-#endif
-
-  for (int i = 0; i < model->rbody_count; i++) {
-#ifdef DEBUG
-    printf("%d %d\n", i, model->rbody[i].bone);
-#endif
+  std::vector<unsigned short> tmp_rb(model->rbody.size());
+  for (int i = 0; i < model->rbody.size(); i++) {
     tmp_rb[i] = model->rbody[i].bone;
   }
-  for (int i = 0; i < model->rbody_count; i++) {
-#ifdef DEBUG
-    printf("%d\n", i);
-#endif
+  for (int i = 0; i < model->rbody.size(); i++) {
     if (tmp_rb[i] == USHORT_MAX) {
       model->rbody[i].bone = USHORT_MAX;
     } else {
       model->rbody[i].bone = index[tmp_rb[i]];
     }
   }
-#ifdef MEM_DBG
-  printf("FREE %p\n", tmp_rb);
-#endif
-  FREE(tmp_rb);
-#ifdef DEBUG
-  puts("ボーンインデックス更新完了");
-#endif
+
+  PLOG_DEBUG << "ボーンインデックス更新完了";
 
   return 0;
 }
@@ -326,7 +306,7 @@ int sort_skin(MODEL *model, LIST *list) {
         break;
       }
     }
-    PLOG_DEBUG << "index[" << i << "]=" << index[i];
+    // PLOG_DEBUG << "index[" << i << "]=" << index[i];
   }
 
   int tmp = 0;
@@ -359,7 +339,7 @@ int sort_skin(MODEL *model, LIST *list) {
   }
 
   for (int i = 0; i < model->skin.size(); i++) { // 表情並び変え
-    PLOG_DEBUG << "index[" << i << "]=" << index[i];
+    // PLOG_DEBUG << "index[" << i << "]=" << index[i];
     skin[index[i]] = model->skin[i];
   }
 
@@ -1081,7 +1061,7 @@ int marge_IK(MODEL *model) {
       tmp++;
     }
 
-    PLOG_DEBUG << i << ":" << index[i] << " " << marge[i];
+    // PLOG_DEBUG << i << ":" << index[i] << " " << marge[i];
   }
 
   for (int i = 0; i < model->IK.size(); i++) {
@@ -1176,24 +1156,16 @@ int marge_bone_disp(MODEL *model) {
 }
 
 int marge_rb(MODEL *model) {
-  int i, j, tmp;
-  int *index;
-  char *marge;
-
   // 同名の剛体を削除
 
-  index = (int *)MALLOC(model->rbody_count * sizeof(int));
-  marge = (char *)MALLOC(model->rbody_count * sizeof(char));
-  memset(marge, 0, model->rbody_count * sizeof(char));
-#ifdef MEM_DBG
-  printf("malloc %p %p\n", index, marge);
-#endif
+  std::vector<int> index(model->rbody.size());
+  std::vector<char> marge(model->rbody.size());
 
-  tmp = 0;
-  for (i = 0; i < model->rbody_count; i++) {
+  int tmp = 0;
+  for (int i = 0; i < model->rbody.size(); i++) {
     if (marge[i] == 0) {
       index[i] = i - tmp;
-      for (j = i + 1; j < model->rbody_count; j++) {
+      for (int j = i + 1; j < model->rbody.size(); j++) {
         if (strcmp(model->rbody[i].name, model->rbody[j].name) == 0) {
           index[j] = i - tmp;
           marge[j] = 1;
@@ -1202,33 +1174,22 @@ int marge_rb(MODEL *model) {
     } else {
       tmp++;
     }
-#ifdef DEBUG
-    printf("%d:%d %d\n", i, index[i], marge[i]);
-#endif
   }
 
   // ジョイント書き換え
-  for (i = 0; i < model->joint_count; i++) {
-    for (j = 0; j < 2; j++) {
+  for (int i = 0; i < model->joint.size(); i++) {
+    for (int j = 0; j < 2; j++) {
       model->joint[i].rbody[j] = index[model->joint[i].rbody[j]];
     }
   }
 
   // 重複削除
-
-  for (i = 0; i < model->rbody_count; i++) {
+  for (int i = 0; i < model->rbody.size(); i++) {
     if (marge[i] == 0 && index[i] != i) {
       model->rbody[index[i]] = model->rbody[i];
     }
   }
-  model->rbody_count = model->rbody_count - tmp;
-
-#ifdef MEM_DBG
-  printf("FREE %p %p\n", index, marge);
-#endif
-
-  FREE(index);
-  FREE(marge);
+  model->rbody.resize(model->rbody.size() - tmp);
 
   return 0;
 }
@@ -1249,7 +1210,7 @@ int update_skin(MODEL *model) {
 
 int adjust_joint(MODEL *model) {
   // 同じ名前のボーンにジョイントの位置を合わせる
-  for (int i = 0; i < model->joint_count; i++) {
+  for (int i = 0; i < model->joint.size(); i++) {
     for (int j = 0; j < model->bone.size(); j++) {
       if (strcmp(model->joint[i].name, model->bone[j].name) == 0) {
         memcpy(model->joint[i].loc, model->bone[j].loc, sizeof(float) * 3);
@@ -1273,7 +1234,7 @@ int show_detail(MODEL *model) {
   printf("ボーン枠:%zu\n", model->bone_group.size());
   printf("表示ボーン数:%zu\n", model->bone_disp.size());
   printf("英名対応:%d\n", model->eng_support);
-  printf("剛体数:%d\n", model->rbody_count);
-  printf("ジョイント数:%d\n\n", model->joint_count);
+  printf("剛体数:%zu\n", model->rbody.size());
+  printf("ジョイント数:%zu\n\n", model->joint.size());
   return 0;
 }

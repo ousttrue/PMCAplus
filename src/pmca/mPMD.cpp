@@ -1,14 +1,252 @@
 // PMD関係のライブラリ、読み込み書き込み系
 
-#include <math.h>
-#include <memory.h>
+#include "mPMD.h"
+#include "ioutil.h"
 #include <plog/Log.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
-#include "dbg.h"
-#include "mPMD.h"
+bool MODEL::load(std::span<uint8_t> bytes, const std::string &file_name) {
+
+  ioutil::binaryreader r(bytes);
+
+  r.read(this->header.magic.data(), 3);
+  if (this->header.magic != std::array<char, 4>{'P', 'm', 'd', '\0'}) {
+    PLOG_ERROR << "invalid magic:" << this->header.magic;
+    return false;
+  }
+
+  this->header.version = r.f32();
+  if (this->header.version != 1.0) {
+    PLOG_ERROR << "invalid version:" << this->header.version;
+    return false;
+  }
+
+  r.read(this->header.name.data(), 20);
+  PLOG_DEBUG << this->header.name.data();
+
+  r.read(this->header.comment.data(), 256);
+  PLOG_DEBUG << this->header.comment.data();
+
+  int vt_count = r.i32();
+  ;
+  PLOG_DEBUG << "頂点数:" << vt_count;
+  this->vt.resize(vt_count);
+  r.read(this->vt.data(), vt_count * sizeof(VERTEX));
+
+  int vt_index_count = r.i32();
+  ;
+  PLOG_DEBUG << "面頂点数:" << vt_index_count;
+  this->vt_index.resize(vt_index_count);
+  r.read(this->vt_index.data(), vt_index_count * 2);
+
+  int mat_count = r.i32();
+  ;
+  PLOG_DEBUG << "材質数:" << mat_count;
+  this->mat.resize(mat_count);
+  for (int i = 0; i < this->mat.size(); i++) {
+    r.read(&this->mat[i], 70);
+    this->mat[i].tex[21] = '\0';
+
+    auto str = file_name;
+    {
+      auto char_p = str.rfind('/');
+      if (char_p != std::string::npos) {
+        str = str.substr(0, char_p + 1);
+      } else {
+        str = {};
+      }
+    }
+
+    {
+      auto char_p = strchr(this->mat[i].tex, '*');
+      if (char_p != NULL) {
+        *char_p = '\0';
+        ++char_p;
+        strcpy(this->mat[i].sph, char_p);
+        sprintf(this->mat[i].sph_path, "%s%s\0", str.c_str(), this->mat[i].sph);
+      } else {
+        *this->mat[i].sph = '\0';
+      }
+    }
+    sprintf(this->mat[i].tex_path, "%s%s\0", str.c_str(), this->mat[i].tex);
+  }
+
+  uint16_t bone_count = r.u16();
+  PLOG_DEBUG << "ボーン数:" << bone_count;
+  this->bone.resize(bone_count);
+  for (int i = 0; i < this->bone.size(); i++) {
+    r.read(this->bone[i].name, 20);
+    this->bone[i].PBone_index = r.u16();
+    this->bone[i].TBone_index = r.u16();
+    this->bone[i].type = r.u8();
+    this->bone[i].IKBone_index = r.u16();
+    r.read(this->bone[i].loc, 12);
+    this->bone[i].name_eng[0] = '\0';
+    this->bone[i].name[21] = '\0';
+  }
+
+  uint16_t IK_count = r.u16();
+  PLOG_DEBUG << "IKデータ数:" << IK_count;
+  this->IK.resize(IK_count);
+  for (int i = 0; i < this->IK.size(); i++) {
+    this->IK[i].IKBone_index = r.u16();
+    this->IK[i].IKTBone_index = r.u16();
+    char IK_chain_len = r.u8();
+    ;
+    this->IK[i].iterations = r.u16();
+    this->IK[i].weight = r.f32();
+    this->IK[i].IK_chain.resize(IK_chain_len);
+    if (IK_chain_len > 0) {
+      r.read(this->IK[i].IK_chain.data(), 2 * IK_chain_len);
+    }
+  }
+
+  uint16_t skin_count = r.u16();
+  PLOG_DEBUG << "表情数:" << skin_count;
+  this->skin.resize(skin_count);
+  for (int i = 0; i < skin_count; i++) {
+    r.read(this->skin[i].name, 20);
+    int skin_vt_count = r.i32();
+    this->skin[i].type = r.u8();
+    this->skin[i].skin_vt.resize(skin_vt_count);
+    for (int j = 0; j < skin_vt_count; j++) {
+      this->skin[i].skin_vt[j].index = r.i32();
+      if (this->skin[i].skin_vt[j].index > this->vt.size()) {
+        exit(1);
+      }
+      r.read(this->skin[i].skin_vt[j].loc, 12);
+    }
+    this->skin[i].name_eng[0] = '\0';
+    this->skin[i].name[20] = '\0';
+  }
+
+  uint8_t skin_disp_count = r.u8();
+  PLOG_DEBUG << "表情枠:" << skin_disp_count;
+  this->skin_disp.resize(skin_disp_count);
+  r.read(this->skin_disp.data(), 2 * this->skin_disp.size());
+
+  uint8_t bone_group_count = r.u8();
+  PLOG_DEBUG << "ボーン枠:" << bone_group_count;
+  this->bone_group.resize(bone_group_count);
+  for (int i = 0; i < bone_group_count; i++) {
+    r.read(&this->bone_group[i].name, 50);
+    this->bone_group[i].name_eng[0] = '\0';
+  }
+
+  int bone_disp_count = r.i32();
+  PLOG_DEBUG << "表示ボーン数:" << bone_disp_count;
+  this->bone_disp.resize(bone_disp_count);
+  for (int i = 0; i < bone_disp_count; i++) {
+    this->bone_disp[i].index = r.u16();
+    this->bone_disp[i].bone_group = r.u8();
+  }
+
+  this->eng_support = r.u8();
+
+  if (r.isend()) {
+    PLOG_DEBUG << "拡張部分なし";
+    this->eng_support = 0;
+    for (int i = 0; i < 10; i++) {
+      int j = i + 1;
+      sprintf(this->toon[i], "toon%02d.bmp\0", j);
+      sprintf(this->toon_path[i], "toon%02d.bmp\0", j);
+    }
+    this->rbody.clear();
+    this->joint.clear();
+    return 0;
+  }
+
+  PLOG_DEBUG << "英名対応:" << (int)this->eng_support;
+
+  if (this->eng_support == 1) {
+    PLOG_DEBUG << "英名対応PMD";
+    r.read(this->header.name_eng.data(), 20);
+    this->header.name_eng[21] = '\0';
+
+    r.read(this->header.comment_eng.data(), 256);
+    this->header.comment_eng[255] = '\0';
+
+    for (int i = 0; i < this->bone.size(); i++) {
+      r.read(this->bone[i].name_eng, 20);
+      this->bone[i].name_eng[20] = '\0';
+    }
+
+    // skin:0
+    if (this->skin.size() > 0) {
+      strcpy(this->skin[0].name_eng, "base");
+    }
+    // skin:1~
+    for (int i = 1; i < this->skin.size(); i++) {
+      r.read(this->skin[i].name_eng, 20);
+      this->skin[i].name_eng[20] = '\0';
+    }
+    for (int i = 0; i < this->bone_group.size(); i++) {
+      r.read(this->bone_group[i].name_eng, 50);
+      this->bone_group[i].name_eng[50] = '\0';
+    }
+  } else {
+    PLOG_DEBUG << "英名非対応PMD";
+
+    this->header.name_eng[0] = '\0';
+    this->header.comment_eng[0] = '\0';
+
+    for (int i = 0; i < this->bone.size(); i++) {
+      *this->bone[i].name_eng = '\0';
+    }
+
+    for (int i = 0; i < this->skin.size(); i++) {
+      *this->skin[i].name_eng = '\0';
+    }
+
+    for (int i = 0; i < this->bone_group.size(); i++) {
+      *this->bone_group[i].name_eng = '\0';
+    }
+  }
+
+  for (int i = 0; i < 10; i++) {
+    r.read(this->toon[i], 100);
+    auto str = file_name;
+    auto char_p = str.rfind('/');
+    if (char_p != std::string::npos) {
+      str = str.substr(0, char_p + 1);
+    } else {
+      str = {};
+    }
+    sprintf(this->toon_path[i], "%s%s\0", str.c_str(), this->toon[i]);
+  }
+
+  int rbody_count = r.i32();
+  PLOG_DEBUG << "剛体数:" << rbody_count;
+  this->rbody.resize(rbody_count);
+  for (int i = 0; i < this->rbody.size(); i++) {
+    r.read(this->rbody[i].name, 20);
+    this->rbody[i].bone = r.u16();
+    this->rbody[i].group = r.u8();
+    this->rbody[i].target = r.u16();
+    this->rbody[i].shape = r.u8();
+    r.read(this->rbody[i].size, 12);
+    r.read(this->rbody[i].loc, 12);
+    r.read(this->rbody[i].rot, 12);
+    r.read(this->rbody[i].property, 20);
+    this->rbody[i].type = r.u8();
+    this->rbody[i].name[21] = '\0';
+  }
+
+  int joint_count = r.i32();
+  PLOG_DEBUG << "ジョイント数:" << joint_count;
+  this->joint.resize(joint_count);
+  for (int i = 0; i < joint_count; i++) {
+    r.read(this->joint[i].name, 20);
+    r.read(this->joint[i].rbody, 8);
+    r.read(this->joint[i].loc, 12);
+    r.read(this->joint[i].rot, 12);
+    r.read(this->joint[i].limit, 4 * 12);
+    r.read(this->joint[i].spring, 4 * 6);
+    this->joint[i].name[20] = '\0';
+  }
+
+  return true;
+}
 
 int load_PMD(MODEL *model, const std::string &file_name) {
   static MODEL cache_model[64];
@@ -61,8 +299,8 @@ int load_PMD(MODEL *model, const std::string &file_name) {
     return 0;
   }
 
-  auto pmd = fopen(file_name.c_str(), "rb");
-  if (pmd == NULL) {
+  auto bytes = ioutil::readfile(file_name);
+  if (bytes.empty()) {
     PLOG_ERROR << "Can't open file:" << file_name;
     return 1;
   }
@@ -70,301 +308,9 @@ int load_PMD(MODEL *model, const std::string &file_name) {
   PLOG_DEBUG << file_name;
   model->path = file_name;
 
-  FREAD(model->header.magic.data(), 1, 3, pmd);
-  if (model->header.magic != std::array<char, 4>{'P', 'm', 'd', '\0'}) {
-    PLOG_ERROR << "invalid magic:" << model->header.magic;
-    return -1;
-  }
-
-  FREAD(&model->header.version, 4, 1, pmd);
-  if (model->header.version != 1.0) {
-    PLOG_ERROR << "invalid version:" << model->header.version;
-    return -1;
-  }
-
-  FREAD(model->header.name.data(), 1, 20, pmd);
-  PLOG_DEBUG << model->header.name.data();
-
-  FREAD(model->header.comment.data(), 1, 256, pmd);
-  PLOG_DEBUG << model->header.comment.data();
-
-#ifdef DEBUG
-  printf("%s \n %f \n %s \n %s \n", model->header.magic, model->header.version,
-         model->header.name, model->header.comment);
-#endif
-
-  int vt_count;
-  FREAD(&vt_count, 4, 1, pmd);
-  PLOG_DEBUG << "頂点数:" << vt_count;
-  model->vt.resize(vt_count);
-  for (i = 0; i < vt_count; i++) {
-    // fseek(pmd, 38, SEEK_CUR);
-    FREAD(model->vt[i].loc, 4, 3, pmd);
-    FREAD(model->vt[i].nor, 4, 3, pmd);
-    FREAD(model->vt[i].uv, 4, 2, pmd);
-    FREAD(model->vt[i].bone_num, 2, 2, pmd);
-    FREAD(&model->vt[i].bone_weight, 1, 1, pmd);
-    FREAD(&model->vt[i].edge_flag, 1, 1, pmd);
-  }
-
-  int vt_index_count;
-  FREAD(&vt_index_count, 4, 1, pmd);
-  PLOG_DEBUG << "面頂点数:" << vt_index_count;
-  model->vt_index.resize(vt_index_count);
-  for (i = 0; i < model->vt_index.size(); i++) {
-    FREAD(&model->vt_index[i], 2, 1, pmd);
-    if (model->vt_index[i] >= model->vt.size()) {
-      printf("頂点インデックスが不正です\n");
-      return 1;
-    }
-  }
-
-  int mat_count;
-  FREAD(&mat_count, 4, 1, pmd);
-  PLOG_DEBUG << "材質数:" << mat_count;
-  model->mat.resize(mat_count);
-  for (i = 0; i < model->mat.size(); i++) {
-    FREAD(model->mat[i].diffuse, 4, 3, pmd);
-    FREAD(&model->mat[i].alpha, 4, 1, pmd);
-    FREAD(&model->mat[i].spec, 4, 1, pmd);
-    FREAD(&model->mat[i].spec_col, 4, 3, pmd);
-    FREAD(&model->mat[i].mirror_col, 4, 3, pmd);
-    FREAD(&model->mat[i].toon_index, 1, 1, pmd);
-    FREAD(&model->mat[i].edge_flag, 1, 1, pmd);
-    FREAD(&model->mat[i].vt_index_count, 4, 1, pmd);
-    FREAD(&model->mat[i].tex, 1, 20, pmd);
-    model->mat[i].tex[21] = '\0';
-
-    auto str = file_name;
-    {
-      auto char_p = str.rfind('/');
-      if (char_p != std::string::npos) {
-        str = str.substr(0, char_p + 1);
-      } else {
-        str = {};
-      }
-    }
-
-    {
-      auto char_p = strchr(model->mat[i].tex, '*');
-      if (char_p != NULL) {
-        *char_p = '\0';
-        ++char_p;
-        strcpy(model->mat[i].sph, char_p);
-        sprintf(model->mat[i].sph_path, "%s%s\0", str.c_str(),
-                model->mat[i].sph);
-      } else {
-        *model->mat[i].sph = '\0';
-      }
-    }
-    sprintf(model->mat[i].tex_path, "%s%s\0", str.c_str(), model->mat[i].tex);
-  }
-
-  uint16_t bone_count;
-  FREAD(&bone_count, 2, 1, pmd);
-  PLOG_DEBUG << "ボーン数:" << bone_count;
-  model->bone.resize(bone_count);
-  for (int i = 0; i < model->bone.size(); i++) {
-    FREAD(model->bone[i].name, 1, 20, pmd);
-    FREAD(&model->bone[i].PBone_index, 2, 1, pmd);
-    FREAD(&model->bone[i].TBone_index, 2, 1, pmd);
-    FREAD(&model->bone[i].type, 1, 1, pmd);
-    FREAD(&model->bone[i].IKBone_index, 2, 1, pmd);
-    FREAD(model->bone[i].loc, 4, 3, pmd);
-    model->bone[i].name_eng[0] = '\0';
-    model->bone[i].name[21] = '\0';
-  }
-
-  uint16_t IK_count;
-  FREAD(&IK_count, 2, 1, pmd);
-  PLOG_DEBUG << "IKデータ数:" << IK_count;
-  model->IK.resize(IK_count);
-  for (int i = 0; i < model->IK.size(); i++) {
-    FREAD(&model->IK[i].IKBone_index, 2, 1, pmd);
-    FREAD(&model->IK[i].IKTBone_index, 2, 1, pmd);
-    char IK_chain_len;
-    FREAD(&IK_chain_len, 1, 1, pmd);
-    FREAD(&model->IK[i].iterations, 2, 1, pmd);
-    FREAD(&model->IK[i].weight, 4, 1, pmd);
-    model->IK[i].IK_chain.resize(IK_chain_len);
-    if (IK_chain_len > 0) {
-      FREAD(model->IK[i].IK_chain.data(), 2, IK_chain_len, pmd);
-    }
-  }
-
-  uint16_t skin_count;
-  FREAD(&skin_count, 2, 1, pmd);
-  PLOG_DEBUG << "表情数:" << skin_count;
-  model->skin.resize(skin_count);
-  for (int i = 0; i < skin_count; i++) {
-    FREAD(model->skin[i].name, 1, 20, pmd);
-    int skin_vt_count;
-    FREAD(&skin_vt_count, 4, 1, pmd);
-    FREAD(&model->skin[i].type, 1, 1, pmd);
-    model->skin[i].skin_vt.resize(skin_vt_count);
-    for (int j = 0; j < skin_vt_count; j++) {
-      FREAD(&model->skin[i].skin_vt[j].index, 4, 1, pmd);
-      if (model->skin[i].skin_vt[j].index > model->vt.size()) {
-        exit(1);
-      }
-      FREAD(&model->skin[i].skin_vt[j].loc, 4, 3, pmd);
-    }
-    model->skin[i].name_eng[0] = '\0';
-    model->skin[i].name[20] = '\0';
-  }
-
-  uint8_t skin_disp_count;
-  FREAD(&skin_disp_count, 1, 1, pmd);
-  PLOG_DEBUG << "表情枠:" << skin_disp_count;
-  model->skin_disp.resize(skin_disp_count);
-  FREAD(model->skin_disp.data(), 2, model->skin_disp.size(), pmd);
-
-  uint8_t bone_group_count;
-  FREAD(&bone_group_count, 1, 1, pmd);
-  PLOG_DEBUG << "ボーン枠:" << bone_group_count;
-  model->bone_group.resize(bone_group_count);
-  for (int i = 0; i < bone_group_count; i++) {
-    FREAD(&model->bone_group[i].name, 1, 50, pmd);
-    model->bone_group[i].name_eng[0] = '\0';
-  }
-
-  int bone_disp_count;
-  FREAD(&bone_disp_count, 4, 1, pmd);
-  PLOG_DEBUG << "表示ボーン数:" << bone_disp_count;
-  model->bone_disp.resize(bone_disp_count);
-  for (int i = 0; i < bone_disp_count; i++) {
-    FREAD(&model->bone_disp[i].index, 2, 1, pmd);
-    FREAD(&model->bone_disp[i].bone_group, 1, 1, pmd);
-  }
-
-  FREAD(&model->eng_support, 1, 1, pmd);
-
-  if (feof(pmd) != 0) {
-    PLOG_DEBUG << "拡張部分なし";
-    model->eng_support = 0;
-    for (int i = 0; i < 10; i++) {
-      int j = i + 1;
-      sprintf(model->toon[i], "toon%02d.bmp\0", j);
-      sprintf(model->toon_path[i], "toon%02d.bmp\0", j);
-    }
-    model->rbody_count = 0;
-    model->rbody = NULL;
-    model->joint_count = 0;
-    model->joint = NULL;
-    return 0;
-  }
-
-  PLOG_DEBUG << "英名対応:" << model->eng_support;
-
-  if (model->eng_support == 1) {
-    printf("英名対応PMD\n");
-    FREAD(model->header.name_eng.data(), 1, 20, pmd);
-    model->header.name_eng[21] = '\0';
-
-    FREAD(model->header.comment_eng.data(), 1, 256, pmd);
-    model->header.comment_eng[255] = '\0';
-
-    for (int i = 0; i < model->bone.size(); i++) {
-      FREAD(model->bone[i].name_eng, 1, 20, pmd);
-      model->bone[i].name_eng[20] = '\0';
-    }
-
-    if (model->skin.size() > 0) {
-      strcpy(model->skin[0].name_eng, "base");
-    }
-    for (int i = 1; i < model->skin.size(); i++) {
-      FREAD(model->skin[i].name_eng, 1, 20, pmd);
-      model->skin[i].name_eng[20] = '\0';
-    }
-    for (int i = 0; i < model->bone_group.size(); i++) {
-      FREAD(model->bone_group[i].name_eng, 1, 50, pmd);
-      model->bone_group[i].name_eng[50] = '\0';
-    }
-  } else {
-    printf("英名非対応PMD\n");
-
-    model->header.name_eng[0] = '\0';
-    model->header.comment_eng[0] = '\0';
-
-    for (i = 0; i < model->bone.size(); i++) {
-      *model->bone[i].name_eng = '\0';
-    }
-
-    // strncpy(model->skin[0].name_eng, "base", 20);
-    // puts(model->skin[0].name);
-    for (i = 0; i < model->skin.size(); i++) {
-      *model->skin[i].name_eng = '\0';
-    }
-
-    for (i = 0; i < model->bone_group.size(); i++) {
-      *model->bone_group[i].name_eng = '\0';
-    }
-  }
-
-  for (i = 0; i < 10; i++) {
-    FREAD(model->toon[i], 1, 100, pmd);
-    auto str = file_name;
-    auto char_p = str.rfind('/');
-    if (char_p != std::string::npos) {
-      str = str.substr(0, char_p + 1);
-    } else {
-      str = {};
-    }
-    sprintf(model->toon_path[i], "%s%s\0", str.c_str(), model->toon[i]);
-#ifdef DEBUG
-    printf("%s%s\n", str, model->toon[i]);
-#endif
-  }
-
-  FREAD(&model->rbody_count, 4, 1, pmd);
-#ifdef DEBUG
-  printf("剛体数:%d\n", model->rbody_count);
-#endif
-  model->rbody =
-      (RIGID_BODY *)MALLOC((size_t)model->rbody_count * sizeof(RIGID_BODY));
-
-  if (model->rbody == NULL) {
-    printf("配列を確保できません\n");
+  if (!model->load(bytes, file_name)) {
     return 1;
   }
-  for (i = 0; i < model->rbody_count; i++) {
-    FREAD(model->rbody[i].name, 1, 20, pmd);
-    FREAD(&model->rbody[i].bone, 2, 1, pmd);
-    FREAD(&model->rbody[i].group, 1, 1, pmd);
-    FREAD(&model->rbody[i].target, 2, 1, pmd);
-    FREAD(&model->rbody[i].shape, 1, 1, pmd);
-    FREAD(model->rbody[i].size, 4, 3, pmd);
-    FREAD(model->rbody[i].loc, 4, 3, pmd);
-    FREAD(model->rbody[i].rot, 4, 3, pmd);
-    FREAD(model->rbody[i].property, 4, 5, pmd);
-    FREAD(&model->rbody[i].type, 1, 1, pmd);
-    model->rbody[i].name[21] = '\0';
-  }
-
-  FREAD(&model->joint_count, 4, 1, pmd);
-#ifdef DEBUG
-  printf("ジョイント数:%d\n", model->joint_count);
-#endif
-  model->joint = (JOINT *)MALLOC((size_t)model->joint_count * sizeof(JOINT));
-  if (model->joint == NULL) {
-    printf("配列を確保できません\n");
-    return 1;
-  }
-  for (i = 0; i < model->joint_count; i++) {
-    FREAD(model->joint[i].name, 1, 20, pmd);
-    FREAD(model->joint[i].rbody, 4, 2, pmd);
-    FREAD(model->joint[i].loc, 4, 3, pmd);
-    FREAD(model->joint[i].rot, 4, 3, pmd);
-    FREAD(model->joint[i].limit, 4, 12, pmd);
-    FREAD(model->joint[i].spring, 4, 6, pmd);
-    model->joint[i].name[20] = '\0';
-  }
-
-  fclose(pmd);
-
-  // dbg_0check(check,1000);
-
-  // FREE(check);
 
   // モデルをキャッシュに保存
   for (i = 0; i < 64; i++) {
@@ -541,9 +487,9 @@ int write_PMD(MODEL *model, const char file_name[]) {
     fwrite(model->toon[i], 1, 100, pmd);
   }
 
-  fwrite(&model->rbody_count, 4, 1, pmd);
-
-  for (i = 0; i < model->rbody_count; i++) {
+  int rbody_count = model->rbody.size();
+  fwrite(&rbody_count, 4, 1, pmd);
+  for (int i = 0; i < model->rbody.size(); i++) {
     fwrite(model->rbody[i].name, 1, 20, pmd);
     fwrite(&model->rbody[i].bone, 2, 1, pmd);
     fwrite(&model->rbody[i].group, 1, 1, pmd);
@@ -555,13 +501,11 @@ int write_PMD(MODEL *model, const char file_name[]) {
     fwrite(model->rbody[i].property, 4, 5, pmd);
     fwrite(&model->rbody[i].type, 1, 1, pmd);
   }
-#ifdef DEBUG
-  printf("剛体\n");
-#endif
+  PLOG_DEBUG << "剛体";
 
-  fwrite(&model->joint_count, 4, 1, pmd);
-
-  for (i = 0; i < model->joint_count; i++) {
+  int joint_count;
+  fwrite(&joint_count, 4, 1, pmd);
+  for (int i = 0; i < model->joint.size(); i++) {
     fwrite(model->joint[i].name, 1, 20, pmd);
     fwrite(model->joint[i].rbody, 4, 2, pmd);
     fwrite(model->joint[i].loc, 4, 3, pmd);
@@ -569,12 +513,10 @@ int write_PMD(MODEL *model, const char file_name[]) {
     fwrite(model->joint[i].limit, 4, 12, pmd);
     fwrite(model->joint[i].spring, 4, 6, pmd);
   }
-#ifdef DEBUG
-  printf("ジョイント\n");
-#endif
+  PLOG_DEBUG << "ジョイント";
 
   fclose(pmd);
-  printf("%sへ出力しました。\n", file_name);
+  PLOG_INFO << file_name << "へ出力しました。";
 
   return ret;
 }
@@ -728,9 +670,8 @@ int print_PMD(MODEL *model, const char file_name[]) {
     fprintf(txt, "%s\n", model->toon[i]);
   }
 
-  fprintf(txt, "剛体数:%d\n", model->rbody_count);
-
-  for (i = 0; i < model->rbody_count; i++) {
+  fprintf(txt, "剛体数:%zu\n", model->rbody.size());
+  for (int i = 0; i < model->rbody.size(); i++) {
     fprintf(txt, "%s\n", model->rbody[i].name);
     fprintf(txt, "ボーン:%d\n", model->rbody[i].bone);
     fprintf(txt, "グループ:%d\n", model->rbody[i].group);
@@ -756,8 +697,8 @@ int print_PMD(MODEL *model, const char file_name[]) {
     fprintf(txt, "タイプ:%d\n\n", model->rbody[i].type);
   }
 
-  fprintf(txt, "ジョイント数:%d\n", model->joint_count);
-  for (i = 0; i < model->joint_count; i++) {
+  fprintf(txt, "ジョイント数:%zu\n", model->joint.size());
+  for (int i = 0; i < model->joint.size(); i++) {
     fprintf(txt, "%s\n", model->joint[i].name);
     fprintf(txt, "剛体:");
     for (int j = 0; j < 2; j++) {
@@ -803,16 +744,12 @@ int create_PMD(MODEL *model) {
 
   for (int i = 0; i < 10; i++) {
     int j = i + 1;
-    //*model->toon[i] = '\0';
-    //*model->toon_path[i] = '\0';
     sprintf(model->toon[i], "toon%02d.bmp\0", j);
     sprintf(model->toon_path[i], "toon%02d.bmp\0", j);
   }
 
-  model->rbody_count = 0;
-  model->rbody = NULL;
-  model->joint_count = 0;
-  model->joint = NULL;
+  model->rbody.clear();
+  model->joint.clear();
 
   return 0;
 }
@@ -834,20 +771,12 @@ int delete_PMD(MODEL *model) {
 
   for (int i = 0; i < 10; i++) {
     int j = i + 1;
-    /**model->toon[i] = '\0';
-     *model->toon_path[i] = '\0';
-     */
     sprintf(model->toon[i], "toon%02d.bmp\0", j);
     sprintf(model->toon_path[i], "toon%02d.bmp\0", j);
   }
 
-  FREE(model->rbody);
-  model->rbody_count = 0;
-  model->rbody = NULL;
-
-  FREE(model->joint);
-  model->joint_count = 0;
-  model->joint = NULL;
+  model->rbody.clear();
+  model->joint.clear();
 
   return 0;
 }
@@ -869,33 +798,9 @@ int copy_PMD(MODEL *out, MODEL *model) {
 
   // 英名
   out->eng_support = model->eng_support;
-#ifdef DEBUG
-  printf("英名\n");
-#endif
 
-  // 剛体
-  out->rbody_count = model->rbody_count;
-  out->rbody =
-      (RIGID_BODY *)MALLOC((size_t)model->rbody_count * sizeof(RIGID_BODY));
-  if (out->rbody == NULL)
-    return -1;
-  for (int i = 0; i < model->rbody_count; i++) {
-    out->rbody[i] = model->rbody[i];
-  }
-#ifdef DEBUG
-  printf("剛体\n");
-#endif
-  // ジョイント
-  out->joint_count = model->joint_count;
-  out->joint = (JOINT *)MALLOC((size_t)model->joint_count * sizeof(JOINT));
-  if (out->joint == NULL)
-    return -1;
-  for (int i = 0; i < model->joint_count; i++) {
-    out->joint[i] = model->joint[i];
-  }
-#ifdef DEBUG
-  printf("ジョイント\n");
-#endif
+  out->rbody = model->rbody;
+  out->joint = model->joint;
 
   return 0;
 }
@@ -905,12 +810,6 @@ int add_PMD(MODEL *model, MODEL *add) {
   int i, j, k;
   int size;
   int tmp[3];
-
-  // ENGLISH eg;
-  unsigned int rbody_count;
-  RIGID_BODY *rbody;
-  unsigned int joint_count;
-  JOINT *joint;
 
   // 頂点
   std::vector<VERTEX> vt(model->vt.size() + add->vt.size());
@@ -1073,40 +972,30 @@ int add_PMD(MODEL *model, MODEL *add) {
   model->eng_support = add->eng_support;
 
   // 剛体
-  rbody_count = model->rbody_count + add->rbody_count;
-  rbody = (RIGID_BODY *)MALLOC((size_t)rbody_count * sizeof(RIGID_BODY));
-
-  for (i = 0; i < model->rbody_count; i++) {
+  std::vector<RIGID_BODY> rbody(model->rbody.size() + add->rbody.size());
+  for (int i = 0; i < model->rbody.size(); i++) {
     rbody[i] = model->rbody[i];
   }
   j = 0;
-  for (i = model->rbody_count; i < rbody_count; i++) {
+  for (i = model->rbody.size(); i < rbody.size(); i++) {
     rbody[i] = add->rbody[j];
     rbody[i].bone = rbody[i].bone + model->bone.size();
     j++;
   }
-#ifdef DEBUG
-  printf("剛体\n");
-#endif
-  // ジョイント
-  joint_count = model->joint_count + add->joint_count;
-  joint = (JOINT *)MALLOC((size_t)joint_count * sizeof(JOINT));
 
-  for (i = 0; i < model->joint_count; i++) {
+  // ジョイント
+  std::vector<JOINT> joint(model->joint.size() + add->joint.size());
+  for (int i = 0; i < model->joint.size(); i++) {
     joint[i] = model->joint[i];
   }
   j = 0;
-  for (i = model->joint_count; i < joint_count; i++) {
+  for (i = model->joint.size(); i < joint.size(); i++) {
     joint[i] = add->joint[j];
     for (k = 0; k < 2; k++) {
-      joint[i].rbody[k] = joint[i].rbody[k] + model->rbody_count;
+      joint[i].rbody[k] = joint[i].rbody[k] + model->rbody.size();
     }
     j++;
   }
-
-#ifdef DEBUG
-  printf("ジョイント\n");
-#endif
 
   std::swap(model->vt, vt);
   std::swap(model->vt_index, vt_index);
@@ -1117,20 +1006,8 @@ int add_PMD(MODEL *model, MODEL *add) {
   std::swap(model->skin_disp, skin_disp);
   std::swap(model->bone_group, bone_group);
   std::swap(model->bone_disp, bone_disp);
-
-#ifdef MEM_DBG
-  printf("free %p\n", model->rbody);
-#endif
-  FREE(model->rbody);
-  model->rbody = rbody;
-  model->rbody_count = rbody_count;
-
-#ifdef MEM_DBG
-  printf("free %p\n", model->joint);
-#endif
-  FREE(model->joint);
-  model->joint = joint;
-  model->joint_count = joint_count;
+  std::swap(model->rbody, rbody);
+  std::swap(model->joint, joint);
 
   return 0;
 }
