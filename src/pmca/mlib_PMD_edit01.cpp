@@ -1085,25 +1085,18 @@ int marge_mat(MODEL *model) {
   char *marge;
   char *p;
 
-  unsigned short *vt_index;
   MATERIAL *tmp_mat;
 
   index = (int *)MALLOC(model->mat_count * sizeof(int));
   marge = (char *)MALLOC(model->mat_count * sizeof(char));
   memset(marge, 0, model->mat_count * sizeof(char));
-  vt_index =
-      (unsigned short *)MALLOC(model->vt_index_count * sizeof(unsigned short));
-  if (vt_index == NULL)
-    return -1;
+  std::vector<unsigned short> vt_index(model->vt_index.size());
   tmp_count = (int *)MALLOC(model->mat_count * sizeof(int));
   if (tmp_count == NULL)
     return -1;
   memset(tmp_count, 0, model->mat_count * sizeof(int));
   tmp_mat = (MATERIAL *)MALLOC(model->mat_count * sizeof(MATERIAL));
   memcpy(tmp_mat, model->mat, model->mat_count * sizeof(MATERIAL));
-#ifdef MEM_DBG
-  printf("malloc %p %p %p %p\n", index, marge, vt_index, tmp_count);
-#endif
 
   // テクスチャ名の同じ材質を探す
   tmp = 0;
@@ -1219,12 +1212,11 @@ int marge_mat(MODEL *model) {
   printf("FREE %p %p %p %p\n", index, marge, model->vt, tmp_count);
 #endif
 
-  FREE(model->vt_index);
   FREE(index);
   FREE(marge);
   FREE(tmp_count);
   FREE(tmp_mat);
-  model->vt_index = vt_index;
+  std::swap(model->vt_index, vt_index);
 
   return 0;
 }
@@ -1498,7 +1490,7 @@ int show_detail(MODEL *model) {
   printf("%s \n %f \n %s \n %s \n", model->header.magic.c_str(),
          model->header.version, model->header.name, model->header.comment);
   printf("頂点数:%zu\n", model->vt.size());
-  printf("面頂点数:%d\n", model->vt_index_count);
+  printf("面頂点数:%zu\n", model->vt_index.size());
   printf("材質数:%d\n", model->mat_count);
   printf("ボーン数:%d\n", model->bone_count);
   printf("IKデータ数:%d\n", model->IK_count);

@@ -102,18 +102,11 @@ int load_PMD(MODEL *model, const std::string &file_name) {
     FREAD(&model->vt[i].edge_flag, 1, 1, pmd);
   }
 
-  FREAD(&model->vt_index_count, 4, 1, pmd);
-#ifdef DEBUG
-  printf("面頂点数:%d\n", model->vt_index_count);
-#endif
-  model->vt_index = (unsigned short *)MALLOC((size_t)model->vt_index_count *
-                                             sizeof(unsigned short));
-  if (model->vt_index == NULL) {
-    printf("配列を確保できません\n");
-    return 1;
-  }
-
-  for (i = 0; i < model->vt_index_count; i++) {
+  int vt_index_count;
+  FREAD(&vt_index_count, 4, 1, pmd);
+  PLOG_DEBUG << "面頂点数:" << vt_index_count;
+  model->vt_index.resize(vt_index_count);
+  for (i = 0; i < model->vt_index.size(); i++) {
     FREAD(&model->vt_index[i], 2, 1, pmd);
     if (model->vt_index[i] >= model->vt.size()) {
       printf("頂点インデックスが不正です\n");
@@ -461,15 +454,9 @@ int write_PMD(MODEL *model, const char file_name[]) {
   fwrite(model->header.name, 20, 1, pmd);
   fwrite(model->header.comment, 256, 1, pmd);
 
-#ifdef DEBUG
-  printf("ヘッダ\n");
-#endif
-
   int vt_count = model->vt.size();
   fwrite(&vt_count, 4, 1, pmd);
-
   for (i = 0; i < (model->vt.size()); i++) {
-    // fseek(pmd, 38, SEEK_CUR);
     fwrite(model->vt[i].loc, 4, 3, pmd);
     fwrite(model->vt[i].nor, 4, 3, pmd);
     fwrite(model->vt[i].uv, 4, 2, pmd);
@@ -478,22 +465,15 @@ int write_PMD(MODEL *model, const char file_name[]) {
     fwrite(&model->vt[i].edge_flag, 1, 1, pmd);
   }
 
-#ifdef DEBUG
-  printf("頂点\n");
-#endif
-
-  fwrite(&model->vt_index_count, 4, 1, pmd);
-
-  for (i = 0; i < model->vt_index_count; i++) {
+  int vt_index_count = model->vt_index.size();
+  fwrite(&vt_index_count, 4, 1, pmd);
+  for (i = 0; i < model->vt_index.size(); i++) {
     if (model->vt_index[i] >= model->vt.size()) {
       printf("頂点インデックスが不正です :%d\n", model->vt_index[i]);
       return 1;
     }
     fwrite(&model->vt_index[i], 2, 1, pmd);
   }
-#ifdef DEBUG
-  printf("面頂点\n");
-#endif
 
   fwrite(&model->mat_count, 4, 1, pmd);
 
@@ -689,9 +669,9 @@ int print_PMD(MODEL *model, const char file_name[]) {
     fprintf(txt, "edge_flag:%d\n\n", model->vt[i].edge_flag);
   }
 
-  fprintf(txt, "面頂点数:%d\n", model->vt_index_count);
+  fprintf(txt, "面頂点数:%zu\n", model->vt_index.size());
 
-  for (i = 0; i < model->vt_index_count; i++) {
+  for (i = 0; i < model->vt_index.size(); i++) {
     fprintf(txt, "%d\n", model->vt_index[i]);
   }
   fprintf(txt, "\n");
@@ -867,9 +847,7 @@ int create_PMD(MODEL *model) {
   strcpy(model->header.comment, "");
 
   model->vt.clear();
-
-  model->vt_index_count = 0;
-  model->vt_index = NULL;
+  model->vt_index.clear();
 
   model->mat_count = 0;
   model->mat = NULL;
@@ -914,11 +892,7 @@ int delete_PMD(MODEL *model) {
   model->header.comment[0] = '\0';
 
   model->vt.clear();
-
-  model->vt_index_count = 0;
-  FREE(model->vt_index);
-
-  model->vt_index = NULL;
+  model->vt_index.clear();
 
   FREE(model->mat);
   model->mat_count = 0;
@@ -996,24 +970,9 @@ int copy_PMD(MODEL *out, MODEL *model) {
   size_t size;
 
   out->header = model->header;
-
   out->vt = model->vt;
+  out->vt_index = model->vt_index;
 
-  PLOG_DEBUG << "頂点";
-
-  // 面頂点
-  out->vt_index_count = model->vt_index_count;
-  out->vt_index = (unsigned short *)MALLOC((size_t)model->vt_index_count *
-                                           sizeof(unsigned short));
-  if (out->vt_index == NULL)
-    return -1;
-  for (i = 0; i < model->vt_index_count; i++) {
-    out->vt_index[i] = model->vt_index[i];
-  }
-
-#ifdef DEBUG
-  printf("面頂点\n");
-#endif
   // 材質
   out->mat_count = model->mat_count;
   out->mat = (MATERIAL *)MALLOC((size_t)model->mat_count * sizeof(MATERIAL));
@@ -1158,8 +1117,6 @@ int add_PMD(MODEL *model, MODEL *add) {
   unsigned int bone_count;
   BONE *bone;
 
-  unsigned int vt_index_count;
-  unsigned short *vt_index;
   unsigned int mat_count;
   MATERIAL *mat;
   unsigned short IK_count;
@@ -1184,7 +1141,6 @@ int add_PMD(MODEL *model, MODEL *add) {
     vt[i] = model->vt[i];
   }
   j = 0;
-
   for (i = model->vt.size(); i < vt.size(); i++) {
     vt[i] = add->vt[j];
     for (k = 0; k < 2; k++) {
@@ -1193,28 +1149,17 @@ int add_PMD(MODEL *model, MODEL *add) {
     j++;
   }
 
-#ifdef DEBUG
-  printf("頂点\n");
-#endif
-
   // 面頂点
-  vt_index_count = model->vt_index_count + add->vt_index_count;
-  vt_index =
-      (unsigned short *)MALLOC((size_t)vt_index_count * sizeof(unsigned short));
-  if (vt_index == NULL)
-    return -1;
-  for (i = 0; i < model->vt_index_count; i++) {
+  std::vector<unsigned short> vt_index(model->vt_index.size() +
+                                       add->vt_index.size());
+  for (i = 0; i < model->vt_index.size(); i++) {
     vt_index[i] = model->vt_index[i];
   }
   j = 0;
-  for (i = model->vt_index_count; i < vt_index_count; i++) {
+  for (i = model->vt_index.size(); i < vt_index.size(); i++) {
     vt_index[i] = add->vt_index[j] + model->vt.size();
     j++;
   }
-
-#ifdef DEBUG
-  printf("面頂点\n");
-#endif
 
   // 材質
   mat_count = model->mat_count + add->mat_count;
@@ -1476,13 +1421,7 @@ int add_PMD(MODEL *model, MODEL *add) {
 #endif
 
   std::swap(model->vt, vt);
-
-#ifdef MEM_DBG
-  printf("free %p\n", model->vt_index);
-#endif
-  FREE(model->vt_index);
-  model->vt_index = vt_index;
-  model->vt_index_count = vt_index_count;
+  std::swap(model->vt_index, vt_index);
 
 #ifdef MEM_DBG
   printf("free %p\n", model->mat);

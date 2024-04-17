@@ -121,7 +121,7 @@ static PyObject *getInfo(PyObject *self, PyObject *args) {
       "name", name, "name_eng", name_eng, "comment", comment, "comment_eng",
       comment_eng,
 
-      "vt_count", model->vt.size(), "face_count", model->vt_index_count / 3,
+      "vt_count", model->vt.size(), "face_count", model->vt_index.size() / 3,
       "mat_count", model->mat_count, "bone_count", model->bone_count,
 
       "IK_count", model->IK_count, "skin_count", model->skin_count,
@@ -160,7 +160,7 @@ static PyObject *getFace(PyObject *self, PyObject *args) {
     return NULL;
   model = &g_model[num];
   i = i * 3;
-  if (model->vt_index_count + 3 < i)
+  if (model->vt_index.size() + 3 < i)
     Py_RETURN_NONE;
   return Array_to_PyList_UShort(&model->vt_index[i], 3);
 }
@@ -367,6 +367,7 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
   create_PMD(&model);
 
   int vt_count;
+  int vt_index_count;
   if (!PyArg_ParseTuple(args,
                         "i"
                         "yyyy"
@@ -376,8 +377,8 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
                         "iO",
                         &num, &str[0], &str[1], &str[2], &str[3],
 
-                        &vt_count, &model.vt_index_count,
-                        &model.mat_count, &model.bone_count,
+                        &vt_count, &vt_index_count, &model.mat_count,
+                        &model.bone_count,
 
                         &model.IK_count, &model.skin_count,
                         &model.bone_group_count, &model.bone_disp_count,
@@ -385,7 +386,6 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
                         &model.eng_support, &model.rbody_count,
                         &model.joint_count, &model.skin_disp_count, &PyTmp))
     return NULL;
-  model.vt_index_count = model.vt_index_count * 3;
 
   model.header.magic = "Pmd";
   model.header.version = 1.0;
@@ -408,9 +408,7 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
   // 頂点
   p->vt.resize(vt_count);
   // 面頂点
-  size = p->vt_index_count * sizeof(unsigned short);
-  p->vt_index = (unsigned short *)MALLOC(size);
-  memset(p->vt_index, 0, size);
+  p->vt_index.resize(vt_index_count * 3);
 
   // 材質
   size = p->mat_count * sizeof(MATERIAL);
@@ -492,7 +490,7 @@ static PyObject *setFace(PyObject *self, PyObject *args) {
     return NULL;
 
   model = &g_model[num];
-  if (model->vt_index_count < i * 3 + 3)
+  if (model->vt_index.size() < i * 3 + 3)
     Py_RETURN_NONE;
 
   PyList_to_Array_UShort(&model->vt_index[i * 3], PyTmp, 3);
