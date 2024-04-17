@@ -122,7 +122,7 @@ static PyObject *getInfo(PyObject *self, PyObject *args) {
       comment_eng,
 
       "vt_count", model->vt.size(), "face_count", model->vt_index.size() / 3,
-      "mat_count", model->mat.size(), "bone_count", model->bone_count,
+      "mat_count", model->mat.size(), "bone_count", model->bone.size(),
 
       "IK_count", model->IK_count, "skin_count", model->skin_count,
       "bone_group_count", model->bone_group_count, "bone_disp_count",
@@ -192,12 +192,13 @@ static PyObject *getMat(PyObject *self, PyObject *args) {
 
 static PyObject *getBone(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
     return NULL;
-  model = &g_model[num];
-  if (model->bone_count <= i)
+
+  auto model = &g_model[num];
+  if (model->bone.size() <= i)
     Py_RETURN_NONE;
+
   return Py_BuildValue(
       "{s:y,s:y,"
       "s:i,s:i,s:i,s:i"
@@ -369,6 +370,7 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
   int vt_count;
   int vt_index_count;
   int mat_count;
+  int bone_count;
   if (!PyArg_ParseTuple(args,
                         "i"
                         "yyyy"
@@ -378,8 +380,7 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
                         "iO",
                         &num, &str[0], &str[1], &str[2], &str[3],
 
-                        &vt_count, &vt_index_count, &mat_count,
-                        &model.bone_count,
+                        &vt_count, &vt_index_count, &mat_count, &bone_count,
 
                         &model.IK_count, &model.skin_count,
                         &model.bone_group_count, &model.bone_disp_count,
@@ -406,17 +407,10 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
   *p = model;
 
   /*メモリ確保************************************************************************/
-  // 頂点
   p->vt.resize(vt_count);
-  // 面頂点
   p->vt_index.resize(vt_index_count * 3);
-  // 材質
   p->mat.resize(mat_count);
-
-  // ボーン
-  size = p->bone_count * sizeof(BONE);
-  p->bone = (BONE *)MALLOC(size);
-  memset(p->bone, 0, size);
+  p->bone.resize(bone_count);
 
   // IKリスト
   size = p->IK_count * sizeof(IK_LIST);
@@ -539,7 +533,7 @@ static PyObject *setBone(PyObject *self, PyObject *args) {
                         &PyTmp))
     return NULL;
   model = &g_model[num];
-  if (model->bone_count <= i)
+  if (model->bone.size() <= i)
     Py_RETURN_NONE;
 
   strncpy(bone.name, str[0], NAME_LEN);
@@ -971,8 +965,8 @@ static PyObject *Sort_PMD(PyObject *self, PyObject *args) {
   ret += sort_disp(&g_model[num], &list);
 
   //-0ボーン削除
-  if (strcmp(g_model[num].bone[g_model[num].bone_count - 1].name, "-0") == 0) {
-    g_model[num].bone_count--;
+  if (strcmp(g_model[num].bone[g_model[num].bone.size() - 1].name, "-0") == 0) {
+    g_model[num].bone.pop_back();
   }
   puts("英語対応化");
   translate(&g_model[num], &list, 1);
@@ -1000,40 +994,43 @@ static PyObject *Move_Model(PyObject *self, PyObject *args) {
 }
 
 static PyObject *Resize_Bone(PyObject *self, PyObject *args) {
+  int num;
   const char *str;
-  int num, index;
-  int ret;
   double len, thi;
   if (!PyArg_ParseTuple(args, "iydd", &num, &str, &len, &thi))
     return NULL;
-  for (index = 0; index < g_model[num].bone_count; index++) {
+
+  int index = 0;
+  for (; index < g_model[num].bone.size(); index++) {
     if (strcmp(g_model[num].bone[index].name, str) == 0) {
       break;
     }
   }
-  if (index == g_model[num].bone_count) {
+  if (index == g_model[num].bone.size()) {
     return Py_BuildValue("i", -1);
   }
-  ret = scale_bone(&g_model[num], index, thi, len, thi);
+
+  auto ret = scale_bone(&g_model[num], index, thi, len, thi);
   return Py_BuildValue("i", ret);
 }
 
 static PyObject *Move_Bone(PyObject *self, PyObject *args) {
+  int num;
   const char *str;
-  int num, index;
-  int ret;
   double pos[3];
   if (!PyArg_ParseTuple(args, "iyddd", &num, &str, &pos[0], &pos[1], &pos[2]))
     return NULL;
-  for (index = 0; index < g_model[num].bone_count; index++) {
+
+  int index = 0;
+  for (; index < g_model[num].bone.size(); index++) {
     if (strcmp(g_model[num].bone[index].name, str) == 0) {
       break;
     }
   }
-  if (index == g_model[num].bone_count) {
+  if (index == g_model[num].bone.size()) {
     return Py_BuildValue("i", -1);
   }
-  ret = move_bone(&g_model[num], index, pos);
+  auto ret = move_bone(&g_model[num], index, pos);
   return Py_BuildValue("i", ret);
 }
 

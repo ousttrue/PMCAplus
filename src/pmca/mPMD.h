@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
+#include <span>
 
 #define USHORT_MAX 65535
 
@@ -125,9 +126,8 @@ struct MODEL {
   std::vector<VERTEX> vt;
   std::vector<unsigned short> vt_index;
   std::vector<MATERIAL> mat;
+  std::vector<BONE> bone;
 
-  unsigned short bone_count;
-  BONE *bone;
   unsigned short IK_count;
   IK_LIST *IK_list;
   unsigned short skin_count;
@@ -155,7 +155,7 @@ struct MODEL {
 int translate(MODEL *model, LIST *list, short mode);
 
 int sort_bone(MODEL *model, LIST *list);
-int update_bone_index(MODEL *model, int index[]);
+int update_bone_index(MODEL *model, std::span<int> index);
 int sort_skin(MODEL *model, LIST *list);
 int sort_disp(MODEL *model, LIST *list);
 int rename_tail(MODEL *model);

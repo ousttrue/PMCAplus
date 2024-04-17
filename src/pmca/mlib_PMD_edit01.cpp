@@ -34,7 +34,7 @@ int translate(MODEL *model, LIST *list, short mode) {
       strncpy(model->header.comment_eng, model->header.comment, 256);
     }
 
-    for (int i = 0; i < model->bone_count; i++) {
+    for (int i = 0; i < model->bone.size(); i++) {
       int j = 0;
       for (; j < list->bone_count; j++) {
         if (strcmp(model->bone[i].name, list->bone[j]) == 0) {
@@ -98,7 +98,7 @@ int translate(MODEL *model, LIST *list, short mode) {
 #endif
 
   } else if (mode == 2) {
-    for (int i = 0; i < model->bone_count; i++) {
+    for (int i = 0; i < model->bone.size(); i++) {
       int j = 0;
       for (; j < list->bone_count; j++) {
         if (strcmp(model->bone[i].name, list->bone[j]) == 0) {
@@ -125,7 +125,7 @@ int translate(MODEL *model, LIST *list, short mode) {
       }
     }
   } else if (mode == 3) {
-    for (int i = 0; i < model->bone_count; i++) {
+    for (int i = 0; i < model->bone.size(); i++) {
       ;
       for (int j = 0; j < list->bone_count; j++) {
         if (strcmp(model->bone[i].name, list->bone_eng[j]) == 0) {
@@ -148,21 +148,12 @@ int translate(MODEL *model, LIST *list, short mode) {
 }
 
 int sort_bone(MODEL *model, LIST *list) {
-  int i, j;
-  int tmp;
-  int *index;
-  BONE *bone;
+  std::vector<int> index(model->bone.size());
+  std::vector<BONE> bone(model->bone.size());
 
-  index = (int *)malloc(model->bone_count * sizeof(int));
-  bone = (BONE *)malloc(model->bone_count * sizeof(BONE));
-
-#ifdef MEM_DBG
-  printf("malloc %p %p\n", index, bone);
-#endif
-
-  for (i = 0; i < model->bone_count; i++) {
+  for (int i = 0; i < model->bone.size(); i++) {
     index[i] = -1; // リストに無いボーンには-1
-    for (j = 0; j < list->bone_count; j++) {
+    for (int j = 0; j < list->bone_count; j++) {
       if (strcmp(list->bone[j], model->bone[i].name) == 0) {
         index[i] = j; // indexにリスト中の番号を代入
         break;
@@ -173,9 +164,10 @@ int sort_bone(MODEL *model, LIST *list) {
 #endif
   }
 
-  tmp = 0;
-  for (i = 0; i < list->bone_count; i++) {
-    for (j = 0; j < model->bone_count; j++) {
+  int tmp = 0;
+  for (int i = 0; i < list->bone_count; i++) {
+    int j = 0;
+    for (; j < model->bone.size(); j++) {
       if (index[j] == i) { // indexにiが存在したら
         // printf("index[%d]に%dが存在します\n", j, i);
         index[j] = index[j] - tmp;
@@ -188,15 +180,15 @@ int sort_bone(MODEL *model, LIST *list) {
     }
   }
   tmp = -1;
-  for (i = 0; i < model->bone_count; i++) {
+  for (int i = 0; i < model->bone.size(); i++) {
     if (tmp < index[i]) {
       tmp = index[i]; // indexの最大値を見つける
     }
   }
   tmp++;
-  for (i = 0; i < model->bone_count; i++) {
+  for (int i = 0; i < model->bone.size(); i++) {
     if (strcmp(model->bone[i].name, "-0") == 0) {
-      index[i] = model->bone_count - 1;
+      index[i] = model->bone.size() - 1;
     } else if (index[i] == -1) {
       index[i] = tmp;
       tmp++;
@@ -206,15 +198,14 @@ int sort_bone(MODEL *model, LIST *list) {
   // 親子関係修正
 
   {
-    int tmp_PBone_index;
-    for (i = 0; i < model->bone_count; i++) {
+    for (int i = 0; i < model->bone.size(); i++) {
       if (model->bone[i].PBone_index != 65535 &&
           index[model->bone[i].PBone_index] > index[i] &&
           strcmp(model->bone[i].name, "-0") != 0) {
 
         tmp = index[model->bone[i].PBone_index];
-        tmp_PBone_index = index[i];
-        for (j = 0; j < model->bone_count; j++) {
+        int tmp_PBone_index = index[i];
+        for (int j = 0; j < model->bone.size(); j++) {
           if (index[j] >= tmp_PBone_index && index[j] < tmp) {
             index[j]++; // 一つ後ろにずらす
           }
@@ -225,7 +216,7 @@ int sort_bone(MODEL *model, LIST *list) {
     }
   }
 
-  for (i = 0; i < model->bone_count; i++) { // ボーン並び変え
+  for (int i = 0; i < model->bone.size(); i++) { // ボーン並び変え
 #ifdef DEBUG
     printf("index[%d]=%d\n", i, index[i]);
 #endif
@@ -249,32 +240,26 @@ int sort_bone(MODEL *model, LIST *list) {
     } else {
       bone[index[i]].IKBone_index = index[model->bone[i].IKBone_index];
     }
-    for (j = 0; j < 3; j++) {
+    for (int j = 0; j < 3; j++) {
       bone[index[i]].loc[j] = model->bone[i].loc[j];
     }
   }
 
   update_bone_index(model, index);
 
-#ifdef MEM_DBG
-  printf("FREE %p %p\n", index, model->bone);
-#endif
-  FREE(model->bone);
-  FREE(index);
+  std::swap(model->bone, bone);
 
-  model->bone = bone;
-
-  if (strcmp(model->bone[model->bone_count - 1].name, "-0") == 0) {
-    model->bone_count--;
+  if (strcmp(model->bone[model->bone.size() - 1].name, "-0") == 0) {
+    model->bone.pop_back();
   }
   return 0;
 }
 
-int update_bone_index(MODEL *model, int index[]) {
+int update_bone_index(MODEL *model, std::span<int> index) {
   int i, j;
   IK_LIST *tmp_ik;
   unsigned short *tmp_disp;
-  char(*tmp_eng)[20];
+  // char(*tmp_eng)[20];
   unsigned short *tmp_rb;
 
   // 頂点のボーン番号を書き換え
@@ -566,14 +551,11 @@ int sort_disp(MODEL *model, LIST *list) {
 }
 
 int rename_tail(MODEL *model) {
-  int i, j, tmp;
-  int flag = 0;
-
   // 全てのbone tailに"-0"の名前をつける
-  for (i = 0; i < model->bone_count; i++) {
+  for (int i = 0; i < model->bone.size(); i++) {
     if (model->bone[i].type == 6 || model->bone[i].type == 7) {
-      flag = 0;
-      for (j = 0; j < model->bone_count; j++) {
+      int flag = 0;
+      for (int j = 0; j < model->bone.size(); j++) {
         if (model->bone[j].TBone_index == i) {
           flag = 1;
           break;
@@ -587,9 +569,9 @@ int rename_tail(MODEL *model) {
   }
 
   // 子ボーンがtailならば+親ボーン名という名前にする
-  for (i = 0; i < model->bone_count; i++) {
-    tmp = model->bone[i].TBone_index;
-    if (tmp < model->bone_count) {
+  for (int i = 0; i < model->bone.size(); i++) {
+    int tmp = model->bone[i].TBone_index;
+    if (tmp < model->bone.size()) {
       if (model->bone[tmp].type == 6 || model->bone[tmp].type == 7) {
         sprintf(model->bone[tmp].name, "+%s", model->bone[i].name);
         sprintf(model->bone[tmp].name_eng, "+%s", model->bone[i].name_eng);
@@ -712,7 +694,7 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz) {
   }
   // 変換するボーンの子をtmp_boneに格納
   len_bone = 0;
-  for (i = 0; i < (model->bone_count); i++) {
+  for (i = 0; i < (model->bone.size()); i++) {
     if (model->bone[i].PBone_index == index) {
       len_bone++;
     }
@@ -721,7 +703,7 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz) {
   diff_bone = (double(*)[3])MALLOC(sizeof(double) * len_bone * 3);
   index_bone = (unsigned int *)MALLOC(sizeof(unsigned int) * len_bone);
   j = 0;
-  for (i = 0; i < model->bone_count; i++) {
+  for (i = 0; i < model->bone.size(); i++) {
     if (model->bone[i].PBone_index == index) {
       index_bone[j] = i;
       for (k = 0; k < 3; k++) {
@@ -777,9 +759,9 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz) {
     }
   }
 
-  for (i = 0; i < model->bone_count; i++) {
+  for (i = 0; i < model->bone.size(); i++) {
     l = i;
-    for (j = 0; j < model->bone_count; j++) {
+    for (j = 0; j < model->bone.size(); j++) {
       if (model->bone[l].PBone_index == 65535) {
         break;
       } else if (model->bone[l].PBone_index == index) {
@@ -803,16 +785,13 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz) {
 }
 
 int bone_vec(MODEL *model, int index, double loc[], double vec[]) {
-  int i;
-  int tail;
-
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     loc[i] = model->bone[index].loc[i];
   }
 
-  tail = model->bone[index].TBone_index;
+  int tail = model->bone[index].TBone_index;
   if (tail == 0) {
-    for (i = 0; i < model->bone_count; i++) {
+    for (int i = 0; i < model->bone.size(); i++) {
       if (model->bone[index].PBone_index == index)
         tail = i;
       break;
@@ -821,7 +800,7 @@ int bone_vec(MODEL *model, int index, double loc[], double vec[]) {
   if (tail == 0)
     return -1;
 
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     vec[i] = model->bone[tail].loc[i] - model->bone[index].loc[i];
     // printf("%f ", vec[i]);
   }
@@ -902,18 +881,15 @@ int coordtrans_inv(double array[][3], unsigned int len, double loc[],
 }
 
 int move_bone(MODEL *model, unsigned int index, double diff[]) {
-  int i, j, k;
-  double tmp;
-
-  if (index > model->bone_count)
+  if (index > model->bone.size())
     return -1;
 
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     model->bone[index].loc[i] = model->bone[index].loc[i] + diff[i];
   }
-  for (i = 0; i < model->vt.size(); i++) {
-    k = 0;
-    tmp = 0.0;
+  for (int i = 0; i < model->vt.size(); i++) {
+    int k = 0;
+    double tmp = 0.0;
     if (model->vt[i].bone_num[0] == index) {
       tmp += (double)model->vt[i].bone_weight / 100;
       k = 1;
@@ -924,7 +900,7 @@ int move_bone(MODEL *model, unsigned int index, double diff[]) {
     }
 
     if (k == 1) {
-      for (j = 0; j < 3; j++) {
+      for (int j = 0; j < 3; j++) {
         model->vt[i].loc[j] = model->vt[i].loc[j] + diff[j] * tmp;
       }
     }
@@ -934,10 +910,8 @@ int move_bone(MODEL *model, unsigned int index, double diff[]) {
 }
 
 int index_bone(MODEL *model, const char bone[]) {
-  int i;
   int index = -1;
-
-  for (i = 0; i < model->bone_count; i++) {
+  for (int i = 0; i < model->bone.size(); i++) {
     if (strcmp(model->bone[i].name, bone) == 0) {
       index = i;
       break;
@@ -948,15 +922,13 @@ int index_bone(MODEL *model, const char bone[]) {
 }
 
 int move_model(MODEL *model, double diff[]) {
-  int i, j;
-
-  for (i = 0; i < model->bone_count; i++) {
-    for (j = 0; j < 3; j++) {
+  for (int i = 0; i < model->bone.size(); i++) {
+    for (int j = 0; j < 3; j++) {
       model->bone[i].loc[j] = model->bone[i].loc[j] + diff[j];
     }
   }
-  for (i = 0; i < model->vt.size(); i++) {
-    for (j = 0; j < 3; j++) {
+  for (int i = 0; i < model->vt.size(); i++) {
+    for (int j = 0; j < 3; j++) {
       model->vt[i].loc[j] = model->vt[i].loc[j] + diff[j];
     }
   }
@@ -965,22 +937,20 @@ int move_model(MODEL *model, double diff[]) {
 }
 
 int resize_model(MODEL *model, double size) {
-  int i, j, k;
-
-  for (i = 0; i < model->bone_count; i++) {
-    for (j = 0; j < 3; j++) {
+  for (int i = 0; i < model->bone.size(); i++) {
+    for (int j = 0; j < 3; j++) {
       model->bone[i].loc[j] = model->bone[i].loc[j] * size;
     }
   }
-  for (i = 0; i < model->vt.size(); i++) {
-    for (j = 0; j < 3; j++) {
+  for (int i = 0; i < model->vt.size(); i++) {
+    for (int j = 0; j < 3; j++) {
       model->vt[i].loc[j] = model->vt[i].loc[j] * size;
     }
   }
 
-  for (i = 1; i < model->skin_count; i++) {
-    for (j = 0; j < model->skin[i].skin_vt_count; j++) {
-      for (k = 0; k < 3; k++) {
+  for (int i = 1; i < model->skin_count; i++) {
+    for (int j = 0; j < model->skin[i].skin_vt_count; j++) {
+      for (int k = 0; k < 3; k++) {
         model->skin[i].data[j].loc[k] = model->skin[i].data[j].loc[k] * size;
       }
     }
@@ -990,25 +960,15 @@ int resize_model(MODEL *model, double size) {
 }
 
 int marge_bone(MODEL *model) {
-  int i, j, tmp;
-  int *index;
-  char *marge;
-  BONE *bone;
+  std::vector<int> index(model->bone.size());
+  std::vector<char> marge(model->bone.size());
+  std::vector<BONE> bone(model->bone.size());
 
-  index = (int *)MALLOC(model->bone_count * sizeof(int));
-  marge = (char *)MALLOC(model->bone_count * sizeof(char));
-  memset(marge, 0, model->bone_count * sizeof(char));
-  bone = (BONE *)MALLOC(model->bone_count * sizeof(BONE));
-
-#ifdef MEM_DBG
-  printf("malloc %p %p %p\n", index, marge, bone);
-#endif
-
-  tmp = 0;
-  for (i = 0; i < model->bone_count; i++) {
+  int tmp = 0;
+  for (int i = 0; i < model->bone.size(); i++) {
     if (marge[i] == 0) {
       index[i] = i - tmp;
-      for (j = i + 1; j < model->bone_count; j++) {
+      for (int j = i + 1; j < model->bone.size(); j++) {
         if (strcmp(model->bone[i].name, model->bone[j].name) == 0) {
           if (model->bone[i].type == 7) {
             model->bone[i].TBone_index = model->bone[j].TBone_index;
@@ -1023,55 +983,43 @@ int marge_bone(MODEL *model) {
     } else {
       tmp++;
     }
-#ifdef DEBUG
-    printf("%d:%d %d\n", i, index[i], marge[i]);
-#endif
+
+    // PLOG_DEBUG << i << ":" << index[i] << " " << marge[i];
   }
 
-  for (i = 0; i < model->bone_count; i++) {
-    if (index[i] >= model->bone_count) {
+  for (int i = 0; i < model->bone.size(); i++) {
+    if (index[i] >= model->bone.size()) {
       return -1;
     } else if (marge[i] == 0) {
       bone[index[i]] = model->bone[i];
-      if (model->bone[i].PBone_index >= model->bone_count) {
+      if (model->bone[i].PBone_index >= model->bone.size()) {
         bone[index[i]].PBone_index = 65535;
       } else {
-#ifdef DEBUG
-        printf("%d :%d %d \n", i, model->bone[i].PBone_index,
-               bone[index[i]].PBone_index);
-#endif
+        // PLOG_DEBUG << i << ":" << model->bone[i].PBone_index << " " << bone[index[i]].PBone_index;
         bone[index[i]].PBone_index = index[model->bone[i].PBone_index];
       }
       if (model->bone[i].TBone_index == 0 ||
-          model->bone[i].TBone_index >= model->bone_count) {
+          model->bone[i].TBone_index >= model->bone.size()) {
         bone[index[i]].TBone_index = 0;
       } else {
         bone[index[i]].TBone_index = index[model->bone[i].TBone_index];
       }
       bone[index[i]].type = model->bone[i].type;
       if (model->bone[i].IKBone_index == 0 ||
-          model->bone[i].IKBone_index >= model->bone_count) {
+          model->bone[i].IKBone_index >= model->bone.size()) {
         bone[index[i]].IKBone_index = 0;
       } else {
         bone[index[i]].IKBone_index = index[model->bone[i].IKBone_index];
       }
     }
   }
-#ifdef DEBUG
-  printf("ボーンインデックスをアップデート\n", index, marge, model->bone);
-#endif
+
+  PLOG_DEBUG << "ボーンインデックスをアップデート";
+
   update_bone_index(model, index);
-  model->bone_count = model->bone_count - tmp;
+  model->bone.resize(model->bone.size() - tmp);
 
-#ifdef MEM_DBG
-  printf("FREE %p %p %p\n", index, marge, model->bone);
-#endif
-
-  FREE(index);
-  FREE(marge);
-  FREE(model->bone);
-
-  model->bone = bone;
+  std::swap(model->bone, bone);
 
   return 0;
 }
@@ -1465,17 +1413,14 @@ int update_skin(MODEL *model) {
 }
 
 int adjust_joint(MODEL *model) {
-  int i, j;
   // 同じ名前のボーンにジョイントの位置を合わせる
-
-  for (i = 0; i < model->joint_count; i++) {
-    for (j = 0; j < model->bone_count; j++) {
+  for (int i = 0; i < model->joint_count; i++) {
+    for (int j = 0; j < model->bone.size(); j++) {
       if (strcmp(model->joint[i].name, model->bone[j].name) == 0) {
         memcpy(model->joint[i].loc, model->bone[j].loc, sizeof(float) * 3);
       }
     }
   }
-
   return 0;
 }
 
@@ -1485,7 +1430,7 @@ int show_detail(MODEL *model) {
   printf("頂点数:%zu\n", model->vt.size());
   printf("面頂点数:%zu\n", model->vt_index.size());
   printf("材質数:%zu\n", model->mat.size());
-  printf("ボーン数:%d\n", model->bone_count);
+  printf("ボーン数:%zu\n", model->bone.size());
   printf("IKデータ数:%d\n", model->IK_count);
   printf("表情数:%d\n", model->skin_count);
   printf("表情枠:%d\n", model->skin_disp_count);
