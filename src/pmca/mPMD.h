@@ -127,13 +127,9 @@ struct MODEL {
   std::vector<IK_LIST> IK;
   std::vector<SKIN> skin;
   std::vector<unsigned short> skin_disp;
+  std::vector<BONE_GROUP> bone_group;
+  std::vector<BONE_DISP> bone_disp;
 
-  unsigned char bone_group_count;
-  // char (*bone_group)[50];
-  // char (*bone_group_eng)[50];
-  BONE_GROUP *bone_group;
-  unsigned int bone_disp_count;
-  BONE_DISP *bone_disp;
   // extention
   unsigned char eng_support;
   // ENGLISH eng;

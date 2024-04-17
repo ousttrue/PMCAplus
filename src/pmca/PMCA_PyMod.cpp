@@ -124,8 +124,8 @@ static PyObject *getInfo(PyObject *self, PyObject *args) {
       "mat_count", model->mat.size(), "bone_count", model->bone.size(),
 
       "IK_count", model->IK.size(), "skin_count", model->skin.size(),
-      "bone_group_count", model->bone_group_count, "bone_disp_count",
-      model->bone_disp_count,
+      "bone_group_count", model->bone_group.size(), "bone_disp_count",
+      model->bone_disp.size(),
 
       "eng_support", model->eng_support, "rb_count", model->rbody_count,
       "joint_count", model->joint_count, "skin_index",
@@ -373,6 +373,8 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
   int IK_count;
   int skin_count;
   int skin_disp_count;
+  int bone_group_count;
+  int bone_disp_count;
   if (!PyArg_ParseTuple(args,
                         "i"
                         "yyyy"
@@ -384,8 +386,8 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
 
                         &vt_count, &vt_index_count, &mat_count, &bone_count,
 
-                        &IK_count, &skin_count, &model.bone_group_count,
-                        &model.bone_disp_count,
+                        &IK_count, &skin_count, &bone_group_count,
+                        &bone_disp_count,
 
                         &model.eng_support, &model.rbody_count,
                         &model.joint_count, &skin_disp_count, &PyTmp))
@@ -412,16 +414,8 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
   p->skin.resize(skin_count);
   p->skin_disp.resize(skin_disp_count);
   PyList_to_Array_UShort(p->skin_disp.data(), PyTmp, p->skin_disp.size());
-
-  // ボーン表示グループ
-  size = p->bone_group_count * sizeof(BONE_GROUP);
-  p->bone_group = (BONE_GROUP *)MALLOC(size);
-  memset(p->bone_group, 0, size);
-
-  // 表示ボーン
-  size = p->bone_disp_count * sizeof(BONE_DISP);
-  p->bone_disp = (BONE_DISP *)MALLOC(size);
-  memset(p->bone_disp, 0, size);
+  p->bone_group.resize(bone_group_count);
+  p->bone_disp.resize(bone_disp_count);
 
   // 剛体
   size = p->rbody_count * sizeof(RIGID_BODY);
@@ -736,70 +730,59 @@ static PyObject *setJoint(PyObject *self, PyObject *args) {
 }
 /*******************************************************************************/
 static PyObject *Set_List(PyObject *self, PyObject *args) {
-  int i;
   PyObject *bn, *bne, *sn, *sne, *gn, *gne;
-  PyObject *tmp;
-  char *p;
-  Py_ssize_t len = NAME_LEN;
-
-  // bone_count, name, name_eng, skin_count, name, name_eng, bone_group_count,
-  // name, name_eng
-  if (!PyArg_ParseTuple(args, "iOOiOOiOO", &list.bone_count, &bn, &bne,
-                        &list.skin_count, &sn, &sne, &list.disp_count, &gn,
-                        &gne))
+  int bone_count;
+  int skin_count;
+  int disp_count;
+  if (!PyArg_ParseTuple(args, "iOOiOOiOO", &bone_count, &bn, &bne, &skin_count,
+                        &sn, &sne, &disp_count, &gn, &gne))
     return NULL;
 
-  list.bone =
-      (char(*)[NAME_LEN])MALLOC(list.bone_count * sizeof(char) * NAME_LEN);
-  list.bone_eng =
-      (char(*)[NAME_LEN])MALLOC(list.bone_count * sizeof(char) * NAME_LEN);
-  list.skin =
-      (char(*)[NAME_LEN])MALLOC(list.skin_count * sizeof(char) * NAME_LEN);
-  list.skin_eng =
-      (char(*)[NAME_LEN])MALLOC(list.skin_count * sizeof(char) * NAME_LEN);
-  list.disp =
-      (char(*)[NAME_LEN])MALLOC(list.disp_count * sizeof(char) * NAME_LEN);
-  list.disp_eng =
-      (char(*)[NAME_LEN])MALLOC(list.disp_count * sizeof(char) * NAME_LEN);
-
-  p = NULL;
+  list.bone.resize(bone_count);
+  list.bone_eng.resize(bone_count);
+  list.skin.resize(skin_count);
+  list.skin_eng.resize(skin_count);
+  list.disp.resize(disp_count);
+  list.disp_eng.resize(disp_count);
 
   /*ボーン*/
-  for (i = 0; i < list.bone_count; i++) {
-    tmp = PyList_GetItem(bn, i);
+  for (int i = 0; i < bone_count; i++) {
+    auto tmp = PyList_GetItem(bn, i);
+    char *p = NULL;
+    Py_ssize_t len;
     PyBytes_AsStringAndSize(tmp, &p, &len);
-    strncpy(list.bone[i], p, NAME_LEN);
+    strncpy(list.bone[i].data(), p, NAME_LEN);
 
     tmp = PyList_GetItem(bne, i);
     PyBytes_AsStringAndSize(tmp, &p, &len);
-    strncpy(list.bone_eng[i], p, NAME_LEN);
+    strncpy(list.bone_eng[i].data(), p, NAME_LEN);
     // printf("%d %s\n", i, list.bone[i]);
   }
 
   /*表情*/
-  for (i = 0; i < list.skin_count; i++) {
-    tmp = PyList_GetItem(sn, i);
-    // strncpy(list.skin[i], PyBytes_AsString(tmp), NAME_LEN);
+  for (int i = 0; i < skin_count; i++) {
+    auto tmp = PyList_GetItem(sn, i);
+    char *p = NULL;
+    Py_ssize_t len;
     PyBytes_AsStringAndSize(tmp, &p, &len);
-    strncpy(list.skin[i], p, NAME_LEN);
+    strncpy(list.skin[i].data(), p, NAME_LEN);
 
     tmp = PyList_GetItem(sne, i);
-    // strncpy(list.skin_eng[i], PyBytes_AsString(tmp), NAME_LEN);
     PyBytes_AsStringAndSize(tmp, &p, &len);
-    strncpy(list.skin_eng[i], p, NAME_LEN);
+    strncpy(list.skin_eng[i].data(), p, NAME_LEN);
   }
 
   /*ボーングループ*/
-  for (i = 0; i < list.disp_count; i++) {
-    tmp = PyList_GetItem(gn, i);
-    // strncpy(list.disp[i], PyBytes_AsString(tmp), NAME_LEN);
+  for (int i = 0; i < disp_count; i++) {
+    auto tmp = PyList_GetItem(gn, i);
+    char *p = NULL;
+    Py_ssize_t len;
     PyBytes_AsStringAndSize(tmp, &p, &len);
-    strncpy(list.disp[i], p, NAME_LEN);
+    strncpy(list.disp[i].data(), p, NAME_LEN);
 
     tmp = PyList_GetItem(gne, i);
-    // strncpy(list.disp_eng[i], PyBytes_AsString(tmp), NAME_LEN);
     PyBytes_AsStringAndSize(tmp, &p, &len);
-    strncpy(list.disp_eng[i], p, NAME_LEN);
+    strncpy(list.disp_eng[i].data(), p, NAME_LEN);
   }
 
   return Py_BuildValue("i", 0);

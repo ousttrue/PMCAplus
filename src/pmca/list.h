@@ -1,18 +1,19 @@
 #pragma once
+#include <array>
 #include <string>
+#include <vector>
 
 #define NAME_LEN 128
 
 struct LIST {
-  unsigned int bone_count;
-  char (*bone)[NAME_LEN];
-  char (*bone_eng)[NAME_LEN];
-  unsigned int skin_count;
-  char (*skin)[NAME_LEN];
-  char (*skin_eng)[NAME_LEN];
-  unsigned int disp_count;
-  char (*disp)[NAME_LEN];
-  char (*disp_eng)[NAME_LEN];
+  std::vector<std::array<char, NAME_LEN>> bone;
+  std::vector<std::array<char, NAME_LEN>> bone_eng;
+
+  std::vector<std::array<char, NAME_LEN>> skin;
+  std::vector<std::array<char, NAME_LEN>> skin_eng;
+
+  std::vector<std::array<char, NAME_LEN>> disp;
+  std::vector<std::array<char, NAME_LEN>> disp_eng;
 
   int load(const std::string &file_name);
 };
