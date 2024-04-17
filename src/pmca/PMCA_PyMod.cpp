@@ -129,7 +129,7 @@ static PyObject *getInfo(PyObject *self, PyObject *args) {
 
       "eng_support", model->eng_support, "rb_count", model->rbody_count,
       "joint_count", model->joint_count, "skin_index",
-      Array_to_PyList_UShort(model->skin_index, model->skin_disp_count));
+      Array_to_PyList_UShort(model->skin_disp.data(), model->skin_disp.size()));
 }
 
 static PyObject *getVt(PyObject *self, PyObject *args) {
@@ -372,6 +372,7 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
   int bone_count;
   int IK_count;
   int skin_count;
+  int skin_disp_count;
   if (!PyArg_ParseTuple(args,
                         "i"
                         "yyyy"
@@ -387,7 +388,7 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
                         &model.bone_disp_count,
 
                         &model.eng_support, &model.rbody_count,
-                        &model.joint_count, &model.skin_disp_count, &PyTmp))
+                        &model.joint_count, &skin_disp_count, &PyTmp))
     return NULL;
 
   model.header.magic = "Pmd";
@@ -409,11 +410,8 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
   p->bone.resize(bone_count);
   p->IK.resize(IK_count);
   p->skin.resize(skin_count);
-
-  // 表情表示
-  size = p->skin_disp_count * sizeof(unsigned short);
-  p->skin_index = (unsigned short *)MALLOC(size);
-  PyList_to_Array_UShort(p->skin_index, PyTmp, p->skin_disp_count);
+  p->skin_disp.resize(skin_disp_count);
+  PyList_to_Array_UShort(p->skin_disp.data(), PyTmp, p->skin_disp.size());
 
   // ボーン表示グループ
   size = p->bone_group_count * sizeof(BONE_GROUP);
