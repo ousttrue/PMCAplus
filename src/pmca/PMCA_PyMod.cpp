@@ -3,8 +3,8 @@
 
 #include "PMCA_PyMod.h"
 #include "PMCA_renderer.h"
-#include "mPMD.h"
 #include "dbg.h"
+#include "mPMD.h"
 
 #define PMCA_MODULE
 #define MODEL_COUNT 16
@@ -121,7 +121,7 @@ static PyObject *getInfo(PyObject *self, PyObject *args) {
       "name", name, "name_eng", name_eng, "comment", comment, "comment_eng",
       comment_eng,
 
-      "vt_count", model->vt_count, "face_count", model->vt_index_count / 3,
+      "vt_count", model->vt.size(), "face_count", model->vt_index_count / 3,
       "mat_count", model->mat_count, "bone_count", model->bone_count,
 
       "IK_count", model->IK_count, "skin_count", model->skin_count,
@@ -139,7 +139,7 @@ static PyObject *getVt(PyObject *self, PyObject *args) {
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
     return NULL;
   model = &g_model[num];
-  if (model->vt_count <= i)
+  if (model->vt.size() <= i)
     Py_RETURN_NONE;
   return Py_BuildValue("{s:O,s:O,s:O,"
                        "s:i,s:i,"
@@ -366,6 +366,7 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
 
   create_PMD(&model);
 
+  int vt_count;
   if (!PyArg_ParseTuple(args,
                         "i"
                         "yyyy"
@@ -375,7 +376,7 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
                         "iO",
                         &num, &str[0], &str[1], &str[2], &str[3],
 
-                        &model.vt_count, &model.vt_index_count,
+                        &vt_count, &model.vt_index_count,
                         &model.mat_count, &model.bone_count,
 
                         &model.IK_count, &model.skin_count,
@@ -405,9 +406,7 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
 
   /*メモリ確保************************************************************************/
   // 頂点
-  size = p->vt_count * sizeof(VERTEX);
-  p->vt = (VERTEX *)MALLOC(size);
-  memset(p->vt, 0, size);
+  p->vt.resize(vt_count);
   // 面頂点
   size = p->vt_index_count * sizeof(unsigned short);
   p->vt_index = (unsigned short *)MALLOC(size);
@@ -479,7 +478,7 @@ static PyObject *setVt(PyObject *self, PyObject *args) {
   PyList_to_Array_Float(vt.uv, PyTmp[2], 2);
 
   model = &g_model[num];
-  if (model->vt_count <= i)
+  if (model->vt.size() <= i)
     Py_RETURN_NONE;
   model->vt[i] = vt;
   return Py_BuildValue("i", 0);
@@ -1109,7 +1108,7 @@ static PyObject *getWHT(PyObject *self, PyObject *args) {
   if (!PyArg_ParseTuple(args, "i", &num))
     return NULL;
 
-  for (i = 0; i < g_model[num].vt_count; i++) {
+  for (i = 0; i < g_model[num].vt.size(); i++) {
     for (j = 0; j < 3; j++) {
       if (g_model[num].vt[i].loc[j] > max[j]) {
         max[j] = g_model[num].vt[i].loc[j];

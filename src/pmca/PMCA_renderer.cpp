@@ -371,9 +371,9 @@ int make_dsp_model(MODEL *model, DSP_MODEL *dsp_model) {
   dsp_model->mats = NULL;
   dsp_model->texid = NULL;
 
-  loc = (float *)MALLOC(model->vt_count * 3 * sizeof(float));
-  nor = (float *)MALLOC(model->vt_count * 3 * sizeof(float));
-  uv = (float *)MALLOC(model->vt_count * 2 * sizeof(float));
+  loc = (float *)MALLOC(model->vt.size() * 3 * sizeof(float));
+  nor = (float *)MALLOC(model->vt.size() * 3 * sizeof(float));
+  uv = (float *)MALLOC(model->vt.size() * 2 * sizeof(float));
   mats = (DSP_MAT *)MALLOC(model->mat_count * sizeof(DSP_MAT));
   memset(mats, 0, model->mat_count * sizeof(DSP_MAT));
   texid = (GLuint *)MALLOC(model->mat_count * sizeof(GLuint));
@@ -388,7 +388,7 @@ int make_dsp_model(MODEL *model, DSP_MODEL *dsp_model) {
   dsp_model->texid = texid;
   dsp_model->mats_c = model->mat_count;
 
-  for (i = 0; i < model->vt_count; i++) {
+  for (i = 0; i < model->vt.size(); i++) {
     memcpy(loc, model->vt[i].loc, 2 * sizeof(float));
     loc += 2;
     *loc = -model->vt[i].loc[2];
