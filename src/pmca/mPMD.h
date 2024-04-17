@@ -12,12 +12,12 @@
 #define COMMENT_LEN 256
 
 struct HEADER { /*283byte*/
-  std::string magic = "Pmd";
+  std::array<char, 4> magic = {0};
   float version;
-  char name[NAME_LEN];
-  char comment[COMMENT_LEN];
-  char name_eng[NAME_LEN];
-  char comment_eng[COMMENT_LEN];
+  std::array<char, NAME_LEN> name = {0};
+  std::array<char, COMMENT_LEN> comment = {0};
+  std::array<char, NAME_LEN> name_eng = {0};
+  std::array<char, COMMENT_LEN> comment_eng = {0};
 };
 
 struct VERTEX { /*38byte*/

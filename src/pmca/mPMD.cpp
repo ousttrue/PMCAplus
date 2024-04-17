@@ -70,18 +70,23 @@ int load_PMD(MODEL *model, const std::string &file_name) {
   PLOG_DEBUG << file_name;
   model->path = file_name;
 
-  char magic[4] = {0};
-  FREAD(magic, 1, 3, pmd);
-  model->header.magic = magic;
-  FREAD(&model->header.version, 4, 1, pmd);
-
-  if (model->header.magic != "Pmd" || model->header.version != 1.0) {
-    printf("Format error\n");
+  FREAD(model->header.magic.data(), 1, 3, pmd);
+  if (model->header.magic != std::array<char, 4>{'P', 'm', 'd', '\0'}) {
+    PLOG_ERROR << "invalid magic:" << model->header.magic;
     return -1;
   }
 
-  FREAD(model->header.name, 1, 20, pmd);
-  FREAD(model->header.comment, 1, 256, pmd);
+  FREAD(&model->header.version, 4, 1, pmd);
+  if (model->header.version != 1.0) {
+    PLOG_ERROR << "invalid version:" << model->header.version;
+    return -1;
+  }
+
+  FREAD(model->header.name.data(), 1, 20, pmd);
+  PLOG_DEBUG << model->header.name.data();
+
+  FREAD(model->header.comment.data(), 1, 256, pmd);
+  PLOG_DEBUG << model->header.comment.data();
 
 #ifdef DEBUG
   printf("%s \n %f \n %s \n %s \n", model->header.magic, model->header.version,
@@ -253,10 +258,10 @@ int load_PMD(MODEL *model, const std::string &file_name) {
 
   if (model->eng_support == 1) {
     printf("英名対応PMD\n");
-    FREAD(model->header.name_eng, 1, 20, pmd);
+    FREAD(model->header.name_eng.data(), 1, 20, pmd);
     model->header.name_eng[21] = '\0';
 
-    FREAD(model->header.comment_eng, 1, 256, pmd);
+    FREAD(model->header.comment_eng.data(), 1, 256, pmd);
     model->header.comment_eng[255] = '\0';
 
     for (int i = 0; i < model->bone.size(); i++) {
@@ -278,8 +283,8 @@ int load_PMD(MODEL *model, const std::string &file_name) {
   } else {
     printf("英名非対応PMD\n");
 
-    *model->header.name_eng = '\0';
-    *model->header.comment_eng = '\0';
+    model->header.name_eng[0] = '\0';
+    model->header.comment_eng[0] = '\0';
 
     for (i = 0; i < model->bone.size(); i++) {
       *model->bone[i].name_eng = '\0';
@@ -404,13 +409,13 @@ int write_PMD(MODEL *model, const char file_name[]) {
   }*/
 
   // ヘッダー書き換え
-  model->header.magic = "Pmd";
+  model->header.magic = {'P', 'm', 'd', '\0'};
   model->header.version = 1.0;
 
-  fwrite(model->header.magic.c_str(), 3, 1, pmd);
+  fwrite(model->header.magic.data(), 3, 1, pmd);
   fwrite(&model->header.version, 4, 1, pmd);
-  fwrite(model->header.name, 20, 1, pmd);
-  fwrite(model->header.comment, 256, 1, pmd);
+  fwrite(model->header.name.data(), 20, 1, pmd);
+  fwrite(model->header.comment.data(), 256, 1, pmd);
 
   int vt_count = model->vt.size();
   fwrite(&vt_count, 4, 1, pmd);
@@ -518,8 +523,8 @@ int write_PMD(MODEL *model, const char file_name[]) {
   fwrite(&model->eng_support, 1, 1, pmd);
 
   if (model->eng_support == 1) {
-    fwrite(model->header.name_eng, 1, 20, pmd);
-    fwrite(model->header.comment_eng, 1, 256, pmd);
+    fwrite(model->header.name_eng.data(), 1, 20, pmd);
+    fwrite(model->header.comment_eng.data(), 1, 256, pmd);
     for (i = 0; i < model->bone.size(); i++) {
       fwrite(model->bone[i].name_eng, 1, 20, pmd);
     }
@@ -588,8 +593,9 @@ int print_PMD(MODEL *model, const char file_name[]) {
     return 1;
   }
 
-  fprintf(txt, "%s \n %f \n %s \n %s \n", model->header.magic.c_str(),
-          model->header.version, model->header.name, model->header.comment);
+  fprintf(txt, "%s \n %f \n %s \n %s \n", model->header.magic.data(),
+          model->header.version, model->header.name.data(),
+          model->header.comment.data());
 
   for (i = 0; i < model->vt.size(); i++) {
     fprintf(txt, "No:%d\n", i);
@@ -705,8 +711,8 @@ int print_PMD(MODEL *model, const char file_name[]) {
 
   fprintf(txt, "英名対応:%d\n", model->eng_support);
   if (model->eng_support == 1) {
-    fprintf(txt, "%s\n", model->header.name_eng);
-    fprintf(txt, "%s\n", model->header.comment_eng);
+    fprintf(txt, "%s\n", model->header.name_eng.data());
+    fprintf(txt, "%s\n", model->header.comment_eng.data());
     for (i = 0; i < model->bone.size(); i++) {
       fprintf(txt, "%s\n", model->bone[i].name_eng);
     }
@@ -782,8 +788,8 @@ int print_PMD(MODEL *model, const char file_name[]) {
 }
 
 int create_PMD(MODEL *model) {
-  strcpy(model->header.name, "");
-  strcpy(model->header.comment, "");
+  model->header.name = {0};
+  model->header.comment = {0};
   model->vt.clear();
   model->vt_index.clear();
   model->mat.clear();
@@ -1150,8 +1156,9 @@ int listup_bone(MODEL *model, const char file_name[]) {
     return 1;
   }
 
-  fprintf(txt, "%s \n %f \n %s \n %s \n", model->header.magic.c_str(),
-          model->header.version, model->header.name, model->header.comment);
+  fprintf(txt, "%s \n %f \n %s \n %s \n", model->header.magic.data(),
+          model->header.version, model->header.name.data(),
+          model->header.comment.data());
 
   fprintf(txt, "ボーン数:%zu\n", model->bone.size());
 

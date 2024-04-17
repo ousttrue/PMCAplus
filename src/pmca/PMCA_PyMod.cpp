@@ -393,12 +393,12 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
                         &model.joint_count, &skin_disp_count, &PyTmp))
     return NULL;
 
-  model.header.magic = "Pmd";
+  model.header.magic = {'P', 'm', 'd', '\0'};
   model.header.version = 1.0;
-  strncpy(model.header.name, str[0], NAME_LEN);
-  strncpy(model.header.comment, str[1], 256);
-  strncpy(model.header.name_eng, str[2], NAME_LEN);
-  strncpy(model.header.comment_eng, str[3], 256);
+  strncpy(model.header.name.data(), str[0], NAME_LEN);
+  strncpy(model.header.comment.data(), str[1], 256);
+  strncpy(model.header.name_eng.data(), str[2], NAME_LEN);
+  strncpy(model.header.comment_eng.data(), str[3], 256);
 
   auto p = &g_model[num];
 
@@ -800,10 +800,10 @@ static PyObject *Set_Name_Comment(PyObject *self, PyObject *args) {
   if (!PyArg_ParseTuple(args, "iyyyy", &num, &name, &comment, &name_eng,
                         &comment_eng))
     return NULL;
-  strncpy(g_model[num].header.name, name, NAME_LEN);
-  strncpy(g_model[num].header.comment, comment, COMMENT_LEN);
-  strncpy(g_model[num].header.name_eng, name_eng, NAME_LEN);
-  strncpy(g_model[num].header.comment_eng, comment_eng, COMMENT_LEN);
+  strncpy(g_model[num].header.name.data(), name, NAME_LEN);
+  strncpy(g_model[num].header.comment.data(), comment, COMMENT_LEN);
+  strncpy(g_model[num].header.name_eng.data(), name_eng, NAME_LEN);
+  strncpy(g_model[num].header.comment_eng.data(), comment_eng, COMMENT_LEN);
   return Py_BuildValue("i", 0);
 }
 

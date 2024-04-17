@@ -25,13 +25,8 @@ int translate(MODEL *model, LIST *list, short mode) {
 
     if (model->eng_support != 1) {
       model->eng_support = 1;
-      // sprintf(model->skin[0].name, "base");
-      /*puts("test point");
-      FREE(model->skin);
-      puts("end test");
-      exit(1);*/
-      strncpy(model->header.name_eng, model->header.name, NAME_LEN);
-      strncpy(model->header.comment_eng, model->header.comment, 256);
+      model->header.name_eng = model->header.name;
+      model->header.comment_eng = model->header.comment;
     }
 
     for (int i = 0; i < model->bone.size(); i++) {
@@ -1265,8 +1260,9 @@ int adjust_joint(MODEL *model) {
 }
 
 int show_detail(MODEL *model) {
-  printf("%s \n %f \n %s \n %s \n", model->header.magic.c_str(),
-         model->header.version, model->header.name, model->header.comment);
+  printf("%s \n %f \n %s \n %s \n", model->header.magic.data(),
+         model->header.version, model->header.name.data(),
+         model->header.comment.data());
   printf("頂点数:%zu\n", model->vt.size());
   printf("面頂点数:%zu\n", model->vt_index.size());
   printf("材質数:%zu\n", model->mat.size());
