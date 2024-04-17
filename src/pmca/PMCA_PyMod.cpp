@@ -242,7 +242,7 @@ static PyObject *getSkin(PyObject *self, PyObject *args) {
       "{s:y,s:y,"
       "s:i,s:i}",
       "name", model->skin[i].name, "name_eng", model->skin[i].name_eng, "count",
-      (int)model->skin[i].skin_vt_count, "type", (int)model->skin[i].type);
+      (int)model->skin[i].skin_vt.size(), "type", (int)model->skin[i].type);
 }
 
 static PyObject *getSkindata(PyObject *self, PyObject *args) {
@@ -251,10 +251,10 @@ static PyObject *getSkindata(PyObject *self, PyObject *args) {
   if (!PyArg_ParseTuple(args, "iii", &num, &i, &j))
     return NULL;
   model = &g_model[num];
-  return Py_BuildValue("{s:i,s:[fff]}", "index", model->skin[i].data[j].index,
-                       "loc", model->skin[i].data[j].loc[0],
-                       model->skin[i].data[j].loc[1],
-                       model->skin[i].data[j].loc[2]);
+  return Py_BuildValue(
+      "{s:i,s:[fff]}", "index", model->skin[i].skin_vt[j].index, "loc",
+      model->skin[i].skin_vt[j].loc[0], model->skin[i].skin_vt[j].loc[1],
+      model->skin[i].skin_vt[j].loc[2]);
 }
 
 static PyObject *getBone_group(PyObject *self, PyObject *args) {
@@ -560,8 +560,9 @@ static PyObject *setSkin(PyObject *self, PyObject *args) {
   int num, i;
   SKIN skin;
   char *str[2];
+  int skin_vt_count;
   if (!PyArg_ParseTuple(args, "iiyyib", &num, &i, &str[0], &str[1],
-                        &skin.skin_vt_count, &skin.type))
+                        &skin_vt_count, &skin.type))
     return NULL;
 
   auto model = &g_model[num];
@@ -572,19 +573,8 @@ static PyObject *setSkin(PyObject *self, PyObject *args) {
   strncpy(skin.name_eng, str[1], NAME_LEN);
 
   // メモリ確保
-  auto size = skin.skin_vt_count * sizeof(SKIN_DATA);
-  if (model->skin[i].skin_vt_count != skin.skin_vt_count) {
-    FREE(model->skin[i].data);
-    model->skin[i].data = NULL;
-  }
-  if (model->skin[i].data == NULL) {
-    skin.data = (SKIN_DATA *)MALLOC(size);
-  } else {
-    skin.data = model->skin[i].data;
-  }
-
+  skin.skin_vt.resize(skin_vt_count);
   model->skin[i] = skin;
-
   return Py_BuildValue("i", 0);
 }
 
@@ -599,10 +589,10 @@ static PyObject *setSkindata(PyObject *self, PyObject *args) {
   if (model->skin.size() <= i)
     Py_RETURN_NONE;
 
-  if (model->skin[i].skin_vt_count <= j)
+  if (model->skin[i].skin_vt.size() <= j)
     Py_RETURN_NONE;
 
-  model->skin[i].data[j] = data;
+  model->skin[i].skin_vt[j] = data;
   return Py_BuildValue("i", 0);
 }
 

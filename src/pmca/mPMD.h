@@ -70,9 +70,8 @@ struct SKIN_DATA { /*16byte*/
 struct SKIN { /*25+16*skin_vt_count byte*/
   char name[NAME_LEN];
   char name_eng[NAME_LEN];
-  unsigned int skin_vt_count;
   unsigned char type;
-  SKIN_DATA *data;
+  std::vector<SKIN_DATA> skin_vt;
 };
 
 struct BONE_GROUP { /*3 byte*/

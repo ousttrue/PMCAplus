@@ -193,18 +193,16 @@ int load_PMD(MODEL *model, const std::string &file_name) {
   model->skin.resize(skin_count);
   for (int i = 0; i < skin_count; i++) {
     FREAD(model->skin[i].name, 1, 20, pmd);
-    FREAD(&model->skin[i].skin_vt_count, 4, 1, pmd);
+    int skin_vt_count;
+    FREAD(&skin_vt_count, 4, 1, pmd);
     FREAD(&model->skin[i].type, 1, 1, pmd);
-    model->skin[i].data = (SKIN_DATA *)MALLOC(
-        (size_t)model->skin[i].skin_vt_count * sizeof(SKIN_DATA));
-    if (model->skin[i].data == NULL)
-      return -1;
-    for (int j = 0; j < model->skin[i].skin_vt_count; j++) {
-      FREAD(&model->skin[i].data[j].index, 4, 1, pmd);
-      if (model->skin[i].data[j].index > model->vt.size()) {
+    model->skin[i].skin_vt.resize(skin_vt_count);
+    for (int j = 0; j < skin_vt_count; j++) {
+      FREAD(&model->skin[i].skin_vt[j].index, 4, 1, pmd);
+      if (model->skin[i].skin_vt[j].index > model->vt.size()) {
         exit(1);
       }
-      FREAD(&model->skin[i].data[j].loc, 4, 3, pmd);
+      FREAD(&model->skin[i].skin_vt[j].loc, 4, 3, pmd);
     }
     model->skin[i].name_eng[0] = '\0';
     model->skin[i].name[20] = '\0';
@@ -501,11 +499,12 @@ int write_PMD(MODEL *model, const char file_name[]) {
   fwrite(&skin_count, 2, 1, pmd);
   for (i = 0; i < model->skin.size(); i++) {
     fwrite(model->skin[i].name, 1, 20, pmd);
-    fwrite(&model->skin[i].skin_vt_count, 4, 1, pmd);
+    int skin_vt_count = model->skin[i].skin_vt.size();
+    fwrite(&skin_vt_count, 4, 1, pmd);
     fwrite(&model->skin[i].type, 1, 1, pmd);
-    for (j = 0; j < model->skin[i].skin_vt_count; j++) {
-      fwrite(&model->skin[i].data[j].index, 4, 1, pmd);
-      fwrite(model->skin[i].data[j].loc, 4, 3, pmd);
+    for (j = 0; j < model->skin[i].skin_vt.size(); j++) {
+      fwrite(&model->skin[i].skin_vt[j].index, 4, 1, pmd);
+      fwrite(model->skin[i].skin_vt[j].loc, 4, 3, pmd);
     }
   }
   PLOG_DEBUG << "表情";
@@ -691,12 +690,12 @@ int print_PMD(MODEL *model, const char file_name[]) {
   fprintf(txt, "表情数:%zu\n", model->skin.size());
   for (i = 0; i < model->skin.size(); i++) {
     fprintf(txt, "表情名:%s\n", model->skin[i].name);
-    fprintf(txt, "表情頂点数:%d\n", model->skin[i].skin_vt_count);
+    fprintf(txt, "表情頂点数:%zu\n", model->skin[i].skin_vt.size());
     fprintf(txt, "表情タイプ:%d\n", model->skin[i].type);
-    for (int j = 0; j < model->skin[i].skin_vt_count; j++) {
-      fprintf(txt, "%d ", model->skin[i].data[j].index);
+    for (int j = 0; j < model->skin[i].skin_vt.size(); j++) {
+      fprintf(txt, "%d ", model->skin[i].skin_vt[j].index);
       for (int k = 0; k < 3; k++) {
-        fprintf(txt, "%f ", model->skin[i].data[j].loc[k]);
+        fprintf(txt, "%f ", model->skin[i].skin_vt[j].loc[k]);
       }
       fprintf(txt, "\n");
     }
@@ -843,11 +842,6 @@ int delete_PMD(MODEL *model) {
   model->mat.clear();
   model->bone.clear();
   model->IK.clear();
-  for (int i = 0; i < model->skin.size(); i++) {
-    PLOG_DEBUG << i;
-    FREE(model->skin[i].data);
-    model->skin[i].data = NULL;
-  }
   model->skin.clear();
 
   FREE(model->skin_index);
@@ -892,14 +886,6 @@ int copy_PMD(MODEL *out, MODEL *model) {
   out->bone = model->bone;
   out->IK = model->IK;
   out->skin = model->skin;
-  for (int i = 0; i < model->skin.size(); i++) {
-    out->skin[i] = model->skin[i];
-    auto size = (size_t)out->skin[i].skin_vt_count * sizeof(SKIN_DATA);
-    out->skin[i].data = (SKIN_DATA *)MALLOC(size);
-    if (out->skin[i].data == NULL)
-      return -1;
-    memcpy(out->skin[i].data, model->skin[i].data, size);
-  }
 
   // 表情表示
   out->skin_disp_count = model->skin_disp_count;
@@ -1072,81 +1058,51 @@ int add_PMD(MODEL *model, MODEL *add) {
   if (add->skin.size() == 0) {
     for (i = 0; i < skin.size(); i++) {
       skin[i] = model->skin[i];
-      size = (size_t)skin[i].skin_vt_count * sizeof(SKIN_DATA);
-      skin[i].data = (SKIN_DATA *)MALLOC(size);
-      if (skin[i].data == NULL)
-        return -1;
-      memcpy(skin[i].data, model->skin[i].data, size);
     }
-
   } else if (model->skin.size() == 0) {
     for (i = 0; i < skin.size(); i++) {
       skin[i] = add->skin[i];
-      size = (size_t)skin[i].skin_vt_count * sizeof(SKIN_DATA);
-      skin[i].data = (SKIN_DATA *)MALLOC(size);
-      if (skin[i].data == NULL)
-        return -1;
-      memcpy(skin[i].data, add->skin[i].data, size);
     }
-    for (i = 0; i < skin[0].skin_vt_count; i++) {
-      skin[0].data[i].index = skin[0].data[i].index + model->vt.size();
-    }
-
   } else if (model->skin.size() != 0 && add->skin.size() != 0) {
     skin.pop_back();
     skin[0] = model->skin[0];
-    skin[0].skin_vt_count =
-        model->skin[0].skin_vt_count + add->skin[0].skin_vt_count;
-    size = (size_t)skin[0].skin_vt_count * sizeof(SKIN_DATA);
-    skin[0].data = (SKIN_DATA *)MALLOC(size);
-    if (skin[0].data == NULL)
-      return -1;
-    tmp[0] = model->skin[0].skin_vt_count;
-    memcpy(skin[0].data, model->skin[0].data, tmp[0] * sizeof(SKIN_DATA));
-    memcpy(&skin[0].data[tmp[0]], add->skin[0].data,
-           add->skin[0].skin_vt_count * sizeof(SKIN_DATA));
+    skin[0].skin_vt.resize(model->skin[0].skin_vt.size() +
+                           add->skin[0].skin_vt.size());
+    auto tmp = model->skin[0].skin_vt.size();
+    memcpy(skin[0].skin_vt.data(), model->skin[0].skin_vt.data(),
+           tmp * sizeof(SKIN_DATA));
+    memcpy(&skin[0].skin_vt[tmp], add->skin[0].skin_vt.data(),
+           add->skin[0].skin_vt.size() * sizeof(SKIN_DATA));
     // baseの合成
 
-    for (i = 0; i < model->skin[0].skin_vt_count; i++) {
-      skin[0].data[i].index = model->skin[0].data[i].index;
+    for (i = 0; i < model->skin[0].skin_vt.size(); i++) {
+      skin[0].skin_vt[i].index = model->skin[0].skin_vt[i].index;
     }
     // printf("%d %d %d\n", skin[0].skin_vt_count, model->skin[0].skin_vt_count,
     // add->skin[0].skin_vt_count);
     j = 0;
-    for (i = model->skin[0].skin_vt_count; i < skin[0].skin_vt_count; i++) {
+    for (i = model->skin[0].skin_vt.size(); i < skin[0].skin_vt.size(); i++) {
       // printf("%d \n", i);
-      skin[0].data[i].index = add->skin[0].data[j].index + model->vt.size();
+      skin[0].skin_vt[i].index =
+          add->skin[0].skin_vt[j].index + model->vt.size();
       j++;
     }
     // 表情追加
     for (i = 1; i < model->skin.size(); i++) {
       skin[i] = model->skin[i];
-      size = (size_t)skin[i].skin_vt_count * sizeof(SKIN_DATA);
-      skin[i].data = (SKIN_DATA *)MALLOC(size);
-      if (skin[i].data == NULL)
-        return -1;
-      memcpy(skin[i].data, model->skin[i].data, size);
       // printf("%d %d \n", i, size);
     }
     j = 1;
     for (i = model->skin.size(); i < skin.size(); i++) {
       // printf("%d\n", j);
       skin[i] = add->skin[j];
-      size = (size_t)skin[i].skin_vt_count * sizeof(SKIN_DATA);
-      skin[i].data = (SKIN_DATA *)MALLOC(size);
-      if (skin[i].data == NULL)
-        return -1;
-      memcpy(skin[i].data, add->skin[j].data, size);
-      for (k = 0; k < skin[i].skin_vt_count; k++) {
-        skin[i].data[k].index =
-            skin[i].data[k].index + model->skin[0].skin_vt_count;
+      for (k = 0; k < skin[i].skin_vt.size(); k++) {
+        skin[i].skin_vt[k].index =
+            skin[i].skin_vt[k].index + model->skin[0].skin_vt.size();
       }
       j++;
     }
   }
-#ifdef DEBUG
-  printf("表情\n");
-#endif
 
   // 表情表示
   skin_disp_count = model->skin_disp_count + add->skin_disp_count;
@@ -1251,10 +1207,6 @@ int add_PMD(MODEL *model, MODEL *add) {
   std::swap(model->mat, mat);
   std::swap(model->bone, bone);
   std::swap(model->IK, IK);
-  for (i = 0; i < model->skin.size(); i++) {
-    FREE(model->skin[i].data);
-    model->skin[i].data = NULL;
-  }
   std::swap(model->skin, skin);
 
 #ifdef MEM_DBG

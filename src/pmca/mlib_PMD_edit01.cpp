@@ -893,9 +893,10 @@ int resize_model(MODEL *model, double size) {
   }
 
   for (int i = 1; i < model->skin.size(); i++) {
-    for (int j = 0; j < model->skin[i].skin_vt_count; j++) {
+    for (int j = 0; j < model->skin[i].skin_vt.size(); j++) {
       for (int k = 0; k < 3; k++) {
-        model->skin[i].data[j].loc[k] = model->skin[i].data[j].loc[k] * size;
+        model->skin[i].skin_vt[j].loc[k] =
+            model->skin[i].skin_vt[j].loc[k] * size;
       }
     }
   }
@@ -1330,10 +1331,11 @@ int update_skin(MODEL *model) {
   // 表情baseの頂点位置を更新する
   if (model->skin.size() == 0)
     return 0;
-  for (int i = 0; i < model->skin[0].skin_vt_count; i++) {
+
+  for (int i = 0; i < model->skin[0].skin_vt.size(); i++) {
     for (int j = 0; j < 3; j++) {
-      int k = model->skin[0].data[i].index;
-      model->skin[0].data[i].loc[j] = model->vt[k].loc[j];
+      int k = model->skin[0].skin_vt[i].index;
+      model->skin[0].skin_vt[i].loc[j] = model->vt[k].loc[j];
     }
   }
   return 0;
