@@ -49,11 +49,8 @@ int translate(MODEL *model, LIST *list, short mode) {
         }
       }
     }
-#ifdef DEBUG
-    printf("bone\n");
-#endif
 
-    for (int i = 1; i < model->skin_count; i++) {
+    for (int i = 1; i < model->skin.size(); i++) {
       int j = 1;
       for (; j < list->skin_count; j++) {
         if (strcmp(model->skin[i].name, list->skin[j]) == 0) {
@@ -111,7 +108,7 @@ int translate(MODEL *model, LIST *list, short mode) {
         strncpy(model->bone[i].name, model->bone[i].name_eng, NAME_LEN);
       }
     }
-    for (int i = 0; i < model->skin_count; i++) {
+    for (int i = 0; i < model->skin.size(); i++) {
       int j = 0;
       for (; j < list->skin_count; j++) {
         if (strcmp(model->skin[i].name, list->skin[j]) == 0) {
@@ -134,7 +131,7 @@ int translate(MODEL *model, LIST *list, short mode) {
         }
       }
     }
-    for (int i = 0; i < model->skin_count; i++) {
+    for (int i = 0; i < model->skin.size(); i++) {
       for (int j = 0; j < list->skin_count; j++) {
         if (strcmp(model->skin[i].name, list->skin_eng[j]) == 0) {
           strncpy(model->skin[i].name, list->skin[j], NAME_LEN);
@@ -333,34 +330,25 @@ int update_bone_index(MODEL *model, std::span<int> index) {
 }
 
 int sort_skin(MODEL *model, LIST *list) {
-  int i, j;
-  int tmp;
-  int *index;
-  SKIN *skin;
 
-  index = (int *)MALLOC(model->skin_count * sizeof(int));
-  skin = (SKIN *)MALLOC(model->skin_count * sizeof(SKIN));
+  std::vector<int> index(model->skin.size());
+  std::vector<SKIN> skin(model->skin.size());
 
-#ifdef MEM_DBG
-  printf("malloc %p %p\n", index, skin);
-#endif
-
-  for (i = 0; i < model->skin_count; i++) {
+  for (int i = 0; i < model->skin.size(); i++) {
     index[i] = -1; // リストに無い表情には-1
-    for (j = 0; j < list->skin_count; j++) {
+    for (int j = 0; j < list->skin_count; j++) {
       if (strcmp(list->skin[j], model->skin[i].name) == 0) {
         index[i] = j; // indexにリスト中の番号を代入
         break;
       }
     }
-#ifdef DEBUG
-    printf("index[%d]=%d\n", i, index[i]);
-#endif
+    PLOG_DEBUG << "index[" << i << "]=" << index[i];
   }
 
-  tmp = 0;
-  for (i = 0; i < list->skin_count; i++) {
-    for (j = 0; j < model->skin_count; j++) {
+  int tmp = 0;
+  for (int i = 0; i < list->skin_count; i++) {
+    int j = 0;
+    for (; j < model->skin.size(); j++) {
       if (index[j] == i) { // indexにiが存在したら
         // printf("index[%d]に%dが存在します\n", j, i);
         index[j] = index[j] - tmp;
@@ -373,37 +361,29 @@ int sort_skin(MODEL *model, LIST *list) {
     }
   }
   tmp = -1;
-  for (i = 0; i < model->skin_count; i++) {
+  for (int i = 0; i < model->skin.size(); i++) {
     if (tmp < index[i]) {
       tmp = index[i]; // indexの最大値を見つける
     }
   }
   tmp++;
-  for (i = 0; i < model->skin_count; i++) {
+  for (int i = 0; i < model->skin.size(); i++) {
     if (index[i] == -1) {
       index[i] = tmp;
       tmp++;
     }
   }
 
-  for (i = 0; i < model->skin_count; i++) { // 表情並び変え
-#ifdef DEBUG
-    printf("index[%d]=%d\n", i, index[i]);
-#endif
+  for (int i = 0; i < model->skin.size(); i++) { // 表情並び変え
+    PLOG_DEBUG << "index[" << i << "]=" << index[i];
     skin[index[i]] = model->skin[i];
   }
 
-  for (i = 0; i < model->skin_disp_count; i++) { // 表情並び変え
+  for (int i = 0; i < model->skin_disp_count; i++) { // 表情並び変え
     model->skin_index[i] = i + 1;
   }
 
-#ifdef MEM_DBG
-  printf("FREE %p %p\n", index, model->skin);
-#endif
-  FREE(model->skin);
-  FREE(index);
-
-  model->skin = skin;
+  std::swap(model->skin, skin);
 
   return 0;
 }
@@ -912,7 +892,7 @@ int resize_model(MODEL *model, double size) {
     }
   }
 
-  for (int i = 1; i < model->skin_count; i++) {
+  for (int i = 1; i < model->skin.size(); i++) {
     for (int j = 0; j < model->skin[i].skin_vt_count; j++) {
       for (int k = 0; k < 3; k++) {
         model->skin[i].data[j].loc[k] = model->skin[i].data[j].loc[k] * size;
@@ -1347,13 +1327,12 @@ int marge_rb(MODEL *model) {
 }
 
 int update_skin(MODEL *model) {
-  int i, j, k;
   // 表情baseの頂点位置を更新する
-  if (model->skin_count == 0)
+  if (model->skin.size() == 0)
     return 0;
-  for (i = 0; i < model->skin[0].skin_vt_count; i++) {
-    for (j = 0; j < 3; j++) {
-      k = model->skin[0].data[i].index;
+  for (int i = 0; i < model->skin[0].skin_vt_count; i++) {
+    for (int j = 0; j < 3; j++) {
+      int k = model->skin[0].data[i].index;
       model->skin[0].data[i].loc[j] = model->vt[k].loc[j];
     }
   }
@@ -1380,7 +1359,7 @@ int show_detail(MODEL *model) {
   printf("材質数:%zu\n", model->mat.size());
   printf("ボーン数:%zu\n", model->bone.size());
   printf("IKデータ数:%zu\n", model->IK.size());
-  printf("表情数:%d\n", model->skin_count);
+  printf("表情数:%zu\n", model->skin.size());
   printf("表情枠:%d\n", model->skin_disp_count);
   printf("ボーン枠:%d\n", model->bone_group_count);
   printf("表示ボーン数:%d\n", model->bone_disp_count);

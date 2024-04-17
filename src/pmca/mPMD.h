@@ -1,7 +1,6 @@
 #pragma once
 #include "list.h"
 #include <span>
-#include <stdint.h>
 #include <stdio.h>
 #include <string>
 #include <vector>
@@ -127,9 +126,8 @@ struct MODEL {
   std::vector<MATERIAL> mat;
   std::vector<BONE> bone;
   std::vector<IK_LIST> IK;
+  std::vector<SKIN> skin;
 
-  unsigned short skin_count;
-  SKIN *skin;
   unsigned char skin_disp_count;
   unsigned short *skin_index;
   unsigned char bone_group_count;
