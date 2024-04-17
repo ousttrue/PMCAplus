@@ -1,5 +1,7 @@
 #pragma once
 #include <stdio.h>
+#include <stdint.h>
+#include <vector>
 
 #define USHORT_MAX 65535
 
@@ -149,6 +151,7 @@ struct MODEL {
   char toon_path[10][PATH_LEN];
   unsigned int rbody_count;
   RIGID_BODY *rbody;
+
   unsigned int joint_count;
   JOINT *joint;
 };

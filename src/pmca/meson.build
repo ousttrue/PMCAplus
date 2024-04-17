@@ -17,7 +17,7 @@ imgui_dep = dependency(
     default_options: ['default_library=static'],
 )
 
-deps = [py_dep, glfw_dep, imgui_dep, gl_dep, glu_dep]
+deps = [py_dep, glfw_dep, imgui_dep, gl_dep, glu_dep, plog_dep]
 
 # if get_option('buildtype') == 'debug'
 #     python_debug_dep = cc.find_library(
@@ -36,6 +36,7 @@ py.extension_module(
     'mlib_PMD_edit01.cpp',
     'mlib_PMD_rw01.cpp',
     'quat.cpp',
+    'ioutil.cpp',
     install: true,
     install_dir: 'bin',
     dependencies: deps,
