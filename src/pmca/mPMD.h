@@ -124,9 +124,8 @@ struct MODEL {
 
   std::vector<VERTEX> vt;
   std::vector<unsigned short> vt_index;
+  std::vector<MATERIAL> mat;
 
-  unsigned int mat_count;
-  MATERIAL *mat;
   unsigned short bone_count;
   BONE *bone;
   unsigned short IK_count;

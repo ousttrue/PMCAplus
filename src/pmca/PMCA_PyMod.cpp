@@ -122,7 +122,7 @@ static PyObject *getInfo(PyObject *self, PyObject *args) {
       comment_eng,
 
       "vt_count", model->vt.size(), "face_count", model->vt_index.size() / 3,
-      "mat_count", model->mat_count, "bone_count", model->bone_count,
+      "mat_count", model->mat.size(), "bone_count", model->bone_count,
 
       "IK_count", model->IK_count, "skin_count", model->skin_count,
       "bone_group_count", model->bone_group_count, "bone_disp_count",
@@ -171,7 +171,7 @@ static PyObject *getMat(PyObject *self, PyObject *args) {
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
     return NULL;
   model = &g_model[num];
-  if (model->mat_count <= i)
+  if (model->mat.size() <= i)
     Py_RETURN_NONE;
   return Py_BuildValue(
       "{s:O,s:f,s:f,"
@@ -368,6 +368,7 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
 
   int vt_count;
   int vt_index_count;
+  int mat_count;
   if (!PyArg_ParseTuple(args,
                         "i"
                         "yyyy"
@@ -377,7 +378,7 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
                         "iO",
                         &num, &str[0], &str[1], &str[2], &str[3],
 
-                        &vt_count, &vt_index_count, &model.mat_count,
+                        &vt_count, &vt_index_count, &mat_count,
                         &model.bone_count,
 
                         &model.IK_count, &model.skin_count,
@@ -409,11 +410,8 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
   p->vt.resize(vt_count);
   // 面頂点
   p->vt_index.resize(vt_index_count * 3);
-
   // 材質
-  size = p->mat_count * sizeof(MATERIAL);
-  p->mat = (MATERIAL *)MALLOC(size);
-  memset(p->mat, 0, size);
+  p->mat.resize(mat_count);
 
   // ボーン
   size = p->bone_count * sizeof(BONE);
@@ -511,7 +509,7 @@ static PyObject *setMat(PyObject *self, PyObject *args) {
     return NULL;
 
   model = &g_model[num];
-  if (model->mat_count <= i)
+  if (model->mat.size() <= i)
     Py_RETURN_NONE;
 
   mat.vt_index_count = mat.vt_index_count * 3;

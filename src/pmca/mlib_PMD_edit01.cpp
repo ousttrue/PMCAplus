@@ -1078,29 +1078,23 @@ int marge_bone(MODEL *model) {
 
 int marge_mat(MODEL *model) {
   int i, j, k;
-  int tmp, size, sum;
-  int *tmp_count;
+  int size;
   int vt_index_count;
-  int *index;
-  char *marge;
   char *p;
 
-  MATERIAL *tmp_mat;
-
-  index = (int *)MALLOC(model->mat_count * sizeof(int));
-  marge = (char *)MALLOC(model->mat_count * sizeof(char));
-  memset(marge, 0, model->mat_count * sizeof(char));
+  auto index = (int *)MALLOC(model->mat.size() * sizeof(int));
+  auto marge = (char *)MALLOC(model->mat.size() * sizeof(char));
+  memset(marge, 0, model->mat.size() * sizeof(char));
   std::vector<unsigned short> vt_index(model->vt_index.size());
-  tmp_count = (int *)MALLOC(model->mat_count * sizeof(int));
+  auto tmp_count = (int *)MALLOC(model->mat.size() * sizeof(int));
   if (tmp_count == NULL)
     return -1;
-  memset(tmp_count, 0, model->mat_count * sizeof(int));
-  tmp_mat = (MATERIAL *)MALLOC(model->mat_count * sizeof(MATERIAL));
-  memcpy(tmp_mat, model->mat, model->mat_count * sizeof(MATERIAL));
+  memset(tmp_count, 0, model->mat.size() * sizeof(int));
+  auto tmp_mat = model->mat;
 
   // テクスチャ名の同じ材質を探す
-  tmp = 0;
-  sum = 0;
+  auto tmp = 0;
+  auto sum = 0;
   /*
   for(i=0; i<model->mat_count; i++){
           if(marge[i] == 0){
@@ -1131,10 +1125,10 @@ int marge_mat(MODEL *model) {
   }
   */
   // printf("%d %d %d\n", model->mat_count, tmp, sum);
-  memset(marge, 0, model->mat_count * sizeof(char));
+  memset(marge, 0, model->mat.size() * sizeof(char));
 
   tmp = 0;
-  for (i = 0; i < model->mat_count; i++) {
+  for (i = 0; i < model->mat.size(); i++) {
     if (marge[i] == 0) {
       /*
       if(model->mat[i].alpha >= 0.999){
@@ -1145,7 +1139,7 @@ int marge_mat(MODEL *model) {
       sum++;
 
       if (model->mat[i].tex[0] != '\0') {
-        for (j = i + 1; j < model->mat_count; j++) {
+        for (j = i + 1; j < model->mat.size(); j++) {
           if (strcmp(model->mat[i].tex, model->mat[j].tex) == 0) {
             if (0.0001 < abs(model->mat[i].tex - model->mat[j].tex)) {
               p = strrchr(model->mat[i].tex, '.');
@@ -1175,10 +1169,10 @@ int marge_mat(MODEL *model) {
   // 面頂点リスト並び替え
   k = 0;
 
-  for (i = 0; i < model->mat_count; i++) {
+  for (i = 0; i < model->mat.size(); i++) {
     vt_index_count = 0;
     sum = 0;
-    for (j = 0; j < model->mat_count; j++) {
+    for (j = 0; j < model->mat.size(); j++) {
       if (index[j] == i) {
         size = model->mat[j].vt_index_count * sizeof(unsigned short);
 
@@ -1198,7 +1192,7 @@ int marge_mat(MODEL *model) {
   }
 
   // 材質並び替え
-  for (i = 0; i < model->mat_count; i++) {
+  for (i = 0; i < model->mat.size(); i++) {
     if (marge[i] == 0) {
       if (index[i] != i)
         model->mat[index[i]] = tmp_mat[i];
@@ -1206,7 +1200,7 @@ int marge_mat(MODEL *model) {
     }
   }
 
-  model->mat_count = model->mat_count - tmp;
+  model->mat.resize(model->mat.size() - tmp);
 
 #ifdef MEM_DBG
   printf("FREE %p %p %p %p\n", index, marge, model->vt, tmp_count);
@@ -1215,7 +1209,6 @@ int marge_mat(MODEL *model) {
   FREE(index);
   FREE(marge);
   FREE(tmp_count);
-  FREE(tmp_mat);
   std::swap(model->vt_index, vt_index);
 
   return 0;
@@ -1491,7 +1484,7 @@ int show_detail(MODEL *model) {
          model->header.version, model->header.name, model->header.comment);
   printf("頂点数:%zu\n", model->vt.size());
   printf("面頂点数:%zu\n", model->vt_index.size());
-  printf("材質数:%d\n", model->mat_count);
+  printf("材質数:%zu\n", model->mat.size());
   printf("ボーン数:%d\n", model->bone_count);
   printf("IKデータ数:%d\n", model->IK_count);
   printf("表情数:%d\n", model->skin_count);

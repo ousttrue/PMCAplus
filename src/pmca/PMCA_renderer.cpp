@@ -1,7 +1,7 @@
 #include "PMCA_renderer.h"
+#include "dbg.h"
 #include "mPMD.h"
 #include "quat.h"
-#include "dbg.h"
 
 #include <Windows.h>
 
@@ -208,7 +208,7 @@ int render_model(int num) {
     return -1;
 
   c = 0;
-  for (i = 0; i < model->mat_count; i++) {
+  for (i = 0; i < model->mat.size(); i++) {
     if (mats[i].texbits != NULL) {
       glEnable(GL_TEXTURE_2D);
       // glBindTexture(GL_TEXTURE_2D , dsp_model->texid[i]);
@@ -258,11 +258,11 @@ int load_tex(MODEL *model, DSP_MODEL *dsp_model) {
 
   // mats = dsp_model->mats;
 
-  if (dsp_model->mats_c != model->mat_count) {
+  if (dsp_model->mats_c != model->mat.size()) {
     return -1;
   }
 
-  glDeleteTextures(model->mat_count, dsp_model->texid);
+  glDeleteTextures(model->mat.size(), dsp_model->texid);
 
   for (int i = 0; i < dsp_model->mats_c; i++) {
     auto &mat = dsp_model->mats[i];
@@ -326,9 +326,9 @@ int load_tex(MODEL *model, DSP_MODEL *dsp_model) {
     }
     mat.texbits = texbits;
   }
-  glGenTextures(model->mat_count, dsp_model->texid);
+  glGenTextures(model->mat.size(), dsp_model->texid);
 
-  for (int i = 0; i < model->mat_count; i++) {
+  for (int i = 0; i < model->mat.size(); i++) {
     if (dsp_model->mats[i].texbits != NULL) {
       glBindTexture(GL_TEXTURE_2D, dsp_model->texid[i]);
     }
@@ -340,14 +340,6 @@ int load_tex(MODEL *model, DSP_MODEL *dsp_model) {
 }
 
 int make_dsp_model(MODEL *model, DSP_MODEL *dsp_model) {
-  int i, j;
-  float *loc;
-  float *nor;
-  float *uv;
-  DSP_MAT *mats;
-  GLuint *texid;
-  // unsigned int index;
-
   /*
   while(myflags.model_lock != 0){
           SDL_Delay(30);
@@ -358,7 +350,7 @@ int make_dsp_model(MODEL *model, DSP_MODEL *dsp_model) {
   FREE(dsp_model->loc);
   FREE(dsp_model->nor);
   FREE(dsp_model->uv);
-  for (i = 0; i < dsp_model->mats_c; i++) {
+  for (int i = 0; i < dsp_model->mats_c; i++) {
     FREE(dsp_model->mats[i].texbits);
     dsp_model->mats[i].texbits = NULL;
     memset(dsp_model->mats[i].texsize, 0, 2 * sizeof(int));
@@ -371,12 +363,12 @@ int make_dsp_model(MODEL *model, DSP_MODEL *dsp_model) {
   dsp_model->mats = NULL;
   dsp_model->texid = NULL;
 
-  loc = (float *)MALLOC(model->vt.size() * 3 * sizeof(float));
-  nor = (float *)MALLOC(model->vt.size() * 3 * sizeof(float));
-  uv = (float *)MALLOC(model->vt.size() * 2 * sizeof(float));
-  mats = (DSP_MAT *)MALLOC(model->mat_count * sizeof(DSP_MAT));
-  memset(mats, 0, model->mat_count * sizeof(DSP_MAT));
-  texid = (GLuint *)MALLOC(model->mat_count * sizeof(GLuint));
+  auto loc = (float *)MALLOC(model->vt.size() * 3 * sizeof(float));
+  auto nor = (float *)MALLOC(model->vt.size() * 3 * sizeof(float));
+  auto uv = (float *)MALLOC(model->vt.size() * 2 * sizeof(float));
+  auto mats = (DSP_MAT *)MALLOC(model->mat.size() * sizeof(DSP_MAT));
+  memset(mats, 0, model->mat.size() * sizeof(DSP_MAT));
+  auto texid = (GLuint *)MALLOC(model->mat.size() * sizeof(GLuint));
   if (loc == NULL || nor == NULL || uv == NULL || mats == NULL) {
     // myflags.model_lock=0;
     return -1;
@@ -386,9 +378,9 @@ int make_dsp_model(MODEL *model, DSP_MODEL *dsp_model) {
   dsp_model->uv = uv;
   dsp_model->mats = mats;
   dsp_model->texid = texid;
-  dsp_model->mats_c = model->mat_count;
+  dsp_model->mats_c = model->mat.size();
 
-  for (i = 0; i < model->vt.size(); i++) {
+  for (int i = 0; i < model->vt.size(); i++) {
     memcpy(loc, model->vt[i].loc, 2 * sizeof(float));
     loc += 2;
     *loc = -model->vt[i].loc[2];
@@ -399,7 +391,7 @@ int make_dsp_model(MODEL *model, DSP_MODEL *dsp_model) {
     uv += 2;
   }
 
-  for (i = 0; i < dsp_model->mats_c; i++) {
+  for (int i = 0; i < dsp_model->mats_c; i++) {
     dsp_model->mats[i].texbits = NULL;
     memset(dsp_model->mats[i].texsize, 0, 2 * sizeof(int));
   }
