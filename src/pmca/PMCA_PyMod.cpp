@@ -1,20 +1,12 @@
-#include "mPMD.h"
-#include "PMCA_glfw.h"
+#include <chrono>
+#include <thread>
+
+#include "PMCA_PyMod.h"
 #include "PMCA_renderer.h"
+#include "mPMD.h"
 
 #define PMCA_MODULE
 #define MODEL_COUNT 16
-
-#ifdef _DEBUG
-#undef _DEBUG
-#include <Python.h>
-#define _DEBUG 1
-#else
-#include <Python.h>
-#endif
-
-#include <chrono>
-#include <thread>
 
 static PyObject *PMCAError;
 
@@ -23,12 +15,10 @@ int *zero;
 MODEL g_model[16];
 LIST list;
 
-/************************************************************/
-
-PyMODINIT_FUNC PyInit_PMCA(void);
-/*PythonAPIA*/
-
-PyMODINIT_FUNC PyInit_PMCA(void);
+#include <plog/Appenders/ColorConsoleAppender.h>
+#include <plog/Formatters/TxtFormatter.h>
+#include <plog/Init.h>
+#include <plog/Log.h>
 
 /************************************************************/
 /*データ変換Utils*/
@@ -395,7 +385,7 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
     return NULL;
   model.vt_index_count = model.vt_index_count * 3;
 
-  strncpy(model.header.magic, "Pmd", 4);
+  model.header.magic = "Pmd";
   model.header.version = 1.0;
   strncpy(model.header.name, str[0], NAME_LEN);
   strncpy(model.header.comment, str[1], 256);
@@ -1214,6 +1204,12 @@ static struct PyModuleDef PMCAmodule = {PyModuleDef_HEAD_INIT,
 
 // モジュール登録
 PyMODINIT_FUNC PyInit_PMCA(void) {
+
+  static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
+  plog::init(plog::verbose, &consoleAppender);
+
+  PLOG_INFO << "PyInit_PMCA";
+
   PyObject *m;
   // static void *PySpam_API[PyPMCA_API_pointers];
   // PyObject *c_api_object;

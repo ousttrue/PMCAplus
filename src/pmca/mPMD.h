@@ -1,7 +1,8 @@
 #pragma once
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <vector>
+#include <string>
 
 #define USHORT_MAX 65535
 
@@ -15,7 +16,7 @@
 #define FREE dbg_free
 
 struct HEADER { /*283byte*/
-  char magic[4];
+  std::string magic = "Pmd";
   float version;
   char name[NAME_LEN];
   char comment[COMMENT_LEN];
