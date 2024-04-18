@@ -3,9 +3,12 @@ import PMCA
 import logging
 import pathlib
 
+
 APPNAME = "PMCA v0.0.6r10"
 COMMANDS = {}
 HERE = pathlib.Path(__file__).absolute().parent
+LOGGER = logging.getLogger(__name__)
+
 
 mapping = {
     "TRACE": "[ trace ]",
@@ -37,6 +40,10 @@ def main():
 
     app = main_frame.MainFrame(APPNAME, master=root)
     app.load(HERE)
+    try:
+        app.load_CNL_File("./last.cnl")
+    except:
+        LOGGER.error("前回のデータの読み込みに失敗しました")
 
     PMCA.CretateViewerThread()
 
@@ -45,8 +52,8 @@ def main():
 
     try:
         app.save_CNL_File("./last.cnl")
-    except:
-        pass
+    except Exception as ex:
+        LOGGER.error(ex)
 
     PMCA.QuitViewerThread()
 

@@ -85,11 +85,6 @@ class MainFrame(tkinter.ttk.Frame):
         self.load_list()
         self.init_tree()
         self.init_mat()
-        try:
-            self.load_CNL_File("./last.cnl")
-
-        except:
-            print("前回のデータの読み込みに失敗しました")
 
     def load_v1(self, x):
         fp = open(x, "r", encoding="cp932")
