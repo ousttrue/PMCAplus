@@ -12,56 +12,14 @@ from main_frame_transform import TransformTab
 from main_frame_info import InfoTab
 from PMCA_data import PMCAData
 
+
 LOGGER = logging.getLogger(__name__)
-
-
-class MENUBAR:
-    def __init__(self, master: tkinter.Tk, app: "MainFrame"):
-        self.menubar = tkinter.Menu(master)
-        master.configure(menu=self.menubar)
-
-        # menu
-        files = tkinter.Menu(self.menubar, tearoff=False)
-        self.menubar.add_cascade(label="ファイル", underline=0, menu=files)
-        files.add_command(label="新規", underline=0, command=app.clear)
-        files.add_command(label="読み込み", underline=0, command=app.load_node)
-        files.add_separator
-        files.add_command(label="保存", underline=0, command=app.save_node)
-        files.add_command(label="モデル保存", underline=0, command=app.dialog_save_PMD)
-        files.add_separator
-        files.add_command(label="一括組立て", underline=0, command=app.batch_assemble)
-        files.add_separator
-        files.add_command(
-            label="PMDフォーマットチェック", underline=0, command=app.savecheck_PMD
-        )
-        files.add_command(label="PMD概要確認", underline=0, command=app.check_PMD)
-        files.add_command(label="PMD詳細確認", underline=0, command=app.propcheck_PMD)
-        files.add_separator
-
-        def quit():
-            master.winfo_toplevel().destroy()
-            master.quit()
-
-        files.add_command(label="exit", underline=0, command=quit)
-
-        # menu
-        editing = tkinter.Menu(self.menubar, tearoff=False)
-        self.menubar.add_cascade(label="編集", underline=0, menu=editing)
-        editing.add_command(label="体型調整を初期化", underline=0, command=app.init_tf)
-        editing.add_command(
-            label="材質をランダム選択", underline=0, command=app.rand_mat
-        )
-        editing.add_command(label="PMCA設定", underline=0, command=app.setting_dialog)
-
-
-class SETTINGS:
-    def __init__(self):
-        self.export2folder = False
 
 
 class MainFrame(tkinter.ttk.Frame):
     def __init__(self, title: str, data: PMCAData, master: tkinter.Tk):
         super().__init__(master)
+        self.export2folder = False
         self.data = data
         self.root = master
         self.root.title(title)
@@ -76,8 +34,43 @@ class MainFrame(tkinter.ttk.Frame):
         self.cur_mat = 0
         self.pack()
         self.createWidgets()
-        self.settings = SETTINGS()
-        self.menubar = MENUBAR(master=master, app=self)
+
+        # menu
+        self.menubar = tkinter.Menu(master)
+        master.configure(menu=self.menubar)
+
+        # files
+        files = tkinter.Menu(self.menubar, tearoff=False)
+        self.menubar.add_cascade(label="ファイル", underline=0, menu=files)
+        files.add_command(label="新規", underline=0, command=self.clear)
+        files.add_command(label="読み込み", underline=0, command=self.load_node)
+        files.add_separator
+        files.add_command(label="保存", underline=0, command=self.save_node)
+        files.add_command(label="モデル保存", underline=0, command=self.dialog_save_PMD)
+        files.add_separator
+        files.add_command(label="一括組立て", underline=0, command=self.batch_assemble)
+        files.add_separator
+        files.add_command(
+            label="PMDフォーマットチェック", underline=0, command=self.savecheck_PMD
+        )
+        files.add_command(label="PMD概要確認", underline=0, command=self.check_PMD)
+        files.add_command(label="PMD詳細確認", underline=0, command=self.propcheck_PMD)
+        files.add_separator
+
+        def quit():
+            master.winfo_toplevel().destroy()
+            master.quit()
+
+        files.add_command(label="exit", underline=0, command=quit)
+
+        # editing
+        editing = tkinter.Menu(self.menubar, tearoff=False)
+        self.menubar.add_cascade(label="編集", underline=0, menu=editing)
+        editing.add_command(label="体型調整を初期化", underline=0, command=self.init_tf)
+        editing.add_command(
+            label="材質をランダム選択", underline=0, command=self.rand_mat
+        )
+        editing.add_command(label="PMCA設定", underline=0, command=self.setting_dialog)
 
         self.init_tree()
         self.init_mat()
@@ -689,7 +682,7 @@ class MainFrame(tkinter.ttk.Frame):
         self.refresh()
 
     def save_PMD(self, name):
-        if self.settings.export2folder:
+        if self.export2folder:
             dirc = name[0:-4]
             os.mkdir(dirc)
             tmp = name.rsplit("/", 1)
