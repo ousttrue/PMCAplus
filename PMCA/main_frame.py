@@ -1,3 +1,4 @@
+from typing import List
 import os, sys
 import shutil
 import random
@@ -5,12 +6,11 @@ import tkinter.ttk
 import PyPMCA
 import PMCA
 import logging
-import pathlib
 from main_frame_model import ModelTab
 from main_frame_color import ColorTab
 from main_frame_transform import TransformTab
 from main_frame_info import InfoTab
-
+from PMCA_data import PMCAData
 
 LOGGER = logging.getLogger(__name__)
 
@@ -60,19 +60,17 @@ class SETTINGS:
 
 
 class MainFrame(tkinter.ttk.Frame):
-    def __init__(self, title: str, master: tkinter.Tk):
+    def __init__(self, title: str, data: PMCAData, master: tkinter.Tk):
         super().__init__(master)
+        self.data = data
         self.root = master
         self.root.title(title)
-        self.parts_list = []
-        self.mats_list = []  # list of class MATS
         self.tree_list = []
         self.tree_entry = []
         self.parts_entry_k = []
         self.parts_entry_p = []
         self.mat_rep = None
         self.transform_data = []
-        self.transform_list = []
         self.target_dir = "./model/"
         self.cur_parts = 0
         self.cur_mat = 0
@@ -81,91 +79,8 @@ class MainFrame(tkinter.ttk.Frame):
         self.settings = SETTINGS()
         self.menubar = MENUBAR(master=master, app=self)
 
-    def load(self, path: pathlib.Path):
-        self.load_data(path)
-        self.load_list()
         self.init_tree()
         self.init_mat()
-
-    def load_v1(self, x):
-        fp = open(x, "r", encoding="cp932")
-        try:
-            lines = fp.read()
-            line = lines.split("\n")
-            line = line[0].replace("\n", "")
-            if (
-                line == "PMCA Parts list v1.0"
-                or line == "PMCA Materials list v1.1"
-                or line == "PMCA Materials list v1.0"
-                or line == "PMCA Textures list v1.0"
-                or line == "PMCA Bone_Group list v1.0"
-            ):
-                fp.close()
-
-                if os.name == "posix":
-                    fp = open(x, "w", encoding="cp932")
-                    fp.write(lines)
-                    fp.close()
-                    converter.v1_v2("./converter/PMCA_1.0-2.0converter", [x])
-                elif os.name == "nt":
-                    converter.v1_v2(".\\converter\\PMCA_1.0-2.0converter.exe", [x])
-            if line == "bone":
-                fp = open(x, "r", encoding="cp932")
-                lines = fp.read()
-                fp.close()
-
-                fp = open(x, "w", encoding="utf-8")
-                fp.write("PMCA list data v2.0\n")
-                fp.write(lines)
-                fp.close()
-
-        except UnicodeDecodeError:
-            fp.close()
-
-    def load_partslist(self, x):
-        fp = open(x, "r", encoding="utf-8-sig")
-        try:
-            line = fp.readline()
-
-            if line == "PMCA Parts list v2.0\n":
-                self.parts_list = PyPMCA.load_partslist(fp, self.parts_list)
-            elif line == "PMCA Materials list v2.0\n":
-                self.mats_list = PyPMCA.load_matslist(fp, self.mats_list)
-            elif line == "PMCA Transform list v2.0\n":
-                self.transform_list = PyPMCA.load_translist(fp, self.transform_list)
-
-            fp.close()
-        except UnicodeDecodeError:
-            fp.close()
-        except UnicodeEncodeError:
-            fp.close()
-
-    def load_data(self, path: pathlib.Path):
-        LOGGER.info("登録データ読み込み", path)
-        for x in os.listdir("./"):
-            if os.path.isfile(x):
-                LOGGER.debug(x)
-
-                self.load_v1(x)
-
-                self.load_partslist(x)
-
-    def load_list(self):
-        LOGGER.info("list.txt読み込み")
-        fp = open("list.txt", "r", encoding="utf-8-sig")
-        LIST = PyPMCA.load_list(fp)
-        PMCA.Set_List(
-            len(LIST["b"][0]),
-            LIST["b"][0],
-            LIST["b"][1],
-            len(LIST["s"][0]),
-            LIST["s"][0],
-            LIST["s"][1],
-            len(LIST["g"][0]),
-            LIST["g"][0],
-            LIST["g"][1],
-        )
-        fp.close()
 
     def init_tree(self):
         LOGGER.info("ツリー初期化")
@@ -182,7 +97,7 @@ class MainFrame(tkinter.ttk.Frame):
 
         self.parts_entry_k = []
         self.parts_entry_p = []
-        for x in self.parts_list:
+        for x in self.data.parts_list:
             for y in x.type:
                 if y == "root":
                     self.parts_entry_k.append(x.name)
@@ -205,8 +120,8 @@ class MainFrame(tkinter.ttk.Frame):
         self.tab[3].frame.comment.delete("1.0", tkinter.END)
 
         self.transform_data = [PyPMCA.MODEL_TRANS_DATA(scale=1.0, bones=[], props={})]
-        tmp = []
-        for x in self.transform_list:
+        tmp: List[str] = []
+        for x in self.data.transform_list:
             tmp.append(x.name)
 
         self.tab[2].tfgroup.set_entry(tmp)
@@ -247,8 +162,33 @@ class MainFrame(tkinter.ttk.Frame):
         self.QUIT.pack(side=tkinter.RIGHT)
         self.frame_button.pack(padx=5, pady=5, side=tkinter.TOP, fill="x")
 
+    def load_CNL_File(self, name):
+        f = open(name, "r", encoding="utf-8-sig")
+        lines = f.read()
+        f.close
+        lines = lines.split("\n")
+
+        self.tab[3].frame.name.set(lines[0])
+        self.tab[3].frame.name_l.set(lines[1])
+        for line in lines[2:]:
+            if line == "PARTS":
+                break
+            elif line == "":
+                pass
+            else:
+                self.tab[3].frame.comment.insert(END, line)
+                self.tab[3].frame.comment.insert(END, "\n")
+
+        else:
+            self.tab[3].frame.comment.delete("1.0", END)
+
+        self.tree_list[0].node.text_to_node(self.data.parts_list, lines)
+        self.mat_rep.text_to_list(lines, self.data.mats_list)
+        self.transform_data[0].text_to_list(lines)
+        return True
+
     ######################################################################################
-    def refresh(self, level=0):
+    def refresh(self, level: int = 0):
         sel_t = int(self.tab[0].l_tree.listbox.curselection()[0])
         self.tree_list = self.tree_list[0].node.create_list()
         self.tree_entry = []
@@ -279,7 +219,7 @@ class MainFrame(tkinter.ttk.Frame):
         if level < 2:
             # 材質関連
             print("材質置換")
-            self.mat_rep.Get(self.mats_list)
+            self.mat_rep.Get(self.data.mats_list)
             # print("1")
             self.mat_entry = [[], []]
             for v in self.mat_rep.mat.values():
@@ -822,54 +762,6 @@ class MainFrame(tkinter.ttk.Frame):
         self.load_CNL_File("./last.cnl")
         self.refresh()
         self.target_dir = name.rsplit("/", 1)[0]
-
-    def load_CNL_File(self, name):
-        f = open(name, "r", encoding="utf-8-sig")
-        lines = f.read()
-        f.close
-        lines = lines.split("\n")
-
-        self.tab[3].frame.name.set(lines[0])
-        self.tab[3].frame.name_l.set(lines[1])
-        for line in lines[2:]:
-            if line == "PARTS":
-                break
-            elif line == "":
-                pass
-            else:
-                self.tab[3].frame.comment.insert(END, line)
-                self.tab[3].frame.comment.insert(END, "\n")
-
-        else:
-            self.tab[3].frame.comment.delete("1.0", END)
-
-        self.tree_list[0].node.text_to_node(self.parts_list, lines)
-        self.mat_rep.text_to_list(lines, self.mats_list)
-        self.transform_data[0].text_to_list(lines)
-        return True
-
-    def save_CNL_File(self, name):
-        if self.tree_list[0].node.child[0] == None:
-            return False
-
-        lines = []
-        lines.append(self.modelinfo.name)
-        lines.append(self.modelinfo.name_l)
-        lines.append(self.modelinfo.comment)
-
-        lines.append("PARTS")
-        lines.extend(self.tree_list[0].node.child[0].node_to_text())
-        lines.append("MATERIAL")
-        lines.extend(self.mat_rep.list_to_text())
-        lines.append("TRANSFORM")
-        lines.extend(self.transform_data[0].list_to_text())
-
-        fp = open(name, "w", encoding="utf-8")
-        for x in lines:
-            fp.write(x + "\n")
-        fp.close
-
-        return True
 
     def setting_dialog(self):
         root = Toplevel()

@@ -2,6 +2,8 @@ import tkinter
 import PMCA
 import logging
 import pathlib
+from main_frame import MainFrame
+from PMCA_data import PMCAData
 
 
 APPNAME = "PMCA v0.0.6r10"
@@ -30,20 +32,17 @@ class ColorfulHandler(logging.StreamHandler):
 
 
 def main():
-
     logging.basicConfig(handlers=[ColorfulHandler()], level=logging.DEBUG)
+
+    # data
+    data = PMCAData()
+    data.load(HERE)
+
+    # gui
     PMCA.Init_PMD()
-
     root = tkinter.Tk()
-
-    import main_frame
-
-    app = main_frame.MainFrame(APPNAME, master=root)
-    app.load(HERE)
-    try:
-        app.load_CNL_File("./last.cnl")
-    except:
-        LOGGER.error("前回のデータの読み込みに失敗しました")
+    app = MainFrame(APPNAME, data, master=root)
+    app.load_CNL_File("./last.cnl")
 
     PMCA.CretateViewerThread()
 

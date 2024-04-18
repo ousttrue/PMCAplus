@@ -73,3 +73,4 @@ class InfoTab(tkinter.ttk.Frame):
             )
 
         self.frame.text.set("Author : %s\nLicense : %s" % (str1, str2))
+

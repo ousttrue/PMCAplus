@@ -1,4 +1,4 @@
-def getInfo():
+def getInfo(num: int):
     """
     Get Info of PMD"
     """
@@ -172,7 +172,13 @@ def Set_List():
     """
     ...
 
-def Set_Name_Comment():
+def Set_Name_Comment(
+    num: int,
+    name: bytes,
+    comment: bytes,
+    name_eng: bytes,
+    comment_eng: bytes,
+):
     """
     Set Name and Comment
     """
@@ -184,7 +190,7 @@ def Init_PMD():
     """
     ...
 
-def Load_PMD():
+def Load_PMD(num: int, path: bytes):
     """
     Load PMD from file"
     """
@@ -208,7 +214,7 @@ def Copy_PMD():
     """
     ...
 
-def Create_PMD():
+def Create_PMD(num: int):
     """
     Create enpty PMD"
     """
