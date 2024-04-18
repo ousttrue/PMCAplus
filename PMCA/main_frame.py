@@ -5,40 +5,49 @@ import tkinter.ttk
 import PyPMCA
 import listbox
 import PMCA
+import logging
+import pathlib
+
+LOGGER = logging.getLogger(__name__)
 
 
 class MENUBAR:
-    def __init__(self, master=None, app=None):
+    def __init__(self, master: tkinter.Tk, app: "MainFrame"):
         self.menubar = tkinter.Menu(master)
         master.configure(menu=self.menubar)
+
+        # menu
         files = tkinter.Menu(self.menubar, tearoff=False)
-        editing = tkinter.Menu(self.menubar, tearoff=False)
         self.menubar.add_cascade(label="ファイル", underline=0, menu=files)
-        self.menubar.add_cascade(label="編集", underline=0, menu=editing)
-        files.add_command(label="新規", under=0, command=app.clear)
-        files.add_command(label="読み込み", under=0, command=app.load_node)
+        files.add_command(label="新規", underline=0, command=app.clear)
+        files.add_command(label="読み込み", underline=0, command=app.load_node)
         files.add_separator
-        files.add_command(label="保存", under=0, command=app.save_node)
-        files.add_command(label="モデル保存", under=0, command=app.dialog_save_PMD)
+        files.add_command(label="保存", underline=0, command=app.save_node)
+        files.add_command(label="モデル保存", underline=0, command=app.dialog_save_PMD)
         files.add_separator
-        files.add_command(label="一括組立て", under=0, command=app.batch_assemble)
+        files.add_command(label="一括組立て", underline=0, command=app.batch_assemble)
         files.add_separator
         files.add_command(
-            label="PMDフォーマットチェック", under=0, command=app.savecheck_PMD
+            label="PMDフォーマットチェック", underline=0, command=app.savecheck_PMD
         )
-        files.add_command(label="PMD概要確認", under=0, command=app.check_PMD)
-        files.add_command(label="PMD詳細確認", under=0, command=app.propcheck_PMD)
+        files.add_command(label="PMD概要確認", underline=0, command=app.check_PMD)
+        files.add_command(label="PMD詳細確認", underline=0, command=app.propcheck_PMD)
         files.add_separator
 
         def quit():
             master.winfo_toplevel().destroy()
             master.quit()
 
-        files.add_command(label="exit", under=0, command=quit)
+        files.add_command(label="exit", underline=0, command=quit)
 
-        editing.add_command(label="体型調整を初期化", under=0, command=app.init_tf)
-        editing.add_command(label="材質をランダム選択", under=0, command=app.rand_mat)
-        editing.add_command(label="PMCA設定", under=0, command=app.setting_dialog)
+        # menu
+        editing = tkinter.Menu(self.menubar, tearoff=False)
+        self.menubar.add_cascade(label="編集", underline=0, menu=editing)
+        editing.add_command(label="体型調整を初期化", underline=0, command=app.init_tf)
+        editing.add_command(
+            label="材質をランダム選択", underline=0, command=app.rand_mat
+        )
+        editing.add_command(label="PMCA設定", underline=0, command=app.setting_dialog)
 
 
 class SETTINGS:
@@ -47,11 +56,10 @@ class SETTINGS:
 
 
 class MainFrame(tkinter.ttk.Frame):
-    def __init__(self, title, master: tkinter.Tk | None = None):
+    def __init__(self, title: str, master: tkinter.Tk):
         super().__init__(master)
-        if master:
-            self.root = master
-            self.root.title(title)
+        self.root = master
+        self.root.title(title)
         self.parts_list = []
         self.mats_list = []  # list of class MATS
         self.tree_list = []
@@ -72,71 +80,82 @@ class MainFrame(tkinter.ttk.Frame):
         self.settings = SETTINGS()
         self.menubar = MENUBAR(master=master, app=self)
 
-    def init(self):
-        self.parts_list = []
-        self.mats_list = []
-        print("登録データ読み込み")
+    def load(self, path: pathlib.Path):
+        self.load_data(path)
+        self.load_list()
+        self.init_tree()
+        self.init_mat()
+        try:
+            self.load_CNL_File("./last.cnl")
+
+        except:
+            print("前回のデータの読み込みに失敗しました")
+
+    def load_v1(self, x):
+        fp = open(x, "r", encoding="cp932")
+        try:
+            lines = fp.read()
+            line = lines.split("\n")
+            line = line[0].replace("\n", "")
+            if (
+                line == "PMCA Parts list v1.0"
+                or line == "PMCA Materials list v1.1"
+                or line == "PMCA Materials list v1.0"
+                or line == "PMCA Textures list v1.0"
+                or line == "PMCA Bone_Group list v1.0"
+            ):
+                fp.close()
+
+                if os.name == "posix":
+                    fp = open(x, "w", encoding="cp932")
+                    fp.write(lines)
+                    fp.close()
+                    converter.v1_v2("./converter/PMCA_1.0-2.0converter", [x])
+                elif os.name == "nt":
+                    converter.v1_v2(".\\converter\\PMCA_1.0-2.0converter.exe", [x])
+            if line == "bone":
+                fp = open(x, "r", encoding="cp932")
+                lines = fp.read()
+                fp.close()
+
+                fp = open(x, "w", encoding="utf-8")
+                fp.write("PMCA list data v2.0\n")
+                fp.write(lines)
+                fp.close()
+
+        except UnicodeDecodeError:
+            fp.close()
+
+    def load_partslist(self, x):
+        fp = open(x, "r", encoding="utf-8-sig")
+        try:
+            line = fp.readline()
+
+            if line == "PMCA Parts list v2.0\n":
+                self.parts_list = PyPMCA.load_partslist(fp, self.parts_list)
+            elif line == "PMCA Materials list v2.0\n":
+                self.mats_list = PyPMCA.load_matslist(fp, self.mats_list)
+            elif line == "PMCA Transform list v2.0\n":
+                self.transform_list = PyPMCA.load_translist(fp, self.transform_list)
+
+            fp.close()
+        except UnicodeDecodeError:
+            fp.close()
+        except UnicodeEncodeError:
+            fp.close()
+
+    def load_data(self, path: pathlib.Path):
+        LOGGER.info("登録データ読み込み", path)
         for x in os.listdir("./"):
             if os.path.isfile(x):
-                print(x)
+                LOGGER.debug(x)
 
-                fp = open(x, "r", encoding="cp932")
-                try:
-                    lines = fp.read()
-                    line = lines.split("\n")
-                    line = line[0].replace("\n", "")
-                    print('"%s"' % (line))
-                    if (
-                        line == "PMCA Parts list v1.0"
-                        or line == "PMCA Materials list v1.1"
-                        or line == "PMCA Materials list v1.0"
-                        or line == "PMCA Textures list v1.0"
-                        or line == "PMCA Bone_Group list v1.0"
-                    ):
-                        fp.close()
+                self.load_v1(x)
 
-                        if os.name == "posix":
-                            fp = open(x, "w", encoding="cp932")
-                            fp.write(lines)
-                            fp.close()
-                            converter.v1_v2("./converter/PMCA_1.0-2.0converter", [x])
-                        elif os.name == "nt":
-                            converter.v1_v2(
-                                ".\\converter\\PMCA_1.0-2.0converter.exe", [x]
-                            )
-                    if line == "bone":
-                        fp = open(x, "r", encoding="cp932")
-                        lines = fp.read()
-                        fp.close()
+                self.load_partslist(x)
 
-                        fp = open(x, "w", encoding="utf-8")
-                        fp.write("PMCA list data v2.0\n")
-                        fp.write(lines)
-                        fp.close()
-
-                except UnicodeDecodeError:
-                    fp.close()
-                fp = open(x, "r", encoding="utf-8-sig")
-                try:
-                    line = fp.readline()
-                    print(line)
-
-                    if line == "PMCA Parts list v2.0\n":
-                        self.parts_list = PyPMCA.load_partslist(fp, self.parts_list)
-                    elif line == "PMCA Materials list v2.0\n":
-                        self.mats_list = PyPMCA.load_matslist(fp, self.mats_list)
-                    elif line == "PMCA Transform list v2.0\n":
-                        self.transform_list = PyPMCA.load_translist(
-                            fp, self.transform_list
-                        )
-
-                    fp.close()
-                except UnicodeDecodeError:
-                    fp.close()
-                except UnicodeEncodeError:
-                    fp.close()
-
-        print("list.txt読み込み")
+    def load_list(self):
+        LOGGER.info("list.txt読み込み")
         fp = open("list.txt", "r", encoding="utf-8-sig")
         LIST = PyPMCA.load_list(fp)
         PMCA.Set_List(
@@ -150,10 +169,10 @@ class MainFrame(tkinter.ttk.Frame):
             LIST["g"][0],
             LIST["g"][1],
         )
-
         fp.close()
 
-        print("ツリー初期化")
+    def init_tree(self):
+        LOGGER.info("ツリー初期化")
         node = PyPMCA.NODE(
             parts=PyPMCA.PARTS(name="ROOT", joint=["root"]), depth=-1, child=[None]
         )
@@ -181,7 +200,8 @@ class MainFrame(tkinter.ttk.Frame):
 
         self.tab[0].l_sel.set_entry(self.parts_entry_k)
 
-        print("材質置換設定初期化")
+    def init_mat(self):
+        LOGGER.info("材質置換設定初期化")
         self.mat_rep = PyPMCA.MAT_REP(app=self)
 
         self.tab[3].frame.name.set("PMCAモデル")
@@ -194,11 +214,6 @@ class MainFrame(tkinter.ttk.Frame):
             tmp.append(x.name)
 
         self.tab[2].tfgroup.set_entry(tmp)
-        try:
-            self.load_CNL_File("./last.cnl")
-
-        except:
-            print("前回のデータの読み込みに失敗しました")
 
     def createWidgets(self):
         """
