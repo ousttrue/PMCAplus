@@ -3,11 +3,13 @@ import shutil
 import random
 import tkinter.ttk
 import PyPMCA
-import listbox
 import PMCA
 import logging
 import pathlib
 from main_frame_model import ModelTab
+from main_frame_color import ColorTab
+from main_frame_transform import TransformTab
+from main_frame_info import InfoTab
 
 
 LOGGER = logging.getLogger(__name__)
@@ -71,9 +73,6 @@ class MainFrame(tkinter.ttk.Frame):
         self.mat_rep = None
         self.transform_data = []
         self.transform_list = []
-        self.licenses = []
-        self.authors = []
-        self.modelinfo = PyPMCA.MODELINFO()
         self.target_dir = "./model/"
         self.cur_parts = 0
         self.cur_mat = 0
@@ -226,115 +225,11 @@ class MainFrame(tkinter.ttk.Frame):
         notebook.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
 
         self.tab = []
-        ########################################################################################################
-        # Tab0
         self.tab.append(ModelTab(self.root))
+        self.tab.append(ColorTab(self.root))
+        self.tab.append(TransformTab(self.root))
+        self.tab.append(InfoTab(self.root))
 
-
-        ########################################################################################################
-        # Tab1
-
-        self.tab.append(tkinter.ttk.Frame(self.root))
-        self.tab[1].frame = tkinter.ttk.Frame(self.tab[1])
-        self.tab[1].text = "Color"
-        self.tab[1].parts_frame = tkinter.ttk.LabelFrame(
-            self.tab[1].frame, text="Material"
-        )
-        self.tab[1].l_tree = listbox.LISTBOX(self.tab[1].parts_frame)
-        self.tab[1].parts_frame.pack(
-            padx=3, pady=3, side=tkinter.LEFT, fill=tkinter.BOTH, expand=1
-        )
-        self.tab[1].l_tree.listbox.bind("<ButtonRelease-1>", self.mats_click)
-
-        self.tab[1].parts_frame = tkinter.ttk.LabelFrame(
-            self.tab[1].frame, text="Select"
-        )
-        self.tab[1].l_sel = listbox.LISTBOX(self.tab[1].parts_frame)
-        self.tab[1].parts_frame.pack(
-            padx=3, pady=3, side=tkinter.LEFT, fill=tkinter.BOTH, expand=1
-        )
-        self.tab[1].l_sel.listbox.bind("<ButtonRelease-1>", self.mats_sel_click)
-
-        self.tab[1].frame.pack(
-            padx=3, pady=3, side=tkinter.TOP, fill=tkinter.BOTH, expand=1
-        )
-
-        self.tab[1].comment = tkinter.StringVar()
-        self.tab[1].comment.set("comment:")
-        self.tab[1].text_label = tkinter.ttk.Label(
-            self.tab[1], textvariable=self.tab[1].comment
-        )
-        self.tab[1].text_label.pack(padx=3, pady=3, side=tkinter.BOTTOM, fill=tkinter.X)
-
-        ########################################################################################################
-        # Tab2
-        self.tab.append(tkinter.ttk.Frame(self.root))
-        self.tab[2].text = "Transform"
-        self.tab[2].tfgroup_frame = tkinter.ttk.LabelFrame(self.tab[2], text="Groups")
-        self.tab[2].tfgroup = listbox.LISTBOX(self.tab[2].tfgroup_frame)
-        # self.tab[2].tfgroup.set_entry(tmp)
-        self.tab[2].tfgroup_frame.pack(
-            padx=3, pady=3, side=tkinter.LEFT, fill=tkinter.BOTH, expand=1
-        )
-        self.tab[2].tfgroup.listbox.bind("<ButtonRelease-1>", self.tf_click)
-
-        self.tab[2].info_frame = tkinter.ttk.LabelFrame(self.tab[2], text="Info")
-        self.tab[2].info_frame.strvar = tkinter.StringVar()
-        self.tab[2].info_frame.strvar.set("x=\ny=\nz=\n")
-        self.tab[2].info_frame.label = tkinter.ttk.Label(
-            self.tab[2].info_frame, textvariable=self.tab[2].info_frame.strvar
-        ).pack(side=tkinter.LEFT, anchor=tkinter.N)
-        self.tab[2].info_frame.pack(
-            padx=3, pady=3, side=tkinter.LEFT, fill=tkinter.BOTH, expand=1
-        )
-
-        ########################################################################################################
-        # Tab3
-        self.tab.append(tkinter.ttk.Frame(self.root))
-        self.tab[3].text = "Info"
-        self.tab[3].frame = tkinter.ttk.Frame(self.tab[3])
-        self.tab[3].frame.comment = tkinter.Text(self.tab[3].frame, height=10)
-        self.tab[3].frame.comment["state"] = "normal"
-        self.tab[3].frame.yscroll = tkinter.ttk.Scrollbar(
-            self.tab[3].frame,
-            orient=tkinter.VERTICAL,
-            command=self.tab[3].frame.comment.yview,
-        )
-        self.tab[3].frame.yscroll.pack(
-            side=tkinter.RIGHT, fill=tkinter.Y, expand=0, anchor=tkinter.E
-        )
-        self.tab[3].frame.comment["yscrollcommand"] = self.tab[3].frame.yscroll.set
-        self.tab[3].frame.comment.pack(side=tkinter.RIGHT, fill=tkinter.BOTH, expand=1)
-
-        self.tab[3].frame.name = tkinter.StringVar()
-        self.tab[3].frame.name.set(self.modelinfo.name)
-        self.tab[3].frame.name_entry = tkinter.ttk.Entry(
-            self.tab[3], textvariable=self.tab[3].frame.name
-        )
-        self.tab[3].frame.name_entry.pack(fill=tkinter.X)
-
-        self.tab[3].frame.name_l = tkinter.StringVar()
-        self.tab[3].frame.name_l.set(self.modelinfo.name)
-        self.tab[3].frame.name_l_entry = tkinter.ttk.Entry(
-            self.tab[3], textvariable=self.tab[3].frame.name_l
-        )
-        self.tab[3].frame.name_l_entry.pack(fill=tkinter.X)
-
-        str1 = ""
-        str2 = ""
-        for x in self.authors:
-            str1 += "%s " % (x)
-        for x in self.licenses:
-            str2 += "%s " % (x)
-
-        self.tab[3].frame.text = tkinter.StringVar()
-        self.tab[3].frame.text.set("Author : %s\nLicense : %s" % (str1, str2))
-        self.tab[3].frame.text_label = tkinter.ttk.Label(
-            self.tab[3], textvariable=self.tab[3].frame.text
-        )
-        self.tab[3].frame.text_label.pack(fill=tkinter.X)
-
-        self.tab[3].frame.pack(fill=tkinter.BOTH, expand=1)
         for x in self.tab:
             notebook.insert(tkinter.END, x, text=x.text)
         ########################################################################################################
@@ -351,95 +246,6 @@ class MainFrame(tkinter.ttk.Frame):
         self.QUIT["command"] = quit
         self.QUIT.pack(side=tkinter.RIGHT)
         self.frame_button.pack(padx=5, pady=5, side=tkinter.TOP, fill="x")
-
-
-    ########################################################################################
-    # functions tab1
-    def mats_click(self, event):
-        sel_t = int(self.tab[1].l_tree.listbox.curselection()[0])
-        print(sel_t)
-        print(self.mat_rep.mat[self.mat_entry[1][sel_t]])
-
-        tmp_list = []
-        for x in self.mat_rep.mat[self.mat_entry[1][sel_t]].mat.entries:
-            tmp_list.append(x.name)
-
-        self.tab[1].l_sel.set_entry(tmp_list)
-        self.tab[0].l_sel.set_entry(
-            self.parts_entry_k, sel=self.tree_list[sel_t].node.list_num
-        )
-        self.cur_mat = sel_t
-
-        self.tab[1].comment.set(
-            "comment:%s" % (self.mat_rep.mat[self.mat_entry[1][sel_t]].mat.comment)
-        )
-
-    def mats_sel_click(self, event):
-        print(self.mat_rep.mat[self.mat_entry[1][self.cur_mat]].sel)
-        sel_t = int(self.tab[1].l_sel.listbox.curselection()[0])
-        self.mat_rep.mat[self.mat_entry[1][self.cur_mat]].sel = self.mat_rep.mat[
-            self.mat_entry[1][self.cur_mat]
-        ].mat.entries[sel_t]
-        self.refresh(level=1)
-
-    ########################################################################################
-    # functions tab2
-    def tf_click(self, event):
-        sel = int(self.tab[2].tfgroup.listbox.curselection()[0])
-        buff = ""
-        print(sel)
-        for x in self.transform_list:
-            print(x.name, len(x.bones))
-
-        for x in self.transform_list[sel].bones:
-            buff += "%s %f %f\n" % (x.name, x.length, x.thick)
-        print(buff)
-
-        t = self.transform_list[sel]
-
-        root = Toplevel()
-        root.fancs = PMCA_dialogs.SCALE_DIALOG_FANC(self, root, sel)
-
-        root.fancs.var = DoubleVar()
-        root.fancs.var.set(t.default)
-        root.fancs.tvar.set("%.3f" % t.default)
-
-        root.transient(self)
-        root.frame1 = Frame(root)
-        root.frame2 = Frame(root)
-
-        Label(root, text=buff).grid(row=0, padx=10, pady=5)
-
-        root.frame1.spinbox = Spinbox(
-            root.frame1,
-            from_=-100,
-            to=100,
-            increment=0.02,
-            format="%.3f",
-            textvariable=root.fancs.tvar,
-            width=5,
-            command=root.fancs.change_spinbox,
-        )
-        root.frame1.spinbox.pack(side="right", padx=5)
-        root.frame1.spinbox.bind("<Return>", root.fancs.enter_spinbox)
-
-        Scale(
-            root.frame1,
-            orient="h",
-            from_=t.limit[0],
-            to=t.limit[1],
-            variable=root.fancs.var,
-            length=256,
-            command=root.fancs.change_scale,
-        ).pack(side="left", padx=5)
-        root.frame1.grid(row=1, padx=10, pady=5)
-
-        Button(root.frame2, text="OK", command=root.fancs.OK).pack(side="right", padx=5)
-        Button(root.frame2, text="Cancel", command=root.fancs.CANCEL).pack(
-            side="left", padx=5
-        )
-        root.frame2.grid(row=2, sticky="e", padx=10, pady=5)
-        root.mainloop()
 
     ######################################################################################
     def refresh(self, level=0):
@@ -571,24 +377,7 @@ class MainFrame(tkinter.ttk.Frame):
         else:
             PMCA.Copy_PMD(3, 0)
 
-        if level < 4:
-            str1 = ""
-            str2 = ""
-            for x in self.authors:
-                str1 += "%s " % (x)
-            for x in self.licenses:
-                str2 += "%s " % (x)
-            self.modelinfo.name = self.tab[3].frame.name.get()
-            self.modelinfo.name_l = self.tab[3].frame.name_l.get()
-            self.modelinfo.comment = self.tab[3].frame.comment.get("1.0", tkinter.END)
-            PyPMCA.Set_Name_Comment(
-                name=self.modelinfo.name,
-                comment="%s\nAuthor:%s\nLicense:%s\n%s"
-                % (self.modelinfo.name_l, str1, str2, self.modelinfo.comment),
-                name_eng=self.modelinfo.name_eng,
-                comment_eng="%s\nAuthor:%s\nLicense:%s\n%s"
-                % (self.modelinfo.name_l_eng, str1, str2, self.modelinfo.comment_eng),
-            )
+        self.tab[3].refresh(level)
 
         if level < 3:
             PMCA.PMD_view_set(0, "replace")  # テクスチャを変更しない
@@ -602,7 +391,6 @@ class MainFrame(tkinter.ttk.Frame):
             "height     = %f\nwidth      = %f\nthickness = %f\n"
             % (wht[1], wht[0], wht[2])
         )
-        self.tab[3].frame.text.set("Author : %s\nLicense : %s" % (str1, str2))
 
         print("Done")
 
