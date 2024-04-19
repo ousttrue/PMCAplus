@@ -1,3 +1,5 @@
+from typing import List
+
 def getInfo(num: int):
     """
     Get Info of PMD"
@@ -166,7 +168,17 @@ def setJoint():
     """
     ...
 
-def Set_List():
+def Set_List(
+    bn: int,
+    b0: List[bytes],
+    b1: List[bytes],
+    sn: int,
+    s0: List[bytes],
+    s1: List[bytes],
+    gn: int,
+    g0: List[bytes],
+    g1: List[bytes],
+) -> None:
     """
     Set List of bone or things"
     """

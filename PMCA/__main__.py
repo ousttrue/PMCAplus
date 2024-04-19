@@ -8,7 +8,7 @@ from PMCA_data import PMCAData
 
 APPNAME = "PMCA v0.0.6r10"
 COMMANDS = {}
-HERE = pathlib.Path(__file__).absolute().parent
+HERE = pathlib.Path(__file__).parent
 LOGGER = logging.getLogger(__name__)
 
 
@@ -31,12 +31,12 @@ class ColorfulHandler(logging.StreamHandler):
         super().emit(record)
 
 
-def main():
+def main(dir: pathlib.Path):
     logging.basicConfig(handlers=[ColorfulHandler()], level=logging.DEBUG)
 
     # data
-    data = PMCAData()
-    data.load(HERE)
+    data = PMCAData(dir)
+    data.load()
 
     # gui
     PMCA.Init_PMD()
@@ -58,4 +58,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(pathlib.Path(".").absolute())

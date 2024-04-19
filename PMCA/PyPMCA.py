@@ -1,4 +1,4 @@
-﻿from typing import List
+﻿from typing import List, NamedTuple
 import sys, os.path
 import os, io
 import tkinter
@@ -26,20 +26,6 @@ class PARTS:  # 読み込みパーツデータ
         self.path = path
         self.type = t
         self.joint = joint
-        self.props = props
-
-
-class MATS:  # 読み込み材質データ
-    def __init__(self, name="", comment="", entries=[], props={}):
-        self.name = name
-        self.comment = comment
-        self.entries = entries
-        self.props = props
-
-
-class MATS_ENTRY:
-    def __init__(self, name="", props={}):
-        self.name = name
         self.props = props
 
 
@@ -94,67 +80,6 @@ def load_partslist(fp: io.FileIO, parts_list: List[PARTS]) -> List[PARTS]:
     # for x in parts_list:
     #     print(x.name, x.path)
     return parts_list
-
-
-def load_matslist(fp, mats_list) -> List["MATS"]:
-    directry = ""
-
-    mats_list.append(MATS(entries=[], props={}))
-
-    line = fp.readline()
-    mode = 0
-    active = mats_list[-1]
-    while line:
-        line = line.rstrip("\n").replace("\t", " ").split(" ", 1)
-        # print(line)
-        if line[0] == "":
-            pass
-        if line[0][:1] == "#":
-            pass
-        elif line[0] == "SETDIR":
-            directry = line[1]
-
-        elif line[0] == "NEXT":
-            if len(active.entries) == 0:
-                mats_list.pop()
-            mats_list.append(MATS(entries=[], props={}))
-            active = mats_list[-1]
-            mode = 0
-
-        elif len(line) < 2:
-            pass
-
-        elif line[0] == "[ENTRY]":
-            active.entries.append(MATS_ENTRY(name=line[1], props={}))
-            mode = 1
-        elif line[0] == "[name]":
-            if mode == 0:
-                for x in mats_list:
-                    if x.name == line[1]:
-                        active = x
-                        mats_list.pop()
-                        break
-                else:
-                    active.name = line[1]
-        elif line[0] == "[comment]":
-            if mode == 0:
-                active.comment = line[1]
-        elif line[0] == "[tex]":
-            active.entries[-1].props["tex"] = line[1]
-            active.entries[-1].props["tex_path"] = directry + line[1]
-        elif line[0] == "[sph]":
-            active.entries[-1].props["sph"] = line[1]
-            active.entries[-1].props["sph_path"] = directry + line[1]
-        elif line[0][:1] == "[" and line[0][-5:] == "_rgb]":
-            active.entries[-1].props[line[0][1:-1]] = line[1].split()
-        elif line[0][:1] == "[" and line[0][-1:] == "]":
-            if line[0][1:-1] in active.entries[-1].props:
-                active.entries[-1].props[line[0][1:-1]].append(line[1])
-            else:
-                active.entries[-1].props[line[0][1:-1]] = [line[1]]
-        line = fp.readline()
-
-    return mats_list
 
 
 def load_translist(fp, trans_list) -> List["MODEL_TRANS_DATA"]:
@@ -225,43 +150,6 @@ def load_translist(fp, trans_list) -> List["MODEL_TRANS_DATA"]:
 	"""
 
     return trans_list
-
-
-def load_list(fp: io.FileIO):
-
-    bone = [[], []]
-    skin = [[], []]
-    group = [[], []]
-
-    line = fp.readline()[:-1]
-    line = fp.readline()[:-1]
-    while line:
-        line = fp.readline()[:-1]
-        if line == "skin":
-            break
-        tmp = line.split(" ")
-        bone[0].append(tmp[0].encode("cp932", "replace"))
-        bone[1].append(tmp[1].encode("cp932", "replace"))
-
-    while line:
-        line = fp.readline()[:-1]
-        if line == "bone_disp":
-            break
-        tmp = line.split(" ")
-        skin[0].append(tmp[0].encode("cp932", "replace"))
-        skin[1].append(tmp[1].encode("cp932", "replace"))
-
-    while line:
-        line = fp.readline()[:-1]
-        if line == "end":
-            break
-        tmp = line.split(" ")
-        group[0].append(tmp[0].encode("cp932", "replace"))
-        group[1].append(tmp[1].encode("cp932", "replace"))
-
-    LIST = {"b": bone, "s": skin, "g": group}
-
-    return LIST
 
 
 ###PMCA操作関連
