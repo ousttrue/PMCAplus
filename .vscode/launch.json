@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "C:/Python312/python.exe",
             "args": [
-                "PMCA/__main__.py"
+                "PyPMCA/__main__.py"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -22,17 +22,29 @@
             ],
             "console": "integratedTerminal"
         },
+        // {
+        //     "name": "PMCA",
+        //     "type": "debugpy",
+        //     "request": "launch",
+        //     "program": "${workspaceFolder}\\PMCA\\__main__.py",
+        //     "cwd": "${workspaceFolder}",
+        //     "console": "integratedTerminal",
+        //     "args": [],
+        //     "env": {
+        //         "PYTHONPATH": "${workspaceFolder}\\prefix\\bin",
+        //     }
+        // },
         {
-            "name": "PMCA",
+            "name": "PyPMCA Module",
             "type": "debugpy",
             "request": "launch",
+            "module": "PyPMCA",
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
-            "program": "${workspaceFolder}\\PMCA\\__main__.py",
             "args": [],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}\\prefix\\bin",
             }
-        }
+        },
     ]
 }

@@ -1,5 +1,5 @@
 import tkinter.ttk
-import listbox
+import PyPMCA.gui.listbox as listbox
 
 
 class TransformTab(tkinter.ttk.Frame):

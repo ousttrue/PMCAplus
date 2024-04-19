@@ -1,13 +1,46 @@
 import tkinter.ttk
-import listbox
-import PyPMCA
+import PMCA  # type: ignore
+
+
+class MODELINFO:
+    def __init__(
+        self,
+        name: str = "PMCAモデル",
+        name_l: str = "PMCAモデル",
+        comment: str = "",
+        name_eng: str = "PMCA model",
+        name_l_eng: str = "PMCA generated model",
+        comment_eng: str = "",
+    ):
+        self.name = name
+        self.name_l = name_l
+        self.comment = comment
+        self.name_eng = name_eng
+        self.name_l_eng = name_l_eng
+        self.comment_eng = comment_eng
+
+
+def Set_Name_Comment(
+    num: int = 0,
+    name: str = "",
+    comment: str = "",
+    name_eng: str = "",
+    comment_eng: str = "",
+):
+    PMCA.Set_Name_Comment(
+        num,
+        name.encode("cp932", "replace"),
+        comment.encode("cp932", "replace"),
+        name_eng.encode("cp932", "replace"),
+        comment_eng.encode("cp932", "replace"),
+    )
 
 
 class InfoTab(tkinter.ttk.Frame):
     def __init__(self, root: tkinter.Tk) -> None:
         super().__init__(root)
         self.text = "Info"
-        self.modelinfo = PyPMCA.MODELINFO()
+        self.modelinfo = MODELINFO()
 
         self.frame = tkinter.ttk.Frame(self)
         self.frame.comment = tkinter.Text(self.frame, height=10)
@@ -63,7 +96,7 @@ class InfoTab(tkinter.ttk.Frame):
             self.modelinfo.name = self.frame.name.get()
             self.modelinfo.name_l = self.frame.name_l.get()
             self.modelinfo.comment = self.frame.comment.get("1.0", tkinter.END)
-            PyPMCA.Set_Name_Comment(
+            Set_Name_Comment(
                 name=self.modelinfo.name,
                 comment="%s\nAuthor:%s\nLicense:%s\n%s"
                 % (self.modelinfo.name_l, str1, str2, self.modelinfo.comment),
@@ -73,4 +106,3 @@ class InfoTab(tkinter.ttk.Frame):
             )
 
         self.frame.text.set("Author : %s\nLicense : %s" % (str1, str2))
-

@@ -196,7 +196,7 @@ def Set_Name_Comment(
     """
     ...
 
-def Init_PMD():
+def Init_PMD() -> None:
     """
     Initialize"
     """
@@ -298,7 +298,7 @@ def getWHT():
     """
     ...
 
-def CretateViewerThread():
+def CretateViewerThread() -> None:
     """
     CretateViewerThread
     """
@@ -310,7 +310,7 @@ def WaitViewerThread():
     """
     ...
 
-def QuitViewerThread():
+def QuitViewerThread() -> None:
     """
     QuitViewerThread"
     """

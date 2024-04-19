@@ -1,9 +1,11 @@
 import tkinter
-import PMCA
 import logging
 import pathlib
-from main_frame import MainFrame
-from PMCA_data import PMCAData
+
+import PMCA  # type: ignore
+
+from .gui.main_frame import MainFrame
+from .PMCA_data import PMCAData
 
 
 APPNAME = "PMCA v0.0.6r10"
@@ -25,7 +27,7 @@ mapping = {
 
 
 # https://pod.hatenablog.com/entry/2020/03/01/221715
-class ColorfulHandler(logging.StreamHandler):
+class ColorfulHandler(logging.StreamHandler):  # type: ignore
     def emit(self, record: logging.LogRecord) -> None:
         record.levelname = mapping[record.levelname]
         super().emit(record)
