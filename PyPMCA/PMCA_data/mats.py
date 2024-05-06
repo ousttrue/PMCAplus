@@ -37,7 +37,6 @@ class MATS:
         active = mats_list[-1]
         for l in lines:
             line = l.rstrip("\n").replace("\t", " ").split(" ", 1)
-            # print(line)
             if line[0] == "":
                 pass
             if line[0][:1] == "#":

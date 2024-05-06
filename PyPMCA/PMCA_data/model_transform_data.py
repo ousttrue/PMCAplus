@@ -1,4 +1,6 @@
-from typing import List, Tuple
+import logging
+
+LOGGER = logging.getLogger(__name__)
 
 
 class BONE_TRANS_DATA:
@@ -7,9 +9,9 @@ class BONE_TRANS_DATA:
         name: str = "",
         length: float = 1.0,
         thick: float = 1.0,
-        pos: List[float] = [0.0, 0.0, 0.0],
-        rot: List[float] = [0.0, 0.0, 0.0],
-        props={},
+        pos: list[float] = [0.0, 0.0, 0.0],
+        rot: list[float] = [0.0, 0.0, 0.0],
+        props: dict[str, str] = {},
     ):
         self.name = name
         self.length = length
@@ -22,8 +24,8 @@ class BONE_TRANS_DATA:
 class MODEL_TRANS_DATA:
     def __init__(
         self,
-        name="",
-        scale=1.0,
+        name: str = "",
+        scale: float = 1.0,
         pos=[0.0, 0.0, 0.0],
         rot=[0.0, 0.0, 0.0],
         bones=[],
@@ -42,8 +44,8 @@ class MODEL_TRANS_DATA:
         self.gamma = gamma
         self.props = props
 
-    def list_to_text(self):
-        lines = []
+    def list_to_text(self) -> list[str]:
+        lines: list[str] = []
         # lines.append('[Name] %s'%(self.name))
         lines.append("[Scale] %f" % (self.scale))
         lines.append("[Pos] %f %f %f" % (self.pos[0], self.pos[1], self.pos[2]))
@@ -60,21 +62,19 @@ class MODEL_TRANS_DATA:
 
         return lines
 
-    def text_to_list(self, lines):
+    def text_to_list(self, lines: list[str]):
         tmp = ["", "", None]
         i = 0
         try:
             while lines[i] != "TRANSFORM":
-                # print(lines[i])
                 i += 1
         except:
             return None
 
         i += 1
-        print("体型調整読み込み")
+        LOGGER.info("体型調整読み込み")
         for j, x in enumerate(lines[i:]):
             x = x.split(" ")
-            print(x)
             if x[0] == "[Name]":
                 self.name = x[1]
             elif x[0] == "[Scale]":
@@ -93,7 +93,6 @@ class MODEL_TRANS_DATA:
         self.bones.append(BONE_TRANS_DATA())
         for x in lines[i + j :]:
             x = x.split(" ")
-            print(x)
             if x[0] == "[Name]":
                 self.bones[-1].name = x[1]
             elif x[0] == "[Length]":
@@ -113,14 +112,13 @@ class MODEL_TRANS_DATA:
                     self.bones.append(BONE_TRANS_DATA())
 
     @staticmethod
-    def load_list(lines: List[str]) -> List["MODEL_TRANS_DATA"]:
-        trans_list: List[MODEL_TRANS_DATA] = []
+    def load_list(lines: list[str]) -> list["MODEL_TRANS_DATA"]:
+        trans_list: list[MODEL_TRANS_DATA] = []
         trans_list.append(MODEL_TRANS_DATA(bones=[]))
 
         mode = 0
         for l in lines:
             line = l.rstrip("\n").replace("\t", " ").split(" ", 1)
-            # print(line)
             if line[0] == "":
                 pass
             if line[0][:1] == "#":

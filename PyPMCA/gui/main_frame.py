@@ -1,4 +1,5 @@
 from typing import List
+import pathlib
 import os, sys
 import shutil
 import random
@@ -12,6 +13,7 @@ from .main_frame_transform import TransformTab
 from .main_frame_info import InfoTab
 from ..PMCA_data.parts import PARTS
 from ..PMCA_data import PMCAData
+from ..PMCA_data.mats import MATS
 from ..PMCA_data.model_transform_data import MODEL_TRANS_DATA
 from .. import PyPMCA
 
@@ -108,8 +110,6 @@ class MAT_REP:  # 材質置換
 
                     if self.mat[mat[i].tex].sel == None:
                         self.mat[mat[i].tex].sel = self.mat[mat[i].tex].mat.entries[0]
-                        for y in self.mat[mat[i].tex].mat.entries:
-                            print(y.props)
 
     def Set(self, model=None, info=None, num=0):
         if model == None:
@@ -129,7 +129,6 @@ class MAT_REP:  # 材質置換
                 rep = self.mat[x.tex].sel
                 for k, v in rep.props.items():
                     if k == "tex":
-                        print("replace texture", x.tex, "to", v, "num =", i)
                         x.tex = v
                     elif k == "tex_path":
                         x.tex_path = v
@@ -144,7 +143,6 @@ class MAT_REP:  # 材質置換
                     elif k == "alpha":
                         x.alpha = float(v)
                     elif k == "spec_rgb":
-                        # print(x.spec_col)
                         x.spec_col = v
                         for j, y in enumerate(x.spec_col):
                             x.spec_col[j] = float(y)
@@ -157,9 +155,6 @@ class MAT_REP:  # 材質置換
                         toon = TOON()
                         toon.path = PMCA.getToonPath(num)
                         toon.name = PMCA.getToon(num)
-                        # print("toon")
-                        # print(toon.name)
-                        # print(toon.path)
                         tmp = v[-1].split(" ")
                         tmp[0] = int(tmp[0])
                         toon.path[tmp[0]] = ("toon/" + tmp[1]).encode(
@@ -167,13 +162,9 @@ class MAT_REP:  # 材質置換
                         )
                         toon.name[tmp[0]] = tmp[1].encode("cp932", "replace")
 
-                        # print(toon.name)
-                        # print(toon.path)
-
                         PMCA.setToon(num, toon.name)
                         PMCA.setToonPath(num, toon.path)
                         x.toon = tmp[0]
-                        # print(tmp)
                     elif k == "author":
                         for y in v[-1].split(" "):
                             for z in self.app.authors:
@@ -189,8 +180,6 @@ class MAT_REP:  # 材質置換
                             else:
                                 self.app.licenses.append(y)
 
-                # print(x.diff_col)
-                # print(x.spec_col)
                 PMCA.setMat(
                     num,
                     i,
@@ -218,37 +207,31 @@ class MAT_REP:  # 材質置換
 
         return lines
 
-    def text_to_list(self, lines, mat_list):
+    def text_to_list(self, lines: list[str], mat_list: list[MATS]):
+        LOGGER.info("parse material_rep")
         self.mat = {}
         tmp = ["", "", None]
         i = 0
         while lines[i] != "MATERIAL":
-            # print(lines[i])
             i += 1
         i += 1
-        print("材質読み込み")
         for x in lines[i:]:
             x = x.split(" ")
-            print(x)
             if x[0] == "[Name]":
                 tmp[0] = x[1]
             elif x[0] == "[Sel]":
                 tmp[1] = x[1]
             elif x[0] == "NEXT":
-                print(tmp[0])
                 for y in mat_list:
                     if y.name == tmp[0]:
                         tmp[2] = y
                         break
                 else:
                     tmp[2] = None
-                    print("Not found")
                     continue
 
                 for y in tmp[2].entries:
-                    print(y.name)
                     if y.name == tmp[1]:
-                        print(tmp[0])
                         self.mat[tmp[0]] = MAT_REP_DATA(num=-1, mat=tmp[2], sel=y)
                         break
 
@@ -308,14 +291,13 @@ class NODE:  # モデルのパーツツリー
                 or tmp[0] == "creator"
                 or tmp[0] == "モデル制作"
             ):
-                print(tmp[1])
                 tmp[1] = tmp[1].replace("　", " ")
                 app.authors = tmp[1].split(" ")
 
             elif tmp[0] == "License" or tmp[0] == "license" or tmp[0] == "ライセンス":
                 tmp[1] = tmp[1].replace("　", " ")
                 app.licenses = tmp[1].split(" ")
-        print("パーツのパス:%s" % (self.parts.path))
+        LOGGER.debug("パーツのパス:%s" % (self.parts.path))
         for x in self.child:
             if x != None:
                 x.assemble_child(num, app)
@@ -331,7 +313,7 @@ class NODE:  # モデルのパーツツリー
 
     def assemble_child(self, num, app):
         pmpy = app
-        print("パーツのパス:%s" % (self.parts.path))
+        LOGGER.info("パーツのパス:%s" % (self.parts.path))
 
         PMCA.Create_PMD(4)
         PMCA.Load_PMD(4, self.parts.path.encode(sys.getdefaultencoding(), "replace"))
@@ -388,7 +370,7 @@ class NODE:  # モデルのパーツツリー
 
         if "script_pre" in self.parts.props:
             for x in self.parts.props["script_pre"]:
-                print("プレスクリプト実行")
+                LOGGER.debug("プレスクリプト実行")
                 argv = x.split()
                 fp = open(argv[0], "r", encoding="utf-8-sig")
                 script = fp.read()
@@ -474,7 +456,6 @@ class NODE:  # モデルのパーツツリー
         lines.append("[Name] %s" % (self.parts.name))
         lines.append("[Path] %s" % (self.parts.path))
         lines.append("[Child]")
-        print(self.parts.path)
         for x in self.child:
             if x != None:
                 lines.extend(x.node_to_text())
@@ -483,19 +464,18 @@ class NODE:  # モデルのパーツツリー
         lines.append("[Parent]")
         return lines
 
-    def text_to_node(self, parts_list, lines):
+    def text_to_node(self, parts_list: list[PARTS], lines: list[str]) -> None:
+        LOGGER.info("parse nodes")
         tmp = [None, None]
         curnode = self
         parents = [self]
         child_nums = [0]
         count = 0
         while lines[count] != "PARTS":
-            # print(lines[i])
             count += 1
         count += 1
 
         while count < len(lines):
-            print("count = %d" % (count))
             line = lines[count].split(" ")
             if len(parents) == 0:
                 break
@@ -515,7 +495,6 @@ class NODE:  # モデルのパーツツリー
             elif line[0] == "[Child]":
 
                 tp = None
-                print(tmp[0], len(parents))
                 if tmp[0] != None:
                     for y in parts_list:
                         if y.name == tmp[0]:
@@ -528,7 +507,6 @@ class NODE:  # モデルのパーツツリー
                                 break
 
                 if tp != None:
-                    print(curnode.parts.name, len(curnode.child), child_nums[-1])
                     curnode.child[child_nums[-1]] = NODE(
                         parts=y, depth=curnode.depth + 1, child=[]
                     )
@@ -553,7 +531,6 @@ class NODE:  # モデルのパーツツリー
             elif line[0] == "[Parent]":
                 curnode = parents.pop()
                 child_nums.pop()
-                print("up", len(parents))
                 if len(child_nums) > 0:
                     child_nums[-1] += 1
             elif line[0] == "MATERIAL":
@@ -561,8 +538,6 @@ class NODE:  # モデルのパーツツリー
             count += 1
 
         self.recalc_depth
-
-        return lines
 
 
 class TREE_LIST:
@@ -717,12 +692,8 @@ class MainFrame(tkinter.ttk.Frame):
         self.QUIT.pack(side=tkinter.RIGHT)
         self.frame_button.pack(padx=5, pady=5, side=tkinter.TOP, fill="x")
 
-    def load_CNL_File(self, name):
-        f = open(name, "r", encoding="utf-8-sig")
-        lines = f.read()
-        f.close
-        lines = lines.split("\n")
-
+    def load_CNL_File(self, file: pathlib.Path) -> None:
+        lines = file.read_text(encoding="utf-8").splitlines()
         self.tab[3].frame.name.set(lines[0])
         self.tab[3].frame.name_l.set(lines[1])
         for line in lines[2:]:
@@ -737,10 +708,12 @@ class MainFrame(tkinter.ttk.Frame):
         else:
             self.tab[3].frame.comment.delete("1.0", END)
 
+        assert len(self.tree_list) > 0
         self.tree_list[0].node.text_to_node(self.data.parts_list, lines)
+        assert self.mat_rep
         self.mat_rep.text_to_list(lines, self.data.mats_list)
+        assert len(self.transform_data) > 0
         self.transform_data[0].text_to_list(lines)
-        return True
 
     ######################################################################################
     def refresh(self, level: int = 0):
@@ -757,7 +730,7 @@ class MainFrame(tkinter.ttk.Frame):
         PMCA.MODEL_LOCK(1)
 
         if level < 1:
-            print("モデル組立て")
+            LOGGER.info("モデル組立て")
 
             PMCA.Create_PMD(0)
 
@@ -773,25 +746,21 @@ class MainFrame(tkinter.ttk.Frame):
 
         if level < 2:
             # 材質関連
-            print("材質置換")
+            LOGGER.info("材質置換")
             self.mat_rep.Get(self.data.mats_list)
-            # print("1")
             self.mat_entry = [[], []]
             for v in self.mat_rep.mat.values():
                 if v.num >= 0:
                     self.mat_entry[0].append(v.mat.name + "  " + v.sel.name)
                     self.mat_entry[1].append(v.mat.name)
-            # print("2")
             self.tab[1].l_tree.set_entry(self.mat_entry[0], sel=self.cur_mat)
-            # print("3")
             self.mat_rep.Set()
-            # print("4")
             PMCA.Copy_PMD(0, 2)
         else:
             PMCA.Copy_PMD(2, 0)
 
         if level < 3:
-            print("体型調整")
+            LOGGER.info("体型調整")
             info_data = PMCA.getInfo(0)
             info = PyPMCA.INFO(info_data)
 
@@ -830,7 +799,6 @@ class MainFrame(tkinter.ttk.Frame):
                         x.pos[1],
                         x.pos[2],
                     )
-                    # print("resize_bone %f %f"%(x.length, x.thick))
 
             if refbone != None:
                 newbone = None
@@ -887,7 +855,7 @@ class MainFrame(tkinter.ttk.Frame):
             % (wht[1], wht[0], wht[2])
         )
 
-        print("Done")
+        LOGGER.info("Done")
 
     ########################################################################################
     # functions menu
@@ -958,7 +926,6 @@ class MainFrame(tkinter.ttk.Frame):
             while count < bone_count:
                 if i >= bone_count:
                     break
-                print(i)
                 i = model.bone[i].parent
                 count += 1
             else:
@@ -1203,8 +1170,6 @@ class MainFrame(tkinter.ttk.Frame):
     def rand_mat(self):
         for x in self.mat_rep.mat.items():
             random.seed()
-            # print(x)
-            # print(x[1].mat)
             x[1].sel = x[1].mat.entries[random.randint(0, len(x[1].mat.entries) - 1)]
         self.refresh()
 
@@ -1262,17 +1227,16 @@ class MainFrame(tkinter.ttk.Frame):
                     try:
                         shutil.copy(mat.tex_path, dirc)
                     except IOError:
-                        print("コピー失敗:%s" % (mat.tex_path))
+                        LOGGER.error("コピー失敗:%s" % (mat.tex_path))
                 if mat.sph != "":
                     try:
                         shutil.copy(mat.sph_path, dirc)
                     except IOError:
-                        print("コピー失敗:%s" % (mat.sph_path))
+                        LOGGER.error("コピー失敗:%s" % (mat.sph_path))
 
             toon = PMCA.getToon(0)
             for i, x in enumerate(PMCA.getToonPath(0)):
                 toon[i] = toon[i].decode("cp932", "replace")
-                print(toon[i], x)
                 if toon[i] != "":
                     try:
                         shutil.copy("toon/" + toon[i], dirc)
@@ -1280,7 +1244,7 @@ class MainFrame(tkinter.ttk.Frame):
                         try:
                             shutil.copy("parts/" + toon[i], dirc)
                         except IOError:
-                            print("コピー失敗:%s" % (toon[i]))
+                            LOGGER.error("コピー失敗:%s" % (toon[i]))
 
     def dialog_save_PMD(self):
         name = filedialog.asksaveasfilename(
@@ -1301,7 +1265,6 @@ class MainFrame(tkinter.ttk.Frame):
         )
 
         self.save_CNL_File("./last.cnl")
-        print(type(names))
         if type(names) is str:
             names = names.split(" ")
         for name in names:

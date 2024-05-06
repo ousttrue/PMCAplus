@@ -17,7 +17,6 @@ def main():
 
     tmp = argvs[0].rsplit("/", 1)
     tmp = tmp.rsplit("/", 1)
-    print(tmp)
 
     curd = tmp[0]
 

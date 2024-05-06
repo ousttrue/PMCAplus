@@ -27,13 +27,9 @@ class TransformTab(tkinter.ttk.Frame):
     def tf_click(self, event):
         sel = int(self.tab[2].tfgroup.listbox.curselection()[0])
         buff = ""
-        print(sel)
-        for x in self.transform_list:
-            print(x.name, len(x.bones))
 
         for x in self.transform_list[sel].bones:
             buff += "%s %f %f\n" % (x.name, x.length, x.thick)
-        print(buff)
 
         t = self.transform_list[sel]
 

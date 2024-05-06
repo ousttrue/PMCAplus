@@ -14,6 +14,8 @@
 #include <string.h>
 #include <thread>
 
+#include <plog/Log.h>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -307,8 +309,9 @@ int load_tex(MODEL *model, DSP_MODEL *dsp_model) {
           h = h * 2;
         }
         tmp_bits = (GLubyte *)MALLOC(h * w * sizeof(GLubyte) * 6);
-        if (tmp_bits == NULL)
-          puts("メモリ確保失敗");
+        if (tmp_bits == NULL) {
+          LOGE << "メモリ確保失敗";
+        }
 
         auto tmp = gluScaleImage(GL_RGBA, mat.texsize[0], mat.texsize[1],
                                  GL_UNSIGNED_BYTE, texbits, w, h,

@@ -31,9 +31,7 @@ class ModelTab(tkinter.ttk.Frame):
     def tree_click(self, event):
         self.tab[0].comment.set("comment:")
         sel_t = int(self.tab[0].l_tree.listbox.curselection()[0]) + 1
-        print(sel_t)
         joint = self.tree_list[sel_t].node.parts.joint[self.tree_list[sel_t].c_num]
-        print(joint)
 
         self.parts_entry_k = []
         self.parts_entry_p = []
@@ -75,9 +73,6 @@ class ModelTab(tkinter.ttk.Frame):
                 node = None
 
         else:
-            print(self.parts_entry_p[sel].path)
-            print(self.tree_list[sel_t].node.parts.name)
-
             node = PyPMCA.NODE(
                 parts=self.parts_entry_p[sel],
                 depth=self.tree_list[sel_t].node.depth + 1,
@@ -102,7 +97,6 @@ class ModelTab(tkinter.ttk.Frame):
                 for x in node.parts.joint:
                     node.child.append(None)
 
-            print(">>", node.parts.name, "\n")
         self.tree_list[sel_t].node.child[self.tree_list[sel_t].c_num] = node
         # self.tree_list[sel_t].node.list_num = sel
         if node == None:

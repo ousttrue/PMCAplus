@@ -870,44 +870,43 @@ static PyObject *Create_PMD(PyObject *self, PyObject *args) {
 
 static PyObject *Marge_PMD(PyObject *self, PyObject *args) {
   int num;
-  int ret;
   if (!PyArg_ParseTuple(args, "i", &num))
     return NULL;
-  puts("ボーンマージ");
-  ret = marge_bone(&g_model[num]);
-  puts("材質マージ");
+
+  LOGD << "ボーンマージ";
+  int ret = marge_bone(&g_model[num]);
+  LOGD << "材質マージ";
   ret += marge_mat(&g_model[num]);
-  puts("IKマージ");
+  LOGD << "IKマージ";
   ret += marge_IK(&g_model[num]);
-  puts("ボーングループマージ");
+  LOGD << "ボーングループマージ";
   ret += marge_bone_disp(&g_model[num]);
-  puts("剛体マージ");
+  LOGD << "剛体マージ";
   ret += marge_rb(&g_model[num]);
   return Py_BuildValue("i", ret);
 }
 
 static PyObject *Sort_PMD(PyObject *self, PyObject *args) {
   int num;
-  int ret;
   if (!PyArg_ParseTuple(args, "i", &num))
     return NULL;
 
   rename_tail(&g_model[num]);
-  puts("ボーンマージ");
-  ret = marge_bone(&g_model[num]);
+  LOGD << "ボーンマージ";
+  int ret = marge_bone(&g_model[num]);
 
-  puts("ボーンソート");
+  LOGD << "ボーンソート";
   ret = sort_bone(&g_model[num], &list);
-  puts("表情ソート");
+  LOGD << "表情ソート";
   ret += sort_skin(&g_model[num], &list);
-  puts("ボーングループソート");
+  LOGD << "ボーングループソート";
   ret += sort_disp(&g_model[num], &list);
 
   //-0ボーン削除
   if (strcmp(g_model[num].bone[g_model[num].bone.size() - 1].name, "-0") == 0) {
     g_model[num].bone.pop_back();
   }
-  puts("英語対応化");
+  LOGD << "英語対応化";
   translate(&g_model[num], &list, 1);
   return Py_BuildValue("i", ret);
 }

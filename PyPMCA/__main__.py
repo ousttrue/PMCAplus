@@ -37,14 +37,14 @@ def main(dir: pathlib.Path):
     logging.basicConfig(handlers=[ColorfulHandler()], level=logging.DEBUG)
 
     # data
-    data = PMCAData(dir)
-    data.load()
+    data = PMCAData()
+    data.load(dir)
 
     # gui
     PMCA.Init_PMD()
     root = tkinter.Tk()
     app = MainFrame(APPNAME, data, master=root)
-    app.load_CNL_File("./last.cnl")
+    app.load_CNL_File(pathlib.Path("./last.cnl"))
 
     PMCA.CretateViewerThread()
 

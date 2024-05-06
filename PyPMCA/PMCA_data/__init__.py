@@ -1,10 +1,8 @@
-from typing import List, NamedTuple, Optional, Tuple
-import os
+from typing import NamedTuple, Tuple
 import pathlib
 import logging
 
 import PMCA  # type: ignore
-from .. import PyPMCA
 from .mats import MATS
 from .parts import PARTS
 from .model_transform_data import MODEL_TRANS_DATA
@@ -14,16 +12,16 @@ LOGGER = logging.getLogger(__name__)
 
 
 class LIST(NamedTuple):
-    b: Tuple[List[bytes], List[bytes]]
-    s: Tuple[List[bytes], List[bytes]]
-    g: Tuple[List[bytes], List[bytes]]
+    b: Tuple[list[bytes], list[bytes]]
+    s: Tuple[list[bytes], list[bytes]]
+    g: Tuple[list[bytes], list[bytes]]
 
     @staticmethod
     def load_list(data: str) -> "LIST":
 
-        bone: Tuple[List[bytes], List[bytes]] = [], []
-        skin: Tuple[List[bytes], List[bytes]] = [], []
-        group: Tuple[List[bytes], List[bytes]] = [], []
+        bone: Tuple[list[bytes], list[bytes]] = [], []
+        skin: Tuple[list[bytes], list[bytes]] = [], []
+        group: Tuple[list[bytes], list[bytes]] = [], []
 
         lines = data.splitlines()
         line = lines.pop(0)
@@ -60,15 +58,14 @@ class LIST(NamedTuple):
 
 
 class PMCAData:
-    def __init__(self, dir: pathlib.Path) -> None:
-        self.dir = dir
-        LOGGER.info("PMCADATA: %s", self.dir.relative_to(pathlib.Path(".").absolute()))
-        self.mats_list: List[PyPMCA.MATS] = []
-        self.parts_list: List[PyPMCA.PARTS] = []
-        self.transform_list: List[PyPMCA.MODEL_TRANS_DATA] = []
+    def __init__(self) -> None:
+        self.mats_list: list[MATS] = []
+        self.parts_list: list[PARTS] = []
+        self.transform_list: list[MODEL_TRANS_DATA] = []
 
-    def load(self):
-        for x in self.dir.iterdir():
+    def load(self, dir: pathlib.Path):
+        LOGGER.info("PMCADATA: %s", dir.relative_to(pathlib.Path(".").absolute()))
+        for x in dir.iterdir():
             if not x.is_file():
                 continue
             if x.suffix == ".py":
@@ -93,21 +90,21 @@ class PMCAData:
 
             lines = src.splitlines()
             if lines[0] == "PMCA Parts list v2.0":
-                LOGGER.info("%s => [%s]", x.relative_to(self.dir), lines[0])
+                LOGGER.info("%s => [%s]", x.relative_to(dir), lines[0])
                 self.parts_list = PARTS.load_list(lines)
                 continue
 
             if lines[0] == "PMCA Materials list v2.0":
-                LOGGER.info("%s => [%s]", x.relative_to(self.dir), lines[0])
+                LOGGER.info("%s => [%s]", x.relative_to(dir), lines[0])
                 self.mats_list = MATS.load_list(lines)
                 continue
 
             if lines[0] == "PMCA Transform list v2.0":
-                LOGGER.info("%s => [%s]", x.relative_to(self.dir), lines[0])
+                LOGGER.info("%s => [%s]", x.relative_to(dir), lines[0])
                 self.transform_list = MODEL_TRANS_DATA.load_list(lines)
                 continue
 
-            LOGGER.warn("skip: %s", x.relative_to(self.dir))
+            LOGGER.warn("skip: %s", x.relative_to(dir))
 
     def save_CNL_File(self, name):
         if self.tree_list[0].node.child[0] == None:

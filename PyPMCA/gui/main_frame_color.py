@@ -30,8 +30,6 @@ class ColorTab(tkinter.ttk.Frame):
 
     def mats_click(self, event):
         sel_t = int(self.tab[1].l_tree.listbox.curselection()[0])
-        print(sel_t)
-        print(self.mat_rep.mat[self.mat_entry[1][sel_t]])
 
         tmp_list = []
         for x in self.mat_rep.mat[self.mat_entry[1][sel_t]].mat.entries:
@@ -48,7 +46,6 @@ class ColorTab(tkinter.ttk.Frame):
         )
 
     def mats_sel_click(self, event):
-        print(self.mat_rep.mat[self.mat_entry[1][self.cur_mat]].sel)
         sel_t = int(self.tab[1].l_sel.listbox.curselection()[0])
         self.mat_rep.mat[self.mat_entry[1][self.cur_mat]].sel = self.mat_rep.mat[
             self.mat_entry[1][self.cur_mat]
