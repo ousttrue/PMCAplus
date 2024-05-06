@@ -1,10 +1,11 @@
-from typing import List
+from typing import Any
 import pathlib
 import os, sys
 import shutil
 import random
-import tkinter.ttk
 import logging
+
+import tkinter.ttk
 
 import PMCA  # type: ignore
 from .main_frame_model import ModelTab
@@ -18,7 +19,7 @@ from ..PMCA_data.model_transform_data import MODEL_TRANS_DATA
 from .. import PyPMCA
 from .bone import BONE
 from .material import MATERIAL, MAT_REP
-from .node import NODE
+from .node import NODE, TREE_LIST
 
 
 LOGGER = logging.getLogger(__name__)
@@ -31,17 +32,15 @@ class MainFrame(tkinter.ttk.Frame):
         self.data = data
         self.root = master
         self.root.title(title)
-        self.tree_list = []
-        self.tree_entry = []
-        self.parts_entry_k = []
-        self.parts_entry_p = []
+        self.tree_list: list[TREE_LIST] = []
+
         self.mat_rep = None
         self.transform_data = []
         self.target_dir = "./model/"
         self.cur_parts = 0
         self.cur_mat = 0
         self.pack()
-        self.createWidgets()
+        self._reateWidgets()
 
         # menu
         self.menubar = tkinter.Menu(master)
@@ -83,49 +82,7 @@ class MainFrame(tkinter.ttk.Frame):
         self.init_tree()
         self.init_mat()
 
-    def init_tree(self):
-        LOGGER.info("ツリー初期化")
-        node = NODE(parts=PARTS(name="ROOT", joint=["root"]), depth=-1, child=[None])
-
-        self.tree_list = node.create_list()
-        self.tree_entry = []
-        for x in self.tree_list:
-            self.tree_entry.append(x.text)
-        self.tree_entry = self.tree_entry[1:]
-        self.tab[0].l_tree.set_entry(self.tree_entry, sel=0)
-
-        self.parts_entry_k = []
-        self.parts_entry_p = []
-        for x in self.data.parts_list:
-            for y in x.type:
-                if y == "root":
-                    self.parts_entry_k.append(x.name)
-                    self.parts_entry_p.append(x)
-                    break
-
-        self.parts_entry_k.append("#外部モデル読み込み")
-        self.parts_entry_p.append("load")
-        # app.parts_entry_k.append('#None')
-        # app.parts_entry_p.append(None)
-
-        self.tab[0].l_sel.set_entry(self.parts_entry_k)
-
-    def init_mat(self):
-        LOGGER.info("材質置換設定初期化")
-        self.mat_rep = MAT_REP(app=self)
-
-        self.tab[3].frame.name.set("PMCAモデル")
-        self.tab[3].frame.name_l.set("PMCAモデル")
-        self.tab[3].frame.comment.delete("1.0", tkinter.END)
-
-        self.transform_data = [MODEL_TRANS_DATA(scale=1.0, bones=[], props={})]
-        tmp: List[str] = []
-        for x in self.data.transform_list:
-            tmp.append(x.name)
-
-        self.tab[2].tfgroup.set_entry(tmp)
-
-    def createWidgets(self):
+    def _reateWidgets(self):
         """
         self.listbox = Listbox(self, height = 6, exportselection = 0, selectmode = SINGLE)
         self.listbox.yscroll = Scrollbar(self, orient = VERTICAL, command = self.listbox.yview)
@@ -138,17 +95,19 @@ class MainFrame(tkinter.ttk.Frame):
         notebook = tkinter.ttk.Notebook(self.root)
         notebook.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
 
-        self.tab = []
-        self.tab.append(ModelTab(self.root))
-        self.tab.append(ColorTab(self.root))
-        self.tab.append(TransformTab(self.root))
-        self.tab.append(InfoTab(self.root))
+        def add_tab(x: Any):
+            notebook.insert(tkinter.END, x, text=x.text)  # type: ignore
 
-        for x in self.tab:
-            notebook.insert(tkinter.END, x, text=x.text)
-        ########################################################################################################
+        self.model_tab = ModelTab(self.root)
+        add_tab(self.model_tab)
+        self.color_tab = ColorTab(self.root)
+        add_tab(self.color_tab)
+        self.transform_tab = TransformTab(self.root)
+        add_tab(self.transform_tab)
+        self.info_tab = InfoTab(self.root)
+        add_tab(self.info_tab)
+
         # Buttons
-
         self.frame_button = tkinter.ttk.Frame(self.root)
         self.QUIT = tkinter.ttk.Button(self.frame_button)
         self.QUIT["text"] = "QUIT"
@@ -161,21 +120,43 @@ class MainFrame(tkinter.ttk.Frame):
         self.QUIT.pack(side=tkinter.RIGHT)
         self.frame_button.pack(padx=5, pady=5, side=tkinter.TOP, fill="x")
 
+    def init_tree(self):
+        LOGGER.info("ツリー初期化")
+        node = NODE(parts=PARTS(name="ROOT", joint=["root"]), depth=-1, children=[None])
+        self.tree_list = node.create_list()
+        self.model_tab.set_tree(self.tree_list)
+        self.model_tab.set_parts(self.data.parts_list)
+
+    def init_mat(self):
+        LOGGER.info("材質置換設定初期化")
+        self.mat_rep = MAT_REP(app=self)
+
+        self.info_tab.frame.name.set("PMCAモデル")
+        self.info_tab.frame.name_l.set("PMCAモデル")
+        self.info_tab.frame.comment.delete("1.0", tkinter.END)
+
+        self.transform_data = [MODEL_TRANS_DATA(scale=1.0, bones=[], props={})]
+        tmp: List[str] = []
+        for x in self.data.transform_list:
+            tmp.append(x.name)
+
+        self.transform_tab.tfgroup.set_entry(tmp)
+
     def load_CNL_File(self, file: pathlib.Path) -> None:
         lines = file.read_text(encoding="utf-8").splitlines()
-        self.tab[3].frame.name.set(lines[0])
-        self.tab[3].frame.name_l.set(lines[1])
+        self.info_tab.frame.name.set(lines[0])
+        self.info_tab.frame.name_l.set(lines[1])
         for line in lines[2:]:
             if line == "PARTS":
                 break
             elif line == "":
                 pass
             else:
-                self.tab[3].frame.comment.insert(END, line)
-                self.tab[3].frame.comment.insert(END, "\n")
+                self.info_tab.frame.comment.insert(END, line)
+                self.info_tab.frame.comment.insert(END, "\n")
 
         else:
-            self.tab[3].frame.comment.delete("1.0", END)
+            self.info_tab.frame.comment.delete("1.0", END)
 
         assert len(self.tree_list) > 0
         self.tree_list[0].node.text_to_node(self.data.parts_list, lines)
@@ -184,16 +165,10 @@ class MainFrame(tkinter.ttk.Frame):
         assert len(self.transform_data) > 0
         self.transform_data[0].text_to_list(lines)
 
-    ######################################################################################
     def refresh(self, level: int = 0):
-        sel_t = int(self.tab[0].l_tree.listbox.curselection()[0])
         self.tree_list = self.tree_list[0].node.create_list()
-        self.tree_entry = []
 
-        for x in self.tree_list:
-            self.tree_entry.append(x.text)
-        self.tree_entry = self.tree_entry[1:]
-        self.tab[0].l_tree.set_entry(self.tree_entry, sel=sel_t)
+        self.model_tab.set_tree(self.tree_list, True)
 
         # モデル組み立て
         PMCA.MODEL_LOCK(1)
@@ -222,7 +197,7 @@ class MainFrame(tkinter.ttk.Frame):
                 if v.num >= 0:
                     self.mat_entry[0].append(v.mat.name + "  " + v.sel.name)
                     self.mat_entry[1].append(v.mat.name)
-            self.tab[1].l_tree.set_entry(self.mat_entry[0], sel=self.cur_mat)
+            self.color_tab.l_tree.set_entry(self.mat_entry[0], sel=self.cur_mat)
             self.mat_rep.Set()
             PMCA.Copy_PMD(0, 2)
         else:
@@ -309,7 +284,7 @@ class MainFrame(tkinter.ttk.Frame):
         else:
             PMCA.Copy_PMD(3, 0)
 
-        self.tab[3].refresh(level)
+        self.info_tab.refresh(level)
 
         if level < 3:
             PMCA.PMD_view_set(0, "replace")  # テクスチャを変更しない
@@ -319,7 +294,7 @@ class MainFrame(tkinter.ttk.Frame):
         PMCA.MODEL_LOCK(0)
 
         wht = PMCA.getWHT(0)
-        self.tab[2].info_frame.strvar.set(
+        self.transform_tab.info_frame.strvar.set(
             "height     = %f\nwidth      = %f\nthickness = %f\n"
             % (wht[1], wht[0], wht[2])
         )
@@ -643,7 +618,7 @@ class MainFrame(tkinter.ttk.Frame):
         self.refresh()
 
     def save_node(self):
-        x = self.tree_list[0].node.child[0]
+        x = self.tree_list[0].node.children[0]
         if x != None:
             name = filedialog.asksaveasfilename(
                 filetypes=[("キャラクタノードリスト", ".cnl"), ("all", ".*")],

@@ -24,11 +24,15 @@ class TREE_LIST:
 
 class NODE:  # モデルのパーツツリー
     def __init__(
-        self, parts: PARTS, depth: int = 0, child: list["NODE"] = [], list_num: int = -1
+        self,
+        parts: PARTS,
+        depth: int = 0,
+        children: list["NODE|None"] = [],
+        list_num: int = -1,
     ):
         self.parts = parts
         self.depth = depth
-        self.child = child
+        self.children = children
         self.list_num = list_num
 
     def assemble(self, num: int, app):
@@ -84,7 +88,7 @@ class NODE:  # モデルのパーツツリー
                 tmp[1] = tmp[1].replace("　", " ")
                 app.licenses = tmp[1].split(" ")
         LOGGER.debug("パーツのパス:%s" % (self.parts.path))
-        for x in self.child:
+        for x in self.children:
             if x != None:
                 x.assemble_child(num, app)
 
@@ -176,7 +180,7 @@ class NODE:  # モデルのパーツツリー
         if "script_fin" in self.parts.props:
             app.script_fin.extend(self.parts.props["script_fin"])
 
-        for x in self.child:
+        for x in self.children:
             if x != None:
                 x.assemble_child(num, app)
 
@@ -186,13 +190,13 @@ class NODE:  # モデルのパーツツリー
                 node=self, depth=self.depth, text="  " * self.depth + self.parts.name
             )
         ]
-        for i, x in enumerate(self.child):
+        for i, x in enumerate(self.children):
             if x != None:
                 l.append(
                     TREE_LIST(
                         node=self,
                         depth=self.depth + 1,
-                        text=("  " * (self.depth + 1)) + self.child[i].parts.name,
+                        text=("  " * (self.depth + 1)) + self.children[i].parts.name,
                         c_num=i,
                     )
                 )
@@ -209,13 +213,13 @@ class NODE:  # モデルのパーツツリー
         return l
 
     def list_add(self, list):
-        for i, x in enumerate(self.child):
+        for i, x in enumerate(self.children):
             if x != None:
                 list.append(
                     TREE_LIST(
                         node=self,
                         depth=self.depth + 1,
-                        text="  " * (self.depth + 1) + self.child[i].parts.name,
+                        text="  " * (self.depth + 1) + self.children[i].parts.name,
                         c_num=i,
                     )
                 )
@@ -233,7 +237,7 @@ class NODE:  # モデルのパーツツリー
     def recalc_depth(self, depth):
         self.depth = depth
         depth = depth + 1
-        for x in self.child:
+        for x in self.children:
             if x != None:
                 x.recalc_depth(depth)
 
@@ -242,7 +246,7 @@ class NODE:  # モデルのパーツツリー
         lines.append("[Name] %s" % (self.parts.name))
         lines.append("[Path] %s" % (self.parts.path))
         lines.append("[Child]")
-        for x in self.child:
+        for x in self.children:
             if x != None:
                 lines.extend(x.node_to_text())
             else:
@@ -293,14 +297,14 @@ class NODE:  # モデルのパーツツリー
                                 break
 
                 if tp != None:
-                    curnode.child[child_nums[-1]] = NODE(
-                        parts=y, depth=curnode.depth + 1, child=[]
+                    curnode.children[child_nums[-1]] = NODE(
+                        parts=y, depth=curnode.depth + 1, children=[]
                     )
                     parents.append(curnode)
-                    curnode = curnode.child[child_nums[-1]]
+                    curnode = curnode.children[child_nums[-1]]
                     child_nums.append(0)
                     for x in curnode.parts.joint:
-                        curnode.child.append(None)
+                        curnode.children.append(None)
 
                 else:
                     depc = 1

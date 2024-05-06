@@ -11,7 +11,7 @@ class PARTS:
         name: str = "",
         comment: str = "",
         path: str = "",
-        t=[],
+        t: list[str] = [],
         joint=[],
         props={},
     ):
