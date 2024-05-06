@@ -1,8 +1,9 @@
+from typing import Any
 import tkinter
 import logging
 import pathlib
+import PMCA  # type: ignore
 
-from .native import PmcaView
 from .gui.main_frame import MainFrame
 from .PMCA_data import PMCAData
 
@@ -29,6 +30,20 @@ class ColorfulHandler(logging.StreamHandler):  # type: ignore
     def emit(self, record: logging.LogRecord) -> None:
         record.levelname = mapping[record.levelname]
         super().emit(record)
+
+
+class PmcaView:
+    def __init__(self):
+        PMCA.Init_PMD()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, _exception_type: Any, _exception_value: Any, _traceback: Any):
+        PMCA.QuitViewerThread()
+
+    def start_thread(self):
+        PMCA.CretateViewerThread()
 
 
 def main(dir: pathlib.Path):

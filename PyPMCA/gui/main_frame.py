@@ -1,6 +1,6 @@
 from typing import Any
 import pathlib
-import os, sys
+import os
 import shutil
 import random
 import logging
@@ -16,8 +16,7 @@ from ..PMCA_data.parts import PARTS
 from ..PMCA_data import PMCAData
 from ..PMCA_data.mats import MATS
 from ..PMCA_data.model_transform_data import MODEL_TRANS_DATA
-from .. import PyPMCA
-from ..bone import BONE
+from .. import pmd_type
 from .material import MAT_REP
 from .node import NODE, TREE_LIST
 
@@ -107,7 +106,9 @@ class MainFrame(tkinter.ttk.Frame):
         )
         editing.add_command(label="PMCA設定", underline=0, command=self.setting_dialog)
 
-        self.tree = NODE(parts=PARTS(name="ROOT", joint=["root"]), depth=-1, children=[None])
+        self.tree = NODE(
+            parts=PARTS(name="ROOT", joint=["root"]), depth=-1, children=[None]
+        )
         self.model_tab.set_tree(self.tree)
         self.model_tab.set_parts(self.data.parts_list)
 
@@ -164,13 +165,14 @@ class MainFrame(tkinter.ttk.Frame):
         if level < 3:
             LOGGER.info("体型調整")
             info_data = PMCA.getInfo(0)
-            info = PyPMCA.INFO(info_data)
+            info = pmd_type.INFO(info_data)
 
-            tmpbone = []
+            tmpbone: list[pmd_type.BONE] = []
             for i in range(info_data["bone_count"]):
                 tmp = PMCA.getBone(0, i)
+                assert tmp
                 tmpbone.append(
-                    BONE(
+                    pmd_type.BONE(
                         tmp["name"],
                         tmp["name_eng"],
                         tmp["parent"],
@@ -205,7 +207,8 @@ class MainFrame(tkinter.ttk.Frame):
             if refbone != None:
                 newbone = None
                 tmp = PMCA.getBone(0, refbone_index)
-                newbone = BONE(
+                assert tmp
+                newbone = pmd_type.BONE(
                     tmp["name"],
                     tmp["name_eng"],
                     tmp["parent"],
@@ -266,7 +269,7 @@ class MainFrame(tkinter.ttk.Frame):
 
     def savecheck_PMD(self):
         self.refresh(level=3)
-        model = PyPMCA.Get_PMD(0)
+        model = pmd.Get_PMD(0)
 
         errors = []
 
@@ -422,7 +425,7 @@ class MainFrame(tkinter.ttk.Frame):
     def check_PMD(self):
         self.refresh(level=3)
         info_data = PMCA.getInfo(0)
-        info = PyPMCA.INFO(info_data)
+        info = pmd.INFO(info_data)
         string = "name :" + info.name
         string += "\ncomment :\n" + info.comment
         string += "\n頂点数 :" + str(info_data["vt_count"])
@@ -455,7 +458,7 @@ class MainFrame(tkinter.ttk.Frame):
 
     def propcheck_PMD(self):
         self.refresh(level=3)
-        model = PyPMCA.Get_PMD(0)
+        model = pmd.Get_PMD(0)
         string = "name :" + model.info.name
         string += "\ncomment :\n" + model.info.comment
         string += "\n\nname_en :" + model.info.name_eng
@@ -562,7 +565,7 @@ class MainFrame(tkinter.ttk.Frame):
 
     def init_tf(self):
         self.transform_data = [
-            PyPMCA.MODEL_TRANS_DATA(
+            pmd.MODEL_TRANS_DATA(
                 scale=1.0, pos=[0.0, 0.0, 0.0], rot=[0.0, 0.0, 0.0], bones=[], props={}
             )
         ]
@@ -602,8 +605,8 @@ class MainFrame(tkinter.ttk.Frame):
             showinfo(text="Error!")
             return None
         pastnode = self.tree_list[0]
-        self.tree_list[0].node = PyPMCA.NODE(
-            parts=PyPMCA.PARTS(name="ROOT", joint=["root"]), depth=-1, child=[None]
+        self.tree_list[0].node = pmd.NODE(
+            parts=pmd.PARTS(name="ROOT", joint=["root"]), depth=-1, child=[None]
         )
         self.load_CNL_File(name)
         self.target_dir = name.rsplit("/", 1)[0]
@@ -621,9 +624,9 @@ class MainFrame(tkinter.ttk.Frame):
             dirc = name.rsplit("/", 1)[0]
             dirc += "/"
             info_data = PMCA.getInfo(0)
-            info = PyPMCA.INFO(info_data)
+            info = pmd.INFO(info_data)
             for i in range(info.data["mat_count"]):
-                mat = PyPMCA.MATERIAL(**PMCA.getMat(0, i))
+                mat = pmd.MATERIAL(**PMCA.getMat(0, i))
                 if mat.tex != "":
                     try:
                         shutil.copy(mat.tex_path, dirc)

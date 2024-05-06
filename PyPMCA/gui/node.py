@@ -2,7 +2,7 @@ import logging
 from ..PMCA_data.parts import PARTS
 import PMCA  # type: ignore
 import sys
-from .. import PyPMCA
+from ..pmd_type import pmd
 
 
 LOGGER = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ class NODE:  # モデルのパーツツリー
         PMCA.Create_PMD(num)
         PMCA.Load_PMD(num, self.parts.path.encode(sys.getdefaultencoding(), "replace"))
         info_data = PMCA.getInfo(0)
-        info = PyPMCA.INFO(info_data)
+        info = pmd.INFO(info_data)
         line = info.comment.split("\n")
 
         app.authors = []
@@ -108,7 +108,7 @@ class NODE:  # モデルのパーツツリー
         PMCA.Load_PMD(4, self.parts.path.encode(sys.getdefaultencoding(), "replace"))
 
         info_data = PMCA.getInfo(4)
-        info = PyPMCA.INFO(info_data)
+        info = pmd.INFO(info_data)
         line = info.comment.split("\n")
         flag_author = False
         flag_license = False

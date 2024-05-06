@@ -1,35 +1,54 @@
 import logging
 from ..PMCA_data.mats import MATS
 import PMCA  # type: ignore
-from .. import PyPMCA
-from ..material import MATERIAL, TOON
+from .. import pmd_type
 
 
 LOGGER = logging.getLogger(__name__)
 
 
-class MAT_REP_DATA:  # 材質置換データ
-    def __init__(self, num: int = -1, mat=None, sel=None):
+class MAT_REP_DATA:
+    """
+    材質置換データ
+    """
+
+    def __init__(
+        self,
+        num: int = -1,
+        mat: pmd_type.MATERIAL | None = None,
+        sel: int | None = None,
+    ):
         self.num = num
         self.mat = mat
         self.sel = sel
 
 
-class MAT_REP:  # 材質置換
+class MAT_REP:
+    """
+    材質置換
+    """
+
     def __init__(self, app=None):
         self.mat = {}
-        self.toon = TOON()
+        self.toon = pmd_type.TOON()
         self.app = app
 
-    def Get(self, mats_list, model=None, info=None, num=0):
+    def Get(
+        self,
+        mats_list: list[pmd_type.MATERIAL],
+        model: pmd_type.PMD | None = None,
+        info: pmd_type.INFO | None = None,
+        num: int = 0,
+    ):
         if model == None:
             if info == None:
                 info_data = PMCA.getInfo(num)
-                info = PyPMCA.INFO(info_data)
-            mat = []
+                info = pmd_type.INFO(info_data)
+            mat: list[pmd_type.MATERIAL] = []
             for i in range(info.data["mat_count"]):
                 tmp = PMCA.getMat(num, i)
-                mat.append(MATERIAL(**tmp))
+                assert tmp
+                mat.append(pmd_type.MATERIAL(**tmp))
         else:
             info = model.info
             mat = model.mat
@@ -48,15 +67,21 @@ class MAT_REP:  # 材質置換
                     if self.mat[mat[i].tex].sel == None:
                         self.mat[mat[i].tex].sel = self.mat[mat[i].tex].mat.entries[0]
 
-    def Set(self, model=None, info=None, num=0):
+    def Set(
+        self,
+        model: pmd_type.PMD | None = None,
+        info: pmd_type.INFO | None = None,
+        num: int = 0,
+    ):
         if model == None:
             if info == None:
                 info_data = PMCA.getInfo(num)
-                info = PyPMCA.INFO(info_data)
-            mat = []
+                assert info_data
+                info = pmd_type.INFO(info_data)
+            mat: list[pmd_type.MATERIAL] = []
             for i in range(info.data["mat_count"]):
                 tmp = PMCA.getMat(num, i)
-                mat.append(MATERIAL(**tmp))
+                mat.append(pmd_type.MATERIAL(**tmp))
         else:
             info = model.info
             mat = model.mat
@@ -89,7 +114,7 @@ class MAT_REP:  # 材質置換
                             x.mirr_col[j] = float(y)
 
                     elif k == "toon":
-                        toon = TOON()
+                        toon = pmd_type.TOON()
                         toon.path = PMCA.getToonPath(num)
                         toon.name = PMCA.getToon(num)
                         tmp = v[-1].split(" ")
