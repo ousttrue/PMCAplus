@@ -106,11 +106,11 @@ class PMCAData:
 
             LOGGER.warn("skip: %s", x.relative_to(dir))
 
-    def save_CNL_File(self, name):
+    def save_CNL_File(self, file: pathlib.Path) -> bool:
         if self.tree_list[0].node.child[0] == None:
             return False
 
-        lines = []
+        lines: list[str] = []
         lines.append(self.modelinfo.name)
         lines.append(self.modelinfo.name_l)
         lines.append(self.modelinfo.comment)
@@ -122,9 +122,8 @@ class PMCAData:
         lines.append("TRANSFORM")
         lines.extend(self.transform_data[0].list_to_text())
 
-        fp = open(name, "w", encoding="utf-8")
-        for x in lines:
-            fp.write(x + "\n")
-        fp.close
+        with file.open("w", encoding="utf-8") as fp:
+            for x in lines:
+                fp.write(x + "\n")
 
         return True

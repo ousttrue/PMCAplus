@@ -40,11 +40,13 @@ def main(dir: pathlib.Path):
     data = PMCAData()
     data.load(dir)
 
+    cnl_file = pathlib.Path("./last.cnl")
+
     # gui
     PMCA.Init_PMD()
     root = tkinter.Tk()
     app = MainFrame(APPNAME, data, master=root)
-    app.load_CNL_File(pathlib.Path("./last.cnl"))
+    app.load_CNL_File(cnl_file)
 
     PMCA.CretateViewerThread()
 
@@ -52,7 +54,7 @@ def main(dir: pathlib.Path):
     app.mainloop()
 
     try:
-        app.save_CNL_File("./last.cnl")
+        data.save_CNL_File(cnl_file)
     except Exception as ex:
         LOGGER.error(ex)
 

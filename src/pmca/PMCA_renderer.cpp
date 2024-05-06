@@ -269,13 +269,14 @@ int load_tex(MODEL *model, DSP_MODEL *dsp_model) {
   for (int i = 0; i < dsp_model->mats_c; i++) {
     auto &mat = dsp_model->mats[i];
     for (int j = 0; j < 3; j++) {
-      printf("%f %f %f\n", model->mat[i].diffuse[j],
-             model->mat[i].mirror_col[j], model->mat[i].spec_col[j]);
+      LOGD << model->mat[i].diffuse[j] << " " << model->mat[i].mirror_col[j]
+           << " " << model->mat[i].spec_col[j];
       mat.col[j] =
           (model->mat[i].diffuse[j] * 2 + model->mat[i].mirror_col[j]) / 2.5 +
           model->mat[i].spec_col[j] / 4;
     }
-    printf("col %f %f %f %f\n", mat.col[0], mat.col[1], mat.col[2], mat.col[3]);
+    LOGD << "col " << mat.col[0] << " " << mat.col[1] << " " << mat.col[2]
+         << " " << mat.col[3];
     mat.col[3] = model->mat[i].alpha;
     mat.texname[0] = '\0';
     memset(mat.texsize, 0, 2 * sizeof(int));

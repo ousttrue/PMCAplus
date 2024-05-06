@@ -1136,8 +1136,10 @@ static struct PyModuleDef PMCAmodule = {PyModuleDef_HEAD_INIT,
 // モジュール登録
 PyMODINIT_FUNC PyInit_PMCA(void) {
 
-  static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
-  plog::init(plog::verbose, &consoleAppender);
+  if (false) {
+    static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
+    plog::init(plog::verbose, &consoleAppender);
+  }
 
   PLOG_INFO << "PyInit_PMCA";
 
