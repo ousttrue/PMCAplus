@@ -17,8 +17,8 @@ from ..PMCA_data import PMCAData
 from ..PMCA_data.mats import MATS
 from ..PMCA_data.model_transform_data import MODEL_TRANS_DATA
 from .. import PyPMCA
-from .bone import BONE
-from .material import MATERIAL, MAT_REP
+from ..bone import BONE
+from .material import MAT_REP
 from .node import NODE, TREE_LIST
 
 
@@ -35,12 +35,40 @@ class MainFrame(tkinter.ttk.Frame):
         self.tree_list: list[TREE_LIST] = []
 
         self.mat_rep = None
-        self.transform_data = []
+        self.transform_data: list[MODEL_TRANS_DATA] = []
         self.target_dir = "./model/"
         self.cur_parts = 0
         self.cur_mat = 0
         self.pack()
-        self._reateWidgets()
+
+        # タブを作成
+        notebook = tkinter.ttk.Notebook(self.root)
+        notebook.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
+
+        def add_tab(x: Any):
+            notebook.insert(tkinter.END, x, text=x.text)  # type: ignore
+
+        self.model_tab = ModelTab(self.root)
+        add_tab(self.model_tab)
+        self.color_tab = ColorTab(self.root)
+        add_tab(self.color_tab)
+        self.transform_tab = TransformTab(self.root)
+        add_tab(self.transform_tab)
+        self.info_tab = InfoTab(self.root)
+        add_tab(self.info_tab)
+
+        # Buttons
+        self.frame_button = tkinter.ttk.Frame(self.root)
+        self.QUIT = tkinter.ttk.Button(self.frame_button)
+        self.QUIT["text"] = "QUIT"
+
+        def quit():
+            self.root.winfo_toplevel().destroy()
+            self.root.quit()
+
+        self.QUIT["command"] = quit
+        self.QUIT.pack(side=tkinter.RIGHT)
+        self.frame_button.pack(padx=5, pady=5, side=tkinter.TOP, fill="x")
 
         # menu
         self.menubar = tkinter.Menu(master)
@@ -79,96 +107,29 @@ class MainFrame(tkinter.ttk.Frame):
         )
         editing.add_command(label="PMCA設定", underline=0, command=self.setting_dialog)
 
-        self.init_tree()
-        self.init_mat()
-
-    def _reateWidgets(self):
-        """
-        self.listbox = Listbox(self, height = 6, exportselection = 0, selectmode = SINGLE)
-        self.listbox.yscroll = Scrollbar(self, orient = VERTICAL, command = self.listbox.yview)
-        self.listbox.yscroll.pack(side = RIGHT, fill = Y, expand = 0)
-        self.listbox["yscrollcommand"] = self.listbox.yscroll.set
-        self.listbox.pack(expand = 1, fill = BOTH)
-        """
-
-        # タブを作成
-        notebook = tkinter.ttk.Notebook(self.root)
-        notebook.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
-
-        def add_tab(x: Any):
-            notebook.insert(tkinter.END, x, text=x.text)  # type: ignore
-
-        self.model_tab = ModelTab(self.root)
-        add_tab(self.model_tab)
-        self.color_tab = ColorTab(self.root)
-        add_tab(self.color_tab)
-        self.transform_tab = TransformTab(self.root)
-        add_tab(self.transform_tab)
-        self.info_tab = InfoTab(self.root)
-        add_tab(self.info_tab)
-
-        # Buttons
-        self.frame_button = tkinter.ttk.Frame(self.root)
-        self.QUIT = tkinter.ttk.Button(self.frame_button)
-        self.QUIT["text"] = "QUIT"
-
-        def quit():
-            self.root.winfo_toplevel().destroy()
-            self.root.quit()
-
-        self.QUIT["command"] = quit
-        self.QUIT.pack(side=tkinter.RIGHT)
-        self.frame_button.pack(padx=5, pady=5, side=tkinter.TOP, fill="x")
-
-    def init_tree(self):
-        LOGGER.info("ツリー初期化")
-        node = NODE(parts=PARTS(name="ROOT", joint=["root"]), depth=-1, children=[None])
-        self.tree_list = node.create_list()
-        self.model_tab.set_tree(self.tree_list)
+        self.tree = NODE(parts=PARTS(name="ROOT", joint=["root"]), depth=-1, children=[None])
+        self.model_tab.set_tree(self.tree)
         self.model_tab.set_parts(self.data.parts_list)
 
-    def init_mat(self):
-        LOGGER.info("材質置換設定初期化")
         self.mat_rep = MAT_REP(app=self)
 
-        self.info_tab.frame.name.set("PMCAモデル")
-        self.info_tab.frame.name_l.set("PMCAモデル")
-        self.info_tab.frame.comment.delete("1.0", tkinter.END)
-
         self.transform_data = [MODEL_TRANS_DATA(scale=1.0, bones=[], props={})]
-        tmp: List[str] = []
-        for x in self.data.transform_list:
-            tmp.append(x.name)
-
-        self.transform_tab.tfgroup.set_entry(tmp)
+        self.transform_tab.tfgroup.set_entry([x.name for x in self.data.transform_list])  # type: ignore
 
     def load_CNL_File(self, file: pathlib.Path) -> None:
         lines = file.read_text(encoding="utf-8").splitlines()
-        self.info_tab.frame.name.set(lines[0])
-        self.info_tab.frame.name_l.set(lines[1])
-        for line in lines[2:]:
-            if line == "PARTS":
-                break
-            elif line == "":
-                pass
-            else:
-                self.info_tab.frame.comment.insert(END, line)
-                self.info_tab.frame.comment.insert(END, "\n")
+        lines = self.info_tab.read_cnl(lines)
 
-        else:
-            self.info_tab.frame.comment.delete("1.0", END)
+        self.tree.text_to_node(self.data.parts_list, lines)
 
-        assert len(self.tree_list) > 0
-        self.tree_list[0].node.text_to_node(self.data.parts_list, lines)
         assert self.mat_rep
         self.mat_rep.text_to_list(lines, self.data.mats_list)
+
         assert len(self.transform_data) > 0
         self.transform_data[0].text_to_list(lines)
 
     def refresh(self, level: int = 0):
-        self.tree_list = self.tree_list[0].node.create_list()
-
-        self.model_tab.set_tree(self.tree_list, True)
+        self.model_tab.set_tree(self.tree, True)
 
         # モデル組み立て
         PMCA.MODEL_LOCK(1)
@@ -179,10 +140,7 @@ class MainFrame(tkinter.ttk.Frame):
             PMCA.Create_PMD(0)
 
             # PMCA.Load_PMD(0, "./testmodels/001.pmd")
-
-            x = self.tree_list[0].node
-            if x != None:
-                x.assemble(0, self)
+            self.tree.assemble(0, self)
 
             PMCA.Copy_PMD(0, 1)
         else:
@@ -301,7 +259,6 @@ class MainFrame(tkinter.ttk.Frame):
 
         LOGGER.info("Done")
 
-    ########################################################################################
     # functions menu
     def clear(self):
         init(self)

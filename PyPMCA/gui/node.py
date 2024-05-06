@@ -49,8 +49,7 @@ class NODE:  # モデルのパーツツリー
             app.authors = ["Unknown"]
             app.licenses = ["Nonfree"]
 
-        pmpy = app
-        pmpy.functions = PMCA
+        app.functions = PMCA
         if "script_pre" in self.parts.props:
             for x in self.parts.props["script_pre"]:
                 argv = x.split()
@@ -261,9 +260,6 @@ class NODE:  # モデルのパーツツリー
         parents = [self]
         child_nums = [0]
         count = 0
-        while lines[count] != "PARTS":
-            count += 1
-        count += 1
 
         while count < len(lines):
             line = lines[count].split(" ")

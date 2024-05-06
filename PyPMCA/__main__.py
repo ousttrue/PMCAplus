@@ -2,14 +2,12 @@ import tkinter
 import logging
 import pathlib
 
-import PMCA  # type: ignore
-
+from .native import PmcaView
 from .gui.main_frame import MainFrame
 from .PMCA_data import PMCAData
 
-
 APPNAME = "PMCA v0.0.6r10"
-COMMANDS = {}
+# COMMANDS = {}
 HERE = pathlib.Path(__file__).parent
 LOGGER = logging.getLogger(__name__)
 
@@ -43,22 +41,20 @@ def main(dir: pathlib.Path):
     cnl_file = pathlib.Path("./last.cnl")
 
     # gui
-    PMCA.Init_PMD()
-    root = tkinter.Tk()
-    app = MainFrame(APPNAME, data, master=root)
-    app.load_CNL_File(cnl_file)
+    with PmcaView() as view:
+        root = tkinter.Tk()
+        app = MainFrame(APPNAME, data, master=root)
+        app.load_CNL_File(cnl_file)
 
-    PMCA.CretateViewerThread()
+        view.start_thread()
 
-    app.refresh()
-    app.mainloop()
+        app.refresh()
+        app.mainloop()
 
-    try:
-        data.save_CNL_File(cnl_file)
-    except Exception as ex:
-        LOGGER.error(ex)
-
-    PMCA.QuitViewerThread()
+        try:
+            data.save_CNL_File(cnl_file)
+        except Exception as ex:
+            LOGGER.error(ex)
 
 
 if __name__ == "__main__":

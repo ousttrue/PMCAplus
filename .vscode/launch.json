@@ -8,9 +8,10 @@
             "name": "(Windows) Launch",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "C:/Python312/python.exe",
+            "program": "C:/Python311/python.exe",
             "args": [
-                "PyPMCA/__main__.py"
+                "-m",
+                "PyPMCA"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

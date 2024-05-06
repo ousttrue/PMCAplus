@@ -85,6 +85,10 @@ class InfoTab(tkinter.ttk.Frame):
 
         self.frame.pack(fill=tkinter.BOTH, expand=1)
 
+        self.frame.name.set("PMCAモデル")
+        self.frame.name_l.set("PMCAモデル")
+        self.frame.comment.delete("1.0", tkinter.END)
+
     def refresh(self, level: int):
         if level < 4:
             str1 = ""
@@ -106,3 +110,19 @@ class InfoTab(tkinter.ttk.Frame):
             )
 
         self.frame.text.set("Author : %s\nLicense : %s" % (str1, str2))
+
+    def read_cnl(self, lines: list[str]) -> list[str]:
+        self.frame.name.set(lines.pop(0))
+        self.frame.name_l.set(lines.pop(0))
+        while len(lines) > 0:
+            line = lines.pop(0)
+            if line == "PARTS":
+                break
+            elif line == "":
+                pass
+            else:
+                self.frame.comment.insert(END, line)
+                self.frame.comment.insert(END, "\n")
+        else:
+            self.frame.comment.delete("1.0", END)
+        return lines

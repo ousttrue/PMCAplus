@@ -134,10 +134,10 @@ static PyObject *getInfo(PyObject *self, PyObject *args) {
 
 static PyObject *getVt(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
     return NULL;
-  model = &g_model[num];
+
+  auto model = &g_model[num];
   if (model->vt.size() <= i)
     Py_RETURN_NONE;
   return Py_BuildValue("{s:O,s:O,s:O,"
@@ -154,10 +154,10 @@ static PyObject *getVt(PyObject *self, PyObject *args) {
 
 static PyObject *getFace(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
     return NULL;
-  model = &g_model[num];
+
+  auto model = &g_model[num];
   i = i * 3;
   if (model->vt_index.size() + 3 < i)
     Py_RETURN_NONE;

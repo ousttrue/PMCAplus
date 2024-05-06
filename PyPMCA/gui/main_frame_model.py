@@ -1,7 +1,7 @@
 import tkinter.ttk
 import PyPMCA.gui.listbox as listbox
 from ..PMCA_data.parts import PARTS
-from .node import TREE_LIST
+from .node import NODE
 
 
 class ModelTab(tkinter.ttk.Frame):
@@ -107,11 +107,11 @@ class ModelTab(tkinter.ttk.Frame):
             self.tab[0].comment.set("comment:%s" % (node.parts.comment))
         self.refresh()
 
-    def set_tree(self, tree_list: list[TREE_LIST], use_sel: bool = False):
+    def set_tree(self, node: NODE, use_sel: bool = False):
         sel_t = int(self.l_tree.listbox.curselection()[0]) if use_sel else 0  # type: ignore
 
         tree_entry: list[str] = []
-        for x in tree_list:
+        for x in node.create_list():
             tree_entry.append(x.text)
         tree_entry = tree_entry[1:]
 

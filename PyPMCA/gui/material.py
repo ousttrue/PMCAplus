@@ -2,45 +2,10 @@ import logging
 from ..PMCA_data.mats import MATS
 import PMCA  # type: ignore
 from .. import PyPMCA
+from ..material import MATERIAL, TOON
 
 
 LOGGER = logging.getLogger(__name__)
-
-
-class MATERIAL:
-    def __init__(
-        self,
-        diff_col,
-        alpha,
-        spec,
-        spec_col,
-        mirr_col,
-        toon,
-        edge,
-        face_count: int,
-        tex: bytes,
-        sph: bytes,
-        tex_path: bytes,
-        sph_path: bytes,
-    ):
-        self.diff_col = diff_col
-        self.alpha = alpha
-        self.spec = spec
-        self.spec_col = spec_col
-        self.mirr_col = mirr_col
-        self.toon = toon
-        self.edge = edge
-        self.face_count = face_count
-        self.tex = tex.decode("cp932", "replace")
-        self.sph = sph.decode("cp932", "replace")
-        self.tex_path = tex_path.decode("cp932", "replace")
-        self.sph_path = sph_path.decode("cp932", "replace")
-
-
-class TOON:
-    def __init__(self):
-        self.name = None
-        self.path = None
 
 
 class MAT_REP_DATA:  # 材質置換データ

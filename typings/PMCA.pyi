@@ -1,90 +1,188 @@
-from typing import List
+from typing import List, TypedDict
 
-def getInfo(num: int):
+class InfoData(TypedDict):
+    name: bytes
+    name_eng: bytes
+    comment: bytes
+    comment_eng: bytes
+    eng_support: int
+    skin_index: list[int]
+    vt_count: int
+    face_count: int
+    mat_count: int
+    bone_count: int
+    IK_count: int
+    skin_count: int
+    bone_group_count: int
+    bone_disp_count: int
+    rb_count: int
+    joint_count: int
+
+def getInfo(model: int) -> InfoData:
     """
     Get Info of PMD"
     """
     ...
 
-def getVt():
+class VtData(TypedDict):
+    loc: tuple[float, float, float]
+
+def getVt(model: int, index: int) -> VtData | None:
     """
     Get Vertex of PMD"
     """
     ...
 
-def getFace():
+def getFace(model: int, index: int) -> tuple[int, int, int] | None:
     """
     Get Face of PMD"
     """
     ...
 
-def getMat():
+class MaterialData(TypedDict):
+    diff_col: tuple[float, float, float]
+    alpha: float
+    spec: float
+    spec_col: tuple[float, float, float]
+    mirr_col: tuple[float, float, float]
+    toon: int
+    edge: float
+    face_count: int
+    tex: bytes
+    sph: bytes
+    tex_path: bytes
+    sph_path: bytes
+
+def getMat(model: int, index: int) -> MaterialData | None:
     """
     Get Material of PMD"
     """
     ...
 
-def getBone():
+class BoneData(TypedDict):
+    name: bytes
+    name_eng: bytes
+    parent: int
+    tail: int
+    type: int
+    IK: int
+    loc: tuple[float, float, float]
+
+def getBone(model: int, index: int) -> BoneData | None:
     """
     Get Bone of PMD"
     """
     ...
 
-def getIK():
+class IkData(TypedDict):
+    index: int
+    tail: int
+    len: int
+    ite: int
+    weight: float
+    child: int
+
+def getIK(model: int, index: int) -> IkData | None:
     """
     Get IK_List of PMD"
     """
     ...
 
-def getSkin():
+class SkinData(TypedDict):
+    name: bytes
+    name_eng: bytes
+    count: int
+    type: int
+
+def getSkin(model: int, index: int) -> SkinData | None:
     """
     Get Skin of PMD"
     """
     ...
 
-def getSkindata():
+class SkinDataData(TypedDict):
+    index: int
+    loc: tuple[float, float, float]
+
+def getSkindata(model: int, index: int, j: int) -> SkinDataData | None:
     """
     Get Skin_data of PMD"
     """
     ...
 
-def getBone_group():
+class BoneGroupData(TypedDict):
+    pass
+
+def getBone_group(model: int, index: int) -> BoneGroupData | None:
     """
     Get Bone_group of PMD"
     """
     ...
 
-def getBone_disp():
+class BoneDispData(TypedDict):
+    index: int
+    bone_group: int
+
+def getBone_disp(model: int, index: int) -> BoneDispData | None:
     """
     Get Bone_disp of PMD"
     """
     ...
 
-def getToon():
+def getToon(
+    model: int,
+) -> tuple[bytes, bytes, bytes, bytes, bytes, bytes, bytes, bytes, bytes, bytes] | None:
     """
     Get Toon textures of PMD"
     """
     ...
 
-def getToonPath():
+def getToonPath(
+    model: int,
+) -> tuple[bytes, bytes, bytes, bytes, bytes, bytes, bytes, bytes, bytes, bytes] | None:
     """
     Get Toon textures path of PMD"
     """
     ...
 
-def getRb():
+class RbData(TypedDict):
+    pass
+
+def getRb(model: int, index: int) -> RbData | None:
     """
     Get Rigid bodies of PMD"
     """
     ...
 
-def getJoint():
+class JointData(TypedDict):
+    pass
+
+def getJoint(model: int, index: int) -> JointData | None:
     """
     Get Joints of PMD"
     """
     ...
 
-def Create_FromInfo():
+def Create_FromInfo(
+    num: int,
+    name: bytes,
+    comment: bytes,
+    name_eng: bytes,
+    comment_eng: bytes,
+    vt_count: int,
+    face_count: int,
+    mat_count: int,
+    bone_count: int,
+    ik_count: int,
+    skin_count: int,
+    bone_group_count: int,
+    bone_dsp_count: int,
+    eng_support: int,
+    rb_count: int,
+    joint_count: int,
+    skin_index_count: int,
+    skin_index: list[int],
+) -> None:
     """
     Create PMD"
     """
@@ -226,7 +324,7 @@ def Copy_PMD():
     """
     ...
 
-def Create_PMD(num: int):
+def Create_PMD(num: int) -> None:
     """
     Create enpty PMD"
     """
@@ -286,7 +384,7 @@ def Adjust_Joints():
     """
     ...
 
-def MODEL_LOCK():
+def MODEL_LOCK(mode: int) -> None:
     """
     Lock/Unlock model"
     """
