@@ -121,7 +121,7 @@ class MainFrame(tkinter.ttk.Frame):
         lines, info = cnl.read_info(lines)
         self.info_tab.set_info(*info)
 
-        self.tree.text_to_node(self.data.parts_list, lines)
+        lines = cnl.read_parts(lines, self.tree, self.data.parts_list)
 
         assert self.mat_rep
         self.mat_rep.text_to_list(lines, self.data.mats_list)

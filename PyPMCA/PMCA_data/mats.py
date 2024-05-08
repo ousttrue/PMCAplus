@@ -260,9 +260,6 @@ class MAT_REP:
         self.mat = {}
         tmp = ["", "", None]
         i = 0
-        while lines[i] != "MATERIAL":
-            i += 1
-        i += 1
         for x in lines[i:]:
             x = x.split(" ")
             if x[0] == "[Name]":
