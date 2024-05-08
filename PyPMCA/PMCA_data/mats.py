@@ -254,28 +254,3 @@ class MAT_REP:
             lines.append("NEXT")
 
         return lines
-
-    def text_to_list(self, lines: list[str], mat_list: list[MATS]):
-        LOGGER.info("parse material_rep")
-        self.mat = {}
-        tmp = ["", "", None]
-        i = 0
-        for x in lines[i:]:
-            x = x.split(" ")
-            if x[0] == "[Name]":
-                tmp[0] = x[1]
-            elif x[0] == "[Sel]":
-                tmp[1] = x[1]
-            elif x[0] == "NEXT":
-                for y in mat_list:
-                    if y.name == tmp[0]:
-                        tmp[2] = y
-                        break
-                else:
-                    tmp[2] = None
-                    continue
-
-                for y in tmp[2].entries:
-                    if y.name == tmp[1]:
-                        self.mat[tmp[0]] = MAT_REP_DATA(num=-1, mat=tmp[2], sel=y)
-                        break

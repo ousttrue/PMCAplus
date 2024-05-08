@@ -26,13 +26,13 @@ class MODEL_TRANS_DATA:
         self,
         name: str = "",
         scale: float = 1.0,
-        pos=[0.0, 0.0, 0.0],
-        rot=[0.0, 0.0, 0.0],
-        bones=[],
-        limit=[0.0, 2.0],
-        default=1.0,
-        gamma=1.0,
-        props={},
+        pos: tuple[float, float, float] = (0.0, 0.0, 0.0),
+        rot: tuple[float, float, float] = (0.0, 0.0, 0.0),
+        bones: list[BONE_TRANS_DATA] = [],
+        limit: tuple[float, float] = (0.0, 2.0),
+        default: float = 1.0,
+        gamma: float = 1.0,
+        props: dict[str, str] = {},
     ):
         self.name = name
         self.scale = scale
@@ -61,55 +61,6 @@ class MODEL_TRANS_DATA:
         lines.pop()
 
         return lines
-
-    def text_to_list(self, lines: list[str]):
-        tmp = ["", "", None]
-        i = 0
-        try:
-            while lines[i] != "TRANSFORM":
-                i += 1
-        except:
-            return None
-
-        i += 1
-        LOGGER.info("体型調整読み込み")
-        for j, x in enumerate(lines[i:]):
-            x = x.split(" ")
-            if x[0] == "[Name]":
-                self.name = x[1]
-            elif x[0] == "[Scale]":
-                self.scale = float(x[1])
-            elif x[0] == "[Pos]":
-                self.pos[0] = float(x[1])
-                self.pos[1] = float(x[2])
-                self.pos[2] = float(x[3])
-            elif x[0] == "[Rot]":
-                self.rot[0] = float(x[1])
-                self.rot[1] = float(x[2])
-                self.rot[2] = float(x[3])
-            elif x[0] == "BONES":
-                break
-        self.bones = []
-        self.bones.append(BONE_TRANS_DATA())
-        for x in lines[i + j :]:
-            x = x.split(" ")
-            if x[0] == "[Name]":
-                self.bones[-1].name = x[1]
-            elif x[0] == "[Length]":
-                self.bones[-1].length = float(x[1])
-            elif x[0] == "[Thick]":
-                self.bones[-1].thick = float(x[1])
-            elif x[0] == "[Pos]":
-                self.bones[-1].pos[0] = float(x[1])
-                self.bones[-1].pos[1] = float(x[2])
-                self.bones[-1].pos[2] = float(x[3])
-            elif x[0] == "[Rot]":
-                self.bones[-1].rot[0] = float(x[1])
-                self.bones[-1].rot[1] = float(x[2])
-                self.bones[-1].rot[2] = float(x[3])
-            elif x[0] == "NEXT":
-                if self.bones[-1].name != "":
-                    self.bones.append(BONE_TRANS_DATA())
 
     @staticmethod
     def load_list(lines: list[str]) -> list["MODEL_TRANS_DATA"]:

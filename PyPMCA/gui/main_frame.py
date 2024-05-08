@@ -124,10 +124,11 @@ class MainFrame(tkinter.ttk.Frame):
         lines = cnl.read_parts(lines, self.tree, self.data.parts_list)
 
         assert self.mat_rep
-        self.mat_rep.text_to_list(lines, self.data.mats_list)
+        lines, mat_rep = cnl.read_mat_rep(lines, self.data.mats_list)
+        self.mat_rep.mat = mat_rep
 
         assert len(self.transform_data) > 0
-        self.transform_data[0].text_to_list(lines)
+        cnl.read_transform(lines, self.transform_data[0])
 
     def refresh(self, level: int = 0):
         self.model_tab.set_tree(self.tree, True)
