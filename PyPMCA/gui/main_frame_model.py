@@ -1,7 +1,7 @@
 import tkinter.ttk
 import PyPMCA.gui.listbox as listbox
 from ..PMCA_data.parts import PARTS
-from .node import NODE
+from ..PMCA_data.node import NODE
 
 
 class ModelTab(tkinter.ttk.Frame):

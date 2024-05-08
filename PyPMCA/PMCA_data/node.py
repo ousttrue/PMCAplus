@@ -1,5 +1,5 @@
 import logging
-from ..PMCA_data.parts import PARTS
+from .parts import PARTS
 import PMCA  # type: ignore
 import sys
 from ..pmd_type import pmd

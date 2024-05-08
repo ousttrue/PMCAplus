@@ -13,12 +13,11 @@ from .main_frame_color import ColorTab
 from .main_frame_transform import TransformTab
 from .main_frame_info import InfoTab
 from ..PMCA_data.parts import PARTS
-from ..PMCA_data import PMCAData
-from ..PMCA_data.mats import MATS
+from ..PMCA_data import PMCAData, cnl
+from ..PMCA_data.mats import MATS, MAT_REP
 from ..PMCA_data.model_transform_data import MODEL_TRANS_DATA
 from .. import pmd_type
-from .material import MAT_REP
-from .node import NODE, TREE_LIST
+from ..PMCA_data.node import NODE, TREE_LIST
 
 
 LOGGER = logging.getLogger(__name__)
@@ -119,7 +118,8 @@ class MainFrame(tkinter.ttk.Frame):
 
     def load_CNL_File(self, file: pathlib.Path) -> None:
         lines = file.read_text(encoding="utf-8").splitlines()
-        lines = self.info_tab.read_cnl(lines)
+        lines, info = cnl.read_info(lines)
+        self.info_tab.set_info(*info)
 
         self.tree.text_to_node(self.data.parts_list, lines)
 
