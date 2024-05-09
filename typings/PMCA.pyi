@@ -318,7 +318,7 @@ def Add_PMD():
     """
     ...
 
-def Copy_PMD():
+def Copy_PMD(src: int, dst: int) -> None:
     """
     Copy PMD"
     """

@@ -3,7 +3,7 @@ import logging
 import pathlib
 
 from .gui.main_frame import MainFrame
-from .PMCA_data import PMCAData
+from . import PMCA_data
 from .renderer import Renderer
 
 
@@ -36,7 +36,7 @@ def main(dir: pathlib.Path):
     logging.basicConfig(handlers=[ColorfulHandler()], level=logging.DEBUG)
 
     # data
-    data = PMCAData()
+    data = PMCA_data.PMCAData()
     data.load(dir)
 
     cnl_file = pathlib.Path("./last.cnl")

@@ -4,36 +4,31 @@ import os
 import shutil
 import random
 import logging
-
 import tkinter.ttk
 
-import PMCA  # type: ignore
 from .main_frame_model import ModelTab
 from .main_frame_color import ColorTab
 from .main_frame_transform import TransformTab
 from .main_frame_info import InfoTab
-from ..PMCA_data.parts import PARTS
-from ..PMCA_data import PMCAData, cnl
-from ..PMCA_data.mats import MATS, MAT_REP
-from ..PMCA_data.model_transform_data import MODEL_TRANS_DATA
+from .. import PMCA_data
 from .. import pmd_type
-from ..PMCA_data.node import NODE, TREE_LIST
+import PMCA  # type: ignore
 
 
 LOGGER = logging.getLogger(__name__)
 
 
 class MainFrame(tkinter.ttk.Frame):
-    def __init__(self, title: str, data: PMCAData, master: tkinter.Tk):
+    def __init__(self, title: str, data: PMCA_data.PMCAData, master: tkinter.Tk):
         super().__init__(master)
         self.export2folder = False
         self.data = data
         self.root = master
         self.root.title(title)
-        self.tree_list: list[TREE_LIST] = []
+        self.tree_list: list[PMCA_data.TREE_LIST] = []
 
         self.mat_rep = None
-        self.transform_data: list[MODEL_TRANS_DATA] = []
+        self.transform_data: list[PMCA_data.MODEL_TRANS_DATA] = []
         self.target_dir = "./model/"
         self.cur_parts = 0
         self.cur_mat = 0
@@ -105,30 +100,34 @@ class MainFrame(tkinter.ttk.Frame):
         )
         editing.add_command(label="PMCA設定", underline=0, command=self.setting_dialog)
 
-        self.tree = NODE(
-            parts=PARTS(name="ROOT", joint=["root"]), depth=-1, children=[None]
+        self.tree = PMCA_data.NODE(
+            parts=PMCA_data.PARTS(name="ROOT", joint=["root"]),
+            depth=-1,
+            children=[None],
         )
         self.model_tab.set_tree(self.tree)
         self.model_tab.set_parts(self.data.parts_list)
 
-        self.mat_rep = MAT_REP(app=self)
+        self.mat_rep = PMCA_data.MAT_REP(app=self)
 
-        self.transform_data = [MODEL_TRANS_DATA(scale=1.0, bones=[], props={})]
+        self.transform_data = [
+            PMCA_data.MODEL_TRANS_DATA(scale=1.0, bones=[], props={})
+        ]
         self.transform_tab.tfgroup.set_entry([x.name for x in self.data.transform_list])  # type: ignore
 
     def load_CNL_File(self, file: pathlib.Path) -> None:
         lines = file.read_text(encoding="utf-8").splitlines()
-        lines, info = cnl.read_info(lines)
+        lines, info = PMCA_data.cnl.read_info(lines)
         self.info_tab.set_info(*info)
 
-        lines = cnl.read_parts(lines, self.tree, self.data.parts_list)
+        lines = PMCA_data.cnl.read_parts(lines, self.tree, self.data.parts_list)
 
         assert self.mat_rep
-        lines, mat_rep = cnl.read_mat_rep(lines, self.data.mats_list)
+        lines, mat_rep = PMCA_data.cnl.read_mat_rep(lines, self.data.mats_list)
         self.mat_rep.mat = mat_rep
 
         assert len(self.transform_data) > 0
-        cnl.read_transform(lines, self.transform_data[0])
+        PMCA_data.cnl.read_transform(lines, self.transform_data[0])
 
     def refresh(self, level: int = 0):
         self.model_tab.set_tree(self.tree, True)

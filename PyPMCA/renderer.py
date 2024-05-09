@@ -1,13 +1,12 @@
 from typing import Any
+import logging
+
 import PMCA  # type: ignore
-from .pmd_type.pmd import PMD
-from .pmd_type.info import INFO
-from .pmd_type.vt import VT
-from .pmd_type.material import MATERIAL, TOON
-from .pmd_type.bone import BONE, BONE_DISP, BONE_GROUP
-from .pmd_type.ik import IK_LIST
-from .pmd_type.skin import SKIN
-from .pmd_type.rigidbody import RB, JOINT
+from . import pmd_type
+from . import PMCA_data
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class Renderer:
@@ -58,15 +57,15 @@ def set_list(
     )
 
 
-def Get(num: int) -> PMD:
+def Get(num: int) -> pmd_type.PMD:
     info_data = PMCA.getInfo(num)
-    info = INFO(info_data)
+    info = pmd_type.INFO(info_data)
 
-    vt: list[VT] = []
+    vt: list[pmd_type.VT] = []
     for i in range(info_data["vt_count"]):
         data = PMCA.getVt(num, i)
         assert data
-        vt.append(VT(**data))
+        vt.append(pmd_type.VT(**data))
 
     face: list[tuple[int, int, int]] = []
     for i in range(info_data["face_count"]):
@@ -74,18 +73,18 @@ def Get(num: int) -> PMD:
         assert data
         face.append(data)
 
-    mat: list[MATERIAL] = []
+    mat: list[pmd_type.MATERIAL] = []
     for i in range(info_data["mat_count"]):
         data = PMCA.getMat(num, i)
         assert data
-        mat.append(MATERIAL(**data))
+        mat.append(pmd_type.MATERIAL(**data))
 
-    bone: list[BONE] = []
+    bone: list[pmd_type.BONE] = []
     for i in range(info_data["bone_count"]):
         data = PMCA.getBone(num, i)
         assert data
         bone.append(
-            BONE(
+            pmd_type.BONE(
                 data["name"],
                 data["name_eng"],
                 data["parent"],
@@ -96,12 +95,12 @@ def Get(num: int) -> PMD:
             )
         )
 
-    ik: list[IK_LIST] = []
+    ik: list[pmd_type.IK_LIST] = []
     for i in range(info_data["IK_count"]):
         data = PMCA.getIK(num, i)
         assert data
         ik.append(
-            IK_LIST(
+            pmd_type.IK_LIST(
                 data["index"],
                 data["tail"],
                 data["len"],
@@ -111,7 +110,7 @@ def Get(num: int) -> PMD:
             )
         )
 
-    skin: list[SKIN] = []
+    skin: list[pmd_type.SKIN] = []
     for i in range(info_data["skin_count"]):
         data = PMCA.getSkin(num, i)
         assert data
@@ -121,7 +120,7 @@ def Get(num: int) -> PMD:
             assert datadata
             skin_data.append(datadata)
         skin.append(
-            SKIN(
+            pmd_type.SKIN(
                 data["name"],
                 data["name_eng"],
                 data["count"],
@@ -130,17 +129,17 @@ def Get(num: int) -> PMD:
             )
         )
 
-    bone_group: list[BONE_GROUP] = []
+    bone_group: list[pmd_type.BONE_GROUP] = []
     for i in range(info_data["bone_group_count"]):
         data = PMCA.getBone_group(num, i)
         assert data
-        bone_group.append(BONE_GROUP(**data))
+        bone_group.append(pmd_type.BONE_GROUP(**data))
 
-    bone_disp: list[BONE_DISP] = []
+    bone_disp: list[pmd_type.BONE_DISP] = []
     for i in range(info_data["bone_disp_count"]):
         data = PMCA.getBone_disp(num, i)
         assert data
-        bone_disp.append(BONE_DISP(**data))
+        bone_disp.append(pmd_type.BONE_DISP(**data))
 
     toon_data = PMCA.getToon(num)
     assert toon_data
@@ -148,26 +147,26 @@ def Get(num: int) -> PMD:
     toon_path_data = PMCA.getToonPath(num)
     assert toon_path_data
 
-    toon = TOON.from_bytes(toon_data, toon_path_data)
+    toon = pmd_type.TOON.from_bytes(toon_data, toon_path_data)
 
-    rb: list[RB] = []
+    rb: list[pmd_type.RB] = []
     for i in range(info_data["rb_count"]):
         data = PMCA.getRb(num, i)
         assert data
-        rb.append(RB(**data))
+        rb.append(pmd_type.RB(**data))
 
-    joint: list[JOINT] = []
+    joint: list[pmd_type.JOINT] = []
     for i in range(info_data["joint_count"]):
         data = PMCA.getJoint(num, i)
         assert data
-        joint.append(JOINT(**data))
+        joint.append(pmd_type.JOINT(**data))
 
-    return PMD(
+    return pmd_type.PMD(
         info, vt, face, mat, bone, ik, skin, bone_group, bone_disp, toon, rb, joint
     )
 
 
-def Set_PMD(num: int, model: PMD):
+def Set_PMD(num: int, model: pmd_type.PMD):
     PMCA.Create_FromInfo(
         num,
         bytes(model.info.name.encode("cp932", "replace")),

@@ -23,18 +23,6 @@
             ],
             "console": "integratedTerminal"
         },
-        // {
-        //     "name": "PMCA",
-        //     "type": "debugpy",
-        //     "request": "launch",
-        //     "program": "${workspaceFolder}\\PMCA\\__main__.py",
-        //     "cwd": "${workspaceFolder}",
-        //     "console": "integratedTerminal",
-        //     "args": [],
-        //     "env": {
-        //         "PYTHONPATH": "${workspaceFolder}\\prefix\\bin",
-        //     }
-        // },
         {
             "name": "PyPMCA Module",
             "type": "debugpy",
