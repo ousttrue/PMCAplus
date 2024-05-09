@@ -782,11 +782,13 @@ static PyObject *Load_PMD(PyObject *self, PyObject *args) {
   }
 
   auto model = load_PMD(str);
-  if (!model) {
-    Py_RETURN_FALSE;
+  if (model) {
+    g_model[num] = model;
+  } else {
+    // clear
+    g_model[num] = MODEL::create();
   }
 
-  g_model[num] = model;
   Py_RETURN_TRUE;
 }
 
