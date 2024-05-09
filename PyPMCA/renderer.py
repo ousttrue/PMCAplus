@@ -309,7 +309,7 @@ class AssembleContext(NamedTuple):
 
 
 def assemble(self: PMCA_data.NODE, num: int) -> AssembleContext:
-    PMCA.Create_PMD(num)
+    LOGGER.info(f"assemble: {self.parts.path}")
     PMCA.Load_PMD(num, self.parts.path.encode(sys.getdefaultencoding(), "replace"))
     info_data = PMCA.getInfo(0)
     info = pmd_type.INFO(info_data)
@@ -319,7 +319,6 @@ def assemble(self: PMCA_data.NODE, num: int) -> AssembleContext:
         context.authors.append("Unknown")
         context.licenses.append("Nonfree")
 
-    # app.functions = PMCA
     if "script_pre" in self.parts.props:
         for x in self.parts.props["script_pre"]:
             argv = x.split()
@@ -378,7 +377,6 @@ def assemble(self: PMCA_data.NODE, num: int) -> AssembleContext:
 def assemble_child(self: PMCA_data.NODE, num: int, context: AssembleContext):
     LOGGER.info("パーツのパス:%s" % (self.parts.path))
 
-    PMCA.Create_PMD(4)
     PMCA.Load_PMD(4, self.parts.path.encode(sys.getdefaultencoding(), "replace"))
 
     info_data = PMCA.getInfo(4)
@@ -443,7 +441,8 @@ def assemble_child(self: PMCA_data.NODE, num: int, context: AssembleContext):
             fp.close
 
     PMCA.Add_PMD(num, 4)
-    PMCA.Marge_PMD(num)
+    ret = PMCA.Marge_PMD(num)
+    assert ret
 
     if "script_post" in self.parts.props:
         for x in self.parts.props["script_post"]:
@@ -626,8 +625,6 @@ def refresh(self: PMCA_data.PMCAData):
     PMCA.MODEL_LOCK(1)
 
     LOGGER.info("モデル組立て")
-
-    PMCA.Create_PMD(0)
 
     # PMCA.Load_PMD(0, "./testmodels/001.pmd")
     context = assemble(self.tree, 0)

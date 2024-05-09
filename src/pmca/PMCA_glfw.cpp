@@ -79,8 +79,8 @@ static void cursor_position_callback(GLFWwindow *window, double xpos,
     }
   }
 
-  vs.x = xpos;
-  vs.y = ypos;
+  vs.x = static_cast<int>(xpos);
+  vs.y = static_cast<int>(ypos);
 }
 
 static void mouse_button_callback(GLFWwindow *window, int button, int action,
@@ -240,8 +240,8 @@ static int viewer_thread() {
     ImGui::NewFrame();
 
     vs.show_axis = 0x01 | 0x02 | 0x04;
-    vs.width = io.DisplaySize.x;
-    vs.height = io.DisplaySize.y;
+    vs.width = static_cast<int>(io.DisplaySize.x);
+    vs.height = static_cast<int>(io.DisplaySize.y);
 
     if (!io.WantCaptureMouse) {
       // send mouse event to 3D scene
@@ -268,8 +268,8 @@ static int viewer_thread() {
 
       cursor_position_callback(window, io.MousePos.x, io.MousePos.y);
     } else {
-      vs.x = io.MousePos.x;
-      vs.y = io.MousePos.y;
+      vs.x = static_cast<int>(io.MousePos.x);
+      vs.y = static_cast<int>(io.MousePos.y);
     }
 
     // 1. Show the big demo window (Most of the sample code is in

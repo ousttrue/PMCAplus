@@ -6,6 +6,7 @@
 #include <string.h>
 
 bool MODEL::load(std::span<uint8_t> bytes, const std::string &file_name) {
+  this->path = file_name;
 
   ioutil::binaryreader r(bytes);
 
@@ -146,11 +147,16 @@ bool MODEL::load(std::span<uint8_t> bytes, const std::string &file_name) {
   if (r.isend()) {
     PLOG_DEBUG << "拡張部分なし";
     this->eng_support = 0;
-    for (int i = 0; i < 10; i++) {
-      int j = i + 1;
-      sprintf(this->toon[i], "toon%02d.bmp\0", j);
-      sprintf(this->toon_path[i], "toon%02d.bmp\0", j);
-    }
+    this->toon_path[0] = this->toon[0] = "toon01.bmp";
+    this->toon_path[1] = this->toon[1] = "toon02.bmp";
+    this->toon_path[2] = this->toon[2] = "toon03.bmp";
+    this->toon_path[3] = this->toon[3] = "toon04.bmp";
+    this->toon_path[4] = this->toon[4] = "toon05.bmp";
+    this->toon_path[5] = this->toon[5] = "toon06.bmp";
+    this->toon_path[6] = this->toon[6] = "toon07.bmp";
+    this->toon_path[7] = this->toon[7] = "toon08.bmp";
+    this->toon_path[8] = this->toon[8] = "toon09.bmp";
+    this->toon_path[9] = this->toon[9] = "toon10.bmp";
     this->rbody.clear();
     this->joint.clear();
     return 0;
@@ -204,7 +210,9 @@ bool MODEL::load(std::span<uint8_t> bytes, const std::string &file_name) {
   }
 
   for (int i = 0; i < 10; i++) {
-    r.read(this->toon[i], 100);
+    char buf[100];
+    r.read(buf, 100);
+    this->toon[i] = buf;
     auto str = file_name;
     auto char_p = str.rfind('/');
     if (char_p != std::string::npos) {
@@ -212,7 +220,7 @@ bool MODEL::load(std::span<uint8_t> bytes, const std::string &file_name) {
     } else {
       str = {};
     }
-    sprintf(this->toon_path[i], "%s%s\0", str.c_str(), this->toon[i]);
+    this->toon_path[i] = (str + this->toon[i]);
   }
 
   int rbody_count = r.i32();
@@ -248,277 +256,209 @@ bool MODEL::load(std::span<uint8_t> bytes, const std::string &file_name) {
   return true;
 }
 
-int load_PMD(MODEL *model, const std::string &file_name) {
-  static MODEL cache_model[64];
-  static unsigned char count[64];
-  static unsigned char cur_count = 255;
-
-  // キャッシュまわり初期化
-  if (cur_count == 255) {
-    for (int i = 0; i < 64; i++) {
-      count[i] = 255;
-      create_PMD(&cache_model[i]);
-    }
-    cur_count = 0;
-  }
-
+std::shared_ptr<MODEL> load_PMD(const std::string &file_name) {
   if (file_name.empty()) {
     PLOG_WARNING << "ファイル名がありません";
-    return 1;
-  }
-
-  if (cur_count > 64) {
-    cur_count = 0;
-  } else {
-    cur_count++;
-  }
-
-  int i = 0;
-  for (; i < 64; i++) {
-    if (count[i] != 255) {
-      // printf("%s, %s\n", cache_model[i].header.path, file_name);
-      if (cache_model[i].path == file_name) {
-        copy_PMD(model, &cache_model[i]);
-        count[i] = cur_count;
-        break;
-      }
-    }
-  }
-
-  int tmp = cur_count + 1;
-  if (tmp >= 64)
-    tmp = 0;
-  for (int j = 0; j < 64; j++) {
-    if (count[i] == tmp) {
-      count[i] = 255;
-      delete_PMD(&cache_model[i]);
-    }
-  }
-  if (i != 64) {
-    printf("Use Cache\n");
-    return 0;
+    return nullptr;
   }
 
   auto bytes = ioutil::readfile(file_name);
   if (bytes.empty()) {
     PLOG_ERROR << "Can't open file:" << file_name;
-    return 1;
+    return nullptr;
   }
 
   PLOG_DEBUG << file_name;
-  model->path = file_name;
-
+  auto model = MODEL::create();
   if (!model->load(bytes, file_name)) {
-    return 1;
+    return nullptr;
   }
 
-  // モデルをキャッシュに保存
-  for (i = 0; i < 64; i++) {
-    if (count[i] == 255) {
-      copy_PMD(&cache_model[i], model);
-      count[i] = cur_count;
-      break;
-    }
-  }
-
-  return 0;
+  return model;
 }
 
-int write_PMD(MODEL *model, const char file_name[]) {
-  int i, j, ret = 0;
-  char str[PATH_LEN];
-
-  FILE *pmd;
-
-  if (strcmp(file_name, "") == 0) {
+bool MODEL::write(const std::string &file_name) const {
+  if (file_name.empty()) {
     printf("ファイル名がありません\n");
-    return 1;
+    return false;
   }
 
-  pmd = fopen(file_name, "wb");
-  if (pmd == NULL) {
-    printf("ファイル %s を開けません\n", file_name);
-    return 1;
+  auto pmd = fopen(file_name.c_str(), "wb");
+  if (!pmd) {
+    printf("ファイル %s を開けません\n", file_name.c_str());
+    return false;
   }
-
-  /*ゼロ埋め*/
-  /*{
-          int total_bytes;
-          char b = '\0';
-          total_bytes = 283+4+38*model->vt_count
-                                          +4+2*model->vt_index_count
-                                          +4*70*model->mat_count;
-          for(i=0; i<total_bytes; i++){
-                  fwrite(&b,1,1,pmd);
-          }
-          fseek(pmd, 0, SEEK_SET);
-  }*/
 
   // ヘッダー書き換え
-  model->header.magic = {'P', 'm', 'd', '\0'};
-  model->header.version = 1.0;
+  this->header.magic = {'P', 'm', 'd', '\0'};
+  this->header.version = 1.0;
 
-  fwrite(model->header.magic.data(), 3, 1, pmd);
-  fwrite(&model->header.version, 4, 1, pmd);
-  fwrite(model->header.name.data(), 20, 1, pmd);
-  fwrite(model->header.comment.data(), 256, 1, pmd);
+  fwrite(this->header.magic.data(), 3, 1, pmd);
+  fwrite(&this->header.version, 4, 1, pmd);
+  fwrite(this->header.name.data(), 20, 1, pmd);
+  fwrite(this->header.comment.data(), 256, 1, pmd);
 
-  int vt_count = model->vt.size();
+  int vt_count = this->vt.size();
   fwrite(&vt_count, 4, 1, pmd);
-  for (i = 0; i < (model->vt.size()); i++) {
-    fwrite(model->vt[i].loc, 4, 3, pmd);
-    fwrite(model->vt[i].nor, 4, 3, pmd);
-    fwrite(model->vt[i].uv, 4, 2, pmd);
-    fwrite(model->vt[i].bone_num, 2, 2, pmd);
-    fwrite(&model->vt[i].bone_weight, 1, 1, pmd);
-    fwrite(&model->vt[i].edge_flag, 1, 1, pmd);
+  for (size_t i = 0; i < this->vt.size(); i++) {
+    fwrite(this->vt[i].loc, 4, 3, pmd);
+    fwrite(this->vt[i].nor, 4, 3, pmd);
+    fwrite(this->vt[i].uv, 4, 2, pmd);
+    fwrite(this->vt[i].bone_num, 2, 2, pmd);
+    fwrite(&this->vt[i].bone_weight, 1, 1, pmd);
+    fwrite(&this->vt[i].edge_flag, 1, 1, pmd);
   }
 
-  int vt_index_count = model->vt_index.size();
+  int vt_index_count = this->vt_index.size();
   fwrite(&vt_index_count, 4, 1, pmd);
-  for (i = 0; i < model->vt_index.size(); i++) {
-    if (model->vt_index[i] >= model->vt.size()) {
-      printf("頂点インデックスが不正です :%d\n", model->vt_index[i]);
+  for (size_t i = 0; i < this->vt_index.size(); i++) {
+    if (this->vt_index[i] >= this->vt.size()) {
+      printf("頂点インデックスが不正です :%d\n", this->vt_index[i]);
       return 1;
     }
-    fwrite(&model->vt_index[i], 2, 1, pmd);
+    fwrite(&this->vt_index[i], 2, 1, pmd);
   }
 
-  int mat_count = model->mat.size();
+  int mat_count = this->mat.size();
   fwrite(&mat_count, 4, 1, pmd);
-  for (i = 0; i < model->mat.size(); i++) {
+  for (size_t i = 0; i < this->mat.size(); i++) {
     // 70bytes
-    fwrite(model->mat[i].diffuse, 4, 3, pmd);
-    fwrite(&model->mat[i].alpha, 4, 1, pmd);
-    fwrite(&model->mat[i].spec, 4, 1, pmd);
-    fwrite(model->mat[i].spec_col, 4, 3, pmd);
-    fwrite(model->mat[i].mirror_col, 4, 3, pmd);
-    fwrite(&model->mat[i].toon_index, 1, 1, pmd);
-    fwrite(&model->mat[i].edge_flag, 1, 1, pmd);
-    fwrite(&model->mat[i].vt_index_count, 4, 1, pmd);
+    fwrite(this->mat[i].diffuse, 4, 3, pmd);
+    fwrite(&this->mat[i].alpha, 4, 1, pmd);
+    fwrite(&this->mat[i].spec, 4, 1, pmd);
+    fwrite(this->mat[i].spec_col, 4, 3, pmd);
+    fwrite(this->mat[i].mirror_col, 4, 3, pmd);
+    fwrite(&this->mat[i].toon_index, 1, 1, pmd);
+    fwrite(&this->mat[i].edge_flag, 1, 1, pmd);
+    fwrite(&this->mat[i].vt_index_count, 4, 1, pmd);
 
-    if (*model->mat[i].sph != '\0') {
-      sprintf(str, "%s*%s\0", model->mat[i].tex, model->mat[i].sph);
+    if (*this->mat[i].sph != '\0') {
+      char str[PATH_LEN];
+      sprintf(str, "%s*%s\0", this->mat[i].tex, this->mat[i].sph);
       if (strlen(str) > 20) {
-        ret = 2;
+        PLOGW << "not zero terminated";
+        // ret = 2;
       }
       fwrite(str, 1, 20, pmd);
     } else {
-      fwrite(model->mat[i].tex, 1, 20, pmd);
+      fwrite(this->mat[i].tex, 1, 20, pmd);
     }
   }
 
-  uint16_t bone_count = model->bone.size();
+  uint16_t bone_count = this->bone.size();
   fwrite(&bone_count, 2, 1, pmd);
-  for (i = 0; i < model->bone.size(); i++) {
-    fwrite(model->bone[i].name, 1, 20, pmd);
-    fwrite(&model->bone[i].PBone_index, 2, 1, pmd);
-    fwrite(&model->bone[i].TBone_index, 2, 1, pmd);
-    fwrite(&model->bone[i].type, 1, 1, pmd);
-    fwrite(&model->bone[i].IKBone_index, 2, 1, pmd);
-    fwrite(model->bone[i].loc, 4, 3, pmd);
+  for (size_t i = 0; i < this->bone.size(); i++) {
+    fwrite(this->bone[i].name, 1, 20, pmd);
+    fwrite(&this->bone[i].PBone_index, 2, 1, pmd);
+    fwrite(&this->bone[i].TBone_index, 2, 1, pmd);
+    fwrite(&this->bone[i].type, 1, 1, pmd);
+    fwrite(&this->bone[i].IKBone_index, 2, 1, pmd);
+    fwrite(this->bone[i].loc, 4, 3, pmd);
   }
 
-  uint16_t IK_count = model->IK.size();
+  uint16_t IK_count = this->IK.size();
   fwrite(&IK_count, 2, 1, pmd);
-  for (int i = 0; i < model->IK.size(); i++) {
-    fwrite(&model->IK[i].IKBone_index, 2, 1, pmd);
-    fwrite(&model->IK[i].IKTBone_index, 2, 1, pmd);
-    uint8_t IK_chain_len = model->IK[i].IK_chain.size();
+  for (int i = 0; i < this->IK.size(); i++) {
+    fwrite(&this->IK[i].IKBone_index, 2, 1, pmd);
+    fwrite(&this->IK[i].IKTBone_index, 2, 1, pmd);
+    uint8_t IK_chain_len = this->IK[i].IK_chain.size();
     fwrite(&IK_chain_len, 1, 1, pmd);
-    fwrite(&model->IK[i].iterations, 2, 1, pmd);
-    fwrite(&model->IK[i].weight, 4, 1, pmd);
-    fwrite(model->IK[i].IK_chain.data(), 2, model->IK[i].IK_chain.size(), pmd);
+    fwrite(&this->IK[i].iterations, 2, 1, pmd);
+    fwrite(&this->IK[i].weight, 4, 1, pmd);
+    fwrite(this->IK[i].IK_chain.data(), 2, this->IK[i].IK_chain.size(), pmd);
   }
   PLOG_DEBUG << "IKリスト";
 
-  uint16_t skin_count = model->skin.size();
+  uint16_t skin_count = this->skin.size();
   fwrite(&skin_count, 2, 1, pmd);
-  for (i = 0; i < model->skin.size(); i++) {
-    fwrite(model->skin[i].name, 1, 20, pmd);
-    int skin_vt_count = model->skin[i].skin_vt.size();
+  for (size_t i = 0; i < this->skin.size(); i++) {
+    fwrite(this->skin[i].name, 1, 20, pmd);
+    int skin_vt_count = this->skin[i].skin_vt.size();
     fwrite(&skin_vt_count, 4, 1, pmd);
-    fwrite(&model->skin[i].type, 1, 1, pmd);
-    for (j = 0; j < model->skin[i].skin_vt.size(); j++) {
-      fwrite(&model->skin[i].skin_vt[j].index, 4, 1, pmd);
-      fwrite(model->skin[i].skin_vt[j].loc, 4, 3, pmd);
+    fwrite(&this->skin[i].type, 1, 1, pmd);
+    for (size_t j = 0; j < this->skin[i].skin_vt.size(); j++) {
+      fwrite(&this->skin[i].skin_vt[j].index, 4, 1, pmd);
+      fwrite(this->skin[i].skin_vt[j].loc, 4, 3, pmd);
     }
   }
   PLOG_DEBUG << "表情";
 
-  uint8_t skin_disp_count = model->skin_disp.size();
+  uint8_t skin_disp_count = this->skin_disp.size();
   fwrite(&skin_disp_count, 1, 1, pmd);
-  fwrite(model->skin_disp.data(), 2, model->skin_disp.size(), pmd);
+  fwrite(this->skin_disp.data(), 2, this->skin_disp.size(), pmd);
   PLOG_DEBUG << "表情表示";
 
-  uint8_t bone_group_count = model->bone_group.size();
+  uint8_t bone_group_count = this->bone_group.size();
   fwrite(&bone_group_count, 1, 1, pmd);
-  for (int i = 0; i < model->bone_group.size(); i++) {
-    fwrite(model->bone_group[i].name, 1, 50, pmd);
+  for (int i = 0; i < this->bone_group.size(); i++) {
+    fwrite(this->bone_group[i].name, 1, 50, pmd);
   }
 
-  int bone_disp_count = model->bone_disp.size();
+  int bone_disp_count = this->bone_disp.size();
   fwrite(&bone_disp_count, 4, 1, pmd);
-  for (int i = 0; i < model->bone_disp.size(); i++) {
-    fwrite(&model->bone_disp[i].index, 2, 1, pmd);
-    fwrite(&model->bone_disp[i].bone_group, 1, 1, pmd);
+  for (int i = 0; i < this->bone_disp.size(); i++) {
+    fwrite(&this->bone_disp[i].index, 2, 1, pmd);
+    fwrite(&this->bone_disp[i].bone_group, 1, 1, pmd);
   }
   PLOG_DEBUG << "ボーン表示";
 
   // extension
-  fwrite(&model->eng_support, 1, 1, pmd);
+  fwrite(&this->eng_support, 1, 1, pmd);
 
-  if (model->eng_support == 1) {
-    fwrite(model->header.name_eng.data(), 1, 20, pmd);
-    fwrite(model->header.comment_eng.data(), 1, 256, pmd);
-    for (i = 0; i < model->bone.size(); i++) {
-      fwrite(model->bone[i].name_eng, 1, 20, pmd);
+  if (this->eng_support == 1) {
+    fwrite(this->header.name_eng.data(), 1, 20, pmd);
+    fwrite(this->header.comment_eng.data(), 1, 256, pmd);
+    for (size_t i = 0; i < this->bone.size(); i++) {
+      fwrite(this->bone[i].name_eng, 1, 20, pmd);
     }
-    for (i = 1; i < model->skin.size(); i++) {
-      fwrite(model->skin[i].name_eng, 1, 20, pmd);
+    for (size_t i = 1; i < this->skin.size(); i++) {
+      fwrite(this->skin[i].name_eng, 1, 20, pmd);
     }
-    for (i = 0; i < model->bone_group.size(); i++) {
-      fwrite(model->bone_group[i].name_eng, 1, 50, pmd);
+    for (size_t i = 0; i < this->bone_group.size(); i++) {
+      fwrite(this->bone_group[i].name_eng, 1, 50, pmd);
     }
   }
   PLOG_DEBUG << "英名";
 
-  for (i = 0; i < 10; i++) {
-    fwrite(model->toon[i], 1, 100, pmd);
+  for (int i = 0; i < 10; i++) {
+    assert(this->toon[i].size() < 100);
+    char buf[100] = {0};
+    memcpy(buf, this->toon[i].data(), this->toon[i].size());
+    fwrite(buf, 1, 100, pmd);
   }
 
-  int rbody_count = model->rbody.size();
+  int rbody_count = this->rbody.size();
   fwrite(&rbody_count, 4, 1, pmd);
-  for (int i = 0; i < model->rbody.size(); i++) {
-    fwrite(model->rbody[i].name, 1, 20, pmd);
-    fwrite(&model->rbody[i].bone, 2, 1, pmd);
-    fwrite(&model->rbody[i].group, 1, 1, pmd);
-    fwrite(&model->rbody[i].target, 2, 1, pmd);
-    fwrite(&model->rbody[i].shape, 1, 1, pmd);
-    fwrite(model->rbody[i].size, 4, 3, pmd);
-    fwrite(model->rbody[i].loc, 4, 3, pmd);
-    fwrite(model->rbody[i].rot, 4, 3, pmd);
-    fwrite(model->rbody[i].property, 4, 5, pmd);
-    fwrite(&model->rbody[i].type, 1, 1, pmd);
+  for (int i = 0; i < this->rbody.size(); i++) {
+    fwrite(this->rbody[i].name, 1, 20, pmd);
+    fwrite(&this->rbody[i].bone, 2, 1, pmd);
+    fwrite(&this->rbody[i].group, 1, 1, pmd);
+    fwrite(&this->rbody[i].target, 2, 1, pmd);
+    fwrite(&this->rbody[i].shape, 1, 1, pmd);
+    fwrite(this->rbody[i].size, 4, 3, pmd);
+    fwrite(this->rbody[i].loc, 4, 3, pmd);
+    fwrite(this->rbody[i].rot, 4, 3, pmd);
+    fwrite(this->rbody[i].property, 4, 5, pmd);
+    fwrite(&this->rbody[i].type, 1, 1, pmd);
   }
   PLOG_DEBUG << "剛体";
 
   int joint_count;
   fwrite(&joint_count, 4, 1, pmd);
-  for (int i = 0; i < model->joint.size(); i++) {
-    fwrite(model->joint[i].name, 1, 20, pmd);
-    fwrite(model->joint[i].rbody, 4, 2, pmd);
-    fwrite(model->joint[i].loc, 4, 3, pmd);
-    fwrite(model->joint[i].rot, 4, 3, pmd);
-    fwrite(model->joint[i].limit, 4, 12, pmd);
-    fwrite(model->joint[i].spring, 4, 6, pmd);
+  for (int i = 0; i < this->joint.size(); i++) {
+    fwrite(this->joint[i].name, 1, 20, pmd);
+    fwrite(this->joint[i].rbody, 4, 2, pmd);
+    fwrite(this->joint[i].loc, 4, 3, pmd);
+    fwrite(this->joint[i].rot, 4, 3, pmd);
+    fwrite(this->joint[i].limit, 4, 12, pmd);
+    fwrite(this->joint[i].spring, 4, 6, pmd);
   }
   PLOG_DEBUG << "ジョイント";
 
   fclose(pmd);
   PLOG_INFO << file_name << "へ出力しました。";
 
-  return ret;
+  return true;
 }
 
 int print_PMD(MODEL *model, const char file_name[]) {
@@ -728,59 +668,6 @@ int print_PMD(MODEL *model, const char file_name[]) {
   return 0;
 }
 
-int create_PMD(MODEL *model) {
-  model->header.name = {0};
-  model->header.comment = {0};
-  model->vt.clear();
-  model->vt_index.clear();
-  model->mat.clear();
-  model->bone.clear();
-  model->IK.clear();
-  model->skin.clear();
-  model->skin_disp.clear();
-  model->bone_group.clear();
-  model->bone_disp.clear();
-  model->eng_support = 0;
-
-  for (int i = 0; i < 10; i++) {
-    int j = i + 1;
-    sprintf(model->toon[i], "toon%02d.bmp\0", j);
-    sprintf(model->toon_path[i], "toon%02d.bmp\0", j);
-  }
-
-  model->rbody.clear();
-  model->joint.clear();
-
-  return 0;
-}
-
-int delete_PMD(MODEL *model) {
-  model->header.name[0] = '\0';
-  model->header.comment[0] = '\0';
-
-  model->vt.clear();
-  model->vt_index.clear();
-  model->mat.clear();
-  model->bone.clear();
-  model->IK.clear();
-  model->skin.clear();
-  model->skin_disp.clear();
-  model->bone_group.clear();
-  model->bone_disp.clear();
-  model->eng_support = 0;
-
-  for (int i = 0; i < 10; i++) {
-    int j = i + 1;
-    sprintf(model->toon[i], "toon%02d.bmp\0", j);
-    sprintf(model->toon_path[i], "toon%02d.bmp\0", j);
-  }
-
-  model->rbody.clear();
-  model->joint.clear();
-
-  return 0;
-}
-
 int copy_PMD(MODEL *out, MODEL *model) {
   out->header = model->header;
   out->vt = model->vt;
@@ -805,209 +692,205 @@ int copy_PMD(MODEL *out, MODEL *model) {
   return 0;
 }
 
-int add_PMD(MODEL *model, MODEL *add) {
-
-  int i, j, k;
-  int size;
-  int tmp[3];
-
+bool MODEL::add_PMD(const std::shared_ptr<MODEL> &add) {
   // 頂点
-  std::vector<VERTEX> vt(model->vt.size() + add->vt.size());
-  for (i = 0; i < model->vt.size(); i++) {
-    vt[i] = model->vt[i];
+  std::vector<VERTEX> vt(this->vt.size() + add->vt.size());
+  for (size_t i = 0; i < this->vt.size(); i++) {
+    vt[i] = this->vt[i];
   }
-  j = 0;
-  for (i = model->vt.size(); i < vt.size(); i++) {
+  size_t j = 0;
+  for (size_t i = this->vt.size(); i < vt.size(); i++) {
     vt[i] = add->vt[j];
-    for (k = 0; k < 2; k++) {
-      vt[i].bone_num[k] += model->bone.size();
+    for (size_t k = 0; k < 2; k++) {
+      vt[i].bone_num[k] += this->bone.size();
     }
     j++;
   }
 
   // 面頂点
-  std::vector<unsigned short> vt_index(model->vt_index.size() +
+  std::vector<unsigned short> vt_index(this->vt_index.size() +
                                        add->vt_index.size());
-  for (i = 0; i < model->vt_index.size(); i++) {
-    vt_index[i] = model->vt_index[i];
+  for (size_t i = 0; i < this->vt_index.size(); i++) {
+    vt_index[i] = this->vt_index[i];
   }
   j = 0;
-  for (i = model->vt_index.size(); i < vt_index.size(); i++) {
-    vt_index[i] = add->vt_index[j] + model->vt.size();
+  for (size_t i = this->vt_index.size(); i < vt_index.size(); i++) {
+    vt_index[i] = add->vt_index[j] + this->vt.size();
     j++;
   }
 
   // 材質
-  std::vector<MATERIAL> mat(model->mat.size() + add->mat.size());
-  for (i = 0; i < model->mat.size(); i++) {
-    mat[i] = model->mat[i];
+  std::vector<MATERIAL> mat(this->mat.size() + add->mat.size());
+  for (size_t i = 0; i < this->mat.size(); i++) {
+    mat[i] = this->mat[i];
   }
   j = 0;
-  for (i = model->mat.size(); i < mat.size(); i++) {
+  for (size_t i = this->mat.size(); i < mat.size(); i++) {
     mat[i] = add->mat[j];
     j++;
   }
 
   // ボーン
-  std::vector<BONE> bone(model->bone.size() + add->bone.size());
-  for (i = 0; i < model->bone.size(); i++) {
-    bone[i] = model->bone[i];
+  std::vector<BONE> bone(this->bone.size() + add->bone.size());
+  for (size_t i = 0; i < this->bone.size(); i++) {
+    bone[i] = this->bone[i];
   }
   j = 0;
-  for (i = model->bone.size(); i < bone.size(); i++) {
+  for (size_t i = this->bone.size(); i < bone.size(); i++) {
     bone[i] = add->bone[j];
     if (bone[i].PBone_index != USHORT_MAX)
-      bone[i].PBone_index = bone[i].PBone_index + model->bone.size();
+      bone[i].PBone_index = bone[i].PBone_index + this->bone.size();
     if (bone[i].TBone_index != 0)
-      bone[i].TBone_index = bone[i].TBone_index + model->bone.size();
+      bone[i].TBone_index = bone[i].TBone_index + this->bone.size();
     if (bone[i].IKBone_index != 0)
-      bone[i].IKBone_index = bone[i].IKBone_index + model->bone.size();
+      bone[i].IKBone_index = bone[i].IKBone_index + this->bone.size();
     j++;
   }
 
   // IKリスト
-  std::vector<IK_LIST> IK(model->IK.size() + add->IK.size());
-  for (int i = 0; i < model->IK.size(); i++) {
-    IK[i] = model->IK[i];
+  std::vector<IK_LIST> IK(this->IK.size() + add->IK.size());
+  for (int i = 0; i < this->IK.size(); i++) {
+    IK[i] = this->IK[i];
   }
   j = 0;
-  for (i = model->IK.size(); i < IK.size(); i++) {
+  for (size_t i = this->IK.size(); i < IK.size(); i++) {
     IK[i] = add->IK[j];
-    IK[i].IKBone_index = IK[i].IKBone_index + model->bone.size();
-    IK[i].IKTBone_index = IK[i].IKTBone_index + model->bone.size();
-    for (k = 0; k < IK[i].IK_chain.size(); k++) {
-      IK[i].IK_chain[k] = IK[i].IK_chain[k] + model->bone.size();
+    IK[i].IKBone_index = IK[i].IKBone_index + this->bone.size();
+    IK[i].IKTBone_index = IK[i].IKTBone_index + this->bone.size();
+    for (size_t k = 0; k < IK[i].IK_chain.size(); k++) {
+      IK[i].IK_chain[k] = IK[i].IK_chain[k] + this->bone.size();
     }
     j++;
   }
 
   // 表情
-  std::vector<SKIN> skin(model->skin.size() + add->skin.size());
+  std::vector<SKIN> skin(this->skin.size() + add->skin.size());
   if (add->skin.size() == 0) {
-    for (i = 0; i < skin.size(); i++) {
-      skin[i] = model->skin[i];
+    for (size_t i = 0; i < skin.size(); i++) {
+      skin[i] = this->skin[i];
     }
-  } else if (model->skin.size() == 0) {
-    for (i = 0; i < skin.size(); i++) {
+  } else if (this->skin.size() == 0) {
+    for (size_t i = 0; i < skin.size(); i++) {
       skin[i] = add->skin[i];
     }
-  } else if (model->skin.size() != 0 && add->skin.size() != 0) {
+  } else if (this->skin.size() != 0 && add->skin.size() != 0) {
     skin.pop_back();
-    skin[0] = model->skin[0];
-    skin[0].skin_vt.resize(model->skin[0].skin_vt.size() +
+    skin[0] = this->skin[0];
+    skin[0].skin_vt.resize(this->skin[0].skin_vt.size() +
                            add->skin[0].skin_vt.size());
-    auto tmp = model->skin[0].skin_vt.size();
-    memcpy(skin[0].skin_vt.data(), model->skin[0].skin_vt.data(),
+    auto tmp = this->skin[0].skin_vt.size();
+    memcpy(skin[0].skin_vt.data(), this->skin[0].skin_vt.data(),
            tmp * sizeof(SKIN_DATA));
     memcpy(&skin[0].skin_vt[tmp], add->skin[0].skin_vt.data(),
            add->skin[0].skin_vt.size() * sizeof(SKIN_DATA));
     // baseの合成
 
-    for (i = 0; i < model->skin[0].skin_vt.size(); i++) {
-      skin[0].skin_vt[i].index = model->skin[0].skin_vt[i].index;
+    for (size_t i = 0; i < this->skin[0].skin_vt.size(); i++) {
+      skin[0].skin_vt[i].index = this->skin[0].skin_vt[i].index;
     }
-    // printf("%d %d %d\n", skin[0].skin_vt_count, model->skin[0].skin_vt_count,
+    // printf("%d %d %d\n", skin[0].skin_vt_count, this->skin[0].skin_vt_count,
     // add->skin[0].skin_vt_count);
     j = 0;
-    for (i = model->skin[0].skin_vt.size(); i < skin[0].skin_vt.size(); i++) {
+    for (size_t i = this->skin[0].skin_vt.size(); i < skin[0].skin_vt.size();
+         i++) {
       // printf("%d \n", i);
       skin[0].skin_vt[i].index =
-          add->skin[0].skin_vt[j].index + model->vt.size();
+          add->skin[0].skin_vt[j].index + this->vt.size();
       j++;
     }
     // 表情追加
-    for (i = 1; i < model->skin.size(); i++) {
-      skin[i] = model->skin[i];
+    for (size_t i = 1; i < this->skin.size(); i++) {
+      skin[i] = this->skin[i];
       // printf("%d %d \n", i, size);
     }
     j = 1;
-    for (i = model->skin.size(); i < skin.size(); i++) {
+    for (size_t i = this->skin.size(); i < skin.size(); i++) {
       // printf("%d\n", j);
       skin[i] = add->skin[j];
-      for (k = 0; k < skin[i].skin_vt.size(); k++) {
+      for (size_t k = 0; k < skin[i].skin_vt.size(); k++) {
         skin[i].skin_vt[k].index =
-            skin[i].skin_vt[k].index + model->skin[0].skin_vt.size();
+            skin[i].skin_vt[k].index + this->skin[0].skin_vt.size();
       }
       j++;
     }
   }
 
   // 表情表示
-  std::vector<unsigned short> skin_disp(model->skin_disp.size() +
+  std::vector<unsigned short> skin_disp(this->skin_disp.size() +
                                         add->skin_disp.size());
-  memcpy(skin_disp.data(), model->skin_disp.data(),
-         model->skin_disp.size() * sizeof(unsigned short));
+  memcpy(skin_disp.data(), this->skin_disp.data(),
+         this->skin_disp.size() * sizeof(unsigned short));
   j = 0;
-  for (int i = model->skin_disp.size(); i < skin_disp.size(); i++) {
-    skin_disp[i] = add->skin_disp[j] + model->skin_disp.size();
+  for (int i = this->skin_disp.size(); i < skin_disp.size(); i++) {
+    skin_disp[i] = add->skin_disp[j] + this->skin_disp.size();
     j++;
   }
 
   // ボーン表示
-  std::vector<BONE_GROUP> bone_group(model->bone_group.size() +
+  std::vector<BONE_GROUP> bone_group(this->bone_group.size() +
                                      add->bone_group.size());
-  for (int i = 0; i < model->bone_group.size(); i++) {
-    bone_group[i] = model->bone_group[i];
+  for (int i = 0; i < this->bone_group.size(); i++) {
+    bone_group[i] = this->bone_group[i];
   }
   j = 0;
-  for (int i = model->bone_group.size(); i < bone_group.size(); i++) {
+  for (int i = this->bone_group.size(); i < bone_group.size(); i++) {
     bone_group[i] = add->bone_group[j];
     j++;
   }
 
-  std::vector<BONE_DISP> bone_disp(model->bone_disp.size() +
+  std::vector<BONE_DISP> bone_disp(this->bone_disp.size() +
                                    add->bone_disp.size());
-  for (int i = 0; i < model->bone_disp.size(); i++) {
-    bone_disp[i] = model->bone_disp[i];
+  for (int i = 0; i < this->bone_disp.size(); i++) {
+    bone_disp[i] = this->bone_disp[i];
   }
   j = 0;
-  for (i = model->bone_disp.size(); i < bone_disp.size(); i++) {
-    bone_disp[i].index = add->bone_disp[j].index + model->bone.size();
+  for (size_t i = this->bone_disp.size(); i < bone_disp.size(); i++) {
+    bone_disp[i].index = add->bone_disp[j].index + this->bone.size();
     bone_disp[i].bone_group =
-        add->bone_disp[j].bone_group + model->bone_group.size();
+        add->bone_disp[j].bone_group + this->bone_group.size();
     j++;
   }
 
   // 英名
-  model->eng_support = add->eng_support;
+  this->eng_support = add->eng_support;
 
   // 剛体
-  std::vector<RIGID_BODY> rbody(model->rbody.size() + add->rbody.size());
-  for (int i = 0; i < model->rbody.size(); i++) {
-    rbody[i] = model->rbody[i];
+  std::vector<RIGID_BODY> rbody(this->rbody.size() + add->rbody.size());
+  for (int i = 0; i < this->rbody.size(); i++) {
+    rbody[i] = this->rbody[i];
   }
   j = 0;
-  for (i = model->rbody.size(); i < rbody.size(); i++) {
+  for (size_t i = this->rbody.size(); i < rbody.size(); i++) {
     rbody[i] = add->rbody[j];
-    rbody[i].bone = rbody[i].bone + model->bone.size();
+    rbody[i].bone = rbody[i].bone + this->bone.size();
     j++;
   }
 
   // ジョイント
-  std::vector<JOINT> joint(model->joint.size() + add->joint.size());
-  for (int i = 0; i < model->joint.size(); i++) {
-    joint[i] = model->joint[i];
+  std::vector<JOINT> joint(this->joint.size() + add->joint.size());
+  for (int i = 0; i < this->joint.size(); i++) {
+    joint[i] = this->joint[i];
   }
   j = 0;
-  for (i = model->joint.size(); i < joint.size(); i++) {
+  for (size_t i = this->joint.size(); i < joint.size(); i++) {
     joint[i] = add->joint[j];
-    for (k = 0; k < 2; k++) {
-      joint[i].rbody[k] = joint[i].rbody[k] + model->rbody.size();
+    for (size_t k = 0; k < 2; k++) {
+      joint[i].rbody[k] = joint[i].rbody[k] + this->rbody.size();
     }
     j++;
   }
 
-  std::swap(model->vt, vt);
-  std::swap(model->vt_index, vt_index);
-  std::swap(model->mat, mat);
-  std::swap(model->bone, bone);
-  std::swap(model->IK, IK);
-  std::swap(model->skin, skin);
-  std::swap(model->skin_disp, skin_disp);
-  std::swap(model->bone_group, bone_group);
-  std::swap(model->bone_disp, bone_disp);
-  std::swap(model->rbody, rbody);
-  std::swap(model->joint, joint);
+  std::swap(this->vt, vt);
+  std::swap(this->vt_index, vt_index);
+  std::swap(this->mat, mat);
+  std::swap(this->bone, bone);
+  std::swap(this->IK, IK);
+  std::swap(this->skin, skin);
+  std::swap(this->skin_disp, skin_disp);
+  std::swap(this->bone_group, bone_group);
+  std::swap(this->bone_disp, bone_disp);
+  std::swap(this->rbody, rbody);
+  std::swap(this->joint, joint);
 
   return 0;
 }

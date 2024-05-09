@@ -446,13 +446,7 @@ def Copy_PMD(src: int, dst: int) -> None:
     """
     ...
 
-def Create_PMD(num: int) -> None:
-    """
-    Create enpty PMD"
-    """
-    ...
-
-def Marge_PMD(num: int) -> None:
+def Marge_PMD(num: int) -> bool:
     """
     Marge PMD"
     """

@@ -1,9 +1,8 @@
-#include <chrono>
+#include <memory>
 #include <thread>
 
 #include "PMCA_PyMod.h"
 #include "PMCA_renderer.h"
-#include "dbg.h"
 #include "mPMD.h"
 
 #define PMCA_MODULE
@@ -11,24 +10,19 @@
 
 static PyObject *PMCAError;
 
-int *zero;
-
-MODEL g_model[16];
-LIST list;
+static std::shared_ptr<MODEL> g_model[16];
+static LIST list;
 
 #include <plog/Appenders/ColorConsoleAppender.h>
 #include <plog/Formatters/TxtFormatter.h>
 #include <plog/Init.h>
 #include <plog/Log.h>
 
-/************************************************************/
 /*データ変換Utils*/
 PyObject *Array_to_PyList_UShort(const unsigned short *input, int count) {
-  int i;
-  PyObject *l, *x;
-  l = PyList_New(0);
-  for (i = 0; i < count; i++) {
-    x = PyLong_FromLong((int)input[i]);
+  auto l = PyList_New(0);
+  for (int i = 0; i < count; i++) {
+    auto x = PyLong_FromLong((int)input[i]);
     if (x == NULL)
       break;
     PyList_Append(l, x);
@@ -39,11 +33,9 @@ PyObject *Array_to_PyList_UShort(const unsigned short *input, int count) {
 }
 
 PyObject *Array_to_PyList_Float(const float *input, int count) {
-  int i;
-  PyObject *l, *x;
-  l = PyList_New(0);
-  for (i = 0; i < count; i++) {
-    x = PyFloat_FromDouble(input[i]);
+  auto l = PyList_New(0);
+  for (int i = 0; i < count; i++) {
+    auto x = PyFloat_FromDouble(input[i]);
     if (x == NULL)
       break;
     PyList_Append(l, x);
@@ -54,23 +46,18 @@ PyObject *Array_to_PyList_Float(const float *input, int count) {
 }
 
 int PyList_to_Array_Float(float *output, PyObject *List, int size) {
-  int i;
-  PyObject *tmp;
-
-  for (i = 0; i < size; i++) {
-    tmp = PyList_GetItem(List, i);
+  for (int i = 0; i < size; i++) {
+    auto tmp = PyList_GetItem(List, i);
     output[i] = PyFloat_AsDouble(tmp);
   }
   return 0;
 }
 
 int PyList_to_Array_UShort(unsigned short *output, PyObject *List, int size) {
-  int i;
-  PyObject *tmp;
   if (size > PyList_Size(List))
     return -1;
-  for (i = 0; i < size; i++) {
-    tmp = PyList_GetItem(List, i);
+  for (int i = 0; i < size; i++) {
+    auto tmp = PyList_GetItem(List, i);
     if (tmp == NULL)
       return -1;
     output[i] = (unsigned short)PyLong_AsLong(tmp);
@@ -80,19 +67,15 @@ int PyList_to_Array_UShort(unsigned short *output, PyObject *List, int size) {
   return 0;
 }
 
-int PyList_to_Array_Str(char **output, PyObject *List, int size, int val) {
-  int i;
-  Py_ssize_t maxlen;
-  char *p;
-
-  maxlen = (Py_ssize_t)val - 1;
-  PyObject *tmp;
-  for (i = 0; i < size; i++) {
-    tmp = PyList_GetItem(List, i);
+int PyList_to_Array_Str(char **output, PyObject *List, int count, int len) {
+  auto maxlen = (Py_ssize_t)len - 1;
+  for (int i = 0; i < count; i++) {
+    auto tmp = PyList_GetItem(List, i);
     // op = output + val*i;
     // p = PyBytes_AsString(tmp);
     // printf("b %p\n", &output[i]);
     // strncpy(output[i], PyBytes_AsString(tmp), maxlen);
+    char *p;
     PyBytes_AsStringAndSize(tmp, &p, &maxlen);
     strncpy(output[i], p, maxlen);
     // printf("a %p %s\n", output[i], output[i]);
@@ -105,9 +88,9 @@ int PyList_to_Array_Str(char **output, PyObject *List, int size, int val) {
 static PyObject *getInfo(PyObject *self, PyObject *args) {
   int num;
   if (!PyArg_ParseTuple(args, "i", &num))
-    return NULL;
+    Py_RETURN_NONE;
 
-  auto model = &g_model[num];
+  auto model = g_model[num];
   auto name = model->header.name;
   auto name_eng = model->header.name_eng;
   auto comment = model->header.comment;
@@ -135,11 +118,12 @@ static PyObject *getInfo(PyObject *self, PyObject *args) {
 static PyObject *getVt(PyObject *self, PyObject *args) {
   int num, i;
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
-    return NULL;
+    Py_RETURN_NONE;
 
-  auto model = &g_model[num];
+  auto model = g_model[num];
   if (model->vt.size() <= i)
     Py_RETURN_NONE;
+
   return Py_BuildValue("{s:O,s:O,s:O,"
                        "s:i,s:i,"
                        "s:i,s:i}",
@@ -155,23 +139,25 @@ static PyObject *getVt(PyObject *self, PyObject *args) {
 static PyObject *getFace(PyObject *self, PyObject *args) {
   int num, i;
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
-    return NULL;
+    Py_RETURN_NONE;
 
-  auto model = &g_model[num];
+  auto model = g_model[num];
   i = i * 3;
   if (model->vt_index.size() + 3 < i)
     Py_RETURN_NONE;
+
   return Array_to_PyList_UShort(&model->vt_index[i], 3);
 }
 
 static PyObject *getMat(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
-    return NULL;
-  model = &g_model[num];
+    Py_RETURN_NONE;
+
+  auto model = g_model[num];
   if (model->mat.size() <= i)
     Py_RETURN_NONE;
+
   return Py_BuildValue(
       "{s:O,s:f,s:f,"
       "s:O,s:O,"
@@ -192,9 +178,9 @@ static PyObject *getMat(PyObject *self, PyObject *args) {
 static PyObject *getBone(PyObject *self, PyObject *args) {
   int num, i;
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
-    return NULL;
+    Py_RETURN_NONE;
 
-  auto model = &g_model[num];
+  auto model = g_model[num];
   if (model->bone.size() <= i)
     Py_RETURN_NONE;
 
@@ -213,9 +199,9 @@ static PyObject *getBone(PyObject *self, PyObject *args) {
 static PyObject *getIK(PyObject *self, PyObject *args) {
   int num, i;
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
-    return NULL;
+    Py_RETURN_NONE;
 
-  auto model = &g_model[num];
+  auto model = g_model[num];
   if (model->IK.size() <= i)
     Py_RETURN_NONE;
 
@@ -232,9 +218,9 @@ static PyObject *getIK(PyObject *self, PyObject *args) {
 static PyObject *getSkin(PyObject *self, PyObject *args) {
   int num, i;
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
-    return NULL;
+    Py_RETURN_NONE;
 
-  auto model = &g_model[num];
+  auto model = g_model[num];
   if (model->skin.size() <= i)
     Py_RETURN_NONE;
 
@@ -247,10 +233,10 @@ static PyObject *getSkin(PyObject *self, PyObject *args) {
 
 static PyObject *getSkindata(PyObject *self, PyObject *args) {
   int num, i, j;
-  MODEL *model;
   if (!PyArg_ParseTuple(args, "iii", &num, &i, &j))
-    return NULL;
-  model = &g_model[num];
+    Py_RETURN_NONE;
+
+  auto model = g_model[num];
   return Py_BuildValue(
       "{s:i,s:[fff]}", "index", model->skin[i].skin_vt[j].index, "loc",
       model->skin[i].skin_vt[j].loc[0], model->skin[i].skin_vt[j].loc[1],
@@ -259,61 +245,62 @@ static PyObject *getSkindata(PyObject *self, PyObject *args) {
 
 static PyObject *getBone_group(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
-    return NULL;
-  model = &g_model[num];
+    Py_RETURN_NONE;
+
+  auto model = g_model[num];
   return Py_BuildValue("{s:y,s:y}", "name", model->bone_group[i].name,
                        "name_eng", model->bone_group[i].name_eng);
 }
 
 static PyObject *getBone_disp(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
-    return NULL;
-  model = &g_model[num];
+    Py_RETURN_NONE;
+
+  auto model = g_model[num];
   return Py_BuildValue("{s:i,s:i}", "index", (int)model->bone_disp[i].index,
                        "bone_group", (int)model->bone_disp[i].bone_group);
 }
 
 static PyObject *getToon(PyObject *self, PyObject *args) {
-  int num, i;
-  MODEL *model;
+  int num;
   if (!PyArg_ParseTuple(args, "i", &num))
-    return NULL;
-  model = &g_model[num];
+    Py_RETURN_NONE;
+
+  auto model = g_model[num];
   return Py_BuildValue("[y,y,y,y,y,"
                        "y,y,y,y,y]",
-                       model->toon[0], model->toon[1], model->toon[2],
-                       model->toon[3], model->toon[4], model->toon[5],
-                       model->toon[6], model->toon[7], model->toon[8],
-                       model->toon[9]);
+                       model->toon[0].c_str(), model->toon[1].c_str(),
+                       model->toon[2].c_str(), model->toon[3].c_str(),
+                       model->toon[4].c_str(), model->toon[5].c_str(),
+                       model->toon[6].c_str(), model->toon[7].c_str(),
+                       model->toon[8].c_str(), model->toon[9].c_str());
 }
 
 static PyObject *getToonPath(PyObject *self, PyObject *args) {
-  int num, i;
-  MODEL *model;
+  int num;
   if (!PyArg_ParseTuple(args, "i", &num))
-    return NULL;
-  model = &g_model[num];
+    Py_RETURN_NONE;
+
+  auto model = g_model[num];
   // printf("%s\n", model->toon_path[0]);
   return Py_BuildValue("[y,y,y,y,y,"
                        "y,y,y,y,y]",
-                       model->toon_path[0], model->toon_path[1],
-                       model->toon_path[2], model->toon_path[3],
-                       model->toon_path[4], model->toon_path[5],
-                       model->toon_path[6], model->toon_path[7],
-                       model->toon_path[8], model->toon_path[9]);
+                       model->toon_path[0].c_str(), model->toon_path[1].c_str(),
+                       model->toon_path[2].c_str(), model->toon_path[3].c_str(),
+                       model->toon_path[4].c_str(), model->toon_path[5].c_str(),
+                       model->toon_path[6].c_str(), model->toon_path[7].c_str(),
+                       model->toon_path[8].c_str(),
+                       model->toon_path[9].c_str());
 }
 
 static PyObject *getRb(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
-
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
-    return NULL;
-  model = &g_model[num];
+    Py_RETURN_NONE;
+
+  auto model = g_model[num];
   return Py_BuildValue(
       "{s:y,s:i,s:i,s:i,s:i,"
       "s:[f,f,f],s:[f,f,f],s:[f,f,f],"
@@ -333,11 +320,10 @@ static PyObject *getRb(PyObject *self, PyObject *args) {
 
 static PyObject *getJoint(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
-
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
-    return NULL;
-  model = &g_model[num];
+    Py_RETURN_NONE;
+
+  auto model = g_model[num];
   return Py_BuildValue(
       "{s:y,s:[I,I],"
       "s:[f,f,f],s:[f,f,f],"
@@ -359,13 +345,9 @@ static PyObject *getJoint(PyObject *self, PyObject *args) {
 }
 
 static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
-  int num, i, size;
-  MODEL model;
-  PyObject *PyTmp;
+  auto model = MODEL::create();
+  int num;
   char *str[4];
-
-  create_PMD(&model);
-
   int vt_count;
   int vt_index_count;
   int mat_count;
@@ -377,6 +359,7 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
   int bone_disp_count;
   int rbody_count;
   int joint_count;
+  PyObject *PyTmp;
   if (!PyArg_ParseTuple(args,
                         "i"
                         "yyyy"
@@ -391,42 +374,38 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
                         &IK_count, &skin_count, &bone_group_count,
                         &bone_disp_count,
 
-                        &model.eng_support, &rbody_count, &joint_count,
+                        &model->eng_support, &rbody_count, &joint_count,
                         &skin_disp_count, &PyTmp))
-    return NULL;
+    Py_RETURN_FALSE;
 
-  model.header.magic = {'P', 'm', 'd', '\0'};
-  model.header.version = 1.0;
-  strncpy(model.header.name.data(), str[0], NAME_LEN);
-  strncpy(model.header.comment.data(), str[1], 256);
-  strncpy(model.header.name_eng.data(), str[2], NAME_LEN);
-  strncpy(model.header.comment_eng.data(), str[3], 256);
+  model->header.magic = {'P', 'm', 'd', '\0'};
+  model->header.version = 1.0;
+  strncpy(model->header.name.data(), str[0], NAME_LEN);
+  strncpy(model->header.comment.data(), str[1], 256);
+  strncpy(model->header.name_eng.data(), str[2], NAME_LEN);
+  strncpy(model->header.comment_eng.data(), str[3], 256);
+  g_model[num] = model;
 
-  auto p = &g_model[num];
+  /* メモリ確保 */
+  model->vt.resize(vt_count);
+  model->vt_index.resize(vt_index_count * 3);
+  model->mat.resize(mat_count);
+  model->bone.resize(bone_count);
+  model->IK.resize(IK_count);
+  model->skin.resize(skin_count);
+  model->skin_disp.resize(skin_disp_count);
+  PyList_to_Array_UShort(model->skin_disp.data(), PyTmp,
+                         model->skin_disp.size());
+  model->bone_group.resize(bone_group_count);
+  model->bone_disp.resize(bone_disp_count);
+  model->rbody.resize(rbody_count);
+  model->joint.resize(joint_count);
 
-  delete_PMD(p);
-  *p = model;
-
-  /*メモリ確保************************************************************************/
-  p->vt.resize(vt_count);
-  p->vt_index.resize(vt_index_count * 3);
-  p->mat.resize(mat_count);
-  p->bone.resize(bone_count);
-  p->IK.resize(IK_count);
-  p->skin.resize(skin_count);
-  p->skin_disp.resize(skin_disp_count);
-  PyList_to_Array_UShort(p->skin_disp.data(), PyTmp, p->skin_disp.size());
-  p->bone_group.resize(bone_group_count);
-  p->bone_disp.resize(bone_disp_count);
-  p->rbody.resize(rbody_count);
-  p->joint.resize(joint_count);
-
-  return Py_BuildValue("i", 0);
+  Py_RETURN_TRUE;
 }
 
 static PyObject *setVt(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
   PyObject *PyTmp[3];
   VERTEX vt;
   if (!PyArg_ParseTuple(args,
@@ -436,36 +415,35 @@ static PyObject *setVt(PyObject *self, PyObject *args) {
                         &num, &i, &PyTmp[0], &PyTmp[1], &PyTmp[2],
                         &vt.bone_num[0], &vt.bone_num[1], &vt.bone_weight,
                         &vt.edge_flag))
-    return NULL;
+    Py_RETURN_FALSE;
+
   PyList_to_Array_Float(vt.loc, PyTmp[0], 3);
   PyList_to_Array_Float(vt.nor, PyTmp[1], 3);
   PyList_to_Array_Float(vt.uv, PyTmp[2], 2);
-
-  model = &g_model[num];
+  auto model = g_model[num];
   if (model->vt.size() <= i)
-    Py_RETURN_NONE;
+    Py_RETURN_FALSE;
+
   model->vt[i] = vt;
-  return Py_BuildValue("i", 0);
+  Py_RETURN_TRUE;
 }
 
 static PyObject *setFace(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
   PyObject *PyTmp;
   if (!PyArg_ParseTuple(args, "iiO", &num, &i, &PyTmp))
-    return NULL;
+    Py_RETURN_FALSE;
 
-  model = &g_model[num];
+  auto model = g_model[num];
   if (model->vt_index.size() < i * 3 + 3)
-    Py_RETURN_NONE;
+    Py_RETURN_FALSE;
 
   PyList_to_Array_UShort(&model->vt_index[i * 3], PyTmp, 3);
-  return Py_BuildValue("i", 0);
+  Py_RETURN_TRUE;
 }
 
 static PyObject *setMat(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
   PyObject *PyTmp[3];
   MATERIAL mat;
   char *str[4];
@@ -474,11 +452,11 @@ static PyObject *setMat(PyObject *self, PyObject *args) {
 
                         &mat.toon_index, &mat.edge_flag, &mat.vt_index_count,
                         &str[0], &str[1], &str[2], &str[3]))
-    return NULL;
+    Py_RETURN_FALSE;
 
-  model = &g_model[num];
+  auto model = g_model[num];
   if (model->mat.size() <= i)
-    Py_RETURN_NONE;
+    Py_RETURN_FALSE;
 
   mat.vt_index_count = mat.vt_index_count * 3;
   PyList_to_Array_Float(mat.diffuse, PyTmp[0], 3);
@@ -490,12 +468,11 @@ static PyObject *setMat(PyObject *self, PyObject *args) {
   strncpy(mat.tex_path, str[2], PATH_LEN);
   strncpy(mat.sph_path, str[3], PATH_LEN);
   model->mat[i] = mat;
-  return Py_BuildValue("i", 0);
+  Py_RETURN_TRUE;
 }
 
 static PyObject *setBone(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
   PyObject *PyTmp;
   BONE bone;
   char *str[2];
@@ -505,17 +482,18 @@ static PyObject *setBone(PyObject *self, PyObject *args) {
                         &bone.IKBone_index,
 
                         &PyTmp))
-    return NULL;
-  model = &g_model[num];
+    Py_RETURN_FALSE;
+
+  auto model = g_model[num];
   if (model->bone.size() <= i)
-    Py_RETURN_NONE;
+    Py_RETURN_FALSE;
 
   strncpy(bone.name, str[0], NAME_LEN);
   strncpy(bone.name_eng, str[1], NAME_LEN);
 
   PyList_to_Array_Float(bone.loc, PyTmp, 3);
   model->bone[i] = bone;
-  return Py_BuildValue("i", 0);
+  Py_RETURN_TRUE;
 }
 
 static PyObject *setIK(PyObject *self, PyObject *args) {
@@ -526,11 +504,11 @@ static PyObject *setIK(PyObject *self, PyObject *args) {
   if (!PyArg_ParseTuple(args, "iiiiiifO", &num, &i, &IK_list.IKBone_index,
                         &IK_list.IKTBone_index, &IK_chain_len,
                         &IK_list.iterations, &IK_list.weight, &PyTmp))
-    return NULL;
+    Py_RETURN_FALSE;
 
-  auto model = &g_model[num];
+  auto model = g_model[num];
   if (model->IK.size() <= i)
-    Py_RETURN_NONE;
+    Py_RETURN_FALSE;
 
   printf("%d %zu\n", IK_chain_len, model->IK[i].IK_chain.size());
 
@@ -539,7 +517,7 @@ static PyObject *setIK(PyObject *self, PyObject *args) {
   PyList_to_Array_UShort(IK_list.IK_chain.data(), PyTmp, IK_chain_len);
 
   model->IK[i] = IK_list;
-  return Py_BuildValue("i", 0);
+  Py_RETURN_TRUE;
 }
 
 static PyObject *setSkin(PyObject *self, PyObject *args) {
@@ -549,11 +527,11 @@ static PyObject *setSkin(PyObject *self, PyObject *args) {
   int skin_vt_count;
   if (!PyArg_ParseTuple(args, "iiyyib", &num, &i, &str[0], &str[1],
                         &skin_vt_count, &skin.type))
-    return NULL;
+    Py_RETURN_FALSE;
 
-  auto model = &g_model[num];
+  auto model = g_model[num];
   if (model->skin.size() <= i)
-    Py_RETURN_NONE;
+    Py_RETURN_FALSE;
 
   strncpy(skin.name, str[0], NAME_LEN);
   strncpy(skin.name_eng, str[1], NAME_LEN);
@@ -561,7 +539,7 @@ static PyObject *setSkin(PyObject *self, PyObject *args) {
   // メモリ確保
   skin.skin_vt.resize(skin_vt_count);
   model->skin[i] = skin;
-  return Py_BuildValue("i", 0);
+  Py_RETURN_TRUE;
 }
 
 static PyObject *setSkindata(PyObject *self, PyObject *args) {
@@ -569,9 +547,9 @@ static PyObject *setSkindata(PyObject *self, PyObject *args) {
   SKIN_DATA data;
   if (!PyArg_ParseTuple(args, "iiii(fff)", &num, &i, &j, &data.index,
                         &data.loc[0], &data.loc[1], &data.loc[2]))
-    return NULL;
+    Py_RETURN_NONE;
 
-  auto model = &g_model[num];
+  auto model = g_model[num];
   if (model->skin.size() <= i)
     Py_RETURN_NONE;
 
@@ -586,9 +564,9 @@ static PyObject *setBone_group(PyObject *self, PyObject *args) {
   int num, i;
   char *str[2];
   if (!PyArg_ParseTuple(args, "iiyy", &num, &i, &str[0], &str[1]))
-    return NULL;
+    Py_RETURN_FALSE;
 
-  auto model = &g_model[num];
+  auto model = g_model[num];
 
   BONE_GROUP bone_group;
   strncpy(bone_group.name, str[0], NAME_LEN);
@@ -601,12 +579,12 @@ static PyObject *setBone_group(PyObject *self, PyObject *args) {
 
 static PyObject *setBone_disp(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
   BONE_DISP bone_disp;
   if (!PyArg_ParseTuple(args, "iiii", &num, &i, &bone_disp.index,
                         &bone_disp.bone_group))
-    return NULL;
-  model = &g_model[num];
+    Py_RETURN_FALSE;
+
+  auto model = g_model[num];
   model->bone_disp[i] = bone_disp;
 
   return Py_BuildValue("i", 0);
@@ -614,10 +592,7 @@ static PyObject *setBone_disp(PyObject *self, PyObject *args) {
 
 static PyObject *setToon(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
   PyObject *tmp;
-  char *p[10];
-
   if (!PyArg_ParseTuple(args, "iO", &num, /*
                                      &model->toon[0],
                                      &model->toon[1],
@@ -630,10 +605,12 @@ static PyObject *setToon(PyObject *self, PyObject *args) {
                                      &model->toon[8],
                                      &model->toon[9]*/
                         &tmp))
-    return NULL;
-  model = &g_model[num];
+    Py_RETURN_FALSE;
+
+  auto model = g_model[num];
+  char *p[10];
   for (i = 0; i < 10; i++) {
-    p[i] = model->toon[i];
+    p[i] = model->toon[i].data();
   }
 
   PyList_to_Array_Str(p, tmp, 10, 100);
@@ -647,15 +624,15 @@ static PyObject *setToon(PyObject *self, PyObject *args) {
 }
 
 static PyObject *setToonPath(PyObject *self, PyObject *args) {
-  int num, i;
-  MODEL *model;
+  int num;
   PyObject *tmp;
-  char *p[10];
   if (!PyArg_ParseTuple(args, "iO", &num, &tmp))
-    return NULL;
-  model = &g_model[num];
-  for (i = 0; i < 10; i++) {
-    p[i] = model->toon_path[i];
+    Py_RETURN_FALSE;
+
+  auto model = g_model[num];
+  char *p[10];
+  for (int i = 0; i < 10; i++) {
+    p[i] = model->toon_path[i].data();
   }
 
   PyList_to_Array_Str(p, tmp, 10, PATH_LEN);
@@ -670,10 +647,8 @@ static PyObject *setToonPath(PyObject *self, PyObject *args) {
 
 static PyObject *setRb(PyObject *self, PyObject *args) {
   int num = 0, i = 0;
-  MODEL *model;
   RIGID_BODY rbody;
   char *str;
-
   if (!PyArg_ParseTuple(
           args,
           "ii"
@@ -687,11 +662,11 @@ static PyObject *setRb(PyObject *self, PyObject *args) {
 
           &rbody.property[0], &rbody.property[1], &rbody.property[2],
           &rbody.property[3], &rbody.property[4], &rbody.type))
-    return NULL;
-  model = &g_model[num];
+    Py_RETURN_FALSE;
 
   strncpy(rbody.name, str, NAME_LEN);
 
+  auto model = g_model[num];
   model->rbody[i] = rbody;
 
   return Py_BuildValue("i", 0);
@@ -699,7 +674,6 @@ static PyObject *setRb(PyObject *self, PyObject *args) {
 
 static PyObject *setJoint(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
   JOINT joint;
   char *str;
   if (!PyArg_ParseTuple(args,
@@ -716,8 +690,9 @@ static PyObject *setJoint(PyObject *self, PyObject *args) {
                         &joint.limit[9], &joint.limit[10], &joint.limit[11],
                         &joint.spring[0], &joint.spring[1], &joint.spring[2],
                         &joint.spring[3], &joint.spring[4], &joint.spring[5]))
-    return NULL;
-  model = &g_model[num];
+    Py_RETURN_FALSE;
+
+  auto model = g_model[num];
   strncpy(joint.name, str, NAME_LEN);
   model->joint[i] = joint;
   return Py_BuildValue("i", 0);
@@ -730,7 +705,7 @@ static PyObject *Set_List(PyObject *self, PyObject *args) {
   int disp_count;
   if (!PyArg_ParseTuple(args, "iOOiOOiOO", &bone_count, &bn, &bne, &skin_count,
                         &sn, &sne, &disp_count, &gn, &gne))
-    return NULL;
+    Py_RETURN_FALSE;
 
   list.bone.resize(bone_count);
   list.bone_eng.resize(bone_count);
@@ -793,18 +768,19 @@ static PyObject *Set_Name_Comment(PyObject *self, PyObject *args) {
   int ret;
   if (!PyArg_ParseTuple(args, "iyyyy", &num, &name, &comment, &name_eng,
                         &comment_eng))
-    return NULL;
-  strncpy(g_model[num].header.name.data(), name, NAME_LEN);
-  strncpy(g_model[num].header.comment.data(), comment, COMMENT_LEN);
-  strncpy(g_model[num].header.name_eng.data(), name_eng, NAME_LEN);
-  strncpy(g_model[num].header.comment_eng.data(), comment_eng, COMMENT_LEN);
+    Py_RETURN_FALSE;
+
+  strncpy(g_model[num]->header.name.data(), name, NAME_LEN);
+  strncpy(g_model[num]->header.comment.data(), comment, COMMENT_LEN);
+  strncpy(g_model[num]->header.name_eng.data(), name_eng, NAME_LEN);
+  strncpy(g_model[num]->header.comment_eng.data(), comment_eng, COMMENT_LEN);
   return Py_BuildValue("i", 0);
 }
 
 /*******************************************************************************/
 static PyObject *Init_PMD(PyObject *self, PyObject *args) {
   for (int i = 0; i < MODEL_COUNT; i++) {
-    create_PMD(&g_model[i]);
+    g_model[i] = MODEL::create();
   }
   model_mgr(Mode::Init, 0, NULL);
   return Py_BuildValue("i", 0);
@@ -813,122 +789,124 @@ static PyObject *Init_PMD(PyObject *self, PyObject *args) {
 static PyObject *Load_PMD(PyObject *self, PyObject *args) {
   const char *str;
   int num;
-  int ret;
+  if (!PyArg_ParseTuple(args, "iy", &num, &str)) {
+    Py_RETURN_FALSE;
+  }
 
-  if (!PyArg_ParseTuple(args, "iy", &num, &str))
-    return NULL;
-  delete_PMD(&g_model[num]);
-  ret = load_PMD(&g_model[num], str);
+  auto model = load_PMD(str);
+  if (!model) {
+    Py_RETURN_FALSE;
+  }
 
-  return Py_BuildValue("i", ret);
+  g_model[num] = model;
+  Py_RETURN_TRUE;
 }
 
 static PyObject *Write_PMD(PyObject *self, PyObject *args) {
   const char *str;
   int num;
-  int ret;
   if (!PyArg_ParseTuple(args, "iy", &num, &str))
-    return NULL;
-  ret = write_PMD(&g_model[num], str);
-  return Py_BuildValue("i", ret);
+    Py_RETURN_FALSE;
+
+  auto ret = g_model[num]->write(str);
+  return Py_BuildValue("i", ret ? 0 : 1);
 }
 
 static PyObject *Add_PMD(PyObject *self, PyObject *args) {
   int num, add;
-  int ret = 1;
-  MODEL model;
-  create_PMD(&model);
   if (!PyArg_ParseTuple(args, "ii", &num, &add))
-    return NULL;
+    Py_RETURN_FALSE;
 
-  add_PMD(&g_model[num], &g_model[add]);
-  delete_PMD(&model);
-  return Py_BuildValue("i", ret);
+  g_model[num]->add_PMD(g_model[add]);
+  Py_RETURN_TRUE;
 }
 
 static PyObject *Copy_PMD(PyObject *self, PyObject *args) {
   int src, dst;
-  int ret = 1;
   if (!PyArg_ParseTuple(args, "ii", &src, &dst))
-    return NULL;
-  delete_PMD(&g_model[dst]);
-  ret = copy_PMD(&g_model[dst], &g_model[src]);
-  if (ret != 0) {
-    return Py_BuildValue("i", ret);
-  }
-  return Py_BuildValue("i", ret);
-}
+    Py_RETURN_FALSE;
 
-static PyObject *Create_PMD(PyObject *self, PyObject *args) {
-  int num;
-  int ret;
-  if (!PyArg_ParseTuple(args, "i", &num))
-    return NULL;
-  ret = delete_PMD(&g_model[num]);
-  return Py_BuildValue("i", ret);
+  g_model[dst] = g_model[src];
+  Py_RETURN_TRUE;
 }
 
 static PyObject *Marge_PMD(PyObject *self, PyObject *args) {
   int num;
   if (!PyArg_ParseTuple(args, "i", &num))
-    return NULL;
+    Py_RETURN_FALSE;
 
+  auto model = g_model[num];
   LOGD << "ボーンマージ";
-  int ret = marge_bone(&g_model[num]);
+  if (!model->marge_bone()) {
+    Py_RETURN_FALSE;
+  }
+
   LOGD << "材質マージ";
-  ret += marge_mat(&g_model[num]);
+  if (!model->marge_mat()) {
+    Py_RETURN_FALSE;
+  }
+
   LOGD << "IKマージ";
-  ret += marge_IK(&g_model[num]);
+  model->marge_IK();
+
   LOGD << "ボーングループマージ";
-  ret += marge_bone_disp(&g_model[num]);
+  model->marge_bone_disp();
+
   LOGD << "剛体マージ";
-  ret += marge_rb(&g_model[num]);
-  return Py_BuildValue("i", ret);
+  model->marge_rb();
+
+  Py_RETURN_TRUE;
 }
 
 static PyObject *Sort_PMD(PyObject *self, PyObject *args) {
   int num;
   if (!PyArg_ParseTuple(args, "i", &num))
-    return NULL;
+    Py_RETURN_FALSE;
 
-  rename_tail(&g_model[num]);
+  auto model = g_model[num];
   LOGD << "ボーンマージ";
-  int ret = marge_bone(&g_model[num]);
+  if (!model->marge_bone()) {
+    Py_RETURN_FALSE;
+  }
 
   LOGD << "ボーンソート";
-  ret = sort_bone(&g_model[num], &list);
+  model->sort_bone(&list);
+
   LOGD << "表情ソート";
-  ret += sort_skin(&g_model[num], &list);
+  model->sort_skin(&list);
+
   LOGD << "ボーングループソート";
-  ret += sort_disp(&g_model[num], &list);
+  model->sort_disp(&list);
 
   //-0ボーン削除
-  if (strcmp(g_model[num].bone[g_model[num].bone.size() - 1].name, "-0") == 0) {
-    g_model[num].bone.pop_back();
+  if (strcmp(model->bone[model->bone.size() - 1].name, "-0") == 0) {
+    model->bone.pop_back();
   }
+
   LOGD << "英語対応化";
-  translate(&g_model[num], &list, 1);
-  return Py_BuildValue("i", ret);
+  model->translate(&list, 1);
+
+  Py_RETURN_TRUE;
 }
-/*************************************************************************************************/
+
 static PyObject *Resize_Model(PyObject *self, PyObject *args) {
   int num;
-  int ret;
   double size;
   if (!PyArg_ParseTuple(args, "id", &num, &size))
-    return NULL;
-  ret = resize_model(&g_model[num], size);
-  return Py_BuildValue("i", ret);
+    Py_RETURN_FALSE;
+
+  g_model[num]->resize_model(size);
+  Py_RETURN_TRUE;
 }
 
 static PyObject *Move_Model(PyObject *self, PyObject *args) {
   int num;
-  int ret;
   double s[3];
   if (!PyArg_ParseTuple(args, "iddd", &num, &s[0], &s[1], &s[2]))
-    return NULL;
-  ret = move_model(&g_model[num], s);
-  return Py_BuildValue("i", ret);
+    Py_RETURN_FALSE;
+
+  g_model[num]->move_model(s);
+  Py_RETURN_TRUE;
 }
 
 static PyObject *Resize_Bone(PyObject *self, PyObject *args) {
@@ -936,20 +914,24 @@ static PyObject *Resize_Bone(PyObject *self, PyObject *args) {
   const char *str;
   double len, thi;
   if (!PyArg_ParseTuple(args, "iydd", &num, &str, &len, &thi))
-    return NULL;
+    Py_RETURN_FALSE;
 
+  auto model = g_model[num];
   int index = 0;
-  for (; index < g_model[num].bone.size(); index++) {
-    if (strcmp(g_model[num].bone[index].name, str) == 0) {
+  for (; index < model->bone.size(); index++) {
+    if (strcmp(model->bone[index].name, str) == 0) {
       break;
     }
   }
-  if (index == g_model[num].bone.size()) {
-    return Py_BuildValue("i", -1);
+  if (index == model->bone.size()) {
+    Py_RETURN_FALSE;
   }
 
-  auto ret = scale_bone(&g_model[num], index, thi, len, thi);
-  return Py_BuildValue("i", ret);
+  if (!model->scale_bone(index, thi, len, thi)) {
+    Py_RETURN_FALSE;
+  }
+
+  Py_RETURN_TRUE;
 }
 
 static PyObject *Move_Bone(PyObject *self, PyObject *args) {
@@ -957,47 +939,47 @@ static PyObject *Move_Bone(PyObject *self, PyObject *args) {
   const char *str;
   double pos[3];
   if (!PyArg_ParseTuple(args, "iyddd", &num, &str, &pos[0], &pos[1], &pos[2]))
-    return NULL;
+    Py_RETURN_FALSE;
 
+  auto model = g_model[num];
   int index = 0;
-  for (; index < g_model[num].bone.size(); index++) {
-    if (strcmp(g_model[num].bone[index].name, str) == 0) {
+  for (; index < model->bone.size(); index++) {
+    if (strcmp(model->bone[index].name, str) == 0) {
       break;
     }
   }
-  if (index == g_model[num].bone.size()) {
-    return Py_BuildValue("i", -1);
+  if (index == model->bone.size()) {
+    Py_RETURN_FALSE;
   }
-  auto ret = move_bone(&g_model[num], index, pos);
-  return Py_BuildValue("i", ret);
+
+  model->move_bone(index, pos);
+  Py_RETURN_TRUE;
 }
 
 static PyObject *Update_Skin(PyObject *self, PyObject *args) {
   int num;
-  int ret;
   if (!PyArg_ParseTuple(args, "i", &num))
-    return NULL;
+    Py_RETURN_FALSE;
 
-  ret = update_skin(&g_model[num]);
-  return Py_BuildValue("i", ret);
+  g_model[num]->update_skin();
+  Py_RETURN_FALSE;
 }
 
 static PyObject *Adjust_Joints(PyObject *self, PyObject *args) {
   int num;
-  int ret;
   if (!PyArg_ParseTuple(args, "i", &num))
-    return NULL;
+    Py_RETURN_FALSE;
 
-  ret = adjust_joint(&g_model[num]);
-  return Py_BuildValue("i", ret);
+  g_model[num]->adjust_joint();
+  Py_RETURN_TRUE;
 }
-/*************************************************************************************************/
+
 static PyObject *PMD_view_set(PyObject *self, PyObject *args) {
   const char *str;
   int num, ret = 0;
 
   if (!PyArg_ParseTuple(args, "is", &num, &str))
-    return NULL;
+    Py_RETURN_FALSE;
   if (strcmp(str, "replace") == 0) {
     model_mgr(Mode::Write, 0, &g_model[num]);
   } else {
@@ -1010,10 +992,9 @@ static PyObject *PMD_view_set(PyObject *self, PyObject *args) {
 
 /*************************************************************************************************/
 static PyObject *MODEL_LOCK(PyObject *self, PyObject *args) {
-  int num, ret = 0;
-
+  int num;
   if (!PyArg_ParseTuple(args, "i", &num))
-    return NULL;
+    Py_RETURN_FALSE;
 
   if (num == 1) {
     printf("Lockstate %d\n", myflags.model_lock);
@@ -1026,30 +1007,29 @@ static PyObject *MODEL_LOCK(PyObject *self, PyObject *args) {
   } else {
     myflags.model_lock = 0;
   }
-  return Py_BuildValue("i", ret);
+  Py_RETURN_TRUE;
 }
 
 static PyObject *getWHT(PyObject *self, PyObject *args) {
-  const char *str;
-  int num, i, j;
-  double wht[3];
+  int num;
+  if (!PyArg_ParseTuple(args, "i", &num))
+    Py_RETURN_NONE;
+
+  auto model = g_model[num];
   double min[3] = {0.0, 0.0, 0.0};
   double max[3] = {0.0, 0.0, 0.0};
-
-  if (!PyArg_ParseTuple(args, "i", &num))
-    return NULL;
-
-  for (i = 0; i < g_model[num].vt.size(); i++) {
-    for (j = 0; j < 3; j++) {
-      if (g_model[num].vt[i].loc[j] > max[j]) {
-        max[j] = g_model[num].vt[i].loc[j];
-      } else if (g_model[num].vt[i].loc[j] < min[j]) {
-        min[j] = g_model[num].vt[i].loc[j];
+  for (size_t i = 0; i < model->vt.size(); i++) {
+    for (size_t j = 0; j < 3; j++) {
+      if (model->vt[i].loc[j] > max[j]) {
+        max[j] = model->vt[i].loc[j];
+      } else if (model->vt[i].loc[j] < min[j]) {
+        min[j] = model->vt[i].loc[j];
       }
     }
   }
 
-  for (i = 0; i < 3; i++) {
+  double wht[3];
+  for (size_t i = 0; i < 3; i++) {
     wht[i] = (max[i] - min[i]) * 8;
   }
 
@@ -1097,7 +1077,6 @@ static PyMethodDef PMCAMethods[] = {
     {"Write_PMD", Write_PMD, METH_VARARGS, "Write PMD from file"},
     {"Add_PMD", Add_PMD, METH_VARARGS, "Add PMD from file"},
     {"Copy_PMD", Copy_PMD, METH_VARARGS, "Copy PMD"},
-    {"Create_PMD", Create_PMD, METH_VARARGS, "Create enpty PMD"},
     {"Marge_PMD", Marge_PMD, METH_VARARGS, "Marge PMD"},
     {"Sort_PMD", Sort_PMD, METH_VARARGS, "Sort PMD"},
     {"PMD_view_set", PMD_view_set, METH_VARARGS, "Set selected PMD to dispray"},
@@ -1135,7 +1114,6 @@ static struct PyModuleDef PMCAmodule = {PyModuleDef_HEAD_INIT,
 
 // モジュール登録
 PyMODINIT_FUNC PyInit_PMCA(void) {
-
   if (false) {
     static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
     plog::init(plog::verbose, &consoleAppender);
@@ -1143,27 +1121,13 @@ PyMODINIT_FUNC PyInit_PMCA(void) {
 
   PLOG_INFO << "PyInit_PMCA";
 
-  PyObject *m;
-  // static void *PySpam_API[PyPMCA_API_pointers];
-  // PyObject *c_api_object;
-
-  m = PyModule_Create(&PMCAmodule);
+  auto m = PyModule_Create(&PMCAmodule);
   if (m == NULL)
-    return NULL;
+    Py_RETURN_NONE;
 
   PMCAError = PyErr_NewException("PMCA.error", NULL, NULL);
   Py_INCREF(PMCAError);
   PyModule_AddObject(m, "error", PMCAError);
 
-  /*
-  // Initialize the C API pointer array
-  PyPMCA_API[PyPMCA_System_NUM] = (void *)PyPMCA_System;
-
-  // Create a Capsule containing the API pointer array's address
-  c_api_object = PyCapsule_New((void *)PyPMCA_API, "PMCA._C_API", NULL);
-
-  if (c_api_object != NULL)
-  PyModule_AddObject(m, "_C_API", c_api_object);
-  */
   return m;
 }
