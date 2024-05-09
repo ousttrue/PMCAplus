@@ -82,24 +82,23 @@ class InfoTab(tkinter.ttk.Frame):
         # else:
         #     self.frame.comment.delete("1.0", END)
 
-    def refresh(self, level: int):
-        if level < 4:
-            str1 = ""
-            str2 = ""
-            for x in self.authors:
-                str1 += "%s " % (x)
-            for x in self.licenses:
-                str2 += "%s " % (x)
-            self.modelinfo.name = self.frame.name.get()
-            self.modelinfo.name_l = self.frame.name_l.get()
-            self.modelinfo.comment = self.frame.comment.get("1.0", tkinter.END)
-            renderer.Set_Name_Comment(
-                name=self.modelinfo.name,
-                comment="%s\nAuthor:%s\nLicense:%s\n%s"
-                % (self.modelinfo.name_l, str1, str2, self.modelinfo.comment),
-                name_eng=self.modelinfo.name_eng,
-                comment_eng="%s\nAuthor:%s\nLicense:%s\n%s"
-                % (self.modelinfo.name_l_eng, str1, str2, self.modelinfo.comment_eng),
-            )
+    def refresh(self):
+        str1 = ""
+        str2 = ""
+        for x in self.authors:
+            str1 += "%s " % (x)
+        for x in self.licenses:
+            str2 += "%s " % (x)
+        self.modelinfo.name = self.frame.name.get()
+        self.modelinfo.name_l = self.frame.name_l.get()
+        self.modelinfo.comment = self.frame.comment.get("1.0", tkinter.END)
+        renderer.Set_Name_Comment(
+            name=self.modelinfo.name,
+            comment="%s\nAuthor:%s\nLicense:%s\n%s"
+            % (self.modelinfo.name_l, str1, str2, self.modelinfo.comment),
+            name_eng=self.modelinfo.name_eng,
+            comment_eng="%s\nAuthor:%s\nLicense:%s\n%s"
+            % (self.modelinfo.name_l_eng, str1, str2, self.modelinfo.comment_eng),
+        )
 
         self.frame.text.set("Author : %s\nLicense : %s" % (str1, str2))

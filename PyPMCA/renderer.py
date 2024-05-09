@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, NamedTuple
 import logging
 import sys
 import traceback
@@ -302,21 +302,24 @@ def Set_PMD(num: int, model: pmd_type.PMD):
         )
 
 
-def assemble(self: PMCA_data.NODE, num: int, app):
-    app.script_fin = []
+class AssembleContext(NamedTuple):
+    script_fin: list[str] = []
+    authors: list[str] = []
+    licenses: list[str] = []
+
+
+def assemble(self: PMCA_data.NODE, num: int) -> AssembleContext:
     PMCA.Create_PMD(num)
     PMCA.Load_PMD(num, self.parts.path.encode(sys.getdefaultencoding(), "replace"))
     info_data = PMCA.getInfo(0)
     info = pmd_type.INFO(info_data)
-    line = info.comment.split("\n")
 
-    app.authors = []
-    app.licenses = []
+    context = AssembleContext()
     if info.name != "":
-        app.authors = ["Unknown"]
-        app.licenses = ["Nonfree"]
+        context.authors.append("Unknown")
+        context.licenses.append("Nonfree")
 
-    app.functions = PMCA
+    # app.functions = PMCA
     if "script_pre" in self.parts.props:
         for x in self.parts.props["script_pre"]:
             argv = x.split()
@@ -334,8 +337,9 @@ def assemble(self: PMCA_data.NODE, num: int, app):
             fp.close
 
     if "script_fin" in self.parts.props:
-        app.script_fin.extend(self.parts.props["script_fin"])
+        context.script_fin.extend(self.parts.props["script_fin"])
 
+    line = info.comment.split("\n")
     for x in line:
         tmp = x.split(":", 1)
         if len(tmp) == 1:
@@ -348,27 +352,30 @@ def assemble(self: PMCA_data.NODE, num: int, app):
             or tmp[0] == "モデル制作"
         ):
             tmp[1] = tmp[1].replace("　", " ")
-            app.authors = tmp[1].split(" ")
+            context.authors.clear()
+            context.authors.extend(tmp[1].split(" "))
 
         elif tmp[0] == "License" or tmp[0] == "license" or tmp[0] == "ライセンス":
             tmp[1] = tmp[1].replace("　", " ")
-            app.licenses = tmp[1].split(" ")
-    LOGGER.debug("パーツのパス:%s" % (self.parts.path))
+            context.licenses.clear()
+            context.licenses.extend(tmp[1].split(" "))
+
     for x in self.children:
         if x != None:
-            assemble_child(x, num, app)
+            assemble_child(x, num, context)
 
     PMCA.Sort_PMD(num)
 
-    for x in app.script_fin:
+    for x in context.script_fin:
         argv = x.split()
         with open(argv[0], "r", encoding="utf-8-sig") as fp:
             script = fp.read()
             exec(script)
 
+    return context
 
-def assemble_child(self: PMCA_data.NODE, num: int, app):
-    pmpy = app
+
+def assemble_child(self: PMCA_data.NODE, num: int, context: AssembleContext):
     LOGGER.info("パーツのパス:%s" % (self.parts.path))
 
     PMCA.Create_PMD(4)
@@ -376,9 +383,10 @@ def assemble_child(self: PMCA_data.NODE, num: int, app):
 
     info_data = PMCA.getInfo(4)
     info = pmd_type.INFO(info_data)
-    line = info.comment.split("\n")
     flag_author = False
     flag_license = False
+
+    line = info.comment.split("\n")
     for x in line:
         tmp = x.split(":", 1)
         if len(tmp) == 1:
@@ -394,35 +402,36 @@ def assemble_child(self: PMCA_data.NODE, num: int, app):
                 flag_author = True
                 tmp[1] = tmp[1].replace("　", " ")
                 for x in tmp[1].split(" "):
-                    for y in app.authors:
+                    for y in context.authors:
                         if x == y:
                             break
                     else:
-                        app.authors.append(x)
+                        context.authors.append(x)
 
         elif tmp[0] == "License" or tmp[0] == "license" or tmp[0] == "ライセンス":
             if len(tmp) > 1:
                 flag_license = True
                 tmp[1] = tmp[1].replace("　", " ")
                 for x in tmp[1].split(" "):
-                    for y in app.licenses:
+                    for y in context.licenses:
                         if x == y:
                             break
                     else:
-                        app.licenses.append(x)
+                        context.licenses.append(x)
+
     if info.name != "":
         if flag_author == False:
-            for x in app.authors:
+            for x in context.authors:
                 if x == "Unknown":
                     break
             else:
-                app.authors.append("Unknown")
+                context.authors.append("Unknown")
         if flag_license == False:
-            for x in app.licenses:
+            for x in context.licenses:
                 if x == "Nonfree":
                     break
             else:
-                app.licenses.append("Nonfree")
+                context.licenses.append("Nonfree")
 
     if "script_pre" in self.parts.props:
         for x in self.parts.props["script_pre"]:
@@ -444,14 +453,14 @@ def assemble_child(self: PMCA_data.NODE, num: int, app):
             exec(script)
             fp.close
     if "script_fin" in self.parts.props:
-        app.script_fin.extend(self.parts.props["script_fin"])
+        context.script_fin.extend(self.parts.props["script_fin"])
 
     for x in self.children:
         if x != None:
-            assemble_child(x, num, app)
+            assemble_child(x, num, context)
 
 
-def Get_MATERIAL(
+def _get_material(
     mat_rep: PMCA_data.MAT_REP,
     mats_list: list[PMCA_data.MATS],
     model: pmd_type.PMD | None = None,
@@ -486,7 +495,8 @@ def Get_MATERIAL(
                     mat_rep.mat[mat[i].tex].sel = mat_rep.mat[mat[i].tex].mat.entries[0]
 
 
-def Set_MATERIAL(
+def _set_material(
+    context: AssembleContext,
     self: PMCA_data.MAT_REP,
     model: pmd_type.PMD | None = None,
     info: pmd_type.INFO | None = None,
@@ -546,18 +556,18 @@ def Set_MATERIAL(
                     x.toon = tmp[0]
                 elif k == "author":
                     for y in v[-1].split(" "):
-                        for z in self.app.authors:
+                        for z in context.authors:
                             if z == y:
                                 break
                         else:
-                            self.app.authors.append(y)
+                            context.authors.append(y)
                 elif k == "license":
                     for y in v[-1].split(" "):
-                        for z in self.app.licenses:
+                        for z in context.licenses:
                             if z == y:
                                 break
                         else:
-                            self.app.licenses.append(y)
+                            context.licenses.append(y)
 
             PMCA.setMat(
                 num,
@@ -612,86 +622,43 @@ def check_PMD(self) -> None:
     root.mainloop()
 
 
-def refresh(self, level: int = 0):
+def refresh(self):
     self.model_tab.set_tree(self.tree, True)
 
     # モデル組み立て
     PMCA.MODEL_LOCK(1)
 
-    if level < 1:
-        LOGGER.info("モデル組立て")
+    LOGGER.info("モデル組立て")
 
-        PMCA.Create_PMD(0)
+    PMCA.Create_PMD(0)
 
-        # PMCA.Load_PMD(0, "./testmodels/001.pmd")
-        assemble(self.tree, 0, self)
+    # PMCA.Load_PMD(0, "./testmodels/001.pmd")
+    context = assemble(self.tree, 0)
 
-        PMCA.Copy_PMD(0, 1)
-    else:
-        PMCA.Copy_PMD(1, 0)
+    PMCA.Copy_PMD(0, 1)
 
-    if level < 2:
-        # 材質関連
-        LOGGER.info("材質置換")
-        Get_MATERIAL(self.mat_rep, self.data.mats_list)
-        self.mat_entry = [[], []]
-        for v in self.mat_rep.mat.values():
-            if v.num >= 0:
-                self.mat_entry[0].append(v.mat.name + "  " + v.sel.name)
-                self.mat_entry[1].append(v.mat.name)
-        self.color_tab.l_tree.set_entry(self.mat_entry[0], sel=self.cur_mat)
-        Set_MATERIAL(self.mat_rep)
-        PMCA.Copy_PMD(0, 2)
-    else:
-        PMCA.Copy_PMD(2, 0)
+    # 材質関連
+    LOGGER.info("材質置換")
+    _get_material(self.mat_rep, self.data.mats_list)
+    self.mat_entry = [[], []]
+    for v in self.mat_rep.mat.values():
+        if v.num >= 0:
+            self.mat_entry[0].append(v.mat.name + "  " + v.sel.name)
+            self.mat_entry[1].append(v.mat.name)
+    self.color_tab.l_tree.set_entry(self.mat_entry[0], sel=self.cur_mat)
+    _set_material(context, self.mat_rep)
+    PMCA.Copy_PMD(0, 2)
 
-    if level < 3:
-        LOGGER.info("体型調整")
-        info_data = PMCA.getInfo(0)
-        info = pmd_type.INFO(info_data)
+    LOGGER.info("体型調整")
+    info_data = PMCA.getInfo(0)
+    info = pmd_type.INFO(info_data)
 
-        tmpbone: list[pmd_type.BONE] = []
-        for i in range(info_data["bone_count"]):
-            tmp = PMCA.getBone(0, i)
-            assert tmp
-            tmpbone.append(
-                pmd_type.BONE(
-                    tmp["name"],
-                    tmp["name_eng"],
-                    tmp["parent"],
-                    tmp["tail"],
-                    tmp["type"],
-                    tmp["IK"],
-                    tmp["loc"],
-                )
-            )
-        refbone = None
-        refbone_index = None
-        for i, x in enumerate(tmpbone):
-            if x.name == "右足首":
-                refbone = x
-                refbone_index = i
-                break
-
-        for y in self.transform_data:
-            PMCA.Resize_Model(0, y.scale)
-            for x in y.bones:
-                PMCA.Resize_Bone(
-                    0, x.name.encode("cp932", "replace"), x.length, x.thick
-                )
-                PMCA.Move_Bone(
-                    0,
-                    x.name.encode("cp932", "replace"),
-                    x.pos[0],
-                    x.pos[1],
-                    x.pos[2],
-                )
-
-        if refbone != None:
-            newbone = None
-            tmp = PMCA.getBone(0, refbone_index)
-            assert tmp
-            newbone = pmd_type.BONE(
+    tmpbone: list[pmd_type.BONE] = []
+    for i in range(info_data["bone_count"]):
+        tmp = PMCA.getBone(0, i)
+        assert tmp
+        tmpbone.append(
+            pmd_type.BONE(
                 tmp["name"],
                 tmp["name_eng"],
                 tmp["parent"],
@@ -700,36 +667,65 @@ def refresh(self, level: int = 0):
                 tmp["IK"],
                 tmp["loc"],
             )
+        )
+    refbone = None
+    refbone_index = None
+    for i, x in enumerate(tmpbone):
+        if x.name == "右足首":
+            refbone = x
+            refbone_index = i
+            break
 
-            dy = refbone.loc[1] - newbone.loc[1]
-            for x in tmpbone:
-                i = x.parent
-                count = 0
-                while i < info_data["bone_count"] and count < info_data["bone_count"]:
-                    if tmpbone[i].name == "センター":
-                        PMCA.Move_Bone(0, x.name.encode("cp932", "replace"), 0, dy, 0)
-                        break
-                    i = tmpbone[i].parent
-                    count += 1
+    for y in self.transform_data:
+        PMCA.Resize_Model(0, y.scale)
+        for x in y.bones:
+            PMCA.Resize_Bone(0, x.name.encode("cp932", "replace"), x.length, x.thick)
+            PMCA.Move_Bone(
+                0,
+                x.name.encode("cp932", "replace"),
+                x.pos[0],
+                x.pos[1],
+                x.pos[2],
+            )
 
-            PMCA.Move_Bone(0, "センター".encode("cp932", "replace"), 0, dy, 0)
-            PMCA.Move_Bone(0, "+センター".encode("cp932", "replace"), 0, -dy, 0)
+    if refbone != None:
+        newbone = None
+        tmp = PMCA.getBone(0, refbone_index)
+        assert tmp
+        newbone = pmd_type.BONE(
+            tmp["name"],
+            tmp["name_eng"],
+            tmp["parent"],
+            tmp["tail"],
+            tmp["type"],
+            tmp["IK"],
+            tmp["loc"],
+        )
 
-        for y in self.transform_data:
-            PMCA.Move_Model(0, y.pos[0], y.pos[1], y.pos[2])
+        dy = refbone.loc[1] - newbone.loc[1]
+        for x in tmpbone:
+            i = x.parent
+            count = 0
+            while i < info_data["bone_count"] and count < info_data["bone_count"]:
+                if tmpbone[i].name == "センター":
+                    PMCA.Move_Bone(0, x.name.encode("cp932", "replace"), 0, dy, 0)
+                    break
+                i = tmpbone[i].parent
+                count += 1
 
-        PMCA.Update_Skin(0)
-        PMCA.Adjust_Joints(0)
-        PMCA.Copy_PMD(0, 3)
-    else:
-        PMCA.Copy_PMD(3, 0)
+        PMCA.Move_Bone(0, "センター".encode("cp932", "replace"), 0, dy, 0)
+        PMCA.Move_Bone(0, "+センター".encode("cp932", "replace"), 0, -dy, 0)
 
-    self.info_tab.refresh(level)
+    for y in self.transform_data:
+        PMCA.Move_Model(0, y.pos[0], y.pos[1], y.pos[2])
 
-    if level < 3:
-        PMCA.PMD_view_set(0, "replace")  # テクスチャを変更しない
-    else:
-        PMCA.PMD_view_set(0, "replace")
+    PMCA.Update_Skin(0)
+    PMCA.Adjust_Joints(0)
+    PMCA.Copy_PMD(0, 3)
+
+    self.info_tab.refresh()
+
+    PMCA.PMD_view_set(0, "replace")  # テクスチャを変更しない
 
     PMCA.MODEL_LOCK(0)
 

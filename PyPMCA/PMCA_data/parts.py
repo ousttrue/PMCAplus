@@ -13,7 +13,7 @@ class PARTS:
         path: str = "",
         t: list[str] = [],
         joint: list[str] = [],
-        props: dict[str, Any] = {},
+        props: dict[str, str] = {},
     ):
         self.name = name
         self.comment = comment
