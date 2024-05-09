@@ -200,7 +200,22 @@ def setFace():
     """
     ...
 
-def setMat():
+def setMat(
+    num: int,
+    i: int,
+    diffuse: tuple[float, float, float],
+    alpha: float,
+    specular: float,
+    specular_color: tuple[float, float, float],
+    mirror_color: tuple[float, float, float],
+    toon: int,
+    edge: int,
+    vertex_count: int,
+    tex: bytes,
+    sph: bytes,
+    tex_path: bytes,
+    sph_path: bytes,
+) -> None:
     """
     Set Material of PMD"
     """

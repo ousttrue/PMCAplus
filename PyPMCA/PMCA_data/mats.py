@@ -1,8 +1,9 @@
 from typing import List
 import logging
-
-import PMCA  # type: ignore
 from .. import pmd_type
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class MATS_ENTRY:
@@ -90,9 +91,6 @@ class MATS:
         return mats_list
 
 
-LOGGER = logging.getLogger(__name__)
-
-
 class MAT_REP_DATA:
     """
     材質置換データ
@@ -101,8 +99,8 @@ class MAT_REP_DATA:
     def __init__(
         self,
         num: int = -1,
-        mat: pmd_type.MATERIAL | None = None,
-        sel: int | None = None,
+        mat: MATS | None = None,
+        sel: MATS_ENTRY | None = None,
     ):
         self.num = num
         self.mat = mat
@@ -115,138 +113,12 @@ class MAT_REP:
     """
 
     def __init__(self, app=None):
-        self.mat = {}
+        self.mat: dict[str, MAT_REP_DATA] = {}
         self.toon = pmd_type.TOON()
         self.app = app
 
-    def Get(
-        self,
-        mats_list: list[pmd_type.MATERIAL],
-        model: pmd_type.PMD | None = None,
-        info: pmd_type.INFO | None = None,
-        num: int = 0,
-    ):
-        if model == None:
-            if info == None:
-                info_data = PMCA.getInfo(num)
-                info = pmd_type.INFO(info_data)
-            mat: list[pmd_type.MATERIAL] = []
-            for i in range(info.data["mat_count"]):
-                tmp = PMCA.getMat(num, i)
-                assert tmp
-                mat.append(pmd_type.MATERIAL(**tmp))
-        else:
-            info = model.info
-            mat = model.mat
-
-        for x in self.mat.values():
-            x.num = -1
-
-        for i in range(info.data["mat_count"]):
-            for x in mats_list:
-                if mat[i].tex == x.name and x.name != "":
-                    if self.mat.get(mat[i].tex) == None:
-                        self.mat[mat[i].tex] = MAT_REP_DATA(mat=x, num=i)
-                    else:
-                        self.mat[mat[i].tex].num = i
-
-                    if self.mat[mat[i].tex].sel == None:
-                        self.mat[mat[i].tex].sel = self.mat[mat[i].tex].mat.entries[0]
-
-    def Set(
-        self,
-        model: pmd_type.PMD | None = None,
-        info: pmd_type.INFO | None = None,
-        num: int = 0,
-    ):
-        if model == None:
-            if info == None:
-                info_data = PMCA.getInfo(num)
-                assert info_data
-                info = pmd_type.INFO(info_data)
-            mat: list[pmd_type.MATERIAL] = []
-            for i in range(info.data["mat_count"]):
-                tmp = PMCA.getMat(num, i)
-                mat.append(pmd_type.MATERIAL(**tmp))
-        else:
-            info = model.info
-            mat = model.mat
-
-        for i, x in enumerate(mat):
-            if self.mat.get(x.tex) != None:
-                rep = self.mat[x.tex].sel
-                for k, v in rep.props.items():
-                    if k == "tex":
-                        x.tex = v
-                    elif k == "tex_path":
-                        x.tex_path = v
-                    elif k == "sph":
-                        x.sph = v
-                    elif k == "sph_path":
-                        x.sph_path = v
-                    elif k == "diff_rgb":
-                        x.diff_col = v
-                        for j, y in enumerate(x.diff_col):
-                            x.diff_col[j] = float(y)
-                    elif k == "alpha":
-                        x.alpha = float(v)
-                    elif k == "spec_rgb":
-                        x.spec_col = v
-                        for j, y in enumerate(x.spec_col):
-                            x.spec_col[j] = float(y)
-                    elif k == "mirr_rgb":
-                        x.mirr_col = v
-                        for j, y in enumerate(x.mirr_col):
-                            x.mirr_col[j] = float(y)
-
-                    elif k == "toon":
-                        toon = pmd_type.TOON()
-                        toon.path = PMCA.getToonPath(num)
-                        toon.name = PMCA.getToon(num)
-                        tmp = v[-1].split(" ")
-                        tmp[0] = int(tmp[0])
-                        toon.path[tmp[0]] = ("toon/" + tmp[1]).encode(
-                            "cp932", "replace"
-                        )
-                        toon.name[tmp[0]] = tmp[1].encode("cp932", "replace")
-
-                        PMCA.setToon(num, toon.name)
-                        PMCA.setToonPath(num, toon.path)
-                        x.toon = tmp[0]
-                    elif k == "author":
-                        for y in v[-1].split(" "):
-                            for z in self.app.authors:
-                                if z == y:
-                                    break
-                            else:
-                                self.app.authors.append(y)
-                    elif k == "license":
-                        for y in v[-1].split(" "):
-                            for z in self.app.licenses:
-                                if z == y:
-                                    break
-                            else:
-                                self.app.licenses.append(y)
-
-                PMCA.setMat(
-                    num,
-                    i,
-                    x.diff_col,
-                    x.alpha,
-                    x.spec,
-                    x.spec_col,
-                    x.mirr_col,
-                    x.toon,
-                    x.edge,
-                    x.face_count,
-                    bytes(x.tex.encode("cp932", "replace")),
-                    bytes(x.sph.encode("cp932", "replace")),
-                    bytes(x.tex_path.encode("cp932", "replace")),
-                    bytes(x.sph_path.encode("cp932", "replace")),
-                )
-
-    def list_to_text(self):
-        lines = []
+    def list_to_text(self) -> list[str]:
+        lines: list[str] = []
 
         for x in self.mat.values():
             lines.append("[Name] %s" % (x.mat.name))

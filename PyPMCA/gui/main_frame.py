@@ -151,14 +151,14 @@ class MainFrame(tkinter.ttk.Frame):
         if level < 2:
             # 材質関連
             LOGGER.info("材質置換")
-            self.mat_rep.Get(self.data.mats_list)
+            renderer.Get_MATERIAL(self.mat_rep, self.data.mats_list)
             self.mat_entry = [[], []]
             for v in self.mat_rep.mat.values():
                 if v.num >= 0:
                     self.mat_entry[0].append(v.mat.name + "  " + v.sel.name)
                     self.mat_entry[1].append(v.mat.name)
             self.color_tab.l_tree.set_entry(self.mat_entry[0], sel=self.cur_mat)
-            self.mat_rep.Set()
+            renderer.Set_MATERIAL(self.mat_rep)
             PMCA.Copy_PMD(0, 2)
         else:
             PMCA.Copy_PMD(2, 0)

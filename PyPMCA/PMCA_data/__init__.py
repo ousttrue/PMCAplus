@@ -1,4 +1,4 @@
-from .mats import MATS, MAT_REP
+from .mats import MATS, MAT_REP, MAT_REP_DATA
 from .parts import PARTS
 from .node import NODE, TREE_LIST
 from .model_transform_data import MODEL_TRANS_DATA
@@ -8,6 +8,7 @@ from . import cnl
 __all__ = [
     "MATS",
     "MAT_REP",
+    "MAT_REP_DATA",
     "PARTS",
     "MODEL_TRANS_DATA",
     "NODE",

@@ -52,10 +52,7 @@ def main(dir: pathlib.Path):
         app.refresh()
         app.mainloop()
 
-        try:
-            data.save_CNL_File(cnl_file)
-        except Exception as ex:
-            LOGGER.error(ex)
+        data.save_CNL_File(cnl_file)
 
 
 if __name__ == "__main__":
