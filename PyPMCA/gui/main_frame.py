@@ -37,9 +37,7 @@ class MainFrame(tkinter.ttk.Frame):
         def add_tab(x: Any):
             notebook.insert(tkinter.END, x, text=x.text)  # type: ignore
 
-        self.model_tab = ModelTab(self.root)
-        self.model_tab.set_tree(self.data.tree)
-        self.model_tab.set_parts(self.data.parts_list)
+        self.model_tab = ModelTab(self.root, self.data)
         add_tab(self.model_tab)
 
         self.color_tab = ColorTab(self.root)

@@ -1,14 +1,13 @@
 import logging
 from .parts import PARTS
 
-
 LOGGER = logging.getLogger(__name__)
 
 
 class TREE_LIST:
     def __init__(
         self,
-        node: "NODE | None" = None,
+        node: "NODE",
         depth: int = 0,
         text: str = "",
         c_num: int = -1,
@@ -19,7 +18,11 @@ class TREE_LIST:
         self.c_num = c_num
 
 
-class NODE:  # モデルのパーツツリー
+class NODE:
+    """
+    モデルのパーツツリー
+    """
+
     def __init__(
         self,
         parts: PARTS,

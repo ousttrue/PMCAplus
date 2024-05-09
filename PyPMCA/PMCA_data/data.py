@@ -115,6 +115,7 @@ class PMCAData:
         lines, info = cnl.read_info(lines)
 
         lines = cnl.read_parts(lines, self.tree, self.parts_list)
+        self.tree_list = self.tree.create_list()
 
         assert self.mat_rep
         lines, mat_rep = cnl.read_mat_rep(lines, self.mats_list)
