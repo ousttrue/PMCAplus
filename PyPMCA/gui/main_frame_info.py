@@ -1,5 +1,5 @@
 import tkinter.ttk
-import PMCA  # type: ignore
+from .. import renderer
 
 
 class MODELINFO:
@@ -18,22 +18,6 @@ class MODELINFO:
         self.name_eng = name_eng
         self.name_l_eng = name_l_eng
         self.comment_eng = comment_eng
-
-
-def Set_Name_Comment(
-    num: int = 0,
-    name: str = "",
-    comment: str = "",
-    name_eng: str = "",
-    comment_eng: str = "",
-):
-    PMCA.Set_Name_Comment(
-        num,
-        name.encode("cp932", "replace"),
-        comment.encode("cp932", "replace"),
-        name_eng.encode("cp932", "replace"),
-        comment_eng.encode("cp932", "replace"),
-    )
 
 
 class InfoTab(tkinter.ttk.Frame):
@@ -109,7 +93,7 @@ class InfoTab(tkinter.ttk.Frame):
             self.modelinfo.name = self.frame.name.get()
             self.modelinfo.name_l = self.frame.name_l.get()
             self.modelinfo.comment = self.frame.comment.get("1.0", tkinter.END)
-            Set_Name_Comment(
+            renderer.Set_Name_Comment(
                 name=self.modelinfo.name,
                 comment="%s\nAuthor:%s\nLicense:%s\n%s"
                 % (self.modelinfo.name_l, str1, str2, self.modelinfo.comment),

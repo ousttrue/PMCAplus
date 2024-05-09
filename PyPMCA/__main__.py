@@ -1,11 +1,11 @@
-from typing import Any
 import tkinter
 import logging
 import pathlib
-import PMCA  # type: ignore
 
 from .gui.main_frame import MainFrame
 from .PMCA_data import PMCAData
+from .renderer import Renderer
+
 
 APPNAME = "PMCA v0.0.6r10"
 # COMMANDS = {}
@@ -32,20 +32,6 @@ class ColorfulHandler(logging.StreamHandler):  # type: ignore
         super().emit(record)
 
 
-class PmcaView:
-    def __init__(self):
-        PMCA.Init_PMD()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, _exception_type: Any, _exception_value: Any, _traceback: Any):
-        PMCA.QuitViewerThread()
-
-    def start_thread(self):
-        PMCA.CretateViewerThread()
-
-
 def main(dir: pathlib.Path):
     logging.basicConfig(handlers=[ColorfulHandler()], level=logging.DEBUG)
 
@@ -56,12 +42,12 @@ def main(dir: pathlib.Path):
     cnl_file = pathlib.Path("./last.cnl")
 
     # gui
-    with PmcaView() as view:
+    with Renderer() as renderer:
         root = tkinter.Tk()
         app = MainFrame(APPNAME, data, master=root)
         app.load_CNL_File(cnl_file)
 
-        view.start_thread()
+        renderer.start_thread()
 
         app.refresh()
         app.mainloop()
