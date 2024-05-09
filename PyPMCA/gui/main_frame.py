@@ -12,6 +12,7 @@ from .main_frame_transform import TransformTab
 from .main_frame_info import InfoTab
 from .. import PMCA_data
 from .. import pmd_type
+from .. import renderer
 import PMCA  # type: ignore
 
 
@@ -141,7 +142,7 @@ class MainFrame(tkinter.ttk.Frame):
             PMCA.Create_PMD(0)
 
             # PMCA.Load_PMD(0, "./testmodels/001.pmd")
-            self.tree.assemble(0, self)
+            renderer.assemble(self.tree, 0, self)
 
             PMCA.Copy_PMD(0, 1)
         else:

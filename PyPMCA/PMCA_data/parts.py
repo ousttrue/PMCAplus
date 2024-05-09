@@ -1,4 +1,4 @@
-from typing import List
+from typing import Any
 
 
 class PARTS:
@@ -12,8 +12,8 @@ class PARTS:
         comment: str = "",
         path: str = "",
         t: list[str] = [],
-        joint=[],
-        props={},
+        joint: list[str] = [],
+        props: dict[str, Any] = {},
     ):
         self.name = name
         self.comment = comment
@@ -23,11 +23,11 @@ class PARTS:
         self.props = props
 
     @staticmethod
-    def load_list(lines: List[str]) -> List["PARTS"]:
+    def load_list(lines: list[str]) -> list["PARTS"]:
         """
         設定ファイル読み込み
         """
-        parts_list: List[PARTS] = []
+        parts_list: list[PARTS] = []
         directry = ""
         active = PARTS(props={})
         for l in lines:

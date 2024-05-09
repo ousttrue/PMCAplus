@@ -1,5 +1,6 @@
 from typing import Any
 import logging
+import sys
 
 import PMCA  # type: ignore
 from . import pmd_type
@@ -293,3 +294,152 @@ def Set_PMD(num: int, model: pmd_type.PMD):
             x.limit,
             x.spring,
         )
+
+
+def assemble(self: PMCA_data.NODE, num: int, app):
+    app.script_fin = []
+    PMCA.Create_PMD(num)
+    PMCA.Load_PMD(num, self.parts.path.encode(sys.getdefaultencoding(), "replace"))
+    info_data = PMCA.getInfo(0)
+    info = pmd_type.INFO(info_data)
+    line = info.comment.split("\n")
+
+    app.authors = []
+    app.licenses = []
+    if info.name != "":
+        app.authors = ["Unknown"]
+        app.licenses = ["Nonfree"]
+
+    app.functions = PMCA
+    if "script_pre" in self.parts.props:
+        for x in self.parts.props["script_pre"]:
+            argv = x.split()
+            fp = open(argv[0], "r", encoding="utf-8-sig")
+            script = fp.read()
+            exec(script)
+            fp.close
+
+    if "script_post" in self.parts.props:
+        for x in self.parts.props["script_post"]:
+            argv = x.split()
+            fp = open(argv[0], "r", encoding="utf-8-sig")
+            script = fp.read()
+            exec(script)
+            fp.close
+
+    if "script_fin" in self.parts.props:
+        app.script_fin.extend(self.parts.props["script_fin"])
+
+    for x in line:
+        tmp = x.split(":", 1)
+        if len(tmp) == 1:
+            tmp = x.split("：", 1)
+        if (
+            tmp[0] == "Author"
+            or tmp[0] == "author"
+            or tmp[0] == "Creator"
+            or tmp[0] == "creator"
+            or tmp[0] == "モデル制作"
+        ):
+            tmp[1] = tmp[1].replace("　", " ")
+            app.authors = tmp[1].split(" ")
+
+        elif tmp[0] == "License" or tmp[0] == "license" or tmp[0] == "ライセンス":
+            tmp[1] = tmp[1].replace("　", " ")
+            app.licenses = tmp[1].split(" ")
+    LOGGER.debug("パーツのパス:%s" % (self.parts.path))
+    for x in self.children:
+        if x != None:
+            assemble_child(x, num, app)
+
+    PMCA.Sort_PMD(num)
+
+    for x in app.script_fin:
+        argv = x.split()
+        with open(argv[0], "r", encoding="utf-8-sig") as fp:
+            script = fp.read()
+            exec(script)
+
+
+def assemble_child(self: PMCA_data.NODE, num: int, app):
+    pmpy = app
+    LOGGER.info("パーツのパス:%s" % (self.parts.path))
+
+    PMCA.Create_PMD(4)
+    PMCA.Load_PMD(4, self.parts.path.encode(sys.getdefaultencoding(), "replace"))
+
+    info_data = PMCA.getInfo(4)
+    info = pmd_type.INFO(info_data)
+    line = info.comment.split("\n")
+    flag_author = False
+    flag_license = False
+    for x in line:
+        tmp = x.split(":", 1)
+        if len(tmp) == 1:
+            tmp = x.split("：", 1)
+        if (
+            tmp[0] == "Author"
+            or tmp[0] == "author"
+            or tmp[0] == "Creator"
+            or tmp[0] == "creator"
+            or tmp[0] == "モデル制作"
+        ):
+            if len(tmp) > 1:
+                flag_author = True
+                tmp[1] = tmp[1].replace("　", " ")
+                for x in tmp[1].split(" "):
+                    for y in app.authors:
+                        if x == y:
+                            break
+                    else:
+                        app.authors.append(x)
+
+        elif tmp[0] == "License" or tmp[0] == "license" or tmp[0] == "ライセンス":
+            if len(tmp) > 1:
+                flag_license = True
+                tmp[1] = tmp[1].replace("　", " ")
+                for x in tmp[1].split(" "):
+                    for y in app.licenses:
+                        if x == y:
+                            break
+                    else:
+                        app.licenses.append(x)
+    if info.name != "":
+        if flag_author == False:
+            for x in app.authors:
+                if x == "Unknown":
+                    break
+            else:
+                app.authors.append("Unknown")
+        if flag_license == False:
+            for x in app.licenses:
+                if x == "Nonfree":
+                    break
+            else:
+                app.licenses.append("Nonfree")
+
+    if "script_pre" in self.parts.props:
+        for x in self.parts.props["script_pre"]:
+            LOGGER.debug("プレスクリプト実行")
+            argv = x.split()
+            fp = open(argv[0], "r", encoding="utf-8-sig")
+            script = fp.read()
+            exec(script)
+            fp.close
+
+    PMCA.Add_PMD(num, 4)
+    PMCA.Marge_PMD(num)
+
+    if "script_post" in self.parts.props:
+        for x in self.parts.props["script_post"]:
+            argv = x.split()
+            fp = open(argv[0], "r", encoding="utf-8-sig")
+            script = fp.read()
+            exec(script)
+            fp.close
+    if "script_fin" in self.parts.props:
+        app.script_fin.extend(self.parts.props["script_fin"])
+
+    for x in self.children:
+        if x != None:
+            assemble_child(x, num, app)

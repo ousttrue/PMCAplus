@@ -300,7 +300,7 @@ def Init_PMD() -> None:
     """
     ...
 
-def Load_PMD(num: int, path: bytes):
+def Load_PMD(num: int, path: bytes) -> None:
     """
     Load PMD from file"
     """
@@ -312,7 +312,7 @@ def Write_PMD():
     """
     ...
 
-def Add_PMD():
+def Add_PMD(num: int, i: int) -> None:
     """
     Add PMD from file"
     """
@@ -330,13 +330,13 @@ def Create_PMD(num: int) -> None:
     """
     ...
 
-def Marge_PMD():
+def Marge_PMD(num: int) -> None:
     """
     Marge PMD"
     """
     ...
 
-def Sort_PMD():
+def Sort_PMD(num: int) -> None:
     """
     Sort PMD"
     """
