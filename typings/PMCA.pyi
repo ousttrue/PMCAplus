@@ -464,43 +464,43 @@ def Sort_PMD(num: int) -> None:
     """
     ...
 
-def PMD_view_set():
+def PMD_view_set(num: int, mode: str) -> None:
     """
     Set selected PMD to dispray"
     """
     ...
 
-def Resize_Model():
+def Resize_Model(num: int, scale: float) -> None:
     """
     Resize_Model"
     """
     ...
 
-def Move_Model():
+def Move_Model(num: int, x: float, y: float, z: float) -> None:
     """
     Move_Model"
     """
     ...
 
-def Resize_Bone():
+def Resize_Bone(num: int, name: bytes, length: float, thickness: float) -> None:
     """
     Resize_Bone"
     """
     ...
 
-def Move_Bone():
+def Move_Bone(num: int, name: bytes, x: float, y: float, z: float) -> None:
     """
     Move_Bone"
     """
     ...
 
-def Update_Skin():
+def Update_Skin(num: int) -> None:
     """
     Update_Skin"
     """
     ...
 
-def Adjust_Joints():
+def Adjust_Joints(num: int) -> None:
     """
     Adjust_Joints"
     """
@@ -512,7 +512,7 @@ def MODEL_LOCK(mode: int) -> None:
     """
     ...
 
-def getWHT():
+def getWHT(num: int) -> tuple[float, float, float]:
     """
     get height, width, thickness from model"
     """

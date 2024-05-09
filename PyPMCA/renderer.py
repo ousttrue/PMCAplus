@@ -622,10 +622,7 @@ def check_PMD(self) -> None:
     root.mainloop()
 
 
-def refresh(self):
-    self.model_tab.set_tree(self.tree, True)
-
-    # モデル組み立て
+def refresh(self: PMCA_data.PMCAData):
     PMCA.MODEL_LOCK(1)
 
     LOGGER.info("モデル組立て")
@@ -639,19 +636,18 @@ def refresh(self):
 
     # 材質関連
     LOGGER.info("材質置換")
-    _get_material(self.mat_rep, self.data.mats_list)
-    self.mat_entry = [[], []]
+    _get_material(self.mat_rep, self.mats_list)
+    self.mat_entry = ([], [])
     for v in self.mat_rep.mat.values():
         if v.num >= 0:
             self.mat_entry[0].append(v.mat.name + "  " + v.sel.name)
             self.mat_entry[1].append(v.mat.name)
-    self.color_tab.l_tree.set_entry(self.mat_entry[0], sel=self.cur_mat)
     _set_material(context, self.mat_rep)
     PMCA.Copy_PMD(0, 2)
 
     LOGGER.info("体型調整")
     info_data = PMCA.getInfo(0)
-    info = pmd_type.INFO(info_data)
+    # _info = pmd_type.INFO(info_data)
 
     tmpbone: list[pmd_type.BONE] = []
     for i in range(info_data["bone_count"]):
@@ -689,6 +685,7 @@ def refresh(self):
             )
 
     if refbone != None:
+        assert refbone_index != None
         newbone = None
         tmp = PMCA.getBone(0, refbone_index)
         assert tmp
@@ -722,19 +719,14 @@ def refresh(self):
     PMCA.Update_Skin(0)
     PMCA.Adjust_Joints(0)
     PMCA.Copy_PMD(0, 3)
-
-    self.info_tab.refresh()
-
     PMCA.PMD_view_set(0, "replace")  # テクスチャを変更しない
-
     PMCA.MODEL_LOCK(0)
 
-    wht = PMCA.getWHT(0)
-    self.transform_tab.info_frame.strvar.set(
-        "height     = %f\nwidth      = %f\nthickness = %f\n" % (wht[1], wht[0], wht[2])
-    )
-
     LOGGER.info("Done")
+
+    w, h, t = PMCA.getWHT(0)
+    for callback in self.on_reflesh:
+        callback(w, h, t)
 
 
 def save_PMD(self, name):

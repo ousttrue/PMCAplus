@@ -25,10 +25,6 @@ class MainFrame(tkinter.ttk.Frame):
         self.data = data
         self.root = master
         self.root.title(title)
-        self.tree_list: list[PMCA_data.TREE_LIST] = []
-
-        self.mat_rep = None
-        self.transform_data: list[PMCA_data.MODEL_TRANS_DATA] = []
         self.target_dir = "./model/"
         self.cur_parts = 0
         self.cur_mat = 0
@@ -42,11 +38,17 @@ class MainFrame(tkinter.ttk.Frame):
             notebook.insert(tkinter.END, x, text=x.text)  # type: ignore
 
         self.model_tab = ModelTab(self.root)
+        self.model_tab.set_tree(self.data.tree)
+        self.model_tab.set_parts(self.data.parts_list)
         add_tab(self.model_tab)
+
         self.color_tab = ColorTab(self.root)
         add_tab(self.color_tab)
+
         self.transform_tab = TransformTab(self.root)
+        self.transform_tab.tfgroup.set_entry([x.name for x in self.data.transform_list])  # type: ignore
         add_tab(self.transform_tab)
+
         self.info_tab = InfoTab(self.root)
         add_tab(self.info_tab)
 
@@ -67,7 +69,7 @@ class MainFrame(tkinter.ttk.Frame):
         self.menubar = tkinter.Menu(master)
         master.configure(menu=self.menubar)
 
-        # files
+        # menu: files
         files = tkinter.Menu(self.menubar, tearoff=False)
         self.menubar.add_cascade(label="ファイル", underline=0, menu=files)
         files.add_command(label="新規", underline=0, command=self.clear)
@@ -93,7 +95,7 @@ class MainFrame(tkinter.ttk.Frame):
 
         files.add_command(label="exit", underline=0, command=quit)
 
-        # editing
+        # menu: editing
         editing = tkinter.Menu(self.menubar, tearoff=False)
         self.menubar.add_cascade(label="編集", underline=0, menu=editing)
         editing.add_command(label="体型調整を初期化", underline=0, command=self.init_tf)
@@ -101,35 +103,6 @@ class MainFrame(tkinter.ttk.Frame):
             label="材質をランダム選択", underline=0, command=self.rand_mat
         )
         editing.add_command(label="PMCA設定", underline=0, command=self.setting_dialog)
-
-        self.tree = PMCA_data.NODE(
-            parts=PMCA_data.PARTS(name="ROOT", joint=["root"]),
-            depth=-1,
-            children=[None],
-        )
-        self.model_tab.set_tree(self.tree)
-        self.model_tab.set_parts(self.data.parts_list)
-
-        self.mat_rep = PMCA_data.MAT_REP(app=self)
-
-        self.transform_data = [
-            PMCA_data.MODEL_TRANS_DATA(scale=1.0, bones=[], props={})
-        ]
-        self.transform_tab.tfgroup.set_entry([x.name for x in self.data.transform_list])  # type: ignore
-
-    def load_CNL_File(self, file: pathlib.Path) -> None:
-        lines = file.read_text(encoding="utf-8").splitlines()
-        lines, info = PMCA_data.cnl.read_info(lines)
-        self.info_tab.set_info(*info)
-
-        lines = PMCA_data.cnl.read_parts(lines, self.tree, self.data.parts_list)
-
-        assert self.mat_rep
-        lines, mat_rep = PMCA_data.cnl.read_mat_rep(lines, self.data.mats_list)
-        self.mat_rep.mat = mat_rep
-
-        assert len(self.transform_data) > 0
-        PMCA_data.cnl.read_transform(lines, self.transform_data[0])
 
     # functions menu
     def clear(self):

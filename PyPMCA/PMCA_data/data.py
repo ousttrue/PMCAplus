@@ -1,12 +1,12 @@
-from typing import NamedTuple
+from typing import NamedTuple, Callable
 import logging
 import pathlib
 
-from .. import renderer
-from .mats import MATS
+from .mats import MATS, MAT_REP
 from .parts import PARTS
+from .node import NODE, TREE_LIST
 from .model_transform_data import MODEL_TRANS_DATA
-
+from . import cnl
 
 LOGGER = logging.getLogger(__name__)
 
@@ -62,9 +62,23 @@ class PMCAData:
         self.mats_list: list[MATS] = []
         self.parts_list: list[PARTS] = []
         self.transform_list: list[MODEL_TRANS_DATA] = []
+        self.tree = NODE(
+            parts=PARTS(name="ROOT", joint=["root"]),
+            depth=-1,
+            children=[None],
+        )
+        self.mat_rep = MAT_REP()
+        self.mat_entry: tuple[list[str], list[str]] = ([], [])
+        # self.transform_data = []
+        self.transform_data: list[MODEL_TRANS_DATA] = [
+            MODEL_TRANS_DATA(scale=1.0, bones=[], props={})
+        ]
+        self.tree_list: list[TREE_LIST] = []
+        self.on_reflesh: list[Callable[[float, float, float], None]] = []
 
-    def load(self, dir: pathlib.Path):
+    def load_asset(self, dir: pathlib.Path) -> LIST | None:
         LOGGER.info("PMCADATA: %s", dir.relative_to(pathlib.Path(".").absolute()))
+        list: LIST | None = None
         for x in dir.iterdir():
             if not x.is_file():
                 continue
@@ -75,7 +89,6 @@ class PMCAData:
             if x.name == "list.txt":
                 LOGGER.info("list.txt")
                 list = LIST.load_list(src)
-                renderer.set_list(*list)
                 continue
 
             lines = src.splitlines()
@@ -95,6 +108,22 @@ class PMCAData:
                 continue
 
             LOGGER.warn("skip: %s", x.relative_to(dir))
+        return list
+
+    def load_CNL_File(self, file: pathlib.Path) -> cnl.CnlInfo:
+        lines = file.read_text(encoding="utf-8").splitlines()
+        lines, info = cnl.read_info(lines)
+
+        lines = cnl.read_parts(lines, self.tree, self.parts_list)
+
+        assert self.mat_rep
+        lines, mat_rep = cnl.read_mat_rep(lines, self.mats_list)
+        self.mat_rep.mat = mat_rep
+
+        assert len(self.transform_data) > 0
+        cnl.read_transform(lines, self.transform_data[0])
+
+        return info
 
     def save_CNL_File(self, file: pathlib.Path) -> bool:
         if self.tree_list[0].node.child[0] == None:
