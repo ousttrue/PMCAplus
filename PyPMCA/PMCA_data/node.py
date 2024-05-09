@@ -35,6 +35,9 @@ class NODE:
         self.children = children
         self.list_num = list_num
 
+    def __str__(self) -> str:
+        return f"[{self.parts.name}]"
+
     def create_list(self) -> list["TREE_LIST"]:
         l: list[TREE_LIST] = [
             TREE_LIST(

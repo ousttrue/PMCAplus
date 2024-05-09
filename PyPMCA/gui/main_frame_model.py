@@ -103,13 +103,16 @@ class ModelTab(tkinter.ttk.Frame):
     def parts_sel_click(self, _event: Any):
         sel = int(self.l_sel.listbox.curselection()[0])  # type: ignore
         sel_t = int(self.l_tree.listbox.curselection()[0]) + 1  # type: ignore
+        tree_node = self.data.tree_list[sel_t]
 
-        LOGGER.debug(sel)
         match self.parts_entry[sel][1]:
             case None:  # Noneを選択した場合
+                LOGGER.debug(f"{sel_t} => None")
                 node = None
+                self.comment.set("comment:")
 
             case "load":  # 外部モデル読み込み
+                LOGGER.debug(f"{sel_t} => load")
                 path = tkinter.filedialog.askopenfilename(
                     filetypes=[("Plygon Model Deta(for MMD)", ".pmd"), ("all", ".*")],
                     defaultextension=".pmd",
@@ -119,24 +122,24 @@ class ModelTab(tkinter.ttk.Frame):
                     parts = PMCA_data.PARTS(name=name, path=path, props={})
                     node = PMCA_data.NODE(
                         parts=parts,
-                        depth=self.data.tree_list[sel_t].node.depth + 1,
+                        depth=tree_node.node.depth + 1,
                         children=[None for _ in parts.joint],
                     )
+                    self.comment.set("comment:%s" % (node.parts.comment))
                 else:
+                    self.comment.set("comment:")
                     node = None
 
             case PMCA_data.PARTS() as parts:
                 node = PMCA_data.NODE(
                     parts=parts,
-                    depth=self.data.tree_list[sel_t].node.depth + 1,
+                    depth=tree_node.node.depth + 1,
                     children=[],
                 )
-                p_node = self.data.tree_list[sel_t].node.children[
-                    self.data.tree_list[sel_t].c_num
-                ]
+                p_node = tree_node.node.children[tree_node.c_num]
 
                 child_appended: list[str] = []
-                if p_node != None:
+                if p_node:
                     for x in node.parts.joint:
                         node.children.append(None)
                         for j, y in enumerate(p_node.parts.joint):
@@ -151,14 +154,10 @@ class ModelTab(tkinter.ttk.Frame):
                 else:
                     for x in node.parts.joint:
                         node.children.append(None)
+                self.comment.set("comment:%s" % (node.parts.comment))
 
-        self.data.tree_list[sel_t].node.children[
-            self.data.tree_list[sel_t].c_num
-        ] = node
-        self.data.tree_list[sel_t].node.list_num = sel
-        if node == None:
-            self.comment.set("comment:")
-        else:
-            self.comment.set("comment:%s" % (node.parts.comment))
+        tree_node.node.children[tree_node.c_num] = node
+        tree_node.node.list_num = sel
+        LOGGER.debug(f"{node}")
 
         renderer.refresh(self.data)
