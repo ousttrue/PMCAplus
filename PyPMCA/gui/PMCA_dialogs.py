@@ -6,12 +6,9 @@ import sys
 sys.argv = [""]
 import os
 
-import time
-
 # インポートパスにカレントディレクトリを加える
 sys.path.append(os.getcwd())
 
-import PMCA
 import PyPMCA
 
 from tkinter import *

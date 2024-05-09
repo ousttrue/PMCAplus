@@ -288,7 +288,7 @@ def Set_Name_Comment(
     comment: bytes,
     name_eng: bytes,
     comment_eng: bytes,
-):
+) -> None:
     """
     Set Name and Comment
     """

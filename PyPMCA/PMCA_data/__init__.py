@@ -2,10 +2,10 @@ from typing import NamedTuple, Tuple
 import pathlib
 import logging
 
-import PMCA  # type: ignore
 from .mats import MATS
 from .parts import PARTS
 from .model_transform_data import MODEL_TRANS_DATA
+from .. import renderer
 
 
 LOGGER = logging.getLogger(__name__)
@@ -75,17 +75,7 @@ class PMCAData:
             if x.name == "list.txt":
                 LOGGER.info("list.txt")
                 list = LIST.load_list(src)
-                PMCA.Set_List(
-                    len(list.b[0]),
-                    list.b[0],
-                    list.b[1],
-                    len(list.s[0]),
-                    list.s[0],
-                    list.s[1],
-                    len(list.g[0]),
-                    list.g[0],
-                    list.g[1],
-                )
+                renderer.set_list(*list)
                 continue
 
             lines = src.splitlines()
