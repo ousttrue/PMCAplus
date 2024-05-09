@@ -307,69 +307,106 @@ class AssembleContext(NamedTuple):
     authors: list[str] = []
     licenses: list[str] = []
 
+    def pre_process(self, info_data: pmd_type.InfoData, props: dict[str, str]):
+        info = pmd_type.INFO(info_data)
+        flag_author = False
+        flag_license = False
+
+        line = info.comment.split("\n")
+        for x in line:
+            tmp = x.split(":", 1)
+            if len(tmp) == 1:
+                tmp = x.split("：", 1)
+            if (
+                tmp[0] == "Author"
+                or tmp[0] == "author"
+                or tmp[0] == "Creator"
+                or tmp[0] == "creator"
+                or tmp[0] == "モデル制作"
+            ):
+                if len(tmp) > 1:
+                    flag_author = True
+                    tmp[1] = tmp[1].replace("　", " ")
+                    for x in tmp[1].split(" "):
+                        for y in self.authors:
+                            if x == y:
+                                break
+                        else:
+                            self.authors.append(x)
+
+            elif tmp[0] == "License" or tmp[0] == "license" or tmp[0] == "ライセンス":
+                if len(tmp) > 1:
+                    flag_license = True
+                    tmp[1] = tmp[1].replace("　", " ")
+                    for x in tmp[1].split(" "):
+                        for y in self.licenses:
+                            if x == y:
+                                break
+                        else:
+                            self.licenses.append(x)
+
+        if info.name != "":
+            if flag_author == False:
+                for x in self.authors:
+                    if x == "Unknown":
+                        break
+                else:
+                    self.authors.append("Unknown")
+            if flag_license == False:
+                for x in self.licenses:
+                    if x == "Nonfree":
+                        break
+                else:
+                    self.licenses.append("Nonfree")
+
+        if "script_pre" in props:
+            for x in props["script_pre"]:
+                LOGGER.debug("プレスクリプト実行")
+                argv = x.split()
+                fp = open(argv[0], "r", encoding="utf-8-sig")
+                script = fp.read()
+                exec(script)
+                fp.close
+
+    def post_process(self, props: dict[str, str]):
+        if "script_post" in props:
+            for x in props["script_post"]:
+                argv = x.split()
+                fp = open(argv[0], "r", encoding="utf-8-sig")
+                script = fp.read()
+                exec(script)
+                fp.close
+        if "script_fin" in props:
+            self.script_fin.extend(props["script_fin"])
+
+    def finalize(self):
+        for x in self.script_fin:
+            argv = x.split()
+            with open(argv[0], "r", encoding="utf-8-sig") as fp:
+                script = fp.read()
+                exec(script)
+
 
 def assemble(self: PMCA_data.NODE, num: int) -> AssembleContext:
-    LOGGER.info(f"assemble: {self.parts.path}")
-    PMCA.Load_PMD(num, self.parts.path.encode(sys.getdefaultencoding(), "replace"))
-    info_data = PMCA.getInfo(0)
-    info = pmd_type.INFO(info_data)
-
     context = AssembleContext()
-    if info.name != "":
-        context.authors.append("Unknown")
-        context.licenses.append("Nonfree")
 
-    if "script_pre" in self.parts.props:
-        for x in self.parts.props["script_pre"]:
-            argv = x.split()
-            fp = open(argv[0], "r", encoding="utf-8-sig")
-            script = fp.read()
-            exec(script)
-            fp.close
+    LOGGER.info(f"assemble[{num}]: {self.parts.path}")
+    ret = PMCA.Load_PMD(
+        num, self.parts.path.encode(sys.getdefaultencoding(), "replace")
+    )
+    assert ret
 
-    if "script_post" in self.parts.props:
-        for x in self.parts.props["script_post"]:
-            argv = x.split()
-            fp = open(argv[0], "r", encoding="utf-8-sig")
-            script = fp.read()
-            exec(script)
-            fp.close
+    info_data = PMCA.getInfo(0)
 
-    if "script_fin" in self.parts.props:
-        context.script_fin.extend(self.parts.props["script_fin"])
-
-    line = info.comment.split("\n")
-    for x in line:
-        tmp = x.split(":", 1)
-        if len(tmp) == 1:
-            tmp = x.split("：", 1)
-        if (
-            tmp[0] == "Author"
-            or tmp[0] == "author"
-            or tmp[0] == "Creator"
-            or tmp[0] == "creator"
-            or tmp[0] == "モデル制作"
-        ):
-            tmp[1] = tmp[1].replace("　", " ")
-            context.authors.clear()
-            context.authors.extend(tmp[1].split(" "))
-
-        elif tmp[0] == "License" or tmp[0] == "license" or tmp[0] == "ライセンス":
-            tmp[1] = tmp[1].replace("　", " ")
-            context.licenses.clear()
-            context.licenses.extend(tmp[1].split(" "))
+    context.pre_process(info_data, self.parts.props)
+    context.post_process(self.parts.props)
 
     for x in self.children:
         if x != None:
             assemble_child(x, num, context)
 
     PMCA.Sort_PMD(num)
-
-    for x in context.script_fin:
-        argv = x.split()
-        with open(argv[0], "r", encoding="utf-8-sig") as fp:
-            script = fp.read()
-            exec(script)
+    context.finalize()
 
     return context
 
@@ -377,82 +414,17 @@ def assemble(self: PMCA_data.NODE, num: int) -> AssembleContext:
 def assemble_child(self: PMCA_data.NODE, num: int, context: AssembleContext):
     LOGGER.info("パーツのパス:%s" % (self.parts.path))
 
-    PMCA.Load_PMD(4, self.parts.path.encode(sys.getdefaultencoding(), "replace"))
+    ret = PMCA.Load_PMD(4, self.parts.path.encode(sys.getdefaultencoding(), "replace"))
+    assert ret
 
     info_data = PMCA.getInfo(4)
-    info = pmd_type.INFO(info_data)
-    flag_author = False
-    flag_license = False
-
-    line = info.comment.split("\n")
-    for x in line:
-        tmp = x.split(":", 1)
-        if len(tmp) == 1:
-            tmp = x.split("：", 1)
-        if (
-            tmp[0] == "Author"
-            or tmp[0] == "author"
-            or tmp[0] == "Creator"
-            or tmp[0] == "creator"
-            or tmp[0] == "モデル制作"
-        ):
-            if len(tmp) > 1:
-                flag_author = True
-                tmp[1] = tmp[1].replace("　", " ")
-                for x in tmp[1].split(" "):
-                    for y in context.authors:
-                        if x == y:
-                            break
-                    else:
-                        context.authors.append(x)
-
-        elif tmp[0] == "License" or tmp[0] == "license" or tmp[0] == "ライセンス":
-            if len(tmp) > 1:
-                flag_license = True
-                tmp[1] = tmp[1].replace("　", " ")
-                for x in tmp[1].split(" "):
-                    for y in context.licenses:
-                        if x == y:
-                            break
-                    else:
-                        context.licenses.append(x)
-
-    if info.name != "":
-        if flag_author == False:
-            for x in context.authors:
-                if x == "Unknown":
-                    break
-            else:
-                context.authors.append("Unknown")
-        if flag_license == False:
-            for x in context.licenses:
-                if x == "Nonfree":
-                    break
-            else:
-                context.licenses.append("Nonfree")
-
-    if "script_pre" in self.parts.props:
-        for x in self.parts.props["script_pre"]:
-            LOGGER.debug("プレスクリプト実行")
-            argv = x.split()
-            fp = open(argv[0], "r", encoding="utf-8-sig")
-            script = fp.read()
-            exec(script)
-            fp.close
+    context.pre_process(info_data, self.parts.props)
 
     PMCA.Add_PMD(num, 4)
     ret = PMCA.Marge_PMD(num)
     assert ret
 
-    if "script_post" in self.parts.props:
-        for x in self.parts.props["script_post"]:
-            argv = x.split()
-            fp = open(argv[0], "r", encoding="utf-8-sig")
-            script = fp.read()
-            exec(script)
-            fp.close
-    if "script_fin" in self.parts.props:
-        context.script_fin.extend(self.parts.props["script_fin"])
+    context.post_process(self.parts.props)
 
     for x in self.children:
         if x != None:
@@ -624,7 +596,7 @@ def check_PMD(self) -> None:
 def refresh(self: PMCA_data.PMCAData):
     PMCA.MODEL_LOCK(1)
 
-    LOGGER.info("モデル組立て")
+    LOGGER.info("モデル組立て(MODEL_LOCK=1)")
 
     # PMCA.Load_PMD(0, "./testmodels/001.pmd")
     context = assemble(self.tree, 0)
@@ -718,8 +690,7 @@ def refresh(self: PMCA_data.PMCAData):
     PMCA.Copy_PMD(0, 3)
     PMCA.PMD_view_set(0, "replace")  # テクスチャを変更しない
     PMCA.MODEL_LOCK(0)
-
-    LOGGER.info("Done")
+    LOGGER.info(f"(MODEL_LOCK=0)")
 
     w, h, t = PMCA.getWHT(0)
     for callback in self.on_reflesh:

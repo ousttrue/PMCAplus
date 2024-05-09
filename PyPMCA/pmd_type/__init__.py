@@ -1,5 +1,5 @@
 from .pmd import PMD
-from .info import INFO
+from .info import INFO, InfoData
 from .vt import VT
 from .material import MATERIAL, TOON
 from .bone import BONE, BONE_DISP, BONE_GROUP
@@ -10,6 +10,7 @@ from .rigidbody import RB, JOINT
 __all__ = [
     "PMD",
     "INFO",
+    "InfoData",
     "VT",
     "MATERIAL",
     "TOON",

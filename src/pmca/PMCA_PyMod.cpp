@@ -985,7 +985,6 @@ static PyObject *MODEL_LOCK(PyObject *self, PyObject *args) {
     Py_RETURN_FALSE;
 
   if (num == 1) {
-    printf("Lockstate %d\n", myflags.model_lock);
     while (myflags.model_lock != 0) {
       std::this_thread::sleep_for(std::chrono::milliseconds(30));
       // printf("C");
@@ -995,6 +994,7 @@ static PyObject *MODEL_LOCK(PyObject *self, PyObject *args) {
   } else {
     myflags.model_lock = 0;
   }
+  printf("Lockstate %d\n", myflags.model_lock);
   Py_RETURN_TRUE;
 }
 

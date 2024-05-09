@@ -58,7 +58,7 @@ void draw_screen(const VIEW_STATE &vs) {
   double asp = (double)vs.width / (double)vs.height;
 
   while (myflags.model_lock != 0) {
-    std::this_thread::sleep_for(std::chrono::minutes(30));
+    std::this_thread::sleep_for(std::chrono::milliseconds(30));
   }
   myflags.model_lock = 1;
 
@@ -102,41 +102,3 @@ void draw_screen(const VIEW_STATE &vs) {
   glFinish();
   myflags.model_lock = 0;
 }
-
-/*描画用のモデルを管理する関数*/
-// struct MODEL;
-// void model_mgr(Mode flag, int num, void *p) {
-//   static std::shared_ptr<MODEL> model[16];
-//   static int init = 1;
-//
-//   /*
-//   num
-//   0:表示
-//   */
-//   if (flag == Mode::Init) {
-//     for (int i = 0; i < 16; i++) {
-//       model[i] = MODEL::create();
-//       make_dsp_model(model[i].get(), i);
-//     }
-//     init = 1;
-//   } else if (flag == Mode::Write) {
-//     init = -1;
-//     *model[num] = *((MODEL *)p);
-//     make_dsp_model(model[num].get(), num);
-//     init = 1;
-//   } else if (flag == Mode::Read) {
-//     if (init == 1) {
-//       load_tex(model[num].get(), num);
-//       init = 0;
-//     } else if (init == -1) {
-//       // return NULL;
-//     }
-//     // return &model[num];
-//   } else if (flag == Mode::Reset) {
-//     init = -1;
-//     *model[num] = *((MODEL *)p);
-//     make_dsp_model(model[num].get(), num);
-//     init = 0;
-//   }
-//   // return 0;
-// }
