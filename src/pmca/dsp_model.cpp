@@ -1,13 +1,119 @@
-#include <Windows.h>
+#include <GL/glew.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 #include "dsp_model.h"
 #include "mPMD.h"
-#include <GL/GL.h>
 #include <stdint.h>
 #include <vector>
+
+static const char *vertex_shader_text = R"(#version 330
+uniform mat4 MVP;
+in vec3 vCol;
+in vec2 vPos;
+out vec3 color;
+void main()
+{
+    gl_Position = MVP * vec4(vPos, 0.0, 1.0);
+    color = vCol;
+}
+)";
+
+static const char *fragment_shader_text = R"(#version 330
+in vec3 color;
+out vec4 fragment;
+void main()
+{
+    fragment = vec4(color, 1.0);
+}
+)";
+
+struct Vertex {
+  float pos[2];
+  float col[3];
+};
+
+// CCW
+//   2
+// 0  1
+// static const Vertex vertices[3] = {{{-0.6f, -0.4f}, {1.f, 0.f, 0.f}},
+//                                    {{0.6f, -0.4f}, {0.f, 1.f, 0.f}},
+//                                    {{0.f, 0.6f}, {0.f, 0.f, 1.f}}};
+
+// CW
+//  1
+// p 2
+static const Vertex vertices[3] = {
+    {{-0.6f, -0.4f}, {1.f, 0.f, 0.f}},
+    {{0.f, 0.6f}, {0.f, 0.f, 1.f}},
+    {{0.6f, -0.4f}, {0.f, 1.f, 0.f}},
+};
+
+struct Triangle {
+
+  GLuint vertex_shader = 0;
+  GLuint fragment_shader = 0;
+  GLuint program = 0;
+  GLint mvp_location = -1;
+  GLint vpos_location = -1;
+  GLint vcol_location = -1;
+
+  GLuint vertex_buffer = 0;
+  GLuint vertex_array = 0;
+
+  Triangle() {
+    // shader
+    vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
+    glCompileShader(vertex_shader);
+
+    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragment_shader, 1, &fragment_shader_text, NULL);
+    glCompileShader(fragment_shader);
+
+    program = glCreateProgram();
+    glAttachShader(program, vertex_shader);
+    glAttachShader(program, fragment_shader);
+    glLinkProgram(program);
+
+    mvp_location = glGetUniformLocation(program, "MVP");
+    vpos_location = glGetAttribLocation(program, "vPos");
+    vcol_location = glGetAttribLocation(program, "vCol");
+
+    // vbo
+    glGenBuffers(1, &vertex_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    // vao
+    glGenVertexArrays(1, &vertex_array);
+    glBindVertexArray(vertex_array);
+    glEnableVertexAttribArray(vpos_location);
+    glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          (void *)offsetof(Vertex, pos));
+    glEnableVertexAttribArray(vcol_location);
+    glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          (void *)offsetof(Vertex, col));
+
+    glBindVertexArray(0);
+  }
+
+  void Draw() {
+    float mvp[16] = {
+        1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
+    };
+    glUseProgram(program);
+    glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat *)&mvp);
+    glBindVertexArray(vertex_array);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+  }
+
+  static std::shared_ptr<Triangle> create() {
+    auto p = std::make_shared<Triangle>();
+    return p;
+  }
+};
 
 struct DSP_MAT {
   float col[4];
@@ -199,6 +305,10 @@ void render_model(const std::shared_ptr<MODEL> &model) {
   }
 
   // glDeleteTextures(model->mat_count, dsp_model->texid);
+
+  static auto s_triangle = Triangle::create();
+
+  s_triangle->Draw();
 }
 
 // void model_set(int num, MODEL *p) {}

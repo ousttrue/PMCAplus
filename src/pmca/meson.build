@@ -16,8 +16,11 @@ imgui_dep = dependency(
     'imgui',
     default_options: ['default_library=static'],
 )
-
-deps = [py_dep, glfw_dep, imgui_dep, gl_dep, glu_dep, plog_dep]
+glew_dep = dependency(
+    'glew',
+    default_options: ['default_library=static'],
+)
+deps = [py_dep, glfw_dep, imgui_dep, gl_dep, glu_dep, plog_dep, glew_dep]
 
 # if get_option('buildtype') == 'debug'
 #     python_debug_dep = cc.find_library(
