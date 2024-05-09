@@ -2,6 +2,7 @@
 
 #include "PMCA_PyMod.h"
 #include "PMCA_renderer.h"
+#include "flags.h"
 #include "quat.h"
 
 #include "imgui.h"

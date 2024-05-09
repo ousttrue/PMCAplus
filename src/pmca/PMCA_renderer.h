@@ -1,15 +1,4 @@
 #pragma once
-#include <memory>
-
-struct FLAGS {
-  int button1;
-  int button2;
-  int button3;
-  int model_lock;
-  int quit;
-};
-
-extern FLAGS myflags;
 
 enum class Mode {
   // 初期化
@@ -19,7 +8,7 @@ enum class Mode {
   // 読み出し
   Read = 1,
   // 描画モデル読み出し
-  ReadModel = 2,
+  // ReadModel = 2,
   // テクスチャはそのままで再セット
   Reset = 3,
 };
@@ -46,6 +35,5 @@ struct VIEW_STATE {
   VIEW_STATE();
 };
 
-void *model_mgr(Mode flag, int num, void *p);
 int setup_opengl();
 void draw_screen(const VIEW_STATE &vs);

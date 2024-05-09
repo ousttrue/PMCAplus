@@ -2,7 +2,8 @@
 #include <thread>
 
 #include "PMCA_PyMod.h"
-#include "PMCA_renderer.h"
+#include "dsp_model.h"
+#include "flags.h"
 #include "mPMD.h"
 
 #define PMCA_MODULE
@@ -67,20 +68,20 @@ int PyList_to_Array_UShort(unsigned short *output, PyObject *List, int size) {
   return 0;
 }
 
-int PyList_to_Array_Str(char **output, PyObject *List, int count, int len) {
-  auto maxlen = (Py_ssize_t)len - 1;
-  for (int i = 0; i < count; i++) {
+std::vector<std::string> PyList_to_Array_Str(PyObject *List) {
+  auto size = PyList_GET_SIZE(List);
+  std::vector<std::string> list;
+  for (size_t i = 0; i < size; i++) {
     auto tmp = PyList_GetItem(List, i);
-    // op = output + val*i;
-    // p = PyBytes_AsString(tmp);
-    // printf("b %p\n", &output[i]);
-    // strncpy(output[i], PyBytes_AsString(tmp), maxlen);
     char *p;
-    PyBytes_AsStringAndSize(tmp, &p, &maxlen);
-    strncpy(output[i], p, maxlen);
-    // printf("a %p %s\n", output[i], output[i]);
+    Py_ssize_t maxlen;
+    if (PyBytes_AsStringAndSize(tmp, &p, &maxlen) == 0) {
+      list.push_back(p);
+    } else {
+      list.push_back("");
+    }
   }
-  return 0;
+  return list;
 }
 
 /************************************************************/
@@ -607,20 +608,14 @@ static PyObject *setToon(PyObject *self, PyObject *args) {
                         &tmp))
     Py_RETURN_FALSE;
 
+  auto list = PyList_to_Array_Str(tmp);
+
   auto model = g_model[num];
-  char *p[10];
-  for (i = 0; i < 10; i++) {
-    p[i] = model->toon[i].data();
+  for (size_t i = 0; i < list.size() && i < 10; ++i) {
+    model->toon[i] = list[i];
   }
 
-  PyList_to_Array_Str(p, tmp, 10, 100);
-  /*
-  for(i=0; i<10; i++){
-          strncpy(model->toon[i], p[i], 100);
-          //printf("%s %s\n",model->toon[i], p[i]);
-  }*/
-
-  return Py_BuildValue("i", 0);
+  Py_RETURN_TRUE;
 }
 
 static PyObject *setToonPath(PyObject *self, PyObject *args) {
@@ -629,20 +624,14 @@ static PyObject *setToonPath(PyObject *self, PyObject *args) {
   if (!PyArg_ParseTuple(args, "iO", &num, &tmp))
     Py_RETURN_FALSE;
 
+  auto list = PyList_to_Array_Str(tmp);
+
   auto model = g_model[num];
-  char *p[10];
-  for (int i = 0; i < 10; i++) {
-    p[i] = model->toon_path[i].data();
+  for (size_t i = 0; i < list.size() && i < 10; ++i) {
+    model->toon_path[i] = list[i];
   }
 
-  PyList_to_Array_Str(p, tmp, 10, PATH_LEN);
-  /*
-  for(i=0; i<10; i++){
-          strncpy(model->toon_path[i], p[i], PATH_LEN);
-          //printf("%s %s\n",model->toon[i], p[i]);
-  }
-  */
-  return Py_BuildValue("i", 0);
+  Py_RETURN_TRUE;
 }
 
 static PyObject *setRb(PyObject *self, PyObject *args) {
@@ -782,7 +771,6 @@ static PyObject *Init_PMD(PyObject *self, PyObject *args) {
   for (int i = 0; i < MODEL_COUNT; i++) {
     g_model[i] = MODEL::create();
   }
-  model_mgr(Mode::Init, 0, NULL);
   return Py_BuildValue("i", 0);
 }
 
@@ -976,21 +964,19 @@ static PyObject *Adjust_Joints(PyObject *self, PyObject *args) {
 
 static PyObject *PMD_view_set(PyObject *self, PyObject *args) {
   const char *str;
-  int num, ret = 0;
-
+  int num;
   if (!PyArg_ParseTuple(args, "is", &num, &str))
     Py_RETURN_FALSE;
-  if (strcmp(str, "replace") == 0) {
-    model_mgr(Mode::Write, 0, &g_model[num]);
-  } else {
+
+  if (strcmp(str, "replace") != 0) {
     printf("unexpected string '%s'\n", str);
-    ret = 1;
+    Py_RETURN_FALSE;
   }
 
-  return Py_BuildValue("i", ret);
+  myflags.current_model = g_model[num];
+  Py_RETURN_TRUE;
 }
 
-/*************************************************************************************************/
 static PyObject *MODEL_LOCK(PyObject *self, PyObject *args) {
   int num;
   if (!PyArg_ParseTuple(args, "i", &num))

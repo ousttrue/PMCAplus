@@ -8,8 +8,8 @@
             "name": "(Windows) Launch",
             "type": "cppvsdbg",
             "request": "launch",
-            // "program": "C:/Python311/python.exe",
-            "program": "${env:LOCALAPPDATA}/Programs/Python/Python311/python.exe",
+            "program": "C:/Python311/python.exe",
+            // "program": "${env:LOCALAPPDATA}/Programs/Python/Python311/python.exe",
             "args": [
                 "-m",
                 "PyPMCA"

@@ -33,6 +33,7 @@ py.extension_module(
     'PMCA_PyMod.cpp',
     'PMCA_glfw.cpp',
     'PMCA_renderer.cpp',
+    'dsp_model.cpp',
     'mlib_PMD_edit01.cpp',
     'mPMD.cpp',
     'quat.cpp',

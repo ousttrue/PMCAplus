@@ -607,7 +607,7 @@ int print_PMD(MODEL *model, const char file_name[]) {
   }
 
   for (i = 0; i < 10; i++) {
-    fprintf(txt, "%s\n", model->toon[i]);
+    fprintf(txt, "%s\n", model->toon[i].c_str());
   }
 
   fprintf(txt, "剛体数:%zu\n", model->rbody.size());
