@@ -1,4 +1,5 @@
 from typing import Sequence
+import dataclasses
 
 
 class MATERIAL:
@@ -10,7 +11,7 @@ class MATERIAL:
         spec_col: tuple[float, float, float],
         mirr_col: tuple[float, float, float],
         toon: int,
-        edge: float,
+        edge: int,
         face_count: int,
         tex: bytes,
         sph: bytes,
@@ -31,58 +32,86 @@ class MATERIAL:
         self.sph_path = sph_path.decode("cp932", "replace")
 
 
+@dataclasses.dataclass
 class TOON:
-    def __init__(
+    name: tuple[
+        str,
+        str,
+        str,
+        str,
+        str,
+        str,
+        str,
+        str,
+        str,
+        str,
+    ] = (
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+    )
+    path: tuple[
+        str,
+        str,
+        str,
+        str,
+        str,
+        str,
+        str,
+        str,
+        str,
+        str,
+    ] = (
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+    )
+
+    def name_cp932(
         self,
-        name: tuple[
-            str,
-            str,
-            str,
-            str,
-            str,
-            str,
-            str,
-            str,
-            str,
-            str,
-        ] = (
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-        ),
-        path: tuple[
-            str,
-            str,
-            str,
-            str,
-            str,
-            str,
-            str,
-            str,
-            str,
-            str,
-        ] = (
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-        ),
-    ):
-        self.name = name
-        self.path = path
+    ) -> tuple[bytes, bytes, bytes, bytes, bytes, bytes, bytes, bytes, bytes, bytes]:
+        return (
+            self.name[0].encode("cp932", "replace"),
+            self.name[1].encode("cp932", "replace"),
+            self.name[2].encode("cp932", "replace"),
+            self.name[3].encode("cp932", "replace"),
+            self.name[4].encode("cp932", "replace"),
+            self.name[5].encode("cp932", "replace"),
+            self.name[6].encode("cp932", "replace"),
+            self.name[7].encode("cp932", "replace"),
+            self.name[8].encode("cp932", "replace"),
+            self.name[9].encode("cp932", "replace"),
+        )
+
+    def path_cp932(
+        self,
+    ) -> tuple[bytes, bytes, bytes, bytes, bytes, bytes, bytes, bytes, bytes, bytes]:
+        return (
+            self.path[0].encode("cp932", "replace"),
+            self.path[1].encode("cp932", "replace"),
+            self.path[2].encode("cp932", "replace"),
+            self.path[3].encode("cp932", "replace"),
+            self.path[4].encode("cp932", "replace"),
+            self.path[5].encode("cp932", "replace"),
+            self.path[6].encode("cp932", "replace"),
+            self.path[7].encode("cp932", "replace"),
+            self.path[8].encode("cp932", "replace"),
+            self.path[9].encode("cp932", "replace"),
+        )
 
     @staticmethod
     def from_bytes(name: Sequence[bytes], path: Sequence[bytes]) -> "TOON":

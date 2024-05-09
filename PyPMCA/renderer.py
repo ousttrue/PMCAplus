@@ -195,7 +195,7 @@ def Set_PMD(num: int, model: pmd_type.PMD):
 
     for i, x in enumerate(model.vt):
         PMCA.setVt(
-            num, i, x.loc, x.nor, x.uv, x.bone_num[0], x.bone_num[1], x.weight, x.edge
+            num, i, x.loc, x.nor, x.uv, x.bone_num0, x.bone_num1, x.weight, x.edge
         )
 
     for i, x in enumerate(model.face):
@@ -213,18 +213,18 @@ def Set_PMD(num: int, model: pmd_type.PMD):
             x.toon,
             x.edge,
             x.face_count,
-            bytes(x.tex.encode("cp932", "replace")),
-            bytes(x.sph.encode("cp932", "replace")),
-            bytes(x.tex_path.encode("cp932", "replace")),
-            bytes(x.sph_path.encode("cp932", "replace")),
+            x.tex.encode("cp932", "replace"),
+            x.sph.encode("cp932", "replace"),
+            x.tex_path.encode("cp932", "replace"),
+            x.sph_path.encode("cp932", "replace"),
         )
 
     for i, x in enumerate(model.bone):
         PMCA.setBone(
             num,
             i,
-            bytes(x.name.encode("cp932", "replace")),
-            bytes(x.name_eng.encode("cp932", "replace")),
+            x.name.encode("cp932", "replace"),
+            x.name_eng.encode("cp932", "replace"),
             x.parent,
             x.tail,
             x.type,
@@ -234,7 +234,14 @@ def Set_PMD(num: int, model: pmd_type.PMD):
 
     for i, x in enumerate(model.IK_list):
         PMCA.setIK(
-            num, i, x.index, x.tail_index, len(x.child), x.iterations, x.weight, x.child
+            num,
+            i,
+            x.index,
+            x.target_index,
+            len(x.chain),
+            x.iterations,
+            x.weight,
+            x.chain,
         )
 
     for i, x in enumerate(model.skin):
@@ -259,13 +266,8 @@ def Set_PMD(num: int, model: pmd_type.PMD):
     for i, x in enumerate(model.bone_dsp):
         PMCA.setBone_disp(num, i, x.index, x.group)
 
-    tmp = []
-    for i, x in enumerate(model.toon.name):
-        tmp.append(bytes(x.encode("cp932", "replace")))
-    PMCA.setToon(num, tmp)
-    for i, x in enumerate(model.toon.path):
-        tmp.append(bytes(x.encode("cp932", "replace")))
-    PMCA.setToonPath(num, tmp)
+    PMCA.setToon(num, model.toon.name_cp932())
+    PMCA.setToonPath(num, model.toon.path_cp932())
 
     for i, x in enumerate(model.rb):
         PMCA.setRb(

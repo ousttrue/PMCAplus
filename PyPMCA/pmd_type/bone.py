@@ -9,12 +9,16 @@ class BONE:
         IK: int,
         loc: tuple[float, float, float],
     ):
-        if type(name) == bytes:
-            name = name.decode("cp932", "replace")
-        if type(name_eng) == bytes:
-            name_eng = name_eng.decode("cp932", "replace")
-        self.name = name
-        self.name_eng = name_eng
+        match name:
+            case str():
+                self.name = name
+            case bytes():
+                self.name = name.decode("cp932", "replace")
+        match name_eng:
+            case str():
+                self.name_eng = name_eng
+            case bytes():
+                self.name_eng = name_eng.decode("cp932", "replace")
         self.parent = parent
         self.tail = tail
         self.type = btype
