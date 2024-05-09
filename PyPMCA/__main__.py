@@ -4,11 +4,10 @@ import pathlib
 
 from .gui.main_frame import MainFrame
 from . import PMCA_data
-from .renderer import Renderer
+from . import renderer
 
 
 APPNAME = "PMCA v0.0.6r10"
-# COMMANDS = {}
 HERE = pathlib.Path(__file__).parent
 LOGGER = logging.getLogger(__name__)
 
@@ -42,14 +41,14 @@ def main(dir: pathlib.Path):
     cnl_file = pathlib.Path("./last.cnl")
 
     # gui
-    with Renderer() as renderer:
+    with renderer.Renderer() as r:
         root = tkinter.Tk()
         app = MainFrame(APPNAME, data, master=root)
         app.load_CNL_File(cnl_file)
 
-        renderer.start_thread()
+        r.start_thread()
+        renderer.refresh(app)
 
-        app.refresh()
         app.mainloop()
 
         data.save_CNL_File(cnl_file)

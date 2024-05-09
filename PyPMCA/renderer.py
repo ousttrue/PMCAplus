@@ -573,3 +573,206 @@ def Set_MATERIAL(
                 x.tex_path.encode("cp932", "replace"),
                 x.sph_path.encode("cp932", "replace"),
             )
+
+
+def check_PMD(self) -> None:
+    refresh(self, level=3)
+    info_data = PMCA.getInfo(0)
+    info = pmd.INFO(info_data)
+    string = "name :" + info.name
+    string += "\ncomment :\n" + info.comment
+    string += "\n頂点数 :" + str(info_data["vt_count"])
+    string += "\n面数　 :" + str(info_data["face_count"])
+    string += "\n材質数 :" + str(info_data["mat_count"])
+    string += "\nボーン数 :" + str(info_data["bone_count"])
+    string += "\nIK数   :" + str(info_data["IK_count"])
+    string += "\n表情数 :" + str(info_data["skin_count"])
+    string += "\nボーングループ数 :" + str(info_data["bone_group_count"])
+    string += "\nボーン表示数 :" + str(info_data["bone_disp_count"])
+
+    string += "\n\n英語対応 :" + str(info_data["eng_support"])
+    string += "\n剛体数 :" + str(info_data["rb_count"])
+    string += "\nジョイント数 :" + str(info_data["joint_count"])
+
+    root = Toplevel()
+    root.transient(self)
+    close = QUIT(root)
+    frame = Frame(root)
+    frame.log = Text(frame)
+    frame.log.insert(END, string)
+    frame.log["state"] = "disabled"
+    frame.yscroll = Scrollbar(frame, orient=VERTICAL, command=frame.log.yview)
+    frame.yscroll.pack(side=RIGHT, fill=Y, expand=0, anchor=E)
+    frame.log["yscrollcommand"] = frame.yscroll.set
+    frame.log.pack(side=RIGHT, fill=BOTH, expand=1)
+    frame.pack(fill=BOTH, expand=1)
+    Button(root, text="OK", command=close).pack()
+    root.mainloop()
+
+
+def refresh(self, level: int = 0):
+    self.model_tab.set_tree(self.tree, True)
+
+    # モデル組み立て
+    PMCA.MODEL_LOCK(1)
+
+    if level < 1:
+        LOGGER.info("モデル組立て")
+
+        PMCA.Create_PMD(0)
+
+        # PMCA.Load_PMD(0, "./testmodels/001.pmd")
+        assemble(self.tree, 0, self)
+
+        PMCA.Copy_PMD(0, 1)
+    else:
+        PMCA.Copy_PMD(1, 0)
+
+    if level < 2:
+        # 材質関連
+        LOGGER.info("材質置換")
+        Get_MATERIAL(self.mat_rep, self.data.mats_list)
+        self.mat_entry = [[], []]
+        for v in self.mat_rep.mat.values():
+            if v.num >= 0:
+                self.mat_entry[0].append(v.mat.name + "  " + v.sel.name)
+                self.mat_entry[1].append(v.mat.name)
+        self.color_tab.l_tree.set_entry(self.mat_entry[0], sel=self.cur_mat)
+        Set_MATERIAL(self.mat_rep)
+        PMCA.Copy_PMD(0, 2)
+    else:
+        PMCA.Copy_PMD(2, 0)
+
+    if level < 3:
+        LOGGER.info("体型調整")
+        info_data = PMCA.getInfo(0)
+        info = pmd_type.INFO(info_data)
+
+        tmpbone: list[pmd_type.BONE] = []
+        for i in range(info_data["bone_count"]):
+            tmp = PMCA.getBone(0, i)
+            assert tmp
+            tmpbone.append(
+                pmd_type.BONE(
+                    tmp["name"],
+                    tmp["name_eng"],
+                    tmp["parent"],
+                    tmp["tail"],
+                    tmp["type"],
+                    tmp["IK"],
+                    tmp["loc"],
+                )
+            )
+        refbone = None
+        refbone_index = None
+        for i, x in enumerate(tmpbone):
+            if x.name == "右足首":
+                refbone = x
+                refbone_index = i
+                break
+
+        for y in self.transform_data:
+            PMCA.Resize_Model(0, y.scale)
+            for x in y.bones:
+                PMCA.Resize_Bone(
+                    0, x.name.encode("cp932", "replace"), x.length, x.thick
+                )
+                PMCA.Move_Bone(
+                    0,
+                    x.name.encode("cp932", "replace"),
+                    x.pos[0],
+                    x.pos[1],
+                    x.pos[2],
+                )
+
+        if refbone != None:
+            newbone = None
+            tmp = PMCA.getBone(0, refbone_index)
+            assert tmp
+            newbone = pmd_type.BONE(
+                tmp["name"],
+                tmp["name_eng"],
+                tmp["parent"],
+                tmp["tail"],
+                tmp["type"],
+                tmp["IK"],
+                tmp["loc"],
+            )
+
+            dy = refbone.loc[1] - newbone.loc[1]
+            for x in tmpbone:
+                i = x.parent
+                count = 0
+                while i < info_data["bone_count"] and count < info_data["bone_count"]:
+                    if tmpbone[i].name == "センター":
+                        PMCA.Move_Bone(0, x.name.encode("cp932", "replace"), 0, dy, 0)
+                        break
+                    i = tmpbone[i].parent
+                    count += 1
+
+            PMCA.Move_Bone(0, "センター".encode("cp932", "replace"), 0, dy, 0)
+            PMCA.Move_Bone(0, "+センター".encode("cp932", "replace"), 0, -dy, 0)
+
+        for y in self.transform_data:
+            PMCA.Move_Model(0, y.pos[0], y.pos[1], y.pos[2])
+
+        PMCA.Update_Skin(0)
+        PMCA.Adjust_Joints(0)
+        PMCA.Copy_PMD(0, 3)
+    else:
+        PMCA.Copy_PMD(3, 0)
+
+    self.info_tab.refresh(level)
+
+    if level < 3:
+        PMCA.PMD_view_set(0, "replace")  # テクスチャを変更しない
+    else:
+        PMCA.PMD_view_set(0, "replace")
+
+    PMCA.MODEL_LOCK(0)
+
+    wht = PMCA.getWHT(0)
+    self.transform_tab.info_frame.strvar.set(
+        "height     = %f\nwidth      = %f\nthickness = %f\n" % (wht[1], wht[0], wht[2])
+    )
+
+    LOGGER.info("Done")
+
+
+def save_PMD(self, name):
+    if self.export2folder:
+        dirc = name[0:-4]
+        os.mkdir(dirc)
+        tmp = name.rsplit("/", 1)
+        name = "%s/%s/%s" % (tmp[0], dirc.rsplit("/", 1)[1], tmp[1])
+
+    if PMCA.Write_PMD(0, name.encode(sysenc, "replace")) == 0:
+        # テクスチャコピー
+        dirc = name.rsplit("/", 1)[0]
+        dirc += "/"
+        info_data = PMCA.getInfo(0)
+        info = pmd.INFO(info_data)
+        for i in range(info.data["mat_count"]):
+            mat = pmd.MATERIAL(**PMCA.getMat(0, i))
+            if mat.tex != "":
+                try:
+                    shutil.copy(mat.tex_path, dirc)
+                except IOError:
+                    LOGGER.error("コピー失敗:%s" % (mat.tex_path))
+            if mat.sph != "":
+                try:
+                    shutil.copy(mat.sph_path, dirc)
+                except IOError:
+                    LOGGER.error("コピー失敗:%s" % (mat.sph_path))
+
+        toon = PMCA.getToon(0)
+        for i, x in enumerate(PMCA.getToonPath(0)):
+            toon[i] = toon[i].decode("cp932", "replace")
+            if toon[i] != "":
+                try:
+                    shutil.copy("toon/" + toon[i], dirc)
+                except IOError:
+                    try:
+                        shutil.copy("parts/" + toon[i], dirc)
+                    except IOError:
+                        LOGGER.error("コピー失敗:%s" % (toon[i]))
