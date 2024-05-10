@@ -4,7 +4,7 @@ import tkinter.filedialog
 import tkinter.ttk
 import PyPMCA.gui.listbox as listbox
 from .. import PMCA_data
-from .. import renderer
+from .. import native
 
 
 LOGGER = logging.getLogger(__name__)
@@ -160,4 +160,4 @@ class ModelTab(tkinter.ttk.Frame):
         tree_node.node.list_num = sel
         LOGGER.debug(f"{node}")
 
-        renderer.refresh(self.data)
+        native.refresh(self.data)

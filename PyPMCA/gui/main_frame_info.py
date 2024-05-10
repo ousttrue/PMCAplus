@@ -1,23 +1,16 @@
 import tkinter.ttk
-from .. import renderer
+import dataclasses
+from .. import native
 
 
+@dataclasses.dataclass
 class MODELINFO:
-    def __init__(
-        self,
-        name: str = "PMCAモデル",
-        name_l: str = "PMCAモデル",
-        comment: str = "",
-        name_eng: str = "PMCA model",
-        name_l_eng: str = "PMCA generated model",
-        comment_eng: str = "",
-    ):
-        self.name = name
-        self.name_l = name_l
-        self.comment = comment
-        self.name_eng = name_eng
-        self.name_l_eng = name_l_eng
-        self.comment_eng = comment_eng
+    name: str = "PMCAモデル"
+    name_l: str = "PMCAモデル"
+    comment: str = ""
+    name_eng: str = "PMCA model"
+    name_l_eng: str = "PMCA generated model"
+    comment_eng: str = ""
 
 
 class InfoTab(tkinter.ttk.Frame):
@@ -92,7 +85,7 @@ class InfoTab(tkinter.ttk.Frame):
         self.modelinfo.name = self.frame.name.get()
         self.modelinfo.name_l = self.frame.name_l.get()
         self.modelinfo.comment = self.frame.comment.get("1.0", tkinter.END)
-        renderer.Set_Name_Comment(
+        native.Set_Name_Comment(
             name=self.modelinfo.name,
             comment="%s\nAuthor:%s\nLicense:%s\n%s"
             % (self.modelinfo.name_l, str1, str2, self.modelinfo.comment),

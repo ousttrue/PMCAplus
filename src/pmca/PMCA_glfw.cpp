@@ -330,7 +330,9 @@ PyObject *WaitViewerThread(PyObject *self, PyObject *args) {
 
 PyObject *QuitViewerThread(PyObject *self, PyObject *args) {
   myflags.quit = 1;
-  g_thread.join();
+  if (g_thread.joinable()) {
+    g_thread.join();
+  }
   Py_RETURN_NONE;
 }
 

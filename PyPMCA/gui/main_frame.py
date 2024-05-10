@@ -9,18 +9,29 @@ import tkinter.ttk
 from .main_frame_model import ModelTab
 from .main_frame_color import ColorTab
 from .main_frame_transform import TransformTab
-from .main_frame_info import InfoTab
+from .main_frame_info import InfoTab, MODELINFO
 from .. import PMCA_data
 from .. import pmd_type
-from .. import renderer
+from .. import native
 
 
 LOGGER = logging.getLogger(__name__)
 
 
 class MainFrame(tkinter.ttk.Frame):
-    def __init__(self, title: str, data: PMCA_data.PMCAData, master: tkinter.Tk):
+    def __init__(
+        self,
+        title: str,
+        data: PMCA_data.PMCAData,
+        name: str,
+        name_l: str,
+        comment: list[str],
+        master: tkinter.Tk | None = None,
+    ):
+        if not master:
+            master = tkinter.Tk()
         super().__init__(master)
+
         self.export2folder = False
         self.data = data
         self.root = master
@@ -82,7 +93,7 @@ class MainFrame(tkinter.ttk.Frame):
             label="PMDフォーマットチェック", underline=0, command=self.savecheck_PMD
         )
         files.add_command(
-            label="PMD概要確認", underline=0, command=lambda: renderer.check_PMD(self)
+            label="PMD概要確認", underline=0, command=lambda: native.check_PMD(self)
         )
         files.add_command(label="PMD詳細確認", underline=0, command=self.propcheck_PMD)
         files.add_separator
@@ -101,6 +112,17 @@ class MainFrame(tkinter.ttk.Frame):
             label="材質をランダム選択", underline=0, command=self.rand_mat
         )
         editing.add_command(label="PMCA設定", underline=0, command=self.setting_dialog)
+
+    def on_refresh(self, w: float, h: float, t: float):
+        self.model_tab.set_tree(self.data.tree, True)
+        self.color_tab.l_tree.set_entry(self.data.mat_entry[0], sel=self.cur_mat)  # type: ignore
+        self.info_tab.refresh()
+        self.transform_tab.info_frame.strvar.set(  # type: ignore
+            "height     = %f\nwidth      = %f\nthickness = %f\n" % (w, h, t)
+        )
+
+    def get_info(self) -> MODELINFO:
+        return self.info_tab.modelinfo
 
     # functions menu
     def clear(self):

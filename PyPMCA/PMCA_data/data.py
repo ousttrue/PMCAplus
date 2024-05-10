@@ -126,19 +126,23 @@ class PMCAData:
 
         return info
 
-    def save_CNL_File(self, file: pathlib.Path) -> bool:
-        if self.tree_list[0].node.child[0] == None:
+    def save_CNL_File(
+        self, file: pathlib.Path, name: str, name_l: str, comment: str
+    ) -> bool:
+        if self.tree.children[0] == None:
             return False
 
         lines: list[str] = []
-        lines.append(self.modelinfo.name)
-        lines.append(self.modelinfo.name_l)
-        lines.append(self.modelinfo.comment)
+        lines.append(name)
+        lines.append(name_l)
+        lines.append(comment)
 
         lines.append("PARTS")
-        lines.extend(self.tree_list[0].node.child[0].node_to_text())
+        lines.extend(self.tree.children[0].node_to_text())
+
         lines.append("MATERIAL")
         lines.extend(self.mat_rep.list_to_text())
+
         lines.append("TRANSFORM")
         lines.extend(self.transform_data[0].list_to_text())
 
