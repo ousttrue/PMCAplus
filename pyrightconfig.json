@@ -1,6 +1,7 @@
 {
     "extraPaths": [
         "C:/ghq/github.com/ousttrue/glglue/src",
+        "D:/ghq/github.com/ousttrue/glglue/src",
         "C:/Python311/Lib/site-packages",
     ],
 }

@@ -99,7 +99,7 @@ class PMCAData:
             lines = src.splitlines()
             if lines[0] == "PMCA Parts list v2.0":
                 LOGGER.info("%s => [%s]", x.relative_to(dir), lines[0])
-                self.parts_list = PARTS.load_list(lines)
+                self.parts_list = [parts for parts in PARTS.parse(lines)]
                 continue
 
             if lines[0] == "PMCA Materials list v2.0":

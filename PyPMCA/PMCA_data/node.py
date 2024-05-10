@@ -39,58 +39,9 @@ class NODE:
             zip(self.parent.children, self.parent.parts.joint)
         ):
             if node == self:
+                assert node.joint == joint
                 return joint, i
         raise RuntimeError()
-
-    # def create_list(self) -> list["TREE_LIST"]:
-    #     l: list[TREE_LIST] = [
-    #         TREE_LIST(
-    #             node=self, depth=self.depth, text="  " * self.depth + self.parts.name
-    #         )
-    #     ]
-    #     for i, x in enumerate(self.children):
-    #         if x.parts:
-    #             l.append(
-    #                 TREE_LIST(
-    #                     node=self,
-    #                     depth=self.depth + 1,
-    #                     text=("  " * (self.depth + 1)) + x.parts.name,
-    #                     c_num=i,
-    #                 )
-    #             )
-    #             x.list_add(l)
-    #         elif self.parts.joint[i] != "":
-    #             l.append(
-    #                 TREE_LIST(
-    #                     node=self,
-    #                     depth=self.depth + 1,
-    #                     text="  " * (self.depth + 1) + "#" + self.parts.joint[i],
-    #                     c_num=i,
-    #                 )
-    #             )
-    #     return l
-
-    # def list_add(self, list: list[TREE_LIST]) -> None:
-    #     for i, x in enumerate(self.children):
-    #         if self.children[i].parts:
-    #             list.append(
-    #                 TREE_LIST(
-    #                     node=self,
-    #                     depth=self.depth + 1,
-    #                     text="  " * (self.depth + 1) + self.children[i].parts.name,
-    #                     c_num=i,
-    #                 )
-    #             )
-    #             x.list_add(list)
-    #         elif self.parts.joint[i] != "":
-    #             list.append(
-    #                 TREE_LIST(
-    #                     node=self,
-    #                     depth=self.depth + 1,
-    #                     text="  " * (self.depth + 1) + "#" + self.parts.joint[i],
-    #                     c_num=i,
-    #                 )
-    #             )
 
     def node_to_text(self) -> list[str]:
         lines: list[str] = []
