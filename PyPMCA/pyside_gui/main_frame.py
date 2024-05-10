@@ -37,6 +37,30 @@ class PmcaNodeModel(GenericTreeModel[PMCA_data.NODE]):
             get_col,
         )
 
+    def root_index(self) -> QtCore.QModelIndex:
+        return self.createIndex(0, 0, self.root.children[0])
+
+
+class PartsListModel(GenericTreeModel[PMCA_data.PARTS]):
+
+    def __init__(self, header: str, parts_list: list[PMCA_data.PARTS]) -> None:
+        super().__init__(
+            None,
+            [header],
+            lambda x: None,
+            lambda x: 0 if x else len(parts_list),
+            lambda x, row: parts_list[row],
+            lambda x, col: x.name,
+        )
+        self.parts_list = parts_list
+
+    def index_from_item(self, target: PMCA_data.PARTS) -> QtCore.QModelIndex:
+        for i, parts in enumerate(self.parts_list):
+            if parts == target:
+                return self.createIndex(i, 0, parts)
+
+        return QtCore.QModelIndex()
+
 
 class ModelTab(QtWidgets.QWidget):
     """
@@ -61,18 +85,25 @@ class ModelTab(QtWidgets.QWidget):
         # left
         self.tree = QtWidgets.QTreeView()
         hbox.addWidget(self.tree)
-        self.tree.setModel(PmcaNodeModel(data.tree))
+        tree_model = PmcaNodeModel(data.tree)
+        self.tree.setModel(tree_model)
         self.tree.expandAll()
         self.tree.selectionModel().selectionChanged.connect(self.onSelectJoint)
+        self.tree.setIndentation(12)
 
         # right
-        self.list = QtWidgets.QListView()
+        self.list = QtWidgets.QTreeView()
         hbox.addWidget(self.list)
 
         # bottom
         self.comment = QtWidgets.QLabel()
         self.comment.setText("comment:")
         vbox.addWidget(self.comment)
+
+        self.tree.selectionModel().setCurrentIndex(
+            tree_model.root_index(),
+            QtCore.QItemSelectionModel.SelectionFlag.ClearAndSelect,
+        )
 
     def onSelectJoint(
         self, selected: QtCore.QItemSelection, deselected: QtCore.QItemSelection
@@ -81,7 +112,17 @@ class ModelTab(QtWidgets.QWidget):
         if len(indexes) > 0:
             index = indexes[0]
             item = cast(PMCA_data.NODE, index.internalPointer())
-            print(item)
+
+            parts = [
+                parts for parts in self.data.parts_list if item.joint in parts.type
+            ]
+            list_model = PartsListModel(f"joints for [{item.joint}]", parts)
+            self.list.setModel(list_model)
+
+            self.list.selectionModel().setCurrentIndex(
+                list_model.index_from_item(item.parts),
+                QtCore.QItemSelectionModel.SelectionFlag.ClearAndSelect,
+            )
 
 
 class ColorTab(QtWidgets.QWidget):
@@ -127,6 +168,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # self.info_tab = InfoTab()
         # self.addTab(self.info_tab, "Info")
+
+    def closeEvent(self, _) -> None:  # type: ignore
+        self.scene.shutdown()
 
 
 class App:

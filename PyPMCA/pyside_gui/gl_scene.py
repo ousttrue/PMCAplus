@@ -44,8 +44,17 @@ class GlScene:
         self.drawables: list[Drawable] = []
         self.model_src: PmdSrc | None = None
         self.model_drawable: Drawable | None = None
+        self.is_shutdown = False
+
+    def shutdown(self) -> None:
+        self.drawables.clear()
+        self.model_drawable = None
+        self.is_shutdown = True
 
     def lazy_initialize(self):
+        if self.is_shutdown:
+            return
+
         if len(self.drawables) == 0:
             line_shader = glo.Shader.load_from_pkg("glglue", "assets/line")
             assert line_shader

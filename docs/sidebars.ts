@@ -23,6 +23,7 @@ const sidebars: SidebarsConfig = {
         'data/list_txt',
         'data/parts',
         'data/materials',
+        'data/transforms',
         'data/cnl',
       ],
     },
