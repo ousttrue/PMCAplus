@@ -25,18 +25,25 @@ class NODE:
 
     def __init__(
         self,
-        parts: PARTS,
+        joint: str,
+        parts: PARTS | None,
         depth: int = 0,
-        children: list["NODE|None"] = [],
+        children: list["NODE"] = [],
         list_num: int = -1,
+        parent: "NODE|None" = None,
     ):
+        self.joint = joint
         self.parts = parts
         self.depth = depth
         self.children = children
         self.list_num = list_num
+        self.parent = parent
 
     def __str__(self) -> str:
-        return f"[{self.parts.name}]"
+        if self.parts:
+            return f"{self.joint}#{self.parts.name}"
+        else:
+            return f"{self.joint}#"
 
     def create_list(self) -> list["TREE_LIST"]:
         l: list[TREE_LIST] = [
@@ -68,7 +75,7 @@ class NODE:
 
     def list_add(self, list: list[TREE_LIST]) -> None:
         for i, x in enumerate(self.children):
-            if x != None:
+            if self.children[i].parts:
                 list.append(
                     TREE_LIST(
                         node=self,

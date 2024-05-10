@@ -402,7 +402,7 @@ def assemble(self: PMCA_data.NODE, num: int) -> AssembleContext:
     context.post_process(self.parts.props)
 
     for x in self.children:
-        if x != None:
+        if x.parts:
             assemble_child(x, num, context)
 
     PMCA.Sort_PMD(num)
@@ -412,6 +412,7 @@ def assemble(self: PMCA_data.NODE, num: int) -> AssembleContext:
 
 
 def assemble_child(self: PMCA_data.NODE, num: int, context: AssembleContext):
+    assert self.parts
     LOGGER.info("パーツのパス:%s" % (self.parts.path))
 
     ret = PMCA.Load_PMD(4, self.parts.path.encode(sys.getdefaultencoding(), "replace"))
@@ -427,7 +428,7 @@ def assemble_child(self: PMCA_data.NODE, num: int, context: AssembleContext):
     context.post_process(self.parts.props)
 
     for x in self.children:
-        if x != None:
+        if x.parts:
             assemble_child(x, num, context)
 
 

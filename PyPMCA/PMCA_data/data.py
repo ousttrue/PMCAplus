@@ -63,9 +63,10 @@ class PMCAData:
         self.parts_list: list[PARTS] = []
         self.transform_list: list[MODEL_TRANS_DATA] = []
         self.tree = NODE(
+            "__root__",
             parts=PARTS(name="ROOT", joint=["root"]),
             depth=-1,
-            children=[None],
+            children=[NODE("root", None)],
         )
         self.mat_rep = MAT_REP()
         self.mat_entry: tuple[list[str], list[str]] = ([], [])

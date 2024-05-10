@@ -71,15 +71,29 @@ def read_parts(
                             tp = y
                             break
 
-            if tp != None:
+            if tp:
+                joint = curnode.parts.joint[child_nums[-1]]
                 curnode.children[child_nums[-1]] = NODE(
-                    parts=y, depth=curnode.depth + 1, children=[]
+                    joint,
+                    parts=y,
+                    depth=curnode.depth + 1,
+                    children=[],
+                    parent=curnode,
                 )
                 parents.append(curnode)
                 curnode = curnode.children[child_nums[-1]]
                 child_nums.append(0)
-                for x in curnode.parts.joint:
-                    curnode.children.append(None)
+                if curnode.parts:
+                    for joint in curnode.parts.joint:
+                        curnode.children.append(
+                            NODE(
+                                joint,
+                                parts=None,
+                                depth=curnode.depth + 1,
+                                children=[],
+                                parent=curnode,
+                            )
+                        )
 
             else:
                 depc = 1

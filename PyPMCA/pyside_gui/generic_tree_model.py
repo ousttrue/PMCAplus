@@ -1,13 +1,8 @@
-from typing import Generic, TypeVar, Callable, cast, Protocol
+from typing import Generic, TypeVar, Callable, cast
 from PySide6 import QtCore
 
 
-class NodeItem(Protocol):
-    parent: "Self|None"
-    children: list["Self"]
-
-
-T = TypeVar("T", bound=NodeItem)
+T = TypeVar("T")
 
 
 class GenericTreeModel(QtCore.QAbstractItemModel, Generic[T]):
@@ -15,10 +10,16 @@ class GenericTreeModel(QtCore.QAbstractItemModel, Generic[T]):
         self,
         root: T,
         headers: list[str],
+        get_parent: Callable[[T], T | None],
+        get_child_count: Callable[[T], int],
+        get_child: Callable[[T, int], T],
         column_from_item: Callable[[T, int], str],
     ):
         super().__init__()
         self.headers = headers
+        self.get_parent = get_parent
+        self.get_child_count = get_child_count
+        self.get_child = get_child
         self.column_from_item = column_from_item
         self.root = root
 
@@ -39,16 +40,17 @@ class GenericTreeModel(QtCore.QAbstractItemModel, Generic[T]):
                 pass
 
     def index(  # type: ignore
-        self, row: int, column: int, parent: QtCore.QModelIndex | QtCore.QPersistentModelIndex
+        self,
+        row: int,
+        column: int,
+        parent: QtCore.QModelIndex | QtCore.QPersistentModelIndex,
     ) -> QtCore.QModelIndex:
         if parent.isValid():
             parentItem: T = parent.internalPointer()  # type: ignore
-            childItem = parentItem.children[row]
-            return self.createIndex(row, column, childItem)
         else:
             parentItem = self.root
-            childItem = parentItem.children[row]
-            return self.createIndex(row, column, childItem)
+        childItem = self.get_child(parentItem, row)
+        return self.createIndex(row, column, childItem)
 
     def parent(  # type: ignore
         self,
@@ -57,15 +59,16 @@ class GenericTreeModel(QtCore.QAbstractItemModel, Generic[T]):
         if child.isValid():
             childItem = cast(T, child.internalPointer())  # type: ignore
             # row, parentItem = self.get_parent(childItem)
-            if childItem and childItem.parent:
-                return self.createIndex(0, 0, childItem.parent)
+            if childItem:
+                parentItem = self.get_parent(childItem)
+                if parentItem:
+                    return self.createIndex(0, 0, parentItem)
 
         return QtCore.QModelIndex()
 
     def rowCount(self, parent: QtCore.QModelIndex | QtCore.QPersistentModelIndex) -> int:  # type: ignore
         if parent.isValid():
             parentItem: T = parent.internalPointer()  # type: ignore
-            return len(parentItem.children)
         else:
             parentItem = self.root
-            return len(parentItem.children)
+        return self.get_child_count(parentItem)

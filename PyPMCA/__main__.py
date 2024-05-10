@@ -57,10 +57,10 @@ def main(dir: pathlib.Path):
 
         app.mainloop()
 
-        model_info = app.get_info()
-        data.save_CNL_File(
-            cnl_file, model_info.name, model_info.name_l, model_info.comment
-        )
+        # model_info = app.get_info()
+        # data.save_CNL_File(
+        #     cnl_file, model_info.name, model_info.name_l, model_info.comment
+        # )
 
 
 if __name__ == "__main__":

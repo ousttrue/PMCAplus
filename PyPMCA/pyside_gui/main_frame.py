@@ -1,34 +1,32 @@
-from typing import Sequence
 import sys
 from PySide6 import QtWidgets, QtCore
 from .. import PMCA_data
 from .generic_tree_model import GenericTreeModel
 
 
-# class NodeWrap:
-#     def __init__(self, src: PMCA_data.NODE | None, parent: "NodeWrap|None" = None):
-#         self.src = src
-#         self.parent = parent
-
-#     @property
-#     def name(self) -> str:
-#         if self.src:
-#             return self.src.parts.name
-#         else:
-#             return "None"
-
-#     @property
-#     def children(self) -> Sequence["NodeWrap"]:
-#         if self.src:
-#             return [NodeWrap(child, self) for child in self.src.children]
-#         else:
-#             return []
-
-
-class PmcaNodeModel(GenericTreeModel[NodeWrap]):
+class PmcaNodeModel(GenericTreeModel[PMCA_data.NODE]):
 
     def __init__(self, root: PMCA_data.NODE) -> None:
-        super().__init__(NodeWrap(root), ["name"], lambda x, _: x.src.parts.name)
+        def get_col(node: PMCA_data.NODE, col: int) -> str:
+            match col:
+                case 0:
+                    return node.joint
+                case 1:
+                    if node.parts:
+                        return node.parts.name
+                    else:
+                        return ""
+                case _:
+                    return "error"
+
+        super().__init__(
+            root,
+            ["joint", "name"],
+            lambda x: x.parent,
+            lambda x: len(x.children),
+            lambda x, row: x.children[row],
+            get_col,
+        )
 
 
 class ModelTab(QtWidgets.QWidget):
