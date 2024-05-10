@@ -1,26 +1,18 @@
-from typing import Any
+import dataclasses
 
 
+@dataclasses.dataclass
 class PARTS:
     """
     パーツデータ
     """
 
-    def __init__(
-        self,
-        name: str = "",
-        comment: str = "",
-        path: str = "",
-        t: list[str] = [],
-        joint: list[str] = [],
-        props: dict[str, str] = {},
-    ):
-        self.name = name
-        self.comment = comment
-        self.path = path
-        self.type = t
-        self.joint = joint
-        self.props = props
+    name: str = ""
+    comment: str = ""
+    path: str = ""
+    type: list[str] = dataclasses.field(default_factory=list)
+    joint: list[str] = dataclasses.field(default_factory=list)
+    props: dict[str, str] = dataclasses.field(default_factory=dict)
 
     @staticmethod
     def load_list(lines: list[str]) -> list["PARTS"]:
@@ -54,7 +46,7 @@ class PARTS:
             elif line[0] == "[type]":
                 active.type = active.type + line[1].split(",")
             elif line[0] == "[joint]":
-                active.joint = active.joint + line[1].split(",")
+                active.joint = active.joint + line[1].strip().split(",")
             elif line[0][:1] == "[" and line[0][-1:] == "]":
                 if line[0][1:-1] in active.props:
                     active.props[line[0][1:-1]].append(line[1])

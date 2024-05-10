@@ -60,6 +60,7 @@ def read_parts(
         elif sp[0] == "[Child]":
 
             tp = None
+            y: PARTS | None = None
             if tmp[0] != None:
                 for y in parts_list:
                     if y.name == tmp[0]:
@@ -76,7 +77,6 @@ def read_parts(
                 curnode.children[child_nums[-1]] = NODE(
                     joint,
                     parts=y,
-                    depth=curnode.depth + 1,
                     children=[],
                     parent=curnode,
                 )
@@ -89,7 +89,6 @@ def read_parts(
                             NODE(
                                 joint,
                                 parts=None,
-                                depth=curnode.depth + 1,
                                 children=[],
                                 parent=curnode,
                             )

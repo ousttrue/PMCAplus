@@ -25,7 +25,7 @@ class ModelTab(tkinter.ttk.Frame):
 
         self.frame = tkinter.ttk.Frame(self)
 
-        # left
+        # left(joint selector)
         self.parts_frame = tkinter.ttk.LabelFrame(self.frame, text="Model")
         self.l_tree = listbox.LISTBOX(self.parts_frame)
         self.parts_frame.pack(
@@ -33,7 +33,7 @@ class ModelTab(tkinter.ttk.Frame):
         )
         self.l_tree.listbox.bind("<ButtonRelease-1>", self.tree_click)
 
-        # right
+        # right(parts list for joint)
         self.parts_frame = tkinter.ttk.LabelFrame(self.frame, text="Parts")
         self.l_sel = listbox.LISTBOX(self.parts_frame)
         self.parts_frame.pack(
@@ -61,8 +61,8 @@ class ModelTab(tkinter.ttk.Frame):
         sel_t = int(self.l_tree.listbox.curselection()[0]) if use_sel else 0  # type: ignore
 
         tree_entry: list[str] = []
-        for x in node.create_list():
-            tree_entry.append(x.text)
+        for x, level in node.traverse():
+            tree_entry.append(f'{"  " * level}{x}')
         tree_entry = tree_entry[1:]
 
         self.l_tree.set_entry(tree_entry, sel=sel_t)  # type: ignore
@@ -75,89 +75,90 @@ class ModelTab(tkinter.ttk.Frame):
                     self.parts_entry.append((x.name, x))
                     break
         self.parts_entry.append(("#外部モデル読み込み", "load"))
-        self.l_sel.set_entry([k for k, _ in self.parts_entry])  # type: ignore
+        self.l_sel.set_entry([k for k, _ in self.parts_entry], sel=self.get_sel_parts(self.data.tree.children[0]))  # type: ignore
 
     def tree_click(self, _event: Any):
         self.comment.set("comment:")
         sel_t = int(self.l_tree.listbox.curselection()[0]) + 1  # type: ignore
-        joint = self.data.tree_list[sel_t].node.parts.joint[
-            self.data.tree_list[sel_t].c_num
-        ]
-        self.update_parts_entry(sel_t, joint)
+        node = self.data.get_node(sel_t)
+        joint, joint_index = node.get_joint()
+        self.update_parts_entry(node, joint, joint_index)
 
-    def update_parts_entry(self, sel_t: int | None = None, joint: str | None = None):
+    def update_parts_entry(self, node: PMCA_data.NODE, joint: str, joint_index: int):
         self.parts_entry.clear()
-        for x in self.data.parts_list:
-            for y in x.type:
-                if y == joint:
-                    self.parts_entry.append((x.name, x))
-                    break
+        for parts in self.data.parts_list:
+            if joint in parts.type:
+                self.parts_entry.append((parts.name, parts))
         self.parts_entry.append(("#外部モデル読み込み", "load"))
-        self.parts_entry.append(("#None", None))
-        if sel_t != None:
-            self.l_sel.set_entry(  # type: ignore
-                [k for k, _ in self.parts_entry],
-                sel=self.data.tree_list[sel_t].node.list_num,
-            )
+        if joint != "root":
+            self.parts_entry.append(("#None", None))
+        self.l_sel.set_entry(  # type: ignore
+            [k for k, _ in self.parts_entry],
+            sel=self.get_sel_parts(node),
+        )
+
+    def get_sel_parts(self, node: PMCA_data.NODE) -> int:
+        for i, (_, parts) in enumerate(self.parts_entry):
+            if parts == node.parts:
+                return i
+        return -1
 
     def parts_sel_click(self, _event: Any):
         sel = int(self.l_sel.listbox.curselection()[0])  # type: ignore
         sel_t = int(self.l_tree.listbox.curselection()[0]) + 1  # type: ignore
-        tree_node = self.data.tree_list[sel_t]
+        node = self.data.get_node(sel_t)
+        assert node.parent
+        joint, joint_index = node.get_joint()
+        assert joint == node.joint
 
         match self.parts_entry[sel][1]:
-            case None:  # Noneを選択した場合
-                LOGGER.debug(f"{sel_t} => None")
-                node = None
-                self.comment.set("comment:")
-
-            case "load":  # 外部モデル読み込み
-                LOGGER.debug(f"{sel_t} => load")
-                path = tkinter.filedialog.askopenfilename(
-                    filetypes=[("Plygon Model Deta(for MMD)", ".pmd"), ("all", ".*")],
-                    defaultextension=".pmd",
-                )
-                if path != "":
-                    name = path.split("/")[-1]
-                    parts = PMCA_data.PARTS(name=name, path=path, props={})
-                    node = PMCA_data.NODE(
-                        parts=parts,
-                        depth=tree_node.node.depth + 1,
-                        children=[None for _ in parts.joint],
-                    )
-                    self.comment.set("comment:%s" % (node.parts.comment))
-                else:
-                    self.comment.set("comment:")
-                    node = None
+            case None:
+                new_node = PMCA_data.NODE(node.joint, None, node.parent)
+                node.parent.children[joint_index] = new_node
+                self.comment.set("comment: None")
 
             case PMCA_data.PARTS() as parts:
-                node = PMCA_data.NODE(
-                    parts=parts,
-                    depth=tree_node.node.depth + 1,
-                    children=[],
+                new_node = PMCA_data.NODE(
+                    node.joint,
+                    parts,
+                    node.parent,
                 )
-                p_node = tree_node.node.children[tree_node.c_num]
+                for joint in parts.joint:
+                    assert joint.strip()
+                    added = False
+                    for child in node.children:
+                        if child.joint == joint:
+                            child.parent = new_node
+                            new_node.children.append(child)
+                            added = True
+                            break
+                    if not added:
+                        new_node.children.append(PMCA_data.NODE(joint, None, new_node))
+                node.parent.children[joint_index] = new_node
+                self.comment.set("comment:%s" % (parts.comment))
 
-                child_appended: list[str] = []
-                if p_node:
-                    for x in node.parts.joint:
-                        node.children.append(None)
-                        for j, y in enumerate(p_node.parts.joint):
-                            if x == y:
-                                for z in child_appended:
-                                    if z == y:
-                                        break
-                                else:
-                                    node.children[-1] = p_node.children[j]
-                                    child_appended.append(y)
-                                    break
-                else:
-                    for x in node.parts.joint:
-                        node.children.append(None)
-                self.comment.set("comment:%s" % (node.parts.comment))
+            case "load":  # 外部モデル読み込み
+                LOGGER.warn(f"{sel_t} => load")
+                new_node = PMCA_data.NODE(node.joint, None, node.parent)
+                node.parent.children[joint_index] = new_node
+                self.comment.set("comment: None")
 
-        tree_node.node.children[tree_node.c_num] = node
-        tree_node.node.list_num = sel
-        LOGGER.debug(f"{node}")
+                # raise NotImplementedError()
+                # path = tkinter.filedialog.askopenfilename(
+                #     filetypes=[("Plygon Model Deta(for MMD)", ".pmd"), ("all", ".*")],
+                #     defaultextension=".pmd",
+                # )
+                # if path != "":
+                #     name = path.split("/")[-1]
+                #     parts = PMCA_data.PARTS(name=name, path=path, props={})
+                #     node = PMCA_data.NODE(
+                #         parts=parts,
+                #         depth=tree_node.node.depth + 1,
+                #         children=[None for _ in parts.joint],
+                #     )
+                #     self.comment.set("comment:%s" % (node.parts.comment))
+                # else:
+                #     self.comment.set("comment:")
+                #     node = None
 
         native.refresh(self.data)

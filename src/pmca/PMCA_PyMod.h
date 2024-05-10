@@ -1,5 +1,6 @@
 #pragma once
 
+#define PY_SSIZE_T_CLEAN
 #ifdef _DEBUG
 #undef _DEBUG
 #include <Python.h>

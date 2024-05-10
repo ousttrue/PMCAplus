@@ -45,7 +45,7 @@ def main(dir: pathlib.Path):
 
     # gui
     with native.Renderer():
-        if False:
+        if True:
             app = tkinter_gui.MainFrame(APPNAME, data, *cnl_info)
         else:
             app = pyside_gui.MainFrame(APPNAME, data, *cnl_info)

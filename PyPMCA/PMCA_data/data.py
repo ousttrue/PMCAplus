@@ -4,7 +4,7 @@ import pathlib
 
 from .mats import MATS, MAT_REP
 from .parts import PARTS
-from .node import NODE, TREE_LIST
+from .node import NODE
 from .model_transform_data import MODEL_TRANS_DATA
 from . import cnl
 
@@ -65,8 +65,7 @@ class PMCAData:
         self.tree = NODE(
             "__root__",
             parts=PARTS(name="ROOT", joint=["root"]),
-            depth=-1,
-            children=[NODE("root", None)],
+            children=[NODE("root", None, [])],
         )
         self.mat_rep = MAT_REP()
         self.mat_entry: tuple[list[str], list[str]] = ([], [])
@@ -74,8 +73,13 @@ class PMCAData:
         self.transform_data: list[MODEL_TRANS_DATA] = [
             MODEL_TRANS_DATA(scale=1.0, bones=[], props={})
         ]
-        self.tree_list: list[TREE_LIST] = []
         self.on_reflesh: list[Callable[[float, float, float], None]] = []
+
+    def get_node(self, target: int) -> NODE:
+        for i, (node, _) in enumerate(self.tree.traverse()):
+            if i == target:
+                return node
+        raise RuntimeError()
 
     def load_asset(self, dir: pathlib.Path) -> LIST | None:
         LOGGER.info("PMCADATA: %s", dir.relative_to(pathlib.Path(".").absolute()))
@@ -116,7 +120,6 @@ class PMCAData:
         lines, info = cnl.read_info(lines)
 
         lines = cnl.read_parts(lines, self.tree, self.parts_list)
-        self.tree_list = self.tree.create_list()
 
         assert self.mat_rep
         lines, mat_rep = cnl.read_mat_rep(lines, self.mats_list)
@@ -130,9 +133,6 @@ class PMCAData:
     def save_CNL_File(
         self, file: pathlib.Path, name: str, name_l: str, comment: str
     ) -> bool:
-        if self.tree.children[0] == None:
-            return False
-
         lines: list[str] = []
         lines.append(name)
         lines.append(name_l)

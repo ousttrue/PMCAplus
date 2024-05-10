@@ -464,6 +464,12 @@ def PMD_view_set(num: int, mode: str) -> None:
     """
     ...
 
+def Get_PMD(num: int) -> tuple[bytes, bytes, list[int]] | None:
+    """
+    Get vertices, indices and vertex_count list
+    """
+    ...
+
 def Resize_Model(num: int, scale: float) -> None:
     """
     Resize_Model"

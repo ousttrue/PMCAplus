@@ -979,6 +979,30 @@ static PyObject *PMD_view_set(PyObject *self, PyObject *args) {
   Py_RETURN_TRUE;
 }
 
+static PyObject *Get_PMD(PyObject *self, PyObject *args) {
+  int num;
+  if (!PyArg_ParseTuple(args, "i", &num))
+    Py_RETURN_FALSE;
+
+  auto model = g_model[num];
+  auto l = PyList_New(model->mat.size());
+  for (size_t i = 0; i < model->mat.size(); ++i) {
+    PyList_SetItem(l, i, Py_BuildValue("i", model->mat[i].vt_index_count));
+  }
+  // auto vt = Py_BuildValue("y#", (const char *)model->vt.data(),
+  //                         model->vt.size() * sizeof(VERTEX));
+  // auto vt_index =
+  //     Py_BuildValue("y#", (const char *)model->vt_index.data(),
+  //                   model->vt_index.size() * sizeof(unsigned short));
+  //
+  // return Py_BuildValue("(OO)", vt, vt_index);
+
+  return Py_BuildValue("y#y#O", model->vt.data(),
+                       model->vt.size() * sizeof(VERTEX),
+                       model->vt_index.data(),
+                       model->vt_index.size() * sizeof(unsigned short), l);
+}
+
 static PyObject *MODEL_LOCK(PyObject *self, PyObject *args) {
   int num;
   if (!PyArg_ParseTuple(args, "i", &num))
@@ -1068,6 +1092,7 @@ static PyMethodDef PMCAMethods[] = {
     {"Marge_PMD", Marge_PMD, METH_VARARGS, "Marge PMD"},
     {"Sort_PMD", Sort_PMD, METH_VARARGS, "Sort PMD"},
     {"PMD_view_set", PMD_view_set, METH_VARARGS, "Set selected PMD to dispray"},
+    {"Get_PMD", Get_PMD, METH_VARARGS, "Get PMD Vertices, Indices, Submeshes"},
     /***********************************************************************/
     {"Resize_Model", Resize_Model, METH_VARARGS, "Resize_Model"},
     {"Move_Model", Move_Model, METH_VARARGS, "Move_Model"},
