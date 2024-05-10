@@ -1,7 +1,8 @@
 import logging
 import pathlib
 
-from .gui.main_frame import MainFrame
+from .pyside_gui import main_frame as pyside_gui
+from .gui import main_frame as tkinter_gui
 from . import PMCA_data
 from . import native
 
@@ -44,7 +45,11 @@ def main(dir: pathlib.Path):
 
     # gui
     with native.Renderer():
-        app = MainFrame(APPNAME, data, *cnl_info)
+        if False:
+            app = tkinter_gui.MainFrame(APPNAME, data, *cnl_info)
+        else:
+            app = pyside_gui.MainFrame(APPNAME, data, *cnl_info)
+
         data.on_reflesh.append(app.on_refresh)
 
         # r.start_thread()
