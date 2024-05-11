@@ -1,3 +1,4 @@
+from typing import Callable
 import dataclasses
 import pathlib
 import logging
@@ -26,6 +27,12 @@ class CnlInfo:
         self.transform_data: list[PMCA_asset.MODEL_TRANS_DATA] = [
             PMCA_asset.MODEL_TRANS_DATA(scale=1.0, bones=[], props={})
         ]
+
+        self.on_reflesh: list[Callable[[], None]] = []
+
+    def raise_refresh(self):
+        for callback in self.on_reflesh:
+            callback()
 
     def get_node(self, target: int) -> NODE:
         for i, (node, _) in enumerate(self.tree.traverse()):

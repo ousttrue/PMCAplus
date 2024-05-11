@@ -61,7 +61,6 @@ class PMCAData:
         self.mats_list: list[MATS] = []
         self.parts_list: list[PARTS] = []
         self.transform_list: list[MODEL_TRANS_DATA] = []
-        self.on_reflesh: list[Callable[[float, float, float], None]] = []
 
     def load_asset(self, dir: pathlib.Path) -> LIST | None:
         LOGGER.info("PMCADATA: %s", dir.relative_to(pathlib.Path(".").absolute()))

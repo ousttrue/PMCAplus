@@ -48,10 +48,13 @@ class MainFrame(tkinter.ttk.Frame):
         def add_tab(x: Any):
             notebook.insert(tkinter.END, x, text=x.text)  # type: ignore
 
-        self.model_tab = ModelTab(self.root, self.data, self.cnl)
+        def on_updated():
+            native.refresh(data, cnl)
+
+        self.model_tab = ModelTab(self.root, self.data, self.cnl, on_updated)
         add_tab(self.model_tab)
 
-        self.color_tab = ColorTab(self.root)
+        self.color_tab = ColorTab(self.root, self.cnl, on_updated)
         add_tab(self.color_tab)
 
         self.transform_tab = TransformTab(self.root)
@@ -113,13 +116,13 @@ class MainFrame(tkinter.ttk.Frame):
         )
         editing.add_command(label="PMCA設定", underline=0, command=self.setting_dialog)
 
-    def on_refresh(self, w: float, h: float, t: float):
+    def on_refresh(self):
         self.model_tab.set_tree(self.cnl.tree, True)
         self.color_tab.l_tree.set_entry(self.cnl.mat_entry[0], sel=self.cur_mat)  # type: ignore
         self.info_tab.refresh()
-        self.transform_tab.info_frame.strvar.set(  # type: ignore
-            "height     = %f\nwidth      = %f\nthickness = %f\n" % (w, h, t)
-        )
+        # self.transform_tab.info_frame.strvar.set(  # type: ignore
+        #     "height     = %f\nwidth      = %f\nthickness = %f\n" % (w, h, t)
+        # )
 
     def get_info(self) -> MODELINFO:
         return self.info_tab.modelinfo

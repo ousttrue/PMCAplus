@@ -695,8 +695,7 @@ def refresh(data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo):
     LOGGER.info(f"(MODEL_LOCK=0)")
 
     w, h, t = PMCA.getWHT(0)
-    for callback in data.on_reflesh:
-        callback(w, h, t)
+    cnl.raise_refresh()
 
 
 def save_PMD(self, name: str):

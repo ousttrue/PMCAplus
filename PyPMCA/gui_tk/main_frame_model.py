@@ -1,11 +1,10 @@
-from typing import Any, Literal
+from typing import Any, Literal, Callable
 import logging
 import tkinter.filedialog
 import tkinter.ttk
 import PyPMCA.gui_tk.listbox as listbox
 from .. import PMCA_asset
 from .. import PMCA_cnl
-from .. import native
 
 
 LOGGER = logging.getLogger(__name__)
@@ -21,12 +20,17 @@ class ModelTab(tkinter.ttk.Frame):
     """
 
     def __init__(
-        self, root: tkinter.Tk, data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo
+        self,
+        root: tkinter.Tk,
+        data: PMCA_asset.PMCAData,
+        cnl: PMCA_cnl.CnlInfo,
+        on_updated: Callable[[], None],
     ) -> None:
         super().__init__(root)
         self.text = "Model"
         self.data = data
         self.cnl = cnl
+        self.on_updated = on_updated
 
         self.frame = tkinter.ttk.Frame(self)
 
@@ -110,19 +114,19 @@ class ModelTab(tkinter.ttk.Frame):
     def parts_sel_click(self, _event: Any):
         sel = int(self.l_sel.listbox.curselection()[0])  # type: ignore
         sel_t = int(self.l_tree.listbox.curselection()[0]) + 1  # type: ignore
-        node = self.data.get_node(sel_t)
+        node = self.cnl.get_node(sel_t)
         assert node.parent
         joint, joint_index = node.get_joint()
         assert joint == node.joint
 
         match self.parts_entry[sel][1]:
             case None:
-                new_node = PMCA_asset.NODE(node.joint, None, node.parent)
+                new_node = PMCA_cnl.NODE(node.joint, None, node.parent)
                 node.parent.children[joint_index] = new_node
                 self.comment.set("comment: None")
 
             case PMCA_asset.PARTS() as parts:
-                new_node = PMCA_asset.NODE(
+                new_node = PMCA_cnl.NODE(
                     node.joint,
                     parts,
                     node.parent,
@@ -137,13 +141,13 @@ class ModelTab(tkinter.ttk.Frame):
                             added = True
                             break
                     if not added:
-                        new_node.children.append(PMCA_asset.NODE(joint, None, new_node))
+                        new_node.children.append(PMCA_cnl.NODE(joint, None, new_node))
                 node.parent.children[joint_index] = new_node
                 self.comment.set("comment:%s" % (parts.comment))
 
             case "load":  # 外部モデル読み込み
                 LOGGER.warn(f"{sel_t} => load")
-                new_node = PMCA_asset.NODE(node.joint, None, node.parent)
+                new_node = PMCA_cnl.NODE(node.joint, None, node.parent)
                 node.parent.children[joint_index] = new_node
                 self.comment.set("comment: None")
 
@@ -165,4 +169,4 @@ class ModelTab(tkinter.ttk.Frame):
                 #     self.comment.set("comment:")
                 #     node = None
 
-        native.refresh(self.data)
+        self.on_updated()
