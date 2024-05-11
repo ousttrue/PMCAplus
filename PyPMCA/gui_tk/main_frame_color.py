@@ -1,5 +1,5 @@
 import tkinter.ttk
-import PyPMCA.gui.listbox as listbox
+import PyPMCA.gui_tk.listbox as listbox
 
 
 class ColorTab(tkinter.ttk.Frame):

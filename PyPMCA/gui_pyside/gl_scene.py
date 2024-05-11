@@ -1,3 +1,4 @@
+from typing import Callable
 import dataclasses
 import logging
 from OpenGL import GL
@@ -5,6 +6,7 @@ from glglue import glo
 from glglue.camera.mouse_camera import MouseCamera
 from glglue.drawable import Drawable, axes, grid
 import glglue.frame_input
+from PIL import Image
 
 
 LOGGER = logging.getLogger(__name__)
@@ -14,11 +16,13 @@ LOGGER = logging.getLogger(__name__)
 class PmdSrc:
     vertices: bytes
     indices: bytes
-    submeshes: list[int]
+    submeshes: list[tuple[int, str]]
 
 
 PmdVS = """#version 330
 in vec3 a_pos;
+in vec2 a_uv;
+out vec2 v_uv;
 uniform mediump mat4 u_view;
 uniform mediump mat4 u_projection;
 uniform mediump mat4 u_model;
@@ -26,16 +30,41 @@ uniform mediump mat4 u_model;
 void main() {
   float f = 1.58 / 20;
   gl_Position = u_projection * u_view * u_model * vec4(a_pos.x * f, a_pos.y * f, -a_pos.z * f, 1);  
+  v_uv = vec2(a_uv.x, a_uv.y);
 }
 """
 
 PmdFS = """#version 330
+in vec2 v_uv;
 out vec4 FragColor;
+uniform sampler2D u_texture;
 
 void main() {
-    FragColor = vec4(1, 1, 1, 1.0);
+    // FragColor = vec4(v_uv, 0, 1);
+    vec4 texel = texture(u_texture, v_uv);
+    FragColor = texel;
 }
 """
+
+
+def texture_func(texture_path: str) -> Callable[[], None]:
+    if texture_path:
+        LOGGER.debug(f"{texture_path}")
+        image = Image.open(texture_path)  # type: ignore
+        texture = glo.Texture(image.width, image.height, image.tobytes())  # type: ignore
+
+        def set_texture():
+            GL.glActiveTexture(GL.GL_TEXTURE0)  # type: ignore
+            texture.bind()
+
+        return set_texture
+
+    else:
+
+        def no_texture():
+            pass
+
+        return no_texture
 
 
 class GlScene:
@@ -75,12 +104,6 @@ class GlScene:
         if not self.model_drawable:
             if self.model_src:
                 shader = glo.shader.Shader.load(PmdVS, PmdFS)
-                match shader:
-                    case str():
-                        LOGGER.error(shader)
-                        assert False
-                    case glo.shader.Shader():
-                        pass
 
                 vbo = glo.Vbo()
                 vbo.set_vertices(memoryview(self.model_src.vertices))
@@ -88,13 +111,31 @@ class GlScene:
                 ibo = glo.Ibo()
                 ibo.set_bytes(self.model_src.indices, 2)
 
-                pos = glo.AttributeLocation.create(shader.program, "a_pos")
-                vao = glo.Vao(vbo, [glo.VertexLayout(pos, 3, 38, 0)], ibo)
+                vao = glo.Vao(
+                    vbo,
+                    [
+                        glo.VertexLayout(
+                            glo.AttributeLocation.create(shader.program, "a_pos"),
+                            3,
+                            38,
+                            0,
+                        ),
+                        glo.VertexLayout(
+                            glo.AttributeLocation.create(shader.program, "a_uv"),
+                            2,
+                            38,
+                            24,
+                        ),
+                    ],
+                    ibo,
+                )
                 self.model_drawable = Drawable(vao)
 
                 props = shader.create_props(self.mouse_camera.camera)
-                for draw_count in self.model_src.submeshes:
-                    self.model_drawable.push_submesh(shader, draw_count * 3, props)
+                for draw_count, texture_path in self.model_src.submeshes:
+                    self.model_drawable.push_submesh(
+                        shader, draw_count * 3, props + [texture_func(texture_path)]
+                    )
 
                 LOGGER.info("create mesh drawable")
 

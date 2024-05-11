@@ -2,7 +2,7 @@ from typing import Any, Literal
 import logging
 import tkinter.filedialog
 import tkinter.ttk
-import PyPMCA.gui.listbox as listbox
+import PyPMCA.gui_tk.listbox as listbox
 from .. import PMCA_data
 from .. import native
 

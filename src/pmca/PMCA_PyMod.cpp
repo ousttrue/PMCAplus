@@ -987,7 +987,9 @@ static PyObject *Get_PMD(PyObject *self, PyObject *args) {
   auto model = g_model[num];
   auto l = PyList_New(model->mat.size());
   for (size_t i = 0; i < model->mat.size(); ++i) {
-    PyList_SetItem(l, i, Py_BuildValue("i", model->mat[i].vt_index_count));
+    PyList_SetItem(l, i,
+                   Py_BuildValue("is", model->mat[i].vt_index_count,
+                                 model->mat[i].tex_path));
   }
   // auto vt = Py_BuildValue("y#", (const char *)model->vt.data(),
   //                         model->vt.size() * sizeof(VERTEX));

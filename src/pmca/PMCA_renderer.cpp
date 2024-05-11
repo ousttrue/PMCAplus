@@ -29,7 +29,8 @@ int setup_opengl() {
 
   /* 裏面を取り除く */
   glEnable(GL_CULL_FACE);
-  glFrontFace(GL_CCW);
+  // glFrontFace(GL_CCW);
+  glFrontFace(GL_CW);
   glCullFace(GL_FRONT);
 
   /* 消去時の色をセット */
@@ -97,6 +98,7 @@ void draw_screen(const VIEW_STATE &vs) {
   }
   glEnd();
 
+  glColor4f(1.0, 1.0, 1.0, 1.0);
   render_model(myflags.current_model);
 
   glFinish();

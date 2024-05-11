@@ -12,7 +12,7 @@
             // "program": "${env:LOCALAPPDATA}/Programs/Python/Python311/python.exe",
             "args": [
                 "-m",
-                "PyPMCA"
+                "PyPMCA.gui_tk"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -25,10 +25,22 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "PyPMCA Module",
+            "name": "PyPMCA_pyside",
             "type": "debugpy",
             "request": "launch",
-            "module": "PyPMCA",
+            "module": "PyPMCA.gui_pyside",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "args": [],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}\\prefix\\bin",
+            }
+        },
+        {
+            "name": "PyPMCA_tk",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "PyPMCA.gui_tk",
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
             "args": [],
