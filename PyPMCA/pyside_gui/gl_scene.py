@@ -24,7 +24,8 @@ uniform mediump mat4 u_projection;
 uniform mediump mat4 u_model;
 
 void main() {
-  gl_Position = u_projection * u_view * u_model * vec4(a_pos, 1);  
+  float f = 1.58 / 20;
+  gl_Position = u_projection * u_view * u_model * vec4(a_pos.x * f, a_pos.y * f, -a_pos.z * f, 1);  
 }
 """
 
@@ -74,7 +75,12 @@ class GlScene:
         if not self.model_drawable:
             if self.model_src:
                 shader = glo.shader.Shader.load(PmdVS, PmdFS)
-                assert isinstance(shader, glo.shader.Shader)
+                match shader:
+                    case str():
+                        LOGGER.error(shader)
+                        assert False
+                    case glo.shader.Shader():
+                        pass
 
                 vbo = glo.Vbo()
                 vbo.set_vertices(memoryview(self.model_src.vertices))

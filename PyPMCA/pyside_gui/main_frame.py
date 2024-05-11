@@ -117,7 +117,7 @@ class ModelTab(QtWidgets.QWidget):
         item = cast(PMCA_data.NODE, index.internalPointer())
 
         parts = [parts for parts in self.data.parts_list if item.joint in parts.type]
-        list_model = PartsListModel(f"joints for [{item.joint}]", parts)
+        list_model = PartsListModel(f"[{item.joint}] parts", parts)
         self.list.setModel(list_model)
         self.list.selectionModel().selectionChanged.connect(self.onPartsSelected)
 
