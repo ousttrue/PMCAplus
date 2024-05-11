@@ -2,11 +2,10 @@ from typing import NamedTuple, Callable
 import logging
 import pathlib
 
-from .mats import MATS, MAT_REP
+from .mats import MATS
 from .parts import PARTS
-from .node import NODE
 from .model_transform_data import MODEL_TRANS_DATA
-from . import cnl
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -62,24 +61,7 @@ class PMCAData:
         self.mats_list: list[MATS] = []
         self.parts_list: list[PARTS] = []
         self.transform_list: list[MODEL_TRANS_DATA] = []
-        self.tree = NODE(
-            "__root__",
-            parts=PARTS(name="ROOT", joint=["root"]),
-            children=[NODE("root", None, [])],
-        )
-        self.mat_rep = MAT_REP()
-        self.mat_entry: tuple[list[str], list[str]] = ([], [])
-        # self.transform_data = []
-        self.transform_data: list[MODEL_TRANS_DATA] = [
-            MODEL_TRANS_DATA(scale=1.0, bones=[], props={})
-        ]
         self.on_reflesh: list[Callable[[float, float, float], None]] = []
-
-    def get_node(self, target: int) -> NODE:
-        for i, (node, _) in enumerate(self.tree.traverse()):
-            if i == target:
-                return node
-        raise RuntimeError()
 
     def load_asset(self, dir: pathlib.Path) -> LIST | None:
         LOGGER.info("PMCADATA: %s", dir.relative_to(pathlib.Path(".").absolute()))
@@ -114,41 +96,3 @@ class PMCAData:
 
             LOGGER.warn("skip: %s", x.relative_to(dir))
         return list
-
-    def load_CNL_File(self, file: pathlib.Path) -> cnl.CnlInfo:
-        lines = file.read_text(encoding="utf-8").splitlines()
-        lines, info = cnl.read_info(lines)
-
-        lines = cnl.read_parts(lines, self.tree, self.parts_list)
-
-        assert self.mat_rep
-        lines, mat_rep = cnl.read_mat_rep(lines, self.mats_list)
-        self.mat_rep.mat = mat_rep
-
-        assert len(self.transform_data) > 0
-        cnl.read_transform(lines, self.transform_data[0])
-
-        return info
-
-    def save_CNL_File(
-        self, file: pathlib.Path, name: str, name_l: str, comment: str
-    ) -> bool:
-        lines: list[str] = []
-        lines.append(name)
-        lines.append(name_l)
-        lines.append(comment)
-
-        lines.append("PARTS")
-        lines.extend(self.tree.children[0].node_to_text())
-
-        lines.append("MATERIAL")
-        lines.extend(self.mat_rep.list_to_text())
-
-        lines.append("TRANSFORM")
-        lines.extend(self.transform_data[0].list_to_text())
-
-        with file.open("w", encoding="utf-8") as fp:
-            for x in lines:
-                fp.write(x + "\n")
-
-        return True

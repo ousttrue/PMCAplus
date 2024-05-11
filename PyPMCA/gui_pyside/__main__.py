@@ -3,6 +3,7 @@ import pathlib
 
 from ..color_logger import ColorfulHandler
 from .. import PMCA_asset
+from .. import PMCA_cnl
 from .. import native
 from . import main_frame as pyside_gui
 
@@ -20,11 +21,12 @@ def main(dir: pathlib.Path):
     if list_txt:
         native.set_list(*list_txt)
 
-    cnl_info = data.load_CNL_File(cnl_file)
+    cnl = PMCA_cnl.CnlInfo()
+    cnl.load_CNL_File(cnl_file, data)
 
     # gui
     with native.Renderer():
-        app = pyside_gui.MainFrame(APPNAME, data, *cnl_info)
+        app = pyside_gui.MainFrame(APPNAME, data, cnl)
 
         app.mainloop()
 

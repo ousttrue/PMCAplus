@@ -1,17 +1,15 @@
-from .mats import MATS, MAT_REP, MAT_REP_DATA
+# static data
 from .parts import PARTS
-from .node import NODE
-from .model_transform_data import MODEL_TRANS_DATA
+from .mats import MATS, MATS_ENTRY
+from .model_transform_data import MODEL_TRANS_DATA, BONE_TRANS_DATA
 from .data import PMCAData
-from . import cnl
+
 
 __all__ = [
-    "MATS",
-    "MAT_REP",
-    "MAT_REP_DATA",
     "PARTS",
+    "MATS",
+    "MATS_ENTRY",
     "MODEL_TRANS_DATA",
-    "NODE",
+    "BONE_TRANS_DATA",
     "PMCAData",
-    "cnl",
 ]

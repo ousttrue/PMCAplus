@@ -1,7 +1,7 @@
 from typing import Iterator
 import dataclasses
 import logging
-from .parts import PARTS
+from ..PMCA_asset.parts import PARTS
 
 LOGGER = logging.getLogger(__name__)
 

@@ -464,7 +464,7 @@ def PMD_view_set(num: int, mode: str) -> None:
     """
     ...
 
-def Get_PMD(num: int) -> tuple[bytes, bytes, list[int]] | None:
+def Get_PMD(num: int) -> tuple[bytes, bytes, list[tuple[int, str]]] | None:
     """
     Get vertices, indices and vertex_count list
     """

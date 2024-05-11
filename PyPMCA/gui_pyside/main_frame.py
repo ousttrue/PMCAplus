@@ -3,6 +3,7 @@ import logging
 import sys
 from PySide6 import QtWidgets, QtCore
 from .. import PMCA_asset
+from .. import PMCA_cnl
 from .generic_tree_model import GenericTreeModel
 from .gl_scene import GlScene, PmdSrc
 import PMCA  # type: ignore
@@ -14,10 +15,9 @@ import glglue.pyside6
 LOGGER = logging.getLogger(__name__)
 
 
-class PmcaNodeModel(GenericTreeModel[PMCA_asset.NODE]):
-
-    def __init__(self, root: PMCA_asset.NODE) -> None:
-        def get_col(node: PMCA_asset.NODE, col: int) -> str:
+class PmcaNodeModel(GenericTreeModel[PMCA_cnl.NODE]):
+    def __init__(self, root: PMCA_cnl.NODE) -> None:
+        def get_col(node: PMCA_cnl.NODE, col: int) -> str:
             match col:
                 case 0:
                     return node.joint
@@ -40,7 +40,6 @@ class PmcaNodeModel(GenericTreeModel[PMCA_asset.NODE]):
 
 
 class PartsListModel(GenericTreeModel[PMCA_asset.PARTS]):
-
     def __init__(self, header: str, parts_list: list[PMCA_asset.PARTS]) -> None:
         super().__init__(
             None,
@@ -69,10 +68,10 @@ class ModelTab(QtWidgets.QWidget):
     +----------+
     """
 
-    def __init__(self, data: PMCA_asset.PMCAData):
+    def __init__(self, data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo):
         super().__init__()
-
         self.data = data
+        self.cnl = cnl
 
         vbox = QtWidgets.QVBoxLayout()
         self.setLayout(vbox)
@@ -94,11 +93,11 @@ class ModelTab(QtWidgets.QWidget):
         self.comment.setText("comment:")
         vbox.addWidget(self.comment)
 
-        self.set_tree_model(data.tree.children[0])
+        self.set_tree_model(self.cnl.tree.children[0])
         self.data_updated: list[Callable[[], None]] = []
 
-    def set_tree_model(self, selected: PMCA_asset.NODE):
-        tree_model = PmcaNodeModel(self.data.tree)
+    def set_tree_model(self, selected: PMCA_cnl.NODE):
+        tree_model = PmcaNodeModel(self.cnl.tree)
         self.tree.setModel(tree_model)
         self.tree.expandAll()
         self.tree.selectionModel().selectionChanged.connect(self.onJointSelected)
@@ -114,17 +113,18 @@ class ModelTab(QtWidgets.QWidget):
         if len(indexes) == 0:
             return
         index = indexes[0]
-        item = cast(PMCA_asset.NODE, index.internalPointer())
+        item = cast(PMCA_cnl.NODE, index.internalPointer())
 
         parts = [parts for parts in self.data.parts_list if item.joint in parts.type]
         list_model = PartsListModel(f"[{item.joint}] parts", parts)
         self.list.setModel(list_model)
         self.list.selectionModel().selectionChanged.connect(self.onPartsSelected)
 
-        self.list.selectionModel().setCurrentIndex(
-            list_model.index_from_item(item.parts),
-            QtCore.QItemSelectionModel.SelectionFlag.ClearAndSelect,
-        )
+        if item.parts:
+            self.list.selectionModel().setCurrentIndex(
+                list_model.index_from_item(item.parts),
+                QtCore.QItemSelectionModel.SelectionFlag.ClearAndSelect,
+            )
 
     def onPartsSelected(
         self, selected: QtCore.QItemSelection, deselected: QtCore.QItemSelection
@@ -139,7 +139,7 @@ class ModelTab(QtWidgets.QWidget):
         tree_index = self.tree.selectionModel().currentIndex()
         if not tree_index.isValid():
             return
-        node = cast(PMCA_asset.NODE, tree_index.internalPointer())
+        node = cast(PMCA_cnl.NODE, tree_index.internalPointer())
 
         print(f"{node} => {parts}")
         assert node.parent
@@ -148,13 +148,13 @@ class ModelTab(QtWidgets.QWidget):
 
         match parts:
             case None:
-                new_node = PMCA_asset.NODE(node.joint, None, node.parent)
+                new_node = PMCA_cnl.NODE(node.joint, None, node.parent)
 
             case PMCA_asset.PARTS():
                 if parts == node.parts:
                     return
 
-                new_node = PMCA_asset.NODE(
+                new_node = PMCA_cnl.NODE(
                     node.joint,
                     parts,
                     node.parent,
@@ -169,10 +169,10 @@ class ModelTab(QtWidgets.QWidget):
                             added = True
                             break
                     if not added:
-                        new_node.children.append(PMCA_asset.NODE(joint, None, new_node))
+                        new_node.children.append(PMCA_cnl.NODE(joint, None, new_node))
 
             case "load":  # 外部モデル読み込み
-                new_node = PMCA_asset.NODE(node.joint, None, node.parent)
+                new_node = PMCA_cnl.NODE(node.joint, None, node.parent)
 
                 # raise NotImplementedError()
                 # path = tkinter.filedialog.askopenfilename(
@@ -219,16 +219,17 @@ class InfoTab(QtWidgets.QWidget):
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self, title: str, data: PMCA_asset.PMCAData):
+    def __init__(self, title: str, data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo):
         super().__init__()
         self.data = data
+        self.cnl = cnl
         self.setWindowTitle(title)
 
         self.scene = GlScene()
         self.glwidget = glglue.pyside6.Widget(self, render_gl=self.scene.render)
         self.setCentralWidget(self.glwidget)
 
-        self.model_tab = ModelTab(data)
+        self.model_tab = ModelTab(data, cnl)
         self.model_dock = QtWidgets.QDockWidget("Model", self)
         self.model_dock.setWidget(self.model_tab)
         self.addDockWidget(
@@ -251,7 +252,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.scene.shutdown()
 
     def on_data_updated(self):
-        native.refresh(self.data)
+        native.refresh(self.data, self.cnl)
         data = PMCA.Get_PMD(0)
         if data:
             self.scene.set_model(PmdSrc(*data))
@@ -259,9 +260,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 class App:
-    def __init__(self, title: str, data: PMCA_asset.PMCAData):
+    def __init__(self, title: str, data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo):
         self.app = QtWidgets.QApplication(sys.argv)
-        self.window = MainWindow(title, data)
+        self.window = MainWindow(title, data, cnl)
         self.window.show()
 
     def mainloop(self):
@@ -271,8 +272,6 @@ class App:
 def MainFrame(
     title: str,
     data: PMCA_asset.PMCAData,
-    name: str,
-    name_l: str,
-    comment: list[str],
+    cnl: PMCA_cnl.CnlInfo,
 ) -> App:
-    return App(title, data)
+    return App(title, data, cnl)

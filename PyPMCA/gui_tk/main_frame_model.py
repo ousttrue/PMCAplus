@@ -4,6 +4,7 @@ import tkinter.filedialog
 import tkinter.ttk
 import PyPMCA.gui_tk.listbox as listbox
 from .. import PMCA_asset
+from .. import PMCA_cnl
 from .. import native
 
 
@@ -19,9 +20,13 @@ class ModelTab(tkinter.ttk.Frame):
     +----------+
     """
 
-    def __init__(self, root: tkinter.Tk, data: PMCA_asset.PMCAData) -> None:
+    def __init__(
+        self, root: tkinter.Tk, data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo
+    ) -> None:
         super().__init__(root)
         self.text = "Model"
+        self.data = data
+        self.cnl = cnl
 
         self.frame = tkinter.ttk.Frame(self)
 
@@ -50,14 +55,13 @@ class ModelTab(tkinter.ttk.Frame):
         self.text_label.pack(padx=3, pady=3, side=tkinter.BOTTOM, fill=tkinter.X)
 
         # init
-        self.parts_entry: list[tuple[str, PMCA_asset.PARTS | Literal["load"] | None]] = (
-            []
-        )
-        self.data = data
-        self.set_tree(self.data.tree)
+        self.parts_entry: list[
+            tuple[str, PMCA_asset.PARTS | Literal["load"] | None]
+        ] = []
+        self.set_tree(self.cnl.tree)
         self.set_parts()
 
-    def set_tree(self, node: PMCA_asset.NODE, use_sel: bool = False):
+    def set_tree(self, node: PMCA_cnl.NODE, use_sel: bool = False):
         sel_t = int(self.l_tree.listbox.curselection()[0]) if use_sel else 0  # type: ignore
 
         tree_entry: list[str] = []
@@ -75,7 +79,7 @@ class ModelTab(tkinter.ttk.Frame):
                     self.parts_entry.append((x.name, x))
                     break
         self.parts_entry.append(("#外部モデル読み込み", "load"))
-        self.l_sel.set_entry([k for k, _ in self.parts_entry], sel=self.get_sel_parts(self.data.tree.children[0]))  # type: ignore
+        self.l_sel.set_entry([k for k, _ in self.parts_entry], sel=self.get_sel_parts(self.cnl.tree.children[0]))  # type: ignore
 
     def tree_click(self, _event: Any):
         self.comment.set("comment:")
@@ -84,7 +88,7 @@ class ModelTab(tkinter.ttk.Frame):
         joint, joint_index = node.get_joint()
         self.update_parts_entry(node, joint, joint_index)
 
-    def update_parts_entry(self, node: PMCA_asset.NODE, joint: str, joint_index: int):
+    def update_parts_entry(self, node: PMCA_cnl.NODE, joint: str, joint_index: int):
         self.parts_entry.clear()
         for parts in self.data.parts_list:
             if joint in parts.type:
@@ -97,7 +101,7 @@ class ModelTab(tkinter.ttk.Frame):
             sel=self.get_sel_parts(node),
         )
 
-    def get_sel_parts(self, node: PMCA_asset.NODE) -> int:
+    def get_sel_parts(self, node: PMCA_cnl.NODE) -> int:
         for i, (_, parts) in enumerate(self.parts_entry):
             if parts == node.parts:
                 return i

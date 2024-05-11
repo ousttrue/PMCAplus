@@ -1,6 +1,5 @@
 from typing import List
 import logging
-from .. import pmd_type
 
 
 LOGGER = logging.getLogger(__name__)
@@ -89,40 +88,3 @@ class MATS:
                     active.entries[-1].props[line[0][1:-1]] = [line[1]]
 
         return mats_list
-
-
-class MAT_REP_DATA:
-    """
-    材質置換データ
-    """
-
-    def __init__(
-        self,
-        num: int = -1,
-        mat: MATS | None = None,
-        sel: MATS_ENTRY | None = None,
-    ):
-        self.num = num
-        self.mat = mat
-        self.sel = sel
-
-
-class MAT_REP:
-    """
-    材質置換
-    """
-
-    def __init__(self, app=None):
-        self.mat: dict[str, MAT_REP_DATA] = {}
-        self.toon = pmd_type.TOON()
-        self.app = app
-
-    def list_to_text(self) -> list[str]:
-        lines: list[str] = []
-
-        for x in self.mat.values():
-            lines.append("[Name] %s" % (x.mat.name))
-            lines.append("[Sel] %s" % (x.sel.name))
-            lines.append("NEXT")
-
-        return lines

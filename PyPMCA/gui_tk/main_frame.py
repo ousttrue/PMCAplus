@@ -11,6 +11,7 @@ from .main_frame_color import ColorTab
 from .main_frame_transform import TransformTab
 from .main_frame_info import InfoTab, MODELINFO
 from .. import PMCA_asset
+from .. import PMCA_cnl
 from .. import pmd_type
 from .. import native
 
@@ -23,17 +24,16 @@ class MainFrame(tkinter.ttk.Frame):
         self,
         title: str,
         data: PMCA_asset.PMCAData,
-        name: str,
-        name_l: str,
-        comment: list[str],
+        cnl: PMCA_cnl.CnlInfo,
         master: tkinter.Tk | None = None,
     ):
         if not master:
             master = tkinter.Tk()
         super().__init__(master)
 
-        self.export2folder = False
         self.data = data
+        self.cnl = cnl
+        self.export2folder = False
         self.root = master
         self.root.title(title)
         self.target_dir = "./model/"
@@ -48,7 +48,7 @@ class MainFrame(tkinter.ttk.Frame):
         def add_tab(x: Any):
             notebook.insert(tkinter.END, x, text=x.text)  # type: ignore
 
-        self.model_tab = ModelTab(self.root, self.data)
+        self.model_tab = ModelTab(self.root, self.data, self.cnl)
         add_tab(self.model_tab)
 
         self.color_tab = ColorTab(self.root)
@@ -114,8 +114,8 @@ class MainFrame(tkinter.ttk.Frame):
         editing.add_command(label="PMCA設定", underline=0, command=self.setting_dialog)
 
     def on_refresh(self, w: float, h: float, t: float):
-        self.model_tab.set_tree(self.data.tree, True)
-        self.color_tab.l_tree.set_entry(self.data.mat_entry[0], sel=self.cur_mat)  # type: ignore
+        self.model_tab.set_tree(self.cnl.tree, True)
+        self.color_tab.l_tree.set_entry(self.cnl.mat_entry[0], sel=self.cur_mat)  # type: ignore
         self.info_tab.refresh()
         self.transform_tab.info_frame.strvar.set(  # type: ignore
             "height     = %f\nwidth      = %f\nthickness = %f\n" % (w, h, t)

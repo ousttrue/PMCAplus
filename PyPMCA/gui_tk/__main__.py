@@ -3,6 +3,7 @@ import pathlib
 
 from ..color_logger import ColorfulHandler
 from .. import PMCA_asset
+from .. import PMCA_cnl
 from .. import native
 from . import main_frame as tkinter_gui
 
@@ -20,13 +21,14 @@ def main(dir: pathlib.Path):
     if list_txt:
         native.set_list(*list_txt)
 
-    cnl_info = data.load_CNL_File(cnl_file)
+    cnl = PMCA_cnl.CnlInfo()
+    cnl.load_CNL_File(cnl_file, data)
 
     # gui
     with native.Renderer() as r:
-        app = tkinter_gui.MainFrame(APPNAME, data, *cnl_info)
+        app = tkinter_gui.MainFrame(APPNAME, data, cnl)
         data.on_reflesh.append(app.on_refresh)
-        native.refresh(data)
+        native.refresh(data, cnl)
 
         r.start_thread()
 

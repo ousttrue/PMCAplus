@@ -6,6 +6,7 @@ import traceback
 import PMCA  # type: ignore
 from . import pmd_type
 from . import PMCA_asset
+from . import PMCA_cnl
 
 
 LOGGER = logging.getLogger(__name__)
@@ -387,7 +388,7 @@ class AssembleContext(NamedTuple):
                 exec(script)
 
 
-def assemble(self: PMCA_asset.NODE, num: int) -> AssembleContext:
+def assemble(self: PMCA_cnl.NODE, num: int) -> AssembleContext:
     context = AssembleContext()
 
     LOGGER.info(f"assemble[{num}]: {self.parts.path}")
@@ -411,7 +412,7 @@ def assemble(self: PMCA_asset.NODE, num: int) -> AssembleContext:
     return context
 
 
-def assemble_child(self: PMCA_asset.NODE, num: int, context: AssembleContext):
+def assemble_child(self: PMCA_cnl.NODE, num: int, context: AssembleContext):
     assert self.parts
     LOGGER.info("パーツのパス:%s" % (self.parts.path))
 
@@ -433,7 +434,7 @@ def assemble_child(self: PMCA_asset.NODE, num: int, context: AssembleContext):
 
 
 def _get_material(
-    mat_rep: PMCA_asset.MAT_REP,
+    mat_rep: PMCA_cnl.MAT_REP,
     mats_list: list[PMCA_asset.MATS],
     model: pmd_type.PMD | None = None,
     info: pmd_type.INFO | None = None,
@@ -459,7 +460,7 @@ def _get_material(
         for x in mats_list:
             if mat[i].tex == x.name and x.name != "":
                 if mat_rep.mat.get(mat[i].tex) == None:
-                    mat_rep.mat[mat[i].tex] = PMCA_asset.MAT_REP_DATA(mat=x, num=i)
+                    mat_rep.mat[mat[i].tex] = PMCA_cnl.MAT_REP_DATA(mat=x, num=i)
                 else:
                     mat_rep.mat[mat[i].tex].num = i
 
@@ -469,7 +470,7 @@ def _get_material(
 
 def _set_material(
     context: AssembleContext,
-    self: PMCA_asset.MAT_REP,
+    self: PMCA_cnl.MAT_REP,
     model: pmd_type.PMD | None = None,
     info: pmd_type.INFO | None = None,
     num: int = 0,
@@ -594,25 +595,25 @@ def check_PMD(self) -> None:
     root.mainloop()
 
 
-def refresh(self: PMCA_asset.PMCAData):
+def refresh(data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo):
     PMCA.MODEL_LOCK(1)
 
     LOGGER.info("モデル組立て(MODEL_LOCK=1)")
 
     # PMCA.Load_PMD(0, "./testmodels/001.pmd")
-    context = assemble(self.tree, 0)
+    context = assemble(cnl.tree, 0)
 
     PMCA.Copy_PMD(0, 1)
 
     # 材質関連
     LOGGER.info("材質置換")
-    _get_material(self.mat_rep, self.mats_list)
-    self.mat_entry = ([], [])
-    for v in self.mat_rep.mat.values():
+    _get_material(cnl.mat_rep, data.mats_list)
+    cnl.mat_entry = ([], [])
+    for v in cnl.mat_rep.mat.values():
         if v.num >= 0:
-            self.mat_entry[0].append(v.mat.name + "  " + v.sel.name)
-            self.mat_entry[1].append(v.mat.name)
-    _set_material(context, self.mat_rep)
+            cnl.mat_entry[0].append(v.mat.name + "  " + v.sel.name)
+            cnl.mat_entry[1].append(v.mat.name)
+    _set_material(context, cnl.mat_rep)
     PMCA.Copy_PMD(0, 2)
 
     LOGGER.info("体型調整")
@@ -642,7 +643,7 @@ def refresh(self: PMCA_asset.PMCAData):
             refbone_index = i
             break
 
-    for y in self.transform_data:
+    for y in cnl.transform_data:
         PMCA.Resize_Model(0, y.scale)
         for x in y.bones:
             PMCA.Resize_Bone(0, x.name.encode("cp932", "replace"), x.length, x.thick)
@@ -683,7 +684,7 @@ def refresh(self: PMCA_asset.PMCAData):
         PMCA.Move_Bone(0, "センター".encode("cp932", "replace"), 0, dy, 0)
         PMCA.Move_Bone(0, "+センター".encode("cp932", "replace"), 0, -dy, 0)
 
-    for y in self.transform_data:
+    for y in cnl.transform_data:
         PMCA.Move_Model(0, y.pos[0], y.pos[1], y.pos[2])
 
     PMCA.Update_Skin(0)
@@ -694,11 +695,11 @@ def refresh(self: PMCA_asset.PMCAData):
     LOGGER.info(f"(MODEL_LOCK=0)")
 
     w, h, t = PMCA.getWHT(0)
-    for callback in self.on_reflesh:
+    for callback in data.on_reflesh:
         callback(w, h, t)
 
 
-def save_PMD(self, name):
+def save_PMD(self, name: str):
     if self.export2folder:
         dirc = name[0:-4]
         os.mkdir(dirc)
