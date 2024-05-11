@@ -141,10 +141,11 @@ class ModelTab(QtWidgets.QWidget):
             return
         node = cast(PMCA_cnl.NODE, tree_index.internalPointer())
 
-        print(f"{node} => {parts}")
         assert node.parent
         joint, joint_index = node.get_joint()
         assert joint == node.joint
+        assert joint_index < len(node.parent.children)
+        LOGGER.debug(f"{node},{joint_index} / {len(node.parent.children)}")
 
         match parts:
             case None:

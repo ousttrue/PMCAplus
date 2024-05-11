@@ -47,24 +47,27 @@ void main() {
 """
 
 
-def texture_func(texture_path: str) -> Callable[[], None]:
+def texture_func(texture_path: str, uniform: glo.UniformLocation) -> Callable[[], None]:
     if texture_path:
         LOGGER.debug(f"{texture_path}")
-        image = Image.open(texture_path)  # type: ignore
-        texture = glo.Texture(image.width, image.height, image.tobytes())  # type: ignore
+        try:
+            image = Image.open(texture_path)  # type: ignore
+            texture = glo.Texture(image.width, image.height, image.tobytes())  # type: ignore
 
-        def set_texture():
-            GL.glActiveTexture(GL.GL_TEXTURE0)  # type: ignore
-            texture.bind()
+            def set_texture():
+                uniform.set_int(0)
+                GL.glActiveTexture(GL.GL_TEXTURE0)  # type: ignore
+                texture.bind()
 
-        return set_texture
+            return set_texture
 
-    else:
+        except Exception as e:
+            LOGGER.error(f"{texture_path}: {e}")
 
-        def no_texture():
-            pass
+    def no_texture():
+        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
 
-        return no_texture
+    return no_texture
 
 
 class GlScene:
@@ -75,6 +78,7 @@ class GlScene:
         self.model_src: PmdSrc | None = None
         self.model_drawable: Drawable | None = None
         self.is_shutdown = False
+        self.clear_color = (0.3, 0.4, 0.5, 1)
 
     def shutdown(self) -> None:
         self.drawables.clear()
@@ -132,9 +136,13 @@ class GlScene:
                 self.model_drawable = Drawable(vao)
 
                 props = shader.create_props(self.mouse_camera.camera)
+                u_texture = glo.UniformLocation.create(shader.program, "u_texture")
+
                 for draw_count, texture_path in self.model_src.submeshes:
                     self.model_drawable.push_submesh(
-                        shader, draw_count * 3, props + [texture_func(texture_path)]
+                        shader,
+                        draw_count,
+                        props + [texture_func(texture_path, u_texture)],
                     )
 
                 LOGGER.info("create mesh drawable")
@@ -160,7 +168,7 @@ class GlScene:
         GL.glViewport(0, 0, frame.width, frame.height)  # type: ignore
         if frame.height == 0:
             return
-        GL.glClearColor(0, 0, 0, 1.0)  # type: ignore
+        GL.glClearColor(*self.clear_color)  # type: ignore
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)  # type: ignore
 
         # render

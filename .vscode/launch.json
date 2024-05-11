@@ -34,7 +34,8 @@
             "args": [],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}\\prefix\\bin",
-            }
+            },
+            "justMyCode": false,
         },
         {
             "name": "PyPMCA_tk",
@@ -46,7 +47,8 @@
             "args": [],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}\\prefix\\bin",
-            }
+            },
+            "justMyCode": false
         },
     ]
 }
