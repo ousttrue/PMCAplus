@@ -20,7 +20,7 @@ class PmcaNodeModel(GenericTreeModel[PMCA_cnl.NODE]):
         def get_col(node: PMCA_cnl.NODE, col: int) -> str:
             match col:
                 case 0:
-                    return node.joint
+                    return node.get_joint()[0]
                 case 1:
                     if node.parts:
                         return node.parts.name
@@ -114,9 +114,10 @@ class ModelTab(QtWidgets.QWidget):
             return
         index = indexes[0]
         item = cast(PMCA_cnl.NODE, index.internalPointer())
+        joint, _ = item.get_joint()
 
-        parts = [parts for parts in self.data.parts_list if item.joint in parts.type]
-        list_model = PartsListModel(f"[{item.joint}] parts", parts)
+        parts = [parts for parts in self.data.parts_list if joint in parts.type]
+        list_model = PartsListModel(f"[{joint}] parts", parts)
         self.list.setModel(list_model)
         self.list.selectionModel().selectionChanged.connect(self.onPartsSelected)
 
@@ -143,37 +144,36 @@ class ModelTab(QtWidgets.QWidget):
 
         assert node.parent
         joint, joint_index = node.get_joint()
-        assert joint == node.joint
         assert joint_index < len(node.parent.children)
         LOGGER.debug(f"{node},{joint_index} / {len(node.parent.children)}")
 
         match parts:
             case None:
-                new_node = PMCA_cnl.NODE(node.joint, None, node.parent)
+                new_node = PMCA_cnl.NODE(node.parent, None)
 
             case PMCA_asset.PARTS():
                 if parts == node.parts:
                     return
 
                 new_node = PMCA_cnl.NODE(
-                    node.joint,
-                    parts,
                     node.parent,
+                    parts,
                 )
-                for joint in parts.joint:
-                    assert joint.strip()
-                    added = False
-                    for child, _ in node.traverse():
-                        if child.joint == joint:
-                            child.parent = new_node
-                            new_node.children.append(child)
-                            added = True
-                            break
-                    if not added:
-                        new_node.children.append(PMCA_cnl.NODE(joint, None, new_node))
+                # for joint in parts.joint:
+                #     assert joint.strip()
+                #     added = False
+                #     for child, _ in node.traverse():
+                #         child_joint, _ = child.get_joint()
+                #         if child_joint == joint:
+                #             child.parent = new_node
+                #             new_node.children.append(child)
+                #             added = True
+                #             break
+                #     if not added:
+                #         new_node.children.append(PMCA_cnl.NODE(joint, None, new_node))
 
             case "load":  # 外部モデル読み込み
-                new_node = PMCA_cnl.NODE(node.joint, None, node.parent)
+                new_node = PMCA_cnl.NODE(node.parent, None)
 
                 # raise NotImplementedError()
                 # path = tkinter.filedialog.askopenfilename(

@@ -12,19 +12,25 @@ class NODE:
     モデルのパーツツリー
     """
 
-    joint: str
+    parent: "NODE|None"
     parts: PARTS | None
-    parent: "NODE|None" = None
     children: list["NODE"] = dataclasses.field(default_factory=list)
 
     def __post_init__(self):
-        assert self.joint
+        if self.parent:
+            assert isinstance(self.parent, NODE)
+        if self.parts:
+            for _joint in self.parts.joint:
+                self.children.append(NODE(self, None))
 
     def __str__(self) -> str:
+        if not self.parent:
+            return "__ROOT__"
+        joint, _ = self.get_joint()
         if self.parts:
-            return f"{self.joint}#{self.parts.name}"
+            return f"{joint}#{self.parts.name}"
         else:
-            return f"{self.joint}#"
+            return f"{joint}#"
 
     def traverse(self, level: int = 0) -> Iterator[tuple["NODE", int]]:
         yield self, level
@@ -38,7 +44,6 @@ class NODE:
             zip(self.parent.children, self.parent.parts.joint)
         ):
             if node == self:
-                assert node.joint == joint
                 return joint, i
         raise RuntimeError()
 

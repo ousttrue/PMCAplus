@@ -15,12 +15,7 @@ class CnlInfo:
         self.name_l: str = ""
         self.comment: list[str] = dataclasses.field(default_factory=list)
 
-        self.tree = NODE(
-            "__root__",
-            parts=PMCA_asset.PARTS(name="ROOT", joint=["root"]),
-            children=[NODE("root", None, [])],
-        )
-
+        self.tree = NODE(None, PMCA_asset.PARTS(name="ROOT", joint=["root"]))
         self.mat_rep = MAT_REP()
         self.mat_entry: tuple[list[str], list[str]] = ([], [])
 
@@ -99,26 +94,10 @@ class CnlInfo:
 
                 if tp:
                     joint = curnode.parts.joint[child_nums[-1]]
-                    curnode.children[child_nums[-1]] = NODE(
-                        joint,
-                        parts=y,
-                        children=[],
-                        parent=curnode,
-                    )
+                    curnode.children[child_nums[-1]] = NODE(curnode, y)
                     parents.append(curnode)
                     curnode = curnode.children[child_nums[-1]]
                     child_nums.append(0)
-                    if curnode.parts:
-                        for joint in curnode.parts.joint:
-                            curnode.children.append(
-                                NODE(
-                                    joint,
-                                    parts=None,
-                                    children=[],
-                                    parent=curnode,
-                                )
-                            )
-
                 else:
                     depc = 1
                     while depc == 0:

@@ -117,31 +117,30 @@ class ModelTab(tkinter.ttk.Frame):
         node = self.cnl.get_node(sel_t)
         assert node.parent
         joint, joint_index = node.get_joint()
-        assert joint == node.joint
 
         match self.parts_entry[sel][1]:
             case None:
-                new_node = PMCA_cnl.NODE(node.joint, None, node.parent)
+                new_node = PMCA_cnl.NODE(node.parent, None)
                 node.parent.children[joint_index] = new_node
                 self.comment.set("comment: None")
 
             case PMCA_asset.PARTS() as parts:
                 new_node = PMCA_cnl.NODE(
-                    node.joint,
-                    parts,
                     node.parent,
+                    parts,
                 )
-                for joint in parts.joint:
-                    assert joint.strip()
-                    added = False
-                    for child in node.children:
-                        if child.joint == joint:
-                            child.parent = new_node
-                            new_node.children.append(child)
-                            added = True
-                            break
-                    if not added:
-                        new_node.children.append(PMCA_cnl.NODE(joint, None, new_node))
+                # for joint in parts.joint:
+                #     assert joint.strip()
+                #     added = False
+                #     for child in node.children:
+                #         child_joint, _ = child.get_joint()
+                #         if child_joint == joint:
+                #             child.parent = new_node
+                #             new_node.children.append(child)
+                #             added = True
+                #             break
+                #     if not added:
+                #         new_node.children.append(PMCA_cnl.NODE(new_node, None))
                 node.parent.children[joint_index] = new_node
                 self.comment.set("comment:%s" % (parts.comment))
 

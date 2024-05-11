@@ -711,7 +711,7 @@ void coordtrans(double array[][3], unsigned int len, double loc[],
 }
 
 void coordtrans_inv(double array[][3], unsigned int len, double loc[],
-                   double mtr[3][3]) {
+                    double mtr[3][3]) {
   /*配列は大きさ[len][3]の2次元配列で、点の座標が格納されている
    */
   int i, j, k;
@@ -1167,10 +1167,12 @@ void MODEL::marge_rb() {
 
 void MODEL::update_skin() {
   // 表情baseの頂点位置を更新する
-  for (int i = 0; i < this->skin[0].skin_vt.size(); i++) {
-    for (int j = 0; j < 3; j++) {
-      int k = this->skin[0].skin_vt[i].index;
-      this->skin[0].skin_vt[i].loc[j] = this->vt[k].loc[j];
+  if (this->skin.size()) {
+    for (int i = 0; i < this->skin[0].skin_vt.size(); i++) {
+      for (int j = 0; j < 3; j++) {
+        int k = this->skin[0].skin_vt[i].index;
+        this->skin[0].skin_vt[i].loc[j] = this->vt[k].loc[j];
+      }
     }
   }
 }
