@@ -5,7 +5,7 @@ import traceback
 
 import PMCA  # type: ignore
 from . import pmd_type
-from . import PMCA_data
+from . import PMCA_asset
 
 
 LOGGER = logging.getLogger(__name__)
@@ -387,7 +387,7 @@ class AssembleContext(NamedTuple):
                 exec(script)
 
 
-def assemble(self: PMCA_data.NODE, num: int) -> AssembleContext:
+def assemble(self: PMCA_asset.NODE, num: int) -> AssembleContext:
     context = AssembleContext()
 
     LOGGER.info(f"assemble[{num}]: {self.parts.path}")
@@ -411,7 +411,7 @@ def assemble(self: PMCA_data.NODE, num: int) -> AssembleContext:
     return context
 
 
-def assemble_child(self: PMCA_data.NODE, num: int, context: AssembleContext):
+def assemble_child(self: PMCA_asset.NODE, num: int, context: AssembleContext):
     assert self.parts
     LOGGER.info("パーツのパス:%s" % (self.parts.path))
 
@@ -433,8 +433,8 @@ def assemble_child(self: PMCA_data.NODE, num: int, context: AssembleContext):
 
 
 def _get_material(
-    mat_rep: PMCA_data.MAT_REP,
-    mats_list: list[PMCA_data.MATS],
+    mat_rep: PMCA_asset.MAT_REP,
+    mats_list: list[PMCA_asset.MATS],
     model: pmd_type.PMD | None = None,
     info: pmd_type.INFO | None = None,
     num: int = 0,
@@ -459,7 +459,7 @@ def _get_material(
         for x in mats_list:
             if mat[i].tex == x.name and x.name != "":
                 if mat_rep.mat.get(mat[i].tex) == None:
-                    mat_rep.mat[mat[i].tex] = PMCA_data.MAT_REP_DATA(mat=x, num=i)
+                    mat_rep.mat[mat[i].tex] = PMCA_asset.MAT_REP_DATA(mat=x, num=i)
                 else:
                     mat_rep.mat[mat[i].tex].num = i
 
@@ -469,7 +469,7 @@ def _get_material(
 
 def _set_material(
     context: AssembleContext,
-    self: PMCA_data.MAT_REP,
+    self: PMCA_asset.MAT_REP,
     model: pmd_type.PMD | None = None,
     info: pmd_type.INFO | None = None,
     num: int = 0,
@@ -594,7 +594,7 @@ def check_PMD(self) -> None:
     root.mainloop()
 
 
-def refresh(self: PMCA_data.PMCAData):
+def refresh(self: PMCA_asset.PMCAData):
     PMCA.MODEL_LOCK(1)
 
     LOGGER.info("モデル組立て(MODEL_LOCK=1)")

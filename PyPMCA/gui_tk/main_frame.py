@@ -10,7 +10,7 @@ from .main_frame_model import ModelTab
 from .main_frame_color import ColorTab
 from .main_frame_transform import TransformTab
 from .main_frame_info import InfoTab, MODELINFO
-from .. import PMCA_data
+from .. import PMCA_asset
 from .. import pmd_type
 from .. import native
 
@@ -22,7 +22,7 @@ class MainFrame(tkinter.ttk.Frame):
     def __init__(
         self,
         title: str,
-        data: PMCA_data.PMCAData,
+        data: PMCA_asset.PMCAData,
         name: str,
         name_l: str,
         comment: list[str],

@@ -2,7 +2,7 @@ import logging
 import pathlib
 
 from ..color_logger import ColorfulHandler
-from .. import PMCA_data
+from .. import PMCA_asset
 from .. import native
 from . import main_frame as pyside_gui
 
@@ -15,7 +15,7 @@ def main(dir: pathlib.Path):
     cnl_file = pathlib.Path("./last.cnl")
 
     # data
-    data = PMCA_data.PMCAData()
+    data = PMCA_asset.PMCAData()
     list_txt = data.load_asset(dir)
     if list_txt:
         native.set_list(*list_txt)

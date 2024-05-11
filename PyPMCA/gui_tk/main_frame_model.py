@@ -3,7 +3,7 @@ import logging
 import tkinter.filedialog
 import tkinter.ttk
 import PyPMCA.gui_tk.listbox as listbox
-from .. import PMCA_data
+from .. import PMCA_asset
 from .. import native
 
 
@@ -19,7 +19,7 @@ class ModelTab(tkinter.ttk.Frame):
     +----------+
     """
 
-    def __init__(self, root: tkinter.Tk, data: PMCA_data.PMCAData) -> None:
+    def __init__(self, root: tkinter.Tk, data: PMCA_asset.PMCAData) -> None:
         super().__init__(root)
         self.text = "Model"
 
@@ -50,14 +50,14 @@ class ModelTab(tkinter.ttk.Frame):
         self.text_label.pack(padx=3, pady=3, side=tkinter.BOTTOM, fill=tkinter.X)
 
         # init
-        self.parts_entry: list[tuple[str, PMCA_data.PARTS | Literal["load"] | None]] = (
+        self.parts_entry: list[tuple[str, PMCA_asset.PARTS | Literal["load"] | None]] = (
             []
         )
         self.data = data
         self.set_tree(self.data.tree)
         self.set_parts()
 
-    def set_tree(self, node: PMCA_data.NODE, use_sel: bool = False):
+    def set_tree(self, node: PMCA_asset.NODE, use_sel: bool = False):
         sel_t = int(self.l_tree.listbox.curselection()[0]) if use_sel else 0  # type: ignore
 
         tree_entry: list[str] = []
@@ -84,7 +84,7 @@ class ModelTab(tkinter.ttk.Frame):
         joint, joint_index = node.get_joint()
         self.update_parts_entry(node, joint, joint_index)
 
-    def update_parts_entry(self, node: PMCA_data.NODE, joint: str, joint_index: int):
+    def update_parts_entry(self, node: PMCA_asset.NODE, joint: str, joint_index: int):
         self.parts_entry.clear()
         for parts in self.data.parts_list:
             if joint in parts.type:
@@ -97,7 +97,7 @@ class ModelTab(tkinter.ttk.Frame):
             sel=self.get_sel_parts(node),
         )
 
-    def get_sel_parts(self, node: PMCA_data.NODE) -> int:
+    def get_sel_parts(self, node: PMCA_asset.NODE) -> int:
         for i, (_, parts) in enumerate(self.parts_entry):
             if parts == node.parts:
                 return i
@@ -113,12 +113,12 @@ class ModelTab(tkinter.ttk.Frame):
 
         match self.parts_entry[sel][1]:
             case None:
-                new_node = PMCA_data.NODE(node.joint, None, node.parent)
+                new_node = PMCA_asset.NODE(node.joint, None, node.parent)
                 node.parent.children[joint_index] = new_node
                 self.comment.set("comment: None")
 
-            case PMCA_data.PARTS() as parts:
-                new_node = PMCA_data.NODE(
+            case PMCA_asset.PARTS() as parts:
+                new_node = PMCA_asset.NODE(
                     node.joint,
                     parts,
                     node.parent,
@@ -133,13 +133,13 @@ class ModelTab(tkinter.ttk.Frame):
                             added = True
                             break
                     if not added:
-                        new_node.children.append(PMCA_data.NODE(joint, None, new_node))
+                        new_node.children.append(PMCA_asset.NODE(joint, None, new_node))
                 node.parent.children[joint_index] = new_node
                 self.comment.set("comment:%s" % (parts.comment))
 
             case "load":  # 外部モデル読み込み
                 LOGGER.warn(f"{sel_t} => load")
-                new_node = PMCA_data.NODE(node.joint, None, node.parent)
+                new_node = PMCA_asset.NODE(node.joint, None, node.parent)
                 node.parent.children[joint_index] = new_node
                 self.comment.set("comment: None")
 

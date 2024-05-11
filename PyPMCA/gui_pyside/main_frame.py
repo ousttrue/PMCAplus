@@ -2,7 +2,7 @@ from typing import cast, Callable
 import logging
 import sys
 from PySide6 import QtWidgets, QtCore
-from .. import PMCA_data
+from .. import PMCA_asset
 from .generic_tree_model import GenericTreeModel
 from .gl_scene import GlScene, PmdSrc
 import PMCA  # type: ignore
@@ -14,10 +14,10 @@ import glglue.pyside6
 LOGGER = logging.getLogger(__name__)
 
 
-class PmcaNodeModel(GenericTreeModel[PMCA_data.NODE]):
+class PmcaNodeModel(GenericTreeModel[PMCA_asset.NODE]):
 
-    def __init__(self, root: PMCA_data.NODE) -> None:
-        def get_col(node: PMCA_data.NODE, col: int) -> str:
+    def __init__(self, root: PMCA_asset.NODE) -> None:
+        def get_col(node: PMCA_asset.NODE, col: int) -> str:
             match col:
                 case 0:
                     return node.joint
@@ -39,9 +39,9 @@ class PmcaNodeModel(GenericTreeModel[PMCA_data.NODE]):
         )
 
 
-class PartsListModel(GenericTreeModel[PMCA_data.PARTS]):
+class PartsListModel(GenericTreeModel[PMCA_asset.PARTS]):
 
-    def __init__(self, header: str, parts_list: list[PMCA_data.PARTS]) -> None:
+    def __init__(self, header: str, parts_list: list[PMCA_asset.PARTS]) -> None:
         super().__init__(
             None,
             [header],
@@ -52,7 +52,7 @@ class PartsListModel(GenericTreeModel[PMCA_data.PARTS]):
         )
         self.parts_list = parts_list
 
-    def index_from_item(self, target: PMCA_data.PARTS) -> QtCore.QModelIndex:
+    def index_from_item(self, target: PMCA_asset.PARTS) -> QtCore.QModelIndex:
         for i, parts in enumerate(self.parts_list):
             if parts == target:
                 return self.createIndex(i, 0, parts)
@@ -69,7 +69,7 @@ class ModelTab(QtWidgets.QWidget):
     +----------+
     """
 
-    def __init__(self, data: PMCA_data.PMCAData):
+    def __init__(self, data: PMCA_asset.PMCAData):
         super().__init__()
 
         self.data = data
@@ -97,7 +97,7 @@ class ModelTab(QtWidgets.QWidget):
         self.set_tree_model(data.tree.children[0])
         self.data_updated: list[Callable[[], None]] = []
 
-    def set_tree_model(self, selected: PMCA_data.NODE):
+    def set_tree_model(self, selected: PMCA_asset.NODE):
         tree_model = PmcaNodeModel(self.data.tree)
         self.tree.setModel(tree_model)
         self.tree.expandAll()
@@ -114,7 +114,7 @@ class ModelTab(QtWidgets.QWidget):
         if len(indexes) == 0:
             return
         index = indexes[0]
-        item = cast(PMCA_data.NODE, index.internalPointer())
+        item = cast(PMCA_asset.NODE, index.internalPointer())
 
         parts = [parts for parts in self.data.parts_list if item.joint in parts.type]
         list_model = PartsListModel(f"[{item.joint}] parts", parts)
@@ -134,12 +134,12 @@ class ModelTab(QtWidgets.QWidget):
             return
 
         parts_index = indexes[0]
-        parts = cast(PMCA_data.PARTS, parts_index.internalPointer())
+        parts = cast(PMCA_asset.PARTS, parts_index.internalPointer())
 
         tree_index = self.tree.selectionModel().currentIndex()
         if not tree_index.isValid():
             return
-        node = cast(PMCA_data.NODE, tree_index.internalPointer())
+        node = cast(PMCA_asset.NODE, tree_index.internalPointer())
 
         print(f"{node} => {parts}")
         assert node.parent
@@ -148,13 +148,13 @@ class ModelTab(QtWidgets.QWidget):
 
         match parts:
             case None:
-                new_node = PMCA_data.NODE(node.joint, None, node.parent)
+                new_node = PMCA_asset.NODE(node.joint, None, node.parent)
 
-            case PMCA_data.PARTS():
+            case PMCA_asset.PARTS():
                 if parts == node.parts:
                     return
 
-                new_node = PMCA_data.NODE(
+                new_node = PMCA_asset.NODE(
                     node.joint,
                     parts,
                     node.parent,
@@ -169,10 +169,10 @@ class ModelTab(QtWidgets.QWidget):
                             added = True
                             break
                     if not added:
-                        new_node.children.append(PMCA_data.NODE(joint, None, new_node))
+                        new_node.children.append(PMCA_asset.NODE(joint, None, new_node))
 
             case "load":  # 外部モデル読み込み
-                new_node = PMCA_data.NODE(node.joint, None, node.parent)
+                new_node = PMCA_asset.NODE(node.joint, None, node.parent)
 
                 # raise NotImplementedError()
                 # path = tkinter.filedialog.askopenfilename(
@@ -219,7 +219,7 @@ class InfoTab(QtWidgets.QWidget):
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self, title: str, data: PMCA_data.PMCAData):
+    def __init__(self, title: str, data: PMCA_asset.PMCAData):
         super().__init__()
         self.data = data
         self.setWindowTitle(title)
@@ -259,7 +259,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 class App:
-    def __init__(self, title: str, data: PMCA_data.PMCAData):
+    def __init__(self, title: str, data: PMCA_asset.PMCAData):
         self.app = QtWidgets.QApplication(sys.argv)
         self.window = MainWindow(title, data)
         self.window.show()
@@ -270,7 +270,7 @@ class App:
 
 def MainFrame(
     title: str,
-    data: PMCA_data.PMCAData,
+    data: PMCA_asset.PMCAData,
     name: str,
     name_l: str,
     comment: list[str],
