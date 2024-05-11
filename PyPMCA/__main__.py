@@ -47,13 +47,10 @@ def main(dir: pathlib.Path):
     with native.Renderer():
         if False:
             app = tkinter_gui.MainFrame(APPNAME, data, *cnl_info)
+            data.on_reflesh.append(app.on_refresh)
+            native.refresh(data)
         else:
             app = pyside_gui.MainFrame(APPNAME, data, *cnl_info)
-
-        data.on_reflesh.append(app.on_refresh)
-
-        # r.start_thread()
-        native.refresh(data)
 
         app.mainloop()
 

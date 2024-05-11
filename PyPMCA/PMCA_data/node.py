@@ -18,8 +18,7 @@ class NODE:
     children: list["NODE"] = dataclasses.field(default_factory=list)
 
     def __post_init__(self):
-        pass
-        # assert self.joint
+        assert self.joint
 
     def __str__(self) -> str:
         if self.parts:

@@ -1,4 +1,4 @@
-from typing import cast
+from typing import cast, Callable
 import logging
 import sys
 from PySide6 import QtWidgets, QtCore
@@ -6,6 +6,7 @@ from .. import PMCA_data
 from .generic_tree_model import GenericTreeModel
 from .gl_scene import GlScene, PmdSrc
 import PMCA  # type: ignore
+from .. import native
 
 import glglue.pyside6
 
@@ -36,9 +37,6 @@ class PmcaNodeModel(GenericTreeModel[PMCA_data.NODE]):
             lambda x, row: x.children[row],
             get_col,
         )
-
-    def root_index(self) -> QtCore.QModelIndex:
-        return self.createIndex(0, 0, self.root.children[0])
 
 
 class PartsListModel(GenericTreeModel[PMCA_data.PARTS]):
@@ -85,10 +83,6 @@ class ModelTab(QtWidgets.QWidget):
         # left
         self.tree = QtWidgets.QTreeView()
         hbox.addWidget(self.tree)
-        tree_model = PmcaNodeModel(data.tree)
-        self.tree.setModel(tree_model)
-        self.tree.expandAll()
-        self.tree.selectionModel().selectionChanged.connect(self.onSelectJoint)
         self.tree.setIndentation(12)
 
         # right
@@ -100,29 +94,110 @@ class ModelTab(QtWidgets.QWidget):
         self.comment.setText("comment:")
         vbox.addWidget(self.comment)
 
+        self.set_tree_model(data.tree.children[0])
+        self.data_updated: list[Callable[[], None]] = []
+
+    def set_tree_model(self, selected: PMCA_data.NODE):
+        tree_model = PmcaNodeModel(self.data.tree)
+        self.tree.setModel(tree_model)
+        self.tree.expandAll()
+        self.tree.selectionModel().selectionChanged.connect(self.onJointSelected)
         self.tree.selectionModel().setCurrentIndex(
-            tree_model.root_index(),
+            tree_model.createIndex(0, 0, selected),
             QtCore.QItemSelectionModel.SelectionFlag.ClearAndSelect,
         )
 
-    def onSelectJoint(
+    def onJointSelected(
         self, selected: QtCore.QItemSelection, deselected: QtCore.QItemSelection
     ) -> None:
         indexes = selected.indexes()
-        if len(indexes) > 0:
-            index = indexes[0]
-            item = cast(PMCA_data.NODE, index.internalPointer())
+        if len(indexes) == 0:
+            return
+        index = indexes[0]
+        item = cast(PMCA_data.NODE, index.internalPointer())
 
-            parts = [
-                parts for parts in self.data.parts_list if item.joint in parts.type
-            ]
-            list_model = PartsListModel(f"joints for [{item.joint}]", parts)
-            self.list.setModel(list_model)
+        parts = [parts for parts in self.data.parts_list if item.joint in parts.type]
+        list_model = PartsListModel(f"joints for [{item.joint}]", parts)
+        self.list.setModel(list_model)
+        self.list.selectionModel().selectionChanged.connect(self.onPartsSelected)
 
-            self.list.selectionModel().setCurrentIndex(
-                list_model.index_from_item(item.parts),
-                QtCore.QItemSelectionModel.SelectionFlag.ClearAndSelect,
-            )
+        self.list.selectionModel().setCurrentIndex(
+            list_model.index_from_item(item.parts),
+            QtCore.QItemSelectionModel.SelectionFlag.ClearAndSelect,
+        )
+
+    def onPartsSelected(
+        self, selected: QtCore.QItemSelection, deselected: QtCore.QItemSelection
+    ):
+        indexes = selected.indexes()
+        if len(indexes) == 0:
+            return
+
+        parts_index = indexes[0]
+        parts = cast(PMCA_data.PARTS, parts_index.internalPointer())
+
+        tree_index = self.tree.selectionModel().currentIndex()
+        if not tree_index.isValid():
+            return
+        node = cast(PMCA_data.NODE, tree_index.internalPointer())
+
+        print(f"{node} => {parts}")
+        assert node.parent
+        joint, joint_index = node.get_joint()
+        assert joint == node.joint
+
+        match parts:
+            case None:
+                new_node = PMCA_data.NODE(node.joint, None, node.parent)
+
+            case PMCA_data.PARTS():
+                if parts == node.parts:
+                    return
+
+                new_node = PMCA_data.NODE(
+                    node.joint,
+                    parts,
+                    node.parent,
+                )
+                for joint in parts.joint:
+                    assert joint.strip()
+                    added = False
+                    for child, _ in node.traverse():
+                        if child.joint == joint:
+                            child.parent = new_node
+                            new_node.children.append(child)
+                            added = True
+                            break
+                    if not added:
+                        new_node.children.append(PMCA_data.NODE(joint, None, new_node))
+
+            case "load":  # 外部モデル読み込み
+                new_node = PMCA_data.NODE(node.joint, None, node.parent)
+
+                # raise NotImplementedError()
+                # path = tkinter.filedialog.askopenfilename(
+                #     filetypes=[("Plygon Model Deta(for MMD)", ".pmd"), ("all", ".*")],
+                #     defaultextension=".pmd",
+                # )
+                # if path != "":
+                #     name = path.split("/")[-1]
+                #     parts = PMCA_data.PARTS(name=name, path=path, props={})
+                #     node = PMCA_data.NODE(
+                #         parts=parts,
+                #         depth=tree_node.node.depth + 1,
+                #         children=[None for _ in parts.joint],
+                #     )
+                #     self.comment.set("comment:%s" % (node.parts.comment))
+                # else:
+                #     self.comment.set("comment:")
+                #     node = None
+
+        node.parent.children[joint_index] = new_node
+
+        self.set_tree_model(new_node)
+
+        for callback in self.data_updated:
+            callback()
 
 
 class ColorTab(QtWidgets.QWidget):
@@ -146,6 +221,7 @@ class InfoTab(QtWidgets.QWidget):
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, title: str, data: PMCA_data.PMCAData):
         super().__init__()
+        self.data = data
         self.setWindowTitle(title)
 
         self.scene = GlScene()
@@ -158,6 +234,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.addDockWidget(
             QtCore.Qt.DockWidgetArea.BottomDockWidgetArea, self.model_dock
         )
+        self.model_tab.data_updated.append(self.on_data_updated)
+        self.on_data_updated()
         # self.addTab(self.model_tab, "Model")
 
         # self.color_tab = ColorTab()
@@ -172,6 +250,13 @@ class MainWindow(QtWidgets.QMainWindow):
     def closeEvent(self, _) -> None:  # type: ignore
         self.scene.shutdown()
 
+    def on_data_updated(self):
+        native.refresh(self.data)
+        data = PMCA.Get_PMD(0)
+        if data:
+            self.scene.set_model(PmdSrc(*data))
+            self.glwidget.repaint()
+
 
 class App:
     def __init__(self, title: str, data: PMCA_data.PMCAData):
@@ -181,11 +266,6 @@ class App:
 
     def mainloop(self):
         self.app.exec()
-
-    def on_refresh(self, w: float, h: float, t: float):
-        data = PMCA.Get_PMD(0)
-        if data:
-            self.window.scene.set_model(PmdSrc(*data))
 
 
 def MainFrame(
