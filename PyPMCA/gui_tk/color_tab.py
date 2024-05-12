@@ -45,7 +45,7 @@ class ColorTab(tkinter.ttk.Frame):
         sel_t = int(self.l_tree.listbox.curselection()[0])  # type: ignore
 
         tmp_list: list[str] = []
-        for x in self.cnl.mat_rep.mat[self.cnl.mat_entry[1][sel_t]].mat.entries:
+        for x in self.cnl.mat_rep.mat_map[self.cnl.mat_entry[1][sel_t]].mat.entries:
             tmp_list.append(x.name)
 
         self.l_sel.set_entry(tmp_list)  # type: ignore
@@ -56,12 +56,12 @@ class ColorTab(tkinter.ttk.Frame):
 
         self.comment.set(
             "comment:%s"
-            % (self.cnl.mat_rep.mat[self.cnl.mat_entry[1][sel_t]].mat.comment)
+            % (self.cnl.mat_rep.mat_map[self.cnl.mat_entry[1][sel_t]].mat.comment)
         )
 
     def mats_sel_click(self, _) -> None:
         sel_t = int(self.l_sel.listbox.curselection()[0])  # type: ignore
-        self.cnl.mat_rep.mat[self.cnl.mat_entry[1][self.cur_mat]].sel = (
-            self.cnl.mat_rep.mat[self.cnl.mat_entry[1][self.cur_mat]].mat.entries[sel_t]
+        self.cnl.mat_rep.mat_map[self.cnl.mat_entry[1][self.cur_mat]].sel = (
+            self.cnl.mat_rep.mat_map[self.cnl.mat_entry[1][self.cur_mat]].mat.entries[sel_t]
         )
         self.on_updated()

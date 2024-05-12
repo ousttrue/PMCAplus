@@ -453,19 +453,18 @@ def _get_material(
         info = model.info
         mat = model.mat
 
-    for x in mat_rep.mat.values():
-        x.num = -1
+    mat_rep.mat_order.clear()
 
     for i in range(info.data["mat_count"]):
-        for x in mats_list:
-            if mat[i].tex == x.name and x.name != "":
-                if mat_rep.mat.get(mat[i].tex) == None:
-                    mat_rep.mat[mat[i].tex] = PMCA_cnl.MAT_REP_DATA(mat=x, num=i)
-                else:
-                    mat_rep.mat[mat[i].tex].num = i
-
-                if mat_rep.mat[mat[i].tex].sel == None:
-                    mat_rep.mat[mat[i].tex].sel = mat_rep.mat[mat[i].tex].mat.entries[0]
+        tex = mat[i].tex
+        if tex != "":
+            if tex not in mat_rep.mat_map:
+                for m in mats_list:
+                    if tex == m.name:
+                        mat_rep.mat_map[tex] = PMCA_cnl.MAT_REP_DATA(m, m.entries[0])
+                        break
+            if tex in mat_rep.mat_map:
+                mat_rep.mat_order.append(tex)
 
 
 def _set_material(
@@ -489,8 +488,8 @@ def _set_material(
         mat = model.mat
 
     for i, x in enumerate(mat):
-        if self.mat.get(x.tex) != None:
-            rep = self.mat[x.tex].sel
+        if self.mat_map.get(x.tex) != None:
+            rep = self.mat_map[x.tex].sel
             for k, v in rep.props.items():
                 if k == "tex":
                     x.tex = v
@@ -609,10 +608,14 @@ def refresh(data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo):
     LOGGER.info("材質置換")
     _get_material(cnl.mat_rep, data.mats_list)
     cnl.mat_entry = ([], [])
-    for v in cnl.mat_rep.mat.values():
-        if v.num >= 0:
-            cnl.mat_entry[0].append(v.mat.name + "  " + v.sel.name)
-            cnl.mat_entry[1].append(v.mat.name)
+    for i, tex in enumerate(cnl.mat_rep.mat_order):
+        mat_rep = cnl.mat_rep.mat_map.get(tex)
+        if mat_rep:
+            LOGGER.debug(f"[{i}] {tex}: {mat_rep.mat.name} => {mat_rep.sel.name}")
+            cnl.mat_entry[0].append(mat_rep.mat.name + "  " + mat_rep.sel.name)
+            cnl.mat_entry[1].append(mat_rep.mat.name)
+        else:
+            LOGGER.debug(f"[{i}] {tex}:")
     _set_material(context, cnl.mat_rep)
     PMCA.Copy_PMD(0, 2)
 

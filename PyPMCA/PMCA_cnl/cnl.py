@@ -3,8 +3,9 @@ import dataclasses
 import pathlib
 import logging
 from .. import PMCA_asset
-from .mat_rep import MAT_REP, MAT_REP_DATA
-from .node import NODE, NodeParent
+from .mat_rep import MAT_REP
+from .node import NODE
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -46,113 +47,6 @@ class CnlInfo:
                 pass
             else:
                 self.comment.append(line)
-
-        raise RuntimeError()
-
-    def _read_parts(
-        self,
-        lines: list[str],
-        node: NODE,
-        parts_list: list[PMCA_asset.PARTS],
-    ) -> list[str]:
-        LOGGER.info("parse nodes")
-        tmp = [None, None]
-        curnode = node
-        parents = [node]
-        child_nums = [0]
-
-        while len(lines) > 0 and len(parents) > 0:
-            line = lines.pop(0)
-            sp = line.split(" ")
-            if sp[0] == "None":
-                tmp = [None, None]
-                child_nums[-1] += 1
-
-            elif sp[0] == "[Name]":
-                tmp[0] = sp[1]
-
-            elif sp[0] == "[Path]":
-                if len(sp) == 1:
-                    tmp[1] = ""
-                else:
-                    tmp[1] = sp[1]
-
-            elif sp[0] == "[Child]":
-
-                tp: PMCA_asset.PARTS | None = None
-                if tmp[0] != None:
-                    for y in parts_list:
-                        if y.name == tmp[0]:
-                            tp = y
-                            break
-                    else:
-                        for y in parts_list:
-                            if y.path == tmp[1]:
-                                tp = y
-                                break
-
-                if tp:
-                    assert curnode.parts
-                    joint = curnode.parts.joint[child_nums[-1]]
-                    curnode.children[child_nums[-1]] = NODE(
-                        NodeParent(curnode, joint, child_nums[-1]), y
-                    )
-                    parents.append(curnode)
-                    curnode = curnode.children[child_nums[-1]]
-                    child_nums.append(0)
-                else:
-                    depc = 1
-                    while depc == 0:
-                        line = lines.pop(0)
-                        if line == "[Child]":
-                            depc += 1
-                        if line == "[Parent]":
-                            depc -= 1
-                    parents.pop()
-                    child_nums.pop()
-                    child_nums[-1] += 1
-
-            elif sp[0] == "[Parent]":
-                curnode = parents.pop()
-                child_nums.pop()
-                if len(child_nums) > 0:
-                    child_nums[-1] += 1
-            elif sp[0] == "MATERIAL":
-                return lines
-            else:
-                pass
-
-        raise RuntimeError()
-
-    def _read_mat_rep(
-        self, lines: list[str], mat_list: list[PMCA_asset.MATS]
-    ) -> tuple[list[str], dict[str, MAT_REP_DATA]]:
-        LOGGER.info("parse material_rep")
-        mat_rep: dict[str, MAT_REP_DATA] = {}
-        tmp = ["", "", None]
-
-        while len(lines) > 0:
-            x = lines.pop(0)
-            x = x.split(" ")
-            if x[0] == "[Name]":
-                tmp[0] = x[1]
-            elif x[0] == "[Sel]":
-                tmp[1] = x[1]
-            elif x[0] == "NEXT":
-                for y in mat_list:
-                    if y.name == tmp[0]:
-                        tmp[2] = y
-                        break
-                else:
-                    tmp[2] = None
-                    continue
-
-                for y in tmp[2].entries:
-                    if y.name == tmp[1]:
-                        mat_rep[tmp[0]] = MAT_REP_DATA(num=-1, mat=tmp[2], sel=y)
-                        break
-            elif x[0] == "TRANSFORM":
-                return lines, mat_rep
 
         raise RuntimeError()
 
@@ -200,11 +94,11 @@ class CnlInfo:
         lines = file.read_text(encoding="utf-8").splitlines()
         lines = self._read_info(lines)
 
-        lines = self._read_parts(lines, self.tree, data.parts_list)
+        lines = self.tree.parse(lines, data.parts_list)
 
         assert self.mat_rep
-        lines, mat_rep = self._read_mat_rep(lines, data.mats_list)
-        self.mat_rep.mat = mat_rep
+        lines, mat_rep = MAT_REP.parse(lines, data.mats_list)
+        self.mat_rep.mat_map = mat_rep
 
         assert len(self.transform_data) > 0
         self._read_transform(lines, self.transform_data[0])
