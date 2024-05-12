@@ -14,19 +14,20 @@ LOGGER = logging.getLogger(__name__)
 
 
 class ColorTab(QtWidgets.QWidget):
-    def __init__(self):
+    def __init__(self, data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo):
         super().__init__()
-        pass
+        self.data = data
+        self.cnl = cnl
 
 
 class TransformTab(QtWidgets.QWidget):
-    def __init__(self):
+    def __init__(self, data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo):
         super().__init__()
         pass
 
 
 class InfoTab(QtWidgets.QWidget):
-    def __init__(self):
+    def __init__(self, data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo):
         super().__init__()
         pass
 
@@ -42,24 +43,44 @@ class MainWindow(QtWidgets.QMainWindow):
         self.glwidget = glglue.pyside6.Widget(self, render_gl=self.scene.render)
         self.setCentralWidget(self.glwidget)
 
+        ## menu
+        self.menu = self.menuBar()
+        self.menu_file = self.menu.addMenu("File")
+        self.menu_edit = self.menu.addMenu("Edit")
+        self.menu_dock = self.menu.addMenu("Dock")
+
+        ## tabs
+        # model
         self.model_tab = ModelTab(data, cnl)
-        self.model_dock = QtWidgets.QDockWidget("Model", self)
-        self.model_dock.setWidget(self.model_tab)
-        self.addDockWidget(
-            QtCore.Qt.DockWidgetArea.BottomDockWidgetArea, self.model_dock
-        )
         self.model_tab.data_updated.append(self.on_data_updated)
+        self.model_dock = self._add_dock("Model", self.model_tab)
+
+        # color
+        self.color_tab = ColorTab(data, cnl)
+        self.color_dock = self._add_dock("Color", self.color_tab)
+        self.tabifyDockWidget(self.model_dock, self.color_dock)
+
+        # transform
+        self.transform_tab = TransformTab(data, cnl)
+        self.transform_dock = self._add_dock("Transform", self.transform_tab)
+        self.tabifyDockWidget(self.model_dock, self.transform_dock)
+
+        # info
+        self.info_tab = InfoTab(data, cnl)
+        self.info_dock = self._add_dock("Info", self.info_tab)
+        self.tabifyDockWidget(self.model_dock, self.info_dock)
+
+        self.model_dock.raise_()
+
         self.on_data_updated()
-        # self.addTab(self.model_tab, "Model")
 
-        # self.color_tab = ColorTab()
-        # self.addTab(self.color_tab, "Color")
+    def _add_dock(self, name: str, widget: QtWidgets.QWidget) -> QtWidgets.QDockWidget:
+        dock = QtWidgets.QDockWidget(name, self)
+        dock.setWidget(widget)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea, dock)
+        self.menu_dock.addAction(dock.toggleViewAction())
 
-        # self.transform_tab = TransformTab()
-        # self.addTab(self.transform_tab, "Transform")
-
-        # self.info_tab = InfoTab()
-        # self.addTab(self.info_tab, "Info")
+        return dock
 
     def closeEvent(self, _) -> None:  # type: ignore
         self.scene.shutdown()
