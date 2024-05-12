@@ -162,7 +162,6 @@ class ModelTab(QtWidgets.QWidget):
                 )
                 used: list[PMCA_cnl.NODE] = []
                 for i, joint in enumerate(parts.joint):
-                    assert joint.strip()
                     for child, _ in node.traverse():
                         assert child.parent
                         if child.parent.joint == joint and child not in used:

@@ -88,17 +88,17 @@ class ModelTab(tkinter.ttk.Frame):
     def tree_click(self, _event: Any):
         self.comment.set("comment:")
         sel_t = int(self.l_tree.listbox.curselection()[0]) + 1  # type: ignore
-        node = self.data.get_node(sel_t)
-        joint, joint_index = node.get_joint()
-        self.update_parts_entry(node, joint, joint_index)
+        node = self.cnl.get_node(sel_t)
+        self.update_parts_entry(node)
 
-    def update_parts_entry(self, node: PMCA_cnl.NODE, joint: str, joint_index: int):
+    def update_parts_entry(self, node: PMCA_cnl.NODE):
+        assert node.parent
         self.parts_entry.clear()
         for parts in self.data.parts_list:
-            if joint in parts.type:
+            if node.parent.joint in parts.type:
                 self.parts_entry.append((parts.name, parts))
         self.parts_entry.append(("#外部モデル読み込み", "load"))
-        if joint != "root":
+        if node.parent.joint != "root":
             self.parts_entry.append(("#None", None))
         self.l_sel.set_entry(  # type: ignore
             [k for k, _ in self.parts_entry],
@@ -116,12 +116,11 @@ class ModelTab(tkinter.ttk.Frame):
         sel_t = int(self.l_tree.listbox.curselection()[0]) + 1  # type: ignore
         node = self.cnl.get_node(sel_t)
         assert node.parent
-        joint, joint_index = node.get_joint()
 
         match self.parts_entry[sel][1]:
             case None:
                 new_node = PMCA_cnl.NODE(node.parent, None)
-                node.parent.children[joint_index] = new_node
+                node.parent.node.children[node.parent.joint_index] = new_node
                 self.comment.set("comment: None")
 
             case PMCA_asset.PARTS() as parts:
@@ -129,26 +128,22 @@ class ModelTab(tkinter.ttk.Frame):
                     node.parent,
                     parts,
                 )
-                # for joint in parts.joint:
-                #     assert joint.strip()
-                #     added = False
-                #     for child in node.children:
-                #         child_joint, _ = child.get_joint()
-                #         if child_joint == joint:
-                #             child.parent = new_node
-                #             new_node.children.append(child)
-                #             added = True
-                #             break
-                #     if not added:
-                #         new_node.children.append(PMCA_cnl.NODE(new_node, None))
-                node.parent.children[joint_index] = new_node
+                used: list[PMCA_cnl.NODE] = []
+                for i, joint in enumerate(parts.joint):
+                    for child, _ in node.traverse():
+                        assert child.parent
+                        if child.parent.joint == joint and child not in used:
+                            new_node.connect(i, child)
+                            used.append(child)
+                            break
+                node.parent.node.children[node.parent.joint_index] = new_node
                 self.comment.set("comment:%s" % (parts.comment))
 
             case "load":  # 外部モデル読み込み
                 LOGGER.warn(f"{sel_t} => load")
-                new_node = PMCA_cnl.NODE(node.joint, None, node.parent)
-                node.parent.children[joint_index] = new_node
-                self.comment.set("comment: None")
+                # new_node = PMCA_cnl.NODE(node.joint, None, node.parent)
+                # node.parent.children[joint_index] = new_node
+                # self.comment.set("comment: None")
 
                 # raise NotImplementedError()
                 # path = tkinter.filedialog.askopenfilename(

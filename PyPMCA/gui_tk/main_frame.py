@@ -6,10 +6,10 @@ import random
 import logging
 import tkinter.ttk
 
-from .main_frame_model import ModelTab
-from .main_frame_color import ColorTab
-from .main_frame_transform import TransformTab
-from .main_frame_info import InfoTab, MODELINFO
+from .model_tab import ModelTab
+from .color_tab import ColorTab
+from .transform_tab import TransformTab
+from .info_tab import InfoTab, MODELINFO
 from .. import PMCA_asset
 from .. import PMCA_cnl
 from .. import pmd_type
