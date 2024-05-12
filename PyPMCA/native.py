@@ -1,4 +1,4 @@
-from typing import Any, NamedTuple
+from typing import Any
 import logging
 import sys
 import traceback
@@ -7,6 +7,7 @@ import PMCA  # type: ignore
 from . import pmd_type
 from . import PMCA_asset
 from . import PMCA_cnl
+from .assemble import AssembleContext
 
 
 LOGGER = logging.getLogger(__name__)
@@ -303,91 +304,6 @@ def Set_PMD(num: int, model: pmd_type.PMD):
         )
 
 
-class AssembleContext(NamedTuple):
-    script_fin: list[str] = []
-    authors: list[str] = []
-    licenses: list[str] = []
-
-    def pre_process(self, info_data: pmd_type.InfoData, props: dict[str, str]):
-        info = pmd_type.INFO(info_data)
-        flag_author = False
-        flag_license = False
-
-        line = info.comment.split("\n")
-        for x in line:
-            tmp = x.split(":", 1)
-            if len(tmp) == 1:
-                tmp = x.split("：", 1)
-            if (
-                tmp[0] == "Author"
-                or tmp[0] == "author"
-                or tmp[0] == "Creator"
-                or tmp[0] == "creator"
-                or tmp[0] == "モデル制作"
-            ):
-                if len(tmp) > 1:
-                    flag_author = True
-                    tmp[1] = tmp[1].replace("　", " ")
-                    for x in tmp[1].split(" "):
-                        for y in self.authors:
-                            if x == y:
-                                break
-                        else:
-                            self.authors.append(x)
-
-            elif tmp[0] == "License" or tmp[0] == "license" or tmp[0] == "ライセンス":
-                if len(tmp) > 1:
-                    flag_license = True
-                    tmp[1] = tmp[1].replace("　", " ")
-                    for x in tmp[1].split(" "):
-                        for y in self.licenses:
-                            if x == y:
-                                break
-                        else:
-                            self.licenses.append(x)
-
-        if info.name != "":
-            if flag_author == False:
-                for x in self.authors:
-                    if x == "Unknown":
-                        break
-                else:
-                    self.authors.append("Unknown")
-            if flag_license == False:
-                for x in self.licenses:
-                    if x == "Nonfree":
-                        break
-                else:
-                    self.licenses.append("Nonfree")
-
-        if "script_pre" in props:
-            for x in props["script_pre"]:
-                LOGGER.debug("プレスクリプト実行")
-                argv = x.split()
-                fp = open(argv[0], "r", encoding="utf-8-sig")
-                script = fp.read()
-                exec(script)
-                fp.close
-
-    def post_process(self, props: dict[str, str]):
-        if "script_post" in props:
-            for x in props["script_post"]:
-                argv = x.split()
-                fp = open(argv[0], "r", encoding="utf-8-sig")
-                script = fp.read()
-                exec(script)
-                fp.close
-        if "script_fin" in props:
-            self.script_fin.extend(props["script_fin"])
-
-    def finalize(self):
-        for x in self.script_fin:
-            argv = x.split()
-            with open(argv[0], "r", encoding="utf-8-sig") as fp:
-                script = fp.read()
-                exec(script)
-
-
 def assemble(self: PMCA_cnl.NODE, num: int) -> AssembleContext:
     context = AssembleContext()
 
@@ -474,73 +390,24 @@ def _set_material(
     info: pmd_type.INFO | None = None,
     num: int = 0,
 ):
+    materials: list[pmd_type.MATERIAL] = []
     if model == None:
         if info == None:
             info_data = PMCA.getInfo(num)
             assert info_data
             info = pmd_type.INFO(info_data)
-        mat: list[pmd_type.MATERIAL] = []
         for i in range(info.data["mat_count"]):
             tmp = PMCA.getMat(num, i)
-            mat.append(pmd_type.MATERIAL(**tmp))
+            materials.append(pmd_type.MATERIAL(**tmp))
     else:
         info = model.info
-        mat = model.mat
+        materials = model.mat
 
-    for i, x in enumerate(mat):
-        if self.mat_map.get(x.tex) != None:
-            rep = self.mat_map[x.tex].sel
-            for k, v in rep.props.items():
-                if k == "tex":
-                    x.tex = v
-                elif k == "tex_path":
-                    x.tex_path = v
-                elif k == "sph":
-                    x.sph = v
-                elif k == "sph_path":
-                    x.sph_path = v
-                elif k == "diff_rgb":
-                    x.diff_col = v
-                    for j, y in enumerate(x.diff_col):
-                        x.diff_col[j] = float(y)
-                elif k == "alpha":
-                    x.alpha = float(v)
-                elif k == "spec_rgb":
-                    x.spec_col = v
-                    for j, y in enumerate(x.spec_col):
-                        x.spec_col[j] = float(y)
-                elif k == "mirr_rgb":
-                    x.mirr_col = v
-                    for j, y in enumerate(x.mirr_col):
-                        x.mirr_col[j] = float(y)
-
-                elif k == "toon":
-                    toon = pmd_type.TOON()
-                    toon.path = PMCA.getToonPath(num)
-                    toon.name = PMCA.getToon(num)
-                    tmp = v[-1].split(" ")
-                    tmp[0] = int(tmp[0])
-                    toon.path[tmp[0]] = ("toon/" + tmp[1]).encode("cp932", "replace")
-                    toon.name[tmp[0]] = tmp[1].encode("cp932", "replace")
-
-                    PMCA.setToon(num, toon.name)
-                    PMCA.setToonPath(num, toon.path)
-                    x.toon = tmp[0]
-                elif k == "author":
-                    for y in v[-1].split(" "):
-                        for z in context.authors:
-                            if z == y:
-                                break
-                        else:
-                            context.authors.append(y)
-                elif k == "license":
-                    for y in v[-1].split(" "):
-                        for z in context.licenses:
-                            if z == y:
-                                break
-                        else:
-                            context.licenses.append(y)
-
+    for i, x in enumerate(materials):
+        rep_mat = self.mat_map.get(x.tex)
+        if rep_mat:
+            selected = rep_mat.sel
+            selected.apply(x, context)
             PMCA.setMat(
                 num,
                 i,

@@ -61,7 +61,9 @@ class ColorTab(tkinter.ttk.Frame):
 
     def mats_sel_click(self, _) -> None:
         sel_t = int(self.l_sel.listbox.curselection()[0])  # type: ignore
-        self.cnl.mat_rep.mat_map[self.cnl.mat_entry[1][self.cur_mat]].sel = (
-            self.cnl.mat_rep.mat_map[self.cnl.mat_entry[1][self.cur_mat]].mat.entries[sel_t]
+        key = self.cnl.mat_entry[1][self.cur_mat]
+        self.cnl.mat_rep.mat_map[key] = PMCA_cnl.MAT_REP_DATA(
+            self.cnl.mat_rep.mat_map[key].mat,
+            self.cnl.mat_rep.mat_map[key].mat.entries[sel_t],
         )
         self.on_updated()
