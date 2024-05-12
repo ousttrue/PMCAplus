@@ -4,7 +4,7 @@ import pathlib
 import logging
 from .. import PMCA_asset
 from .mat_rep import MAT_REP, MAT_REP_DATA
-from .node import NODE
+from .node import NODE, NodeParent
 
 LOGGER = logging.getLogger(__name__)
 
@@ -79,8 +79,7 @@ class CnlInfo:
 
             elif sp[0] == "[Child]":
 
-                tp = None
-                y: PARTS | None = None
+                tp: PMCA_asset.PARTS | None = None
                 if tmp[0] != None:
                     for y in parts_list:
                         if y.name == tmp[0]:
@@ -93,8 +92,11 @@ class CnlInfo:
                                 break
 
                 if tp:
+                    assert curnode.parts
                     joint = curnode.parts.joint[child_nums[-1]]
-                    curnode.children[child_nums[-1]] = NODE(curnode, y)
+                    curnode.children[child_nums[-1]] = NODE(
+                        NodeParent(curnode, joint, child_nums[-1]), y
+                    )
                     parents.append(curnode)
                     curnode = curnode.children[child_nums[-1]]
                     child_nums.append(0)

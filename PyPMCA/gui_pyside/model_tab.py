@@ -14,19 +14,24 @@ class PmcaNodeModel(GenericTreeModel[PMCA_cnl.NODE]):
         def get_col(node: PMCA_cnl.NODE, col: int) -> str:
             match col:
                 case 0:
-                    return node.get_joint()[0]
+                    # joint
+                    if node.parent:
+                        return node.parent.joint
+                    else:
+                        return "no_parent"
                 case 1:
+                    # parts
                     if node.parts:
                         return node.parts.name
                     else:
                         return ""
                 case _:
-                    return "error"
+                    raise RuntimeError()
 
         super().__init__(
             root,
             ["joint", "parts"],
-            lambda x: x.parent,
+            lambda x: x.parent.node if x.parent else None,
             lambda x: len(x.children),
             lambda x, row: x.children[row],
             get_col,
@@ -108,10 +113,12 @@ class ModelTab(QtWidgets.QWidget):
             return
         index = indexes[0]
         item = cast(PMCA_cnl.NODE, index.internalPointer())
-        joint, _ = item.get_joint()
+        assert item.parent
 
-        parts = [parts for parts in self.data.parts_list if joint in parts.type]
-        list_model = PartsListModel(f"[{joint}] parts", parts)
+        parts = [
+            parts for parts in self.data.parts_list if item.parent.joint in parts.type
+        ]
+        list_model = PartsListModel(f"[{item.parent.joint}] parts", parts)
         self.list.setModel(list_model)
         self.list.selectionModel().selectionChanged.connect(self.onPartsSelected)
 
@@ -137,9 +144,9 @@ class ModelTab(QtWidgets.QWidget):
         node = cast(PMCA_cnl.NODE, tree_index.internalPointer())
 
         assert node.parent
-        _joint, joint_index = node.get_joint()
-        assert joint_index < len(node.parent.children)
-        LOGGER.debug(f"{node},{joint_index} / {len(node.parent.children)}")
+        LOGGER.debug(
+            f"{node},{node.parent.joint_index} / {len(node.parent.node.children)}"
+        )
 
         match parts:
             case None:
@@ -153,18 +160,15 @@ class ModelTab(QtWidgets.QWidget):
                     node.parent,
                     parts,
                 )
-                # for joint in parts.joint:
-                #     assert joint.strip()
-                #     added = False
-                #     for child, _ in node.traverse():
-                #         child_joint, _ = child.get_joint()
-                #         if child_joint == joint:
-                #             child.parent = new_node
-                #             new_node.children.append(child)
-                #             added = True
-                #             break
-                #     if not added:
-                #         new_node.children.append(PMCA_cnl.NODE(joint, None, new_node))
+                used: list[PMCA_cnl.NODE] = []
+                for i, joint in enumerate(parts.joint):
+                    assert joint.strip()
+                    for child, _ in node.traverse():
+                        assert child.parent
+                        if child.parent.joint == joint and child not in used:
+                            new_node.connect(i, child)
+                            used.append(child)
+                            break
 
             case "load":  # 外部モデル読み込み
                 new_node = PMCA_cnl.NODE(node.parent, None)
@@ -187,7 +191,7 @@ class ModelTab(QtWidgets.QWidget):
                 #     self.comment.set("comment:")
                 #     node = None
 
-        node.parent.children[joint_index] = new_node
+        node.parent.node.children[node.parent.joint_index] = new_node
 
         self.set_tree_model(new_node)
 

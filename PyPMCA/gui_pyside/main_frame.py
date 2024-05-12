@@ -38,6 +38,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.data = data
         self.cnl = cnl
         self.setWindowTitle(title)
+        self.resize(800, 800)
 
         self.scene = GlScene()
         self.glwidget = glglue.pyside6.Widget(self, render_gl=self.scene.render)
