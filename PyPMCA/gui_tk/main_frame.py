@@ -57,7 +57,7 @@ class MainFrame(tkinter.ttk.Frame):
         self.color_tab = ColorTab(self.root, self.cnl, on_updated)
         add_tab(self.color_tab)
 
-        self.transform_tab = TransformTab(self.root)
+        self.transform_tab = TransformTab(self.root, self.data, self.cnl)
         self.transform_tab.tfgroup.set_entry([x.name for x in self.data.transform_list])  # type: ignore
         add_tab(self.transform_tab)
 

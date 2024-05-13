@@ -1,11 +1,18 @@
 import tkinter.ttk
 import PyPMCA.gui_tk.listbox as listbox
+from .. import PMCA_asset
+from .. import PMCA_cnl
+from . import PMCA_dialogs
 
 
 class TransformTab(tkinter.ttk.Frame):
-    def __init__(self, root: tkinter.Tk) -> None:
+    def __init__(
+        self, root: tkinter.Tk, data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo
+    ) -> None:
         super().__init__(root)
         self.text = "Transform"
+        self.data = data
+        self.cnl = cnl
         self.tfgroup_frame = tkinter.ttk.LabelFrame(self, text="Groups")
         self.tfgroup = listbox.LISTBOX(self.tfgroup_frame)
         # self.tfgroup.set_entry(tmp)
@@ -25,28 +32,28 @@ class TransformTab(tkinter.ttk.Frame):
         )
 
     def tf_click(self, event):
-        sel = int(self.tab[2].tfgroup.listbox.curselection()[0])
+        sel = int(self.tfgroup.listbox.curselection()[0])
         buff = ""
 
-        for x in self.transform_list[sel].bones:
+        for x in self.data.transform_list[sel].bones:
             buff += "%s %f %f\n" % (x.name, x.length, x.thick)
 
-        t = self.transform_list[sel]
+        t = self.data.transform_list[sel]
 
-        root = Toplevel()
-        root.fancs = PMCA_dialogs.SCALE_DIALOG_FANC(self, root, sel)
+        root = tkinter.Toplevel()
+        root.fancs = PMCA_dialogs.SCALE_DIALOG_FANC(root, sel, self.data, self.cnl)
 
-        root.fancs.var = DoubleVar()
+        root.fancs.var = tkinter.DoubleVar()
         root.fancs.var.set(t.default)
         root.fancs.tvar.set("%.3f" % t.default)
 
         root.transient(self)
-        root.frame1 = Frame(root)
-        root.frame2 = Frame(root)
+        root.frame1 = tkinter.Frame(root)
+        root.frame2 = tkinter.Frame(root)
 
-        Label(root, text=buff).grid(row=0, padx=10, pady=5)
+        tkinter.Label(root, text=buff).grid(row=0, padx=10, pady=5)
 
-        root.frame1.spinbox = Spinbox(
+        root.frame1.spinbox = tkinter.Spinbox(
             root.frame1,
             from_=-100,
             to=100,
@@ -59,7 +66,7 @@ class TransformTab(tkinter.ttk.Frame):
         root.frame1.spinbox.pack(side="right", padx=5)
         root.frame1.spinbox.bind("<Return>", root.fancs.enter_spinbox)
 
-        Scale(
+        tkinter.Scale(
             root.frame1,
             orient="h",
             from_=t.limit[0],
@@ -70,8 +77,10 @@ class TransformTab(tkinter.ttk.Frame):
         ).pack(side="left", padx=5)
         root.frame1.grid(row=1, padx=10, pady=5)
 
-        Button(root.frame2, text="OK", command=root.fancs.OK).pack(side="right", padx=5)
-        Button(root.frame2, text="Cancel", command=root.fancs.CANCEL).pack(
+        tkinter.Button(root.frame2, text="OK", command=root.fancs.OK).pack(
+            side="right", padx=5
+        )
+        tkinter.Button(root.frame2, text="Cancel", command=root.fancs.CANCEL).pack(
             side="left", padx=5
         )
         root.frame2.grid(row=2, sticky="e", padx=10, pady=5)
