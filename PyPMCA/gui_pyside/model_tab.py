@@ -29,11 +29,10 @@ class PmcaNodeModel(GenericTreeModel[PMCA_cnl.NODE]):
                     raise RuntimeError()
 
         super().__init__(
-            root,
-            ["joint", "parts"],
             lambda x: x.parent.node if x.parent else None,
-            lambda x: len(x.children),
-            lambda x, row: x.children[row],
+            lambda x: len(x.children) if x else len(root.children),
+            lambda x, row: x.children[row] if x else root.children[row],
+            ["joint", "parts"],
             get_col,
         )
 
@@ -102,7 +101,7 @@ class ModelTab(QtWidgets.QWidget):
             parts for parts in self.data.parts_list if item.parent.joint in parts.type
         ]
         list_model = GenericListModel(
-            [f"[{item.parent.joint}] parts"], parts, lambda item, col: item.name
+            parts, [f"[{item.parent.joint}] parts"], lambda item, col: item.name
         )
         self.list.setModel(list_model)
         self.list.selectionModel().selectionChanged.connect(self.onPartsSelected)

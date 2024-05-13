@@ -8,11 +8,10 @@ T = TypeVar("T")
 class GenericTreeModel(QtCore.QAbstractItemModel, Generic[T]):
     def __init__(
         self,
-        root: T,
-        headers: list[str],
         get_parent: Callable[[T], T | None],
-        get_child_count: Callable[[T], int],
-        get_child: Callable[[T, int], T],
+        get_child_count: Callable[[T | None], int],
+        get_child: Callable[[T | None, int], T],
+        headers: list[str],
         column_from_item: Callable[[T, int], str],
     ):
         super().__init__()
@@ -21,7 +20,6 @@ class GenericTreeModel(QtCore.QAbstractItemModel, Generic[T]):
         self.get_child_count = get_child_count
         self.get_child = get_child
         self.column_from_item = column_from_item
-        self.root = root
 
     def columnCount(self, parent: QtCore.QModelIndex | QtCore.QPersistentModelIndex) -> int:  # type: ignore
         return len(self.headers)
@@ -47,10 +45,11 @@ class GenericTreeModel(QtCore.QAbstractItemModel, Generic[T]):
     ) -> QtCore.QModelIndex:
         if parent.isValid():
             parentItem: T = parent.internalPointer()  # type: ignore
+            childItem = self.get_child(parentItem, row)
+            return self.createIndex(row, column, childItem)
         else:
-            parentItem = self.root
-        childItem = self.get_child(parentItem, row)
-        return self.createIndex(row, column, childItem)
+            childItem = self.get_child(None, row)
+            return self.createIndex(row, column, childItem)
 
     def parent(  # type: ignore
         self,
@@ -69,24 +68,23 @@ class GenericTreeModel(QtCore.QAbstractItemModel, Generic[T]):
     def rowCount(self, parent: QtCore.QModelIndex | QtCore.QPersistentModelIndex) -> int:  # type: ignore
         if parent.isValid():
             parentItem: T = parent.internalPointer()  # type: ignore
+            return self.get_child_count(parentItem)
         else:
-            parentItem = self.root
-        return self.get_child_count(parentItem)
+            return self.get_child_count(None)
 
 
 class GenericListModel(GenericTreeModel[T]):
     def __init__(
         self,
-        headers: list[str],
         items: list[T],
+        headers: list[str],
         get_col: Callable[[T, int], str],
     ) -> None:
         super().__init__(
-            None,  # type: ignore
-            headers,
             lambda x: None,
             lambda x: 0 if x else len(items),
             lambda x, row: items[row],
+            headers,
             get_col,
         )
         self.parts_list = items
