@@ -1,7 +1,7 @@
-from typing import Callable, cast
+from typing import Callable, cast, TypeVar
 import logging
 from PySide6 import QtWidgets, QtCore
-from .generic_tree_model import GenericTreeModel
+from .generic_tree_model import GenericTreeModel, GenericListModel
 from .. import PMCA_asset
 from .. import PMCA_cnl
 
@@ -38,24 +38,7 @@ class PmcaNodeModel(GenericTreeModel[PMCA_cnl.NODE]):
         )
 
 
-class PartsListModel(GenericTreeModel[PMCA_asset.PARTS | None]):
-    def __init__(self, header: str, parts_list: list[PMCA_asset.PARTS]) -> None:
-        super().__init__(
-            None,
-            [header],
-            lambda x: None,
-            lambda x: 0 if x else len(parts_list),
-            lambda x, row: parts_list[row],
-            lambda x, col: x.name if x else "None",
-        )
-        self.parts_list = parts_list
-
-    def index_from_item(self, target: PMCA_asset.PARTS) -> QtCore.QModelIndex:
-        for i, parts in enumerate(self.parts_list):
-            if parts == target:
-                return self.createIndex(i, 0, parts)
-
-        return QtCore.QModelIndex()
+T = TypeVar("T")
 
 
 class ModelTab(QtWidgets.QWidget):
@@ -118,7 +101,9 @@ class ModelTab(QtWidgets.QWidget):
         parts = [
             parts for parts in self.data.parts_list if item.parent.joint in parts.type
         ]
-        list_model = PartsListModel(f"[{item.parent.joint}] parts", parts)
+        list_model = GenericListModel(
+            [f"[{item.parent.joint}] parts"], parts, lambda item, col: item.name
+        )
         self.list.setModel(list_model)
         self.list.selectionModel().selectionChanged.connect(self.onPartsSelected)
 

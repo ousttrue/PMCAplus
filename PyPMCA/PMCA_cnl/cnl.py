@@ -3,7 +3,8 @@ import dataclasses
 import pathlib
 import logging
 from .. import PMCA_asset
-from .mat_rep import MAT_REP
+from .. import pmd_type
+from .mat_rep import MAT_REP, MAT_REP_DATA
 from .node import NODE
 
 
@@ -18,8 +19,6 @@ class CnlInfo:
 
         self.tree = NODE(None, PMCA_asset.PARTS(name="ROOT", joint=["root"]))
         self.mat_rep = MAT_REP()
-        self.mat_entry: tuple[list[str], list[str]] = ([], [])
-
         self.transform_data: list[PMCA_asset.MODEL_TRANS_DATA] = [
             PMCA_asset.MODEL_TRANS_DATA(scale=1.0, bones=[], props={})
         ]
@@ -125,3 +124,20 @@ class CnlInfo:
                 fp.write(x + "\n")
 
         return True
+
+    def update_mat_rep(
+        self, data: PMCA_asset.PMCAData, materials: list[pmd_type.MATERIAL]
+    ):
+        self.mat_rep.mat_order.clear()
+
+        for mat in materials:
+            if mat.tex != "":
+                if mat.tex not in self.mat_rep.mat_map:
+                    for m in data.mats_list:
+                        if m.name == mat.tex:
+                            self.mat_rep.mat_map[mat.tex] = MAT_REP_DATA(
+                                m, m.entries[0]
+                            )
+                            break
+                if mat.tex in self.mat_rep.mat_map:
+                    self.mat_rep.mat_order.append(mat.tex)

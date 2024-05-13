@@ -118,7 +118,7 @@ class MainFrame(tkinter.ttk.Frame):
 
     def on_refresh(self):
         self.model_tab.set_tree(self.cnl.tree, True)
-        self.color_tab.l_tree.set_entry(self.cnl.mat_entry[0], sel=self.cur_mat)  # type: ignore
+        self.color_tab.l_tree.set_entry(self.cnl.mat_rep.get_entries(), sel=self.cur_mat)  # type: ignore
         self.info_tab.refresh()
         # self.transform_tab.info_frame.strvar.set(  # type: ignore
         #     "height     = %f\nwidth      = %f\nthickness = %f\n" % (w, h, t)

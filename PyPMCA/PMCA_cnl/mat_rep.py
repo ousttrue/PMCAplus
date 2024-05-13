@@ -1,4 +1,4 @@
-from typing import NamedTuple
+import dataclasses
 import logging
 from .. import PMCA_asset
 from .. import pmd_type
@@ -7,13 +7,17 @@ from .. import pmd_type
 LOGGER = logging.getLogger(__name__)
 
 
-class MAT_REP_DATA(NamedTuple):
+@dataclasses.dataclass
+class MAT_REP_DATA:
     """
     材質置換データ
     """
 
     mat: PMCA_asset.MATS
     sel: PMCA_asset.MATS_ENTRY
+
+    def select_entry(self, sel: int) -> None:
+        self.sel = self.mat.entries[sel]
 
 
 class MAT_REP:
@@ -25,6 +29,23 @@ class MAT_REP:
         self.mat_map: dict[str, MAT_REP_DATA] = {}
         self.mat_order: list[str] = []
         self.toon = pmd_type.TOON()
+
+    def get_material_entry(self, i: int) -> MAT_REP_DATA:
+        return self.mat_map[self.mat_order[i]]
+
+    def get_entries(self) -> list[str]:
+        entries: list[str] = []
+
+        # self.material_entries = ([], [])
+        for i, tex in enumerate(self.mat_order):
+            mat_rep = self.mat_map.get(tex)
+            assert mat_rep
+            LOGGER.debug(f"[{i}] {tex}: {mat_rep.mat.name} => {mat_rep.sel.name}")
+            # self.material_entries[0].append(mat_rep.mat.name + "  " + mat_rep.sel.name)
+            # self.material_entries[1].append(mat_rep.mat.name)
+            entries.append(f"[{i}] {mat_rep.mat.name} => {mat_rep.sel.name}")
+
+        return entries
 
     def list_to_text(self) -> list[str]:
         lines: list[str] = []

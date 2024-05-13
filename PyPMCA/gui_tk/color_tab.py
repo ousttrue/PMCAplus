@@ -14,6 +14,7 @@ class ColorTab(tkinter.ttk.Frame):
         super().__init__(root)
         self.cnl = cnl
         self.on_updated = on_updated
+        self.cur_mat: PMCA_cnl.MAT_REP_DATA | None = None
 
         self.frame = tkinter.ttk.Frame(self)
         self.text = "Color"
@@ -43,27 +44,24 @@ class ColorTab(tkinter.ttk.Frame):
 
     def mats_click(self, _):
         sel_t = int(self.l_tree.listbox.curselection()[0])  # type: ignore
+        mat_rep = self.cnl.mat_rep.get_material_entry(sel_t)
 
         tmp_list: list[str] = []
-        for x in self.cnl.mat_rep.mat_map[self.cnl.mat_entry[1][sel_t]].mat.entries:
+        for x in mat_rep.mat.entries:
             tmp_list.append(x.name)
 
         self.l_sel.set_entry(tmp_list)  # type: ignore
         # self.tab[0].l_sel.set_entry(
         #     self.parts_entry_k, sel=self.tree_list[sel_t].node.list_num
         # )
-        self.cur_mat = sel_t
+        self.cur_mat = mat_rep
 
-        self.comment.set(
-            "comment:%s"
-            % (self.cnl.mat_rep.mat_map[self.cnl.mat_entry[1][sel_t]].mat.comment)
-        )
+        self.comment.set(f"comment:{mat_rep.mat.comment}")
 
     def mats_sel_click(self, _) -> None:
         sel_t = int(self.l_sel.listbox.curselection()[0])  # type: ignore
-        key = self.cnl.mat_entry[1][self.cur_mat]
-        self.cnl.mat_rep.mat_map[key] = PMCA_cnl.MAT_REP_DATA(
-            self.cnl.mat_rep.mat_map[key].mat,
-            self.cnl.mat_rep.mat_map[key].mat.entries[sel_t],
-        )
+
+        assert self.cur_mat
+        self.cur_mat.select_entry(sel_t)
+
         self.on_updated()

@@ -349,67 +349,34 @@ def assemble_child(self: PMCA_cnl.NODE, num: int, context: AssembleContext):
             assemble_child(x, num, context)
 
 
-def _get_material(
-    mat_rep: PMCA_cnl.MAT_REP,
-    mats_list: list[PMCA_asset.MATS],
-    model: pmd_type.PMD | None = None,
-    info: pmd_type.INFO | None = None,
-    num: int = 0,
-):
-    if model == None:
-        if info == None:
-            info_data = PMCA.getInfo(num)
-            info = pmd_type.INFO(info_data)
-        mat: list[pmd_type.MATERIAL] = []
-        for i in range(info.data["mat_count"]):
-            tmp = PMCA.getMat(num, i)
-            assert tmp
-            mat.append(pmd_type.MATERIAL(**tmp))
-    else:
-        info = model.info
-        mat = model.mat
-
-    mat_rep.mat_order.clear()
-
-    for i in range(info.data["mat_count"]):
-        tex = mat[i].tex
-        if tex != "":
-            if tex not in mat_rep.mat_map:
-                for m in mats_list:
-                    if tex == m.name:
-                        mat_rep.mat_map[tex] = PMCA_cnl.MAT_REP_DATA(m, m.entries[0])
-                        break
-            if tex in mat_rep.mat_map:
-                mat_rep.mat_order.append(tex)
+def _get_material() -> list[pmd_type.MATERIAL]:
+    info_data = PMCA.getInfo(0)
+    materials: list[pmd_type.MATERIAL] = []
+    for i in range(info_data["mat_count"]):
+        tmp = PMCA.getMat(0, i)
+        assert tmp
+        materials.append(pmd_type.MATERIAL(**tmp))
+    return materials
 
 
 def _set_material(
     context: AssembleContext,
-    self: PMCA_cnl.MAT_REP,
-    model: pmd_type.PMD | None = None,
-    info: pmd_type.INFO | None = None,
-    num: int = 0,
+    cnl: PMCA_cnl.MAT_REP,
 ):
     materials: list[pmd_type.MATERIAL] = []
-    if model == None:
-        if info == None:
-            info_data = PMCA.getInfo(num)
-            assert info_data
-            info = pmd_type.INFO(info_data)
-        for i in range(info.data["mat_count"]):
-            tmp = PMCA.getMat(num, i)
-            materials.append(pmd_type.MATERIAL(**tmp))
-    else:
-        info = model.info
-        materials = model.mat
+    info_data = PMCA.getInfo(0)
+    assert info_data
+    for i in range(info_data["mat_count"]):
+        tmp = PMCA.getMat(0, i)
+        materials.append(pmd_type.MATERIAL(**tmp))
 
     for i, x in enumerate(materials):
-        rep_mat = self.mat_map.get(x.tex)
+        rep_mat = cnl.mat_map.get(x.tex)
         if rep_mat:
             selected = rep_mat.sel
             selected.apply(x, context)
             PMCA.setMat(
-                num,
+                0,
                 i,
                 x.diff_col,
                 x.alpha,
@@ -471,18 +438,9 @@ def refresh(data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo):
 
     PMCA.Copy_PMD(0, 1)
 
-    # 材質関連
     LOGGER.info("材質置換")
-    _get_material(cnl.mat_rep, data.mats_list)
-    cnl.mat_entry = ([], [])
-    for i, tex in enumerate(cnl.mat_rep.mat_order):
-        mat_rep = cnl.mat_rep.mat_map.get(tex)
-        if mat_rep:
-            LOGGER.debug(f"[{i}] {tex}: {mat_rep.mat.name} => {mat_rep.sel.name}")
-            cnl.mat_entry[0].append(mat_rep.mat.name + "  " + mat_rep.sel.name)
-            cnl.mat_entry[1].append(mat_rep.mat.name)
-        else:
-            LOGGER.debug(f"[{i}] {tex}:")
+    materials = _get_material()
+    cnl.update_mat_rep(data, materials)
     _set_material(context, cnl.mat_rep)
     PMCA.Copy_PMD(0, 2)
 

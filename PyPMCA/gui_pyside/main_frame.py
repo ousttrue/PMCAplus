@@ -8,6 +8,7 @@ import PMCA  # type: ignore
 import glglue.pyside6
 from .gl_scene import GlScene, PmdSrc
 from .model_tab import ModelTab
+from .generic_tree_model import GenericListModel
 
 
 LOGGER = logging.getLogger(__name__)
@@ -18,6 +19,31 @@ class ColorTab(QtWidgets.QWidget):
         super().__init__()
         self.data = data
         self.cnl = cnl
+
+        vbox = QtWidgets.QVBoxLayout()
+        self.setLayout(vbox)
+
+        hbox = QtWidgets.QSplitter(QtCore.Qt.Orientation.Horizontal, self)
+        vbox.addWidget(hbox, stretch=2)
+
+        # left
+        self.left = QtWidgets.QTreeView()
+        hbox.addWidget(self.left)
+
+        # right
+        self.right = QtWidgets.QTreeView()
+        hbox.addWidget(self.right)
+
+        # bottom
+        self.comment = QtWidgets.QLabel()
+        self.comment.setText("comment:")
+        vbox.addWidget(self.comment)
+
+    def update_list(self):
+        list_model = GenericListModel(
+            [f"materials"], self.cnl.mat_rep.get_entries(), lambda item, col: item
+        )
+        self.left.setModel(list_model)
 
 
 class TransformTab(QtWidgets.QWidget):
@@ -79,7 +105,7 @@ class MainWindow(QtWidgets.QMainWindow):
         dock = QtWidgets.QDockWidget(name, self)
         dock.setWidget(widget)
         self.addDockWidget(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea, dock)
-        self.menu_dock.addAction(dock.toggleViewAction())
+        self.menu_dock.addAction(dock.toggleViewAction())  # type: ignore
 
         return dock
 
@@ -91,6 +117,7 @@ class MainWindow(QtWidgets.QMainWindow):
         data = PMCA.Get_PMD(0)
         if data:
             self.scene.set_model(PmdSrc(*data))
+            self.color_tab.update_list()
             self.glwidget.repaint()
 
 

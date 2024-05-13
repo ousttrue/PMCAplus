@@ -72,3 +72,28 @@ class GenericTreeModel(QtCore.QAbstractItemModel, Generic[T]):
         else:
             parentItem = self.root
         return self.get_child_count(parentItem)
+
+
+class GenericListModel(GenericTreeModel[T]):
+    def __init__(
+        self,
+        headers: list[str],
+        items: list[T],
+        get_col: Callable[[T, int], str],
+    ) -> None:
+        super().__init__(
+            None,  # type: ignore
+            headers,
+            lambda x: None,
+            lambda x: 0 if x else len(items),
+            lambda x, row: items[row],
+            get_col,
+        )
+        self.parts_list = items
+
+    def index_from_item(self, target: T) -> QtCore.QModelIndex:
+        for i, parts in enumerate(self.parts_list):
+            if parts == target:
+                return self.createIndex(i, 0, parts)
+
+        return QtCore.QModelIndex()
