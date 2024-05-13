@@ -75,7 +75,6 @@ class ModelTab(QtWidgets.QWidget):
         vbox.addWidget(self.comment)
 
         self.set_tree_model(self.cnl.tree.children[0])
-        self.data_updated: list[Callable[[], None]] = []
 
     def set_tree_model(self, selected: PMCA_cnl.NODE):
         tree_model = PmcaNodeModel(self.cnl.tree)
@@ -178,5 +177,4 @@ class ModelTab(QtWidgets.QWidget):
 
         self.set_tree_model(new_node)
 
-        for callback in self.data_updated:
-            callback()
+        self.cnl.raise_refresh()

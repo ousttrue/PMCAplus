@@ -16,6 +16,9 @@ class MAT_REP_DATA:
     mat: PMCA_asset.MATS
     sel: PMCA_asset.MATS_ENTRY
 
+    def __str__(self) -> str:
+        return f"{self.mat.name} => {self.sel.name}"
+
     def select_entry(self, sel: int) -> None:
         self.sel = self.mat.entries[sel]
 
@@ -33,8 +36,8 @@ class MAT_REP:
     def get_material_entry(self, i: int) -> MAT_REP_DATA:
         return self.mat_map[self.mat_order[i]]
 
-    def get_entries(self) -> list[str]:
-        entries: list[str] = []
+    def get_entries(self) -> list[MAT_REP_DATA]:
+        entries: list[MAT_REP_DATA] = []
 
         # self.material_entries = ([], [])
         for i, tex in enumerate(self.mat_order):
@@ -43,7 +46,7 @@ class MAT_REP:
             LOGGER.debug(f"[{i}] {tex}: {mat_rep.mat.name} => {mat_rep.sel.name}")
             # self.material_entries[0].append(mat_rep.mat.name + "  " + mat_rep.sel.name)
             # self.material_entries[1].append(mat_rep.mat.name)
-            entries.append(f"[{i}] {mat_rep.mat.name} => {mat_rep.sel.name}")
+            entries.append(mat_rep)
 
         return entries
 

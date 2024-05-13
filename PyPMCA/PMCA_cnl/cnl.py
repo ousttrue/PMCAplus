@@ -23,9 +23,14 @@ class CnlInfo:
             PMCA_asset.MODEL_TRANS_DATA(scale=1.0, bones=[], props={})
         ]
 
+        self.on_updated: list[Callable[[], None]] = []
         self.on_reflesh: list[Callable[[], None]] = []
 
     def raise_refresh(self):
+        for callback in self.on_updated:
+            callback()
+
+    def on_refresh(self):
         for callback in self.on_reflesh:
             callback()
 

@@ -31,6 +31,8 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__()
         self.data = data
         self.cnl = cnl
+        self.cnl.on_updated.append(self.on_cnl_updated)
+
         self.setWindowTitle(title)
         self.resize(800, 800)
 
@@ -47,7 +49,6 @@ class MainWindow(QtWidgets.QMainWindow):
         ## tabs
         # model
         self.model_tab = ModelTab(data, cnl)
-        self.model_tab.data_updated.append(self.on_data_updated)
         self.model_dock = self._add_dock("Model", self.model_tab)
 
         # color
@@ -67,7 +68,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.model_dock.raise_()
 
-        self.on_data_updated()
+        self.on_cnl_updated()
 
     def _add_dock(self, name: str, widget: QtWidgets.QWidget) -> QtWidgets.QDockWidget:
         dock = QtWidgets.QDockWidget(name, self)
@@ -80,7 +81,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def closeEvent(self, _) -> None:  # type: ignore
         self.scene.shutdown()
 
-    def on_data_updated(self):
+    def on_cnl_updated(self):
         native.refresh(self.data, self.cnl)
         data = PMCA.Get_PMD(0)
         if data:
