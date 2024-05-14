@@ -12,7 +12,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class CnlInfo:
-    def __init__(self):
+    def __init__(self, raise_refresh: Callable[["CnlInfo"], None]):
         self.name: str = ""
         self.name_l: str = ""
         self.comment: list[str] = dataclasses.field(default_factory=list)
@@ -23,12 +23,11 @@ class CnlInfo:
             PMCA_asset.MODEL_TRANS_DATA(scale=1.0, bones=[], props={})
         ]
 
-        self.on_updated: list[Callable[[], None]] = []
+        self._raise_refresh = raise_refresh
         self.on_reflesh: list[Callable[[], None]] = []
 
     def raise_refresh(self):
-        for callback in self.on_updated:
-            callback()
+        self._raise_refresh(self)
 
     def on_refresh(self):
         for callback in self.on_reflesh:

@@ -21,7 +21,10 @@ def main(dir: pathlib.Path):
     if list_txt:
         native.set_list(*list_txt)
 
-    cnl = PMCA_cnl.CnlInfo()
+    def raise_refresh(c: PMCA_cnl.CnlInfo):
+        native.refresh(data, c)
+
+    cnl = PMCA_cnl.CnlInfo(raise_refresh)
     cnl.load_CNL_File(cnl_file, data)
 
     # gui

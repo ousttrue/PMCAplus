@@ -1,21 +1,24 @@
+from typing import Any
 import tkinter
+import tkinter.ttk
 
 
-class LISTBOX:
-    def __init__(self, master=None):
-        self.listbox = tkinter.Listbox(
-            master, height=6, exportselection=0, selectmode=tkinter.SINGLE
+class LISTBOX(tkinter.Listbox):
+    def __init__(self, parent: tkinter.ttk.LabelFrame):
+        super().__init__(parent, height=6, exportselection=0, selectmode=tkinter.SINGLE)
+
+        self.yscroll = tkinter.ttk.Scrollbar(
+            parent,
+            orient=tkinter.VERTICAL,
+            command=self.yview,  # type: ignore
         )
-        self.listbox.yscroll = tkinter.ttk.Scrollbar(
-            master, orient=tkinter.VERTICAL, command=self.listbox.yview
-        )
-        self.listbox.yscroll.pack(side=tkinter.RIGHT, fill=tkinter.Y, expand=0)
-        self.listbox["yscrollcommand"] = self.listbox.yscroll.set
-        self.listbox.pack(fill=tkinter.BOTH, expand=1)
+        self.yscroll.pack(side=tkinter.RIGHT, fill=tkinter.Y, expand=0)
+        self["yscrollcommand"] = self.yscroll.set
+        self.pack(fill=tkinter.BOTH, expand=1)
 
-    def set_entry(self, entry, sel=-1):
-        self.listbox.delete(0, tkinter.END)
+    def set_entry(self, entry: list[Any], sel: int = -1) -> None:
+        self.delete(0, tkinter.END)
         for x in entry:
-            self.listbox.insert("end", x)
+            self.insert("end", x)
         if sel >= 0:
-            self.listbox.selection_set(sel)
+            self.selection_set(sel)

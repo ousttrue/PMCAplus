@@ -48,13 +48,10 @@ class MainFrame(tkinter.ttk.Frame):
         def add_tab(x: Any):
             notebook.insert(tkinter.END, x, text=x.text)  # type: ignore
 
-        def on_updated():
-            native.refresh(data, cnl)
-
-        self.model_tab = ModelTab(self.root, self.data, self.cnl, on_updated)
+        self.model_tab = ModelTab(self.root, self.data, self.cnl)
         add_tab(self.model_tab)
 
-        self.color_tab = ColorTab(self.root, self.cnl, on_updated)
+        self.color_tab = ColorTab(self.root, self.cnl)
         add_tab(self.color_tab)
 
         self.transform_tab = TransformTab(self.root, self.data, self.cnl)
