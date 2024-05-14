@@ -13,7 +13,7 @@ class Frame1(tkinter.Frame):
     def __init__(self, parent: "SCALE_DIALOG_FANC", t: PMCA_asset.MODEL_TRANS_DATA):
         super().__init__(parent)
 
-        label = tkinter.Label(self, text=f"{t.limit[0]} ~ {t.limit[1]}")
+        label = tkinter.Label(self, text=f"{t.scale_min} ~ {t.scale_max}")
         label.pack()
         self._make_spinbox(parent, t)
         self._make_slider(parent, t)
@@ -22,7 +22,7 @@ class Frame1(tkinter.Frame):
         self, parent: "SCALE_DIALOG_FANC", t: PMCA_asset.MODEL_TRANS_DATA
     ) -> None:
         self.tvar = tkinter.StringVar()
-        self.tvar.set("%.3f" % t.default)
+        self.tvar.set("%.3f" % t.scale_default)
 
         def change_spinbox() -> None:
             var = float(self.tvar.get())
@@ -58,7 +58,7 @@ class Frame1(tkinter.Frame):
         self, parent: "SCALE_DIALOG_FANC", t: PMCA_asset.MODEL_TRANS_DATA
     ) -> None:
         self.var = tkinter.DoubleVar()
-        self.var.set(t.default)
+        self.var.set(t.scale_default)
 
         def change_scale(event: str) -> None:
             var = float(self.var.get())
@@ -68,8 +68,8 @@ class Frame1(tkinter.Frame):
         tkinter.Scale(
             self,
             orient="horizontal",
-            from_=t.limit[0],
-            to=t.limit[1],
+            from_=t.scale_min,
+            to=t.scale_max,
             variable=self.var,
             length=256,
             command=change_scale,
@@ -99,7 +99,6 @@ class SCALE_DIALOG_FANC(tkinter.Toplevel):
                 bones=[],
                 pos=(0.0, 0.0, 0.0),
                 rot=(0.0, 0.0, 0.0),
-                props={},
             )
         )
         self.transform_data = self.cnl.transform_data[-1]
@@ -180,13 +179,17 @@ class SCALE_DIALOG_FANC(tkinter.Toplevel):
             weight[2] * var,
         )
 
-        for i, x in enumerate(self.data.transform_list[self.sel].bones):
-            self.transform_data.bones[i].length = x.length * var + 1 - x.length
-            self.transform_data.bones[i].thick = x.thick * var + 1 - x.thick
-            for j, y in enumerate(x.pos):
-                self.transform_data.bones[i].pos[j] = y * var
-            for j, y in enumerate(x.rot):
-                self.transform_data.bones[i].rot[j] = y * var
+        def scale(
+            v: tuple[float, float, float], var: float
+        ) -> tuple[float, float, float]:
+            x, y, z = v
+            return (x * var, y * var, z * var)
+
+        for i, bone in enumerate(self.data.transform_list[self.sel].bones):
+            self.transform_data.bones[i].length = bone.length * var + 1 - bone.length
+            self.transform_data.bones[i].thick = bone.thick * var + 1 - bone.thick
+            self.transform_data.bones[i].pos = scale(bone.pos, var)
+            self.transform_data.bones[i].rot = scale(bone.rot, var)
         self.cnl.raise_refresh()
 
 

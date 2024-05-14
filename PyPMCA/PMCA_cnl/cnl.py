@@ -20,7 +20,7 @@ class CnlInfo:
         self.tree = NODE(None, PMCA_asset.PARTS(name="ROOT", joint=["root"]))
         self.mat_rep = MAT_REP()
         self.transform_data: list[PMCA_asset.MODEL_TRANS_DATA] = [
-            PMCA_asset.MODEL_TRANS_DATA(scale=1.0, bones=[], props={})
+            PMCA_asset.MODEL_TRANS_DATA("cnl")
         ]
 
         self._raise_refresh = raise_refresh
@@ -58,40 +58,58 @@ class CnlInfo:
     ) -> None:
         LOGGER.info("体型調整読み込み")
         j = 0
-        for j, x in enumerate(lines):
-            x = x.split(" ")
-            if x[0] == "[Name]":
-                transform.name = x[1]
-            elif x[0] == "[Scale]":
-                transform.scale = float(x[1])
-            elif x[0] == "[Pos]":
-                transform.pos = (float(x[1]), float(x[2]), float(x[3]))
-            elif x[0] == "[Rot]":
-                transform.rot = (float(x[1]), float(x[2]), float(x[3]))
-            elif x[0] == "BONES":
+        for j, l in enumerate(lines):
+            l = l.strip()
+            if l == "":
+                continue
+            if l.startswith("#"):
+                continue
+            if l == "BONES":
                 break
 
+            k, v = [x.strip() for x in l.split(maxsplit=1)]
+            match k:
+                case "[Name]":
+                    transform.name = v
+                case "[Scale]":
+                    transform.scale = float(v)
+                case "[Pos]":
+                    x, y, z = v.split()
+                    transform.pos = (float(x), float(y), float(z))
+                case "[Rot]":
+                    x, y, z = v.split()
+                    transform.rot = (float(x), float(y), float(z))
+                case _:
+                    raise RuntimeError()
+
+        j += 1
         transform.bones.clear()
-        transform.bones.append(PMCA_asset.BONE_TRANS_DATA())
-        for x in lines[j:]:
-            x = x.split(" ")
-            if x[0] == "[Name]":
-                transform.bones[-1].name = x[1]
-            elif x[0] == "[Length]":
-                transform.bones[-1].length = float(x[1])
-            elif x[0] == "[Thick]":
-                transform.bones[-1].thick = float(x[1])
-            elif x[0] == "[Pos]":
-                transform.bones[-1].pos[0] = float(x[1])
-                transform.bones[-1].pos[1] = float(x[2])
-                transform.bones[-1].pos[2] = float(x[3])
-            elif x[0] == "[Rot]":
-                transform.bones[-1].rot[0] = float(x[1])
-                transform.bones[-1].rot[1] = float(x[2])
-                transform.bones[-1].rot[2] = float(x[3])
-            elif x[0] == "NEXT":
-                if transform.bones[-1].name != "":
-                    transform.bones.append(PMCA_asset.BONE_TRANS_DATA())
+        for l in lines[j:]:
+            l = l.strip()
+            if l == "":
+                continue
+            if l.startswith("#"):
+                continue
+            if l == "NEXT":
+                continue
+
+            k, v = [x.strip() for x in l.split(maxsplit=1)]
+            match k:
+                case "[Name]":
+                    # transform.bones[-1].name = x[1]
+                    transform.bones.append(PMCA_asset.BONE_TRANS_DATA(v))
+                case "[Length]":
+                    transform.bones[-1].length = float(v)
+                case "[Thick]":
+                    transform.bones[-1].thick = float(v)
+                case "[Pos]":
+                    x, y, z = v.split()
+                    transform.bones[-1].pos = (float(x), float(y), float(z))
+                case "[Rot]":
+                    x, y, z = v.split()
+                    transform.bones[-1].rot = (float(x), float(y), float(z))
+                case _:
+                    raise RuntimeError()
 
     def load_CNL_File(self, file: pathlib.Path, data: PMCA_asset.PMCAData) -> None:
         lines = file.read_text(encoding="utf-8").splitlines()
