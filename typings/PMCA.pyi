@@ -1,24 +1,7 @@
 from typing import List, TypedDict
+from PyPMCA import pmd_type
 
-class InfoData(TypedDict):
-    name: bytes
-    name_eng: bytes
-    comment: bytes
-    comment_eng: bytes
-    eng_support: int
-    skin_index: list[int]
-    vt_count: int
-    face_count: int
-    mat_count: int
-    bone_count: int
-    IK_count: int
-    skin_count: int
-    bone_group_count: int
-    bone_disp_count: int
-    rb_count: int
-    joint_count: int
-
-def getInfo(model: int) -> InfoData:
+def getInfo(model: int) -> pmd_type.InfoData:
     """
     Get Info of PMD"
     """

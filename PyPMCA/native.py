@@ -304,10 +304,12 @@ def Set_PMD(num: int, model: pmd_type.PMD):
         )
 
 
-def assemble(self: PMCA_cnl.NODE, num: int) -> AssembleContext:
+def _assemble(self: PMCA_cnl.NODE, num: int) -> AssembleContext:
     context = AssembleContext()
 
     LOGGER.info(f"assemble[{num}]: {self.parts.path}")
+
+    # 空モデル
     ret = PMCA.Load_PMD(
         num, self.parts.path.encode(sys.getdefaultencoding(), "replace")
     )
@@ -318,9 +320,10 @@ def assemble(self: PMCA_cnl.NODE, num: int) -> AssembleContext:
     context.pre_process(info_data, self.parts.props)
     context.post_process(self.parts.props)
 
+    # Parts を合体
     for x in self.children:
         if x.parts:
-            assemble_child(x, num, context)
+            _assemble_child(x, num, context)
 
     PMCA.Sort_PMD(num)
     context.finalize()
@@ -328,25 +331,28 @@ def assemble(self: PMCA_cnl.NODE, num: int) -> AssembleContext:
     return context
 
 
-def assemble_child(self: PMCA_cnl.NODE, num: int, context: AssembleContext):
+def _assemble_child(self: PMCA_cnl.NODE, num: int, context: AssembleContext):
     assert self.parts
     LOGGER.info("パーツのパス:%s" % (self.parts.path))
 
+    # 4 にロード
     ret = PMCA.Load_PMD(4, self.parts.path.encode(sys.getdefaultencoding(), "replace"))
     assert ret
 
     info_data = PMCA.getInfo(4)
     context.pre_process(info_data, self.parts.props)
 
+    # 0 に 4 を合成
     PMCA.Add_PMD(num, 4)
     ret = PMCA.Marge_PMD(num)
     assert ret
 
     context.post_process(self.parts.props)
 
+    # 再帰
     for x in self.children:
         if x.parts:
-            assemble_child(x, num, context)
+            _assemble_child(x, num, context)
 
 
 def _get_material() -> list[pmd_type.MATERIAL]:
@@ -428,26 +434,7 @@ def check_PMD(self) -> None:
     root.mainloop()
 
 
-def refresh(data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo):
-    PMCA.MODEL_LOCK(1)
-
-    LOGGER.info("モデル組立て(MODEL_LOCK=1)")
-
-    # PMCA.Load_PMD(0, "./testmodels/001.pmd")
-    context = assemble(cnl.tree, 0)
-
-    PMCA.Copy_PMD(0, 1)
-
-    LOGGER.info("材質置換")
-    materials = _get_material()
-    cnl.update_mat_rep(data, materials)
-    _set_material(context, cnl.mat_rep)
-    PMCA.Copy_PMD(0, 2)
-
-    LOGGER.info("体型調整")
-    info_data = PMCA.getInfo(0)
-    # _info = pmd_type.INFO(info_data)
-
+def _get_bones(info_data) -> list[pmd_type.BONE]:
     tmpbone: list[pmd_type.BONE] = []
     for i in range(info_data["bone_count"]):
         tmp = PMCA.getBone(0, i)
@@ -463,28 +450,57 @@ def refresh(data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo):
                 tmp["loc"],
             )
         )
+    return tmpbone
+
+
+def refresh(data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo):
+    """
+    cnl の変更を MODEL=0 に反映して描画を更新する
+    """
+    PMCA.MODEL_LOCK(1)
+    LOGGER.info("モデル組立て(MODEL_LOCK=1)")
+    context = _assemble(cnl.tree, 0)
+
+    # PMCA.Copy_PMD(0, 1)
+
+    LOGGER.info("材質置換")
+    materials = _get_material()
+    cnl.update_mat_rep(data, materials)
+    _set_material(context, cnl.mat_rep)
+
+    # PMCA.Copy_PMD(0, 2)
+
+    LOGGER.info("体型調整")
+    info_data = PMCA.getInfo(0)
+    tmpbone = _get_bones(info_data)
+
     refbone = None
     refbone_index = None
-    for i, x in enumerate(tmpbone):
-        if x.name == "右足首":
-            refbone = x
+    for i, transform_bone in enumerate(tmpbone):
+        if transform_bone.name == "右足首":
+            refbone = transform_bone
             refbone_index = i
             break
 
-    for y in cnl.transform_data:
-        PMCA.Resize_Model(0, y.scale)
-        for x in y.bones:
-            PMCA.Resize_Bone(0, x.name.encode("cp932", "replace"), x.length, x.thick)
+    for transform_data in cnl.transform_data_list:
+        PMCA.Resize_Model(0, transform_data.scale)
+        for transform_bone in transform_data.bones:
+            PMCA.Resize_Bone(
+                0,
+                transform_bone.name.encode("cp932", "replace"),
+                transform_bone.length,
+                transform_bone.thick,
+            )
             PMCA.Move_Bone(
                 0,
-                x.name.encode("cp932", "replace"),
-                x.pos[0],
-                x.pos[1],
-                x.pos[2],
+                transform_bone.name.encode("cp932", "replace"),
+                transform_bone.pos[0],
+                transform_bone.pos[1],
+                transform_bone.pos[2],
             )
 
-    if refbone != None:
-        assert refbone_index != None
+    if refbone:
+        assert refbone_index
         newbone = None
         tmp = PMCA.getBone(0, refbone_index)
         assert tmp
@@ -498,13 +514,16 @@ def refresh(data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo):
             tmp["loc"],
         )
 
+        # 体型調整による足首の移動量で設置を調整
         dy = refbone.loc[1] - newbone.loc[1]
-        for x in tmpbone:
-            i = x.parent
+        for transform_bone in tmpbone:
+            i = transform_bone.parent
             count = 0
             while i < info_data["bone_count"] and count < info_data["bone_count"]:
                 if tmpbone[i].name == "センター":
-                    PMCA.Move_Bone(0, x.name.encode("cp932", "replace"), 0, dy, 0)
+                    PMCA.Move_Bone(
+                        0, transform_bone.name.encode("cp932", "replace"), 0, dy, 0
+                    )
                     break
                 i = tmpbone[i].parent
                 count += 1
@@ -512,13 +531,16 @@ def refresh(data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo):
         PMCA.Move_Bone(0, "センター".encode("cp932", "replace"), 0, dy, 0)
         PMCA.Move_Bone(0, "+センター".encode("cp932", "replace"), 0, -dy, 0)
 
-    for y in cnl.transform_data:
-        PMCA.Move_Model(0, y.pos[0], y.pos[1], y.pos[2])
+    for transform_data in cnl.transform_data_list:
+        PMCA.Move_Model(
+            0, transform_data.pos[0], transform_data.pos[1], transform_data.pos[2]
+        )
 
     PMCA.Update_Skin(0)
     PMCA.Adjust_Joints(0)
-    PMCA.Copy_PMD(0, 3)
+    # PMCA.Copy_PMD(0, 3)
     PMCA.PMD_view_set(0, "replace")  # テクスチャを変更しない
+
     PMCA.MODEL_LOCK(0)
     LOGGER.info(f"(MODEL_LOCK=0)")
 

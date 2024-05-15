@@ -6,6 +6,8 @@ class InfoData(TypedDict):
     name_eng: bytes
     comment: bytes
     comment_eng: bytes
+    eng_support: int
+    skin_index: list[int]
     vt_count: int
     face_count: int
     mat_count: int
@@ -14,10 +16,8 @@ class InfoData(TypedDict):
     skin_count: int
     bone_group_count: int
     bone_disp_count: int
-    eng_support: int
     rb_count: int
     joint_count: int
-    skin_index: list[int]
 
 
 class INFO:

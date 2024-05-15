@@ -693,204 +693,120 @@ int copy_PMD(MODEL *out, MODEL *model) {
 }
 
 bool MODEL::add_PMD(const std::shared_ptr<MODEL> &add) {
+  auto pre_vt_size = this->vt.size();
+  auto pre_bone_size = this->bone.size();
+  auto pre_skin_disp_size = this->skin_disp.size();
+  auto pre_bone_group_size = this->bone_group.size();
+  auto pre_rbody_size = this->rbody.size();
+
   // 頂点
-  std::vector<VERTEX> vt(this->vt.size() + add->vt.size());
-  for (size_t i = 0; i < this->vt.size(); i++) {
-    vt[i] = this->vt[i];
-  }
-  size_t j = 0;
-  for (size_t i = this->vt.size(); i < vt.size(); i++) {
-    vt[i] = add->vt[j];
-    for (size_t k = 0; k < 2; k++) {
-      vt[i].bone_num[k] += this->bone.size();
-    }
-    j++;
+  this->vt.reserve(this->vt.size() + add->vt.size());
+  for (auto &v : add->vt) {
+    vt.push_back(v);
+    // fix bone index
+    vt.back().bone_num[0] += pre_bone_size;
+    vt.back().bone_num[1] += pre_bone_size;
   }
 
   // 面頂点
-  std::vector<unsigned short> vt_index(this->vt_index.size() +
-                                       add->vt_index.size());
-  for (size_t i = 0; i < this->vt_index.size(); i++) {
-    vt_index[i] = this->vt_index[i];
-  }
-  j = 0;
-  for (size_t i = this->vt_index.size(); i < vt_index.size(); i++) {
-    vt_index[i] = add->vt_index[j] + this->vt.size();
-    j++;
+  this->vt_index.reserve(this->vt_index.size() + add->vt_index.size());
+  for (auto index : add->vt_index) {
+    // fix index
+    vt_index.push_back(index + pre_vt_size);
   }
 
   // 材質
-  std::vector<MATERIAL> mat(this->mat.size() + add->mat.size());
-  for (size_t i = 0; i < this->mat.size(); i++) {
-    mat[i] = this->mat[i];
-  }
-  j = 0;
-  for (size_t i = this->mat.size(); i < mat.size(); i++) {
-    mat[i] = add->mat[j];
-    j++;
+  this->mat.reserve(this->mat.size() + add->mat.size());
+  for (auto &m : add->mat) {
+    mat.push_back(m);
   }
 
   // ボーン
-  std::vector<BONE> bone(this->bone.size() + add->bone.size());
-  for (size_t i = 0; i < this->bone.size(); i++) {
-    bone[i] = this->bone[i];
-  }
-  j = 0;
-  for (size_t i = this->bone.size(); i < bone.size(); i++) {
-    bone[i] = add->bone[j];
-    if (bone[i].PBone_index != USHORT_MAX)
-      bone[i].PBone_index = bone[i].PBone_index + this->bone.size();
-    if (bone[i].TBone_index != 0)
-      bone[i].TBone_index = bone[i].TBone_index + this->bone.size();
-    if (bone[i].IKBone_index != 0)
-      bone[i].IKBone_index = bone[i].IKBone_index + this->bone.size();
-    j++;
+  this->bone.reserve(this->bone.size() + add->bone.size());
+  for (auto &b : add->bone) {
+    bone.push_back(b);
+    // fix bone index
+    if (bone.back().PBone_index != USHORT_MAX)
+      bone.back().PBone_index += pre_bone_size;
+    if (bone.back().TBone_index != 0)
+      bone.back().TBone_index += pre_bone_size;
+    if (bone.back().IKBone_index != 0)
+      bone.back().IKBone_index += pre_bone_size;
   }
 
   // IKリスト
-  std::vector<IK_LIST> IK(this->IK.size() + add->IK.size());
-  for (int i = 0; i < this->IK.size(); i++) {
-    IK[i] = this->IK[i];
-  }
-  j = 0;
-  for (size_t i = this->IK.size(); i < IK.size(); i++) {
-    IK[i] = add->IK[j];
-    IK[i].IKBone_index = IK[i].IKBone_index + this->bone.size();
-    IK[i].IKTBone_index = IK[i].IKTBone_index + this->bone.size();
-    for (size_t k = 0; k < IK[i].IK_chain.size(); k++) {
-      IK[i].IK_chain[k] = IK[i].IK_chain[k] + this->bone.size();
+  this->IK.reserve(this->IK.size() + add->IK.size());
+  for (auto &ik : add->IK) {
+    IK.push_back(ik);
+    IK.back().IKBone_index += pre_bone_size;
+    IK.back().IKTBone_index += pre_bone_size;
+    for (size_t k = 0; k < IK.back().IK_chain.size(); k++) {
+      IK.back().IK_chain[k] += pre_bone_size;
     }
-    j++;
   }
 
   // 表情
-  std::vector<SKIN> skin(this->skin.size() + add->skin.size());
   if (add->skin.size() == 0) {
-    for (size_t i = 0; i < skin.size(); i++) {
-      skin[i] = this->skin[i];
-    }
+    // nothing
   } else if (this->skin.size() == 0) {
-    for (size_t i = 0; i < skin.size(); i++) {
-      skin[i] = add->skin[i];
-    }
+    // copy
+    this->skin.assign(add->skin.begin(), add->skin.end());
   } else if (this->skin.size() != 0 && add->skin.size() != 0) {
-    skin.pop_back();
-    skin[0] = this->skin[0];
-    skin[0].skin_vt.resize(this->skin[0].skin_vt.size() +
-                           add->skin[0].skin_vt.size());
-    auto tmp = this->skin[0].skin_vt.size();
-    memcpy(skin[0].skin_vt.data(), this->skin[0].skin_vt.data(),
-           tmp * sizeof(SKIN_DATA));
-    memcpy(&skin[0].skin_vt[tmp], add->skin[0].skin_vt.data(),
-           add->skin[0].skin_vt.size() * sizeof(SKIN_DATA));
-    // baseの合成
+    // 0番を合成
+    skin[0].skin_vt.reserve(this->skin[0].skin_vt.size() +
+                            add->skin[0].skin_vt.size());
+    for (auto &skin_vt : add->skin[0].skin_vt) {
+      this->skin[0].skin_vt.push_back(skin_vt);
+      // index 補正
+      this->skin[0].skin_vt.back().index += pre_vt_size;
+    }
 
-    for (size_t i = 0; i < this->skin[0].skin_vt.size(); i++) {
-      skin[0].skin_vt[i].index = this->skin[0].skin_vt[i].index;
-    }
-    // printf("%d %d %d\n", skin[0].skin_vt_count, this->skin[0].skin_vt_count,
-    // add->skin[0].skin_vt_count);
-    j = 0;
-    for (size_t i = this->skin[0].skin_vt.size(); i < skin[0].skin_vt.size();
-         i++) {
-      // printf("%d \n", i);
-      skin[0].skin_vt[i].index =
-          add->skin[0].skin_vt[j].index + this->vt.size();
-      j++;
-    }
-    // 表情追加
-    for (size_t i = 1; i < this->skin.size(); i++) {
-      skin[i] = this->skin[i];
-      // printf("%d %d \n", i, size);
-    }
-    j = 1;
-    for (size_t i = this->skin.size(); i < skin.size(); i++) {
-      // printf("%d\n", j);
-      skin[i] = add->skin[j];
-      for (size_t k = 0; k < skin[i].skin_vt.size(); k++) {
-        skin[i].skin_vt[k].index =
-            skin[i].skin_vt[k].index + this->skin[0].skin_vt.size();
+    // 1以降追加
+    this->skin.reserve(this->skin.size() + add->skin.size() - 1);
+    for (size_t i = 1; i < add->skin.size(); i++) {
+      skin.push_back(add->skin[i]);
+      for (size_t k = 0; k < skin.back().skin_vt.size(); k++) {
+        // index 補正
+        skin.back().skin_vt[k].index += pre_vt_size;
       }
-      j++;
     }
   }
 
   // 表情表示
-  std::vector<unsigned short> skin_disp(this->skin_disp.size() +
-                                        add->skin_disp.size());
-  memcpy(skin_disp.data(), this->skin_disp.data(),
-         this->skin_disp.size() * sizeof(unsigned short));
-  j = 0;
-  for (int i = this->skin_disp.size(); i < skin_disp.size(); i++) {
-    skin_disp[i] = add->skin_disp[j] + this->skin_disp.size();
-    j++;
+  skin_disp.reserve(this->skin_disp.size() + add->skin_disp.size());
+  for (auto &sd : add->skin_disp) {
+    skin_disp.push_back(sd + pre_skin_disp_size);
   }
 
   // ボーン表示
-  std::vector<BONE_GROUP> bone_group(this->bone_group.size() +
-                                     add->bone_group.size());
-  for (int i = 0; i < this->bone_group.size(); i++) {
-    bone_group[i] = this->bone_group[i];
+  bone_group.reserve(this->bone_group.size() + add->bone_group.size());
+  for (auto &bg : add->bone_group) {
+    bone_group.push_back(bg);
   }
-  j = 0;
-  for (int i = this->bone_group.size(); i < bone_group.size(); i++) {
-    bone_group[i] = add->bone_group[j];
-    j++;
-  }
-
-  std::vector<BONE_DISP> bone_disp(this->bone_disp.size() +
-                                   add->bone_disp.size());
-  for (int i = 0; i < this->bone_disp.size(); i++) {
-    bone_disp[i] = this->bone_disp[i];
-  }
-  j = 0;
-  for (size_t i = this->bone_disp.size(); i < bone_disp.size(); i++) {
-    bone_disp[i].index = add->bone_disp[j].index + this->bone.size();
-    bone_disp[i].bone_group =
-        add->bone_disp[j].bone_group + this->bone_group.size();
-    j++;
+  bone_disp.reserve(this->bone_disp.size() + add->bone_disp.size());
+  for (auto &bd : add->bone_disp) {
+    bone_disp.push_back(bd);
+    bone_disp.back().index += pre_bone_size;
+    bone_disp.back().bone_group += pre_bone_group_size;
   }
 
   // 英名
   this->eng_support = add->eng_support;
 
   // 剛体
-  std::vector<RIGID_BODY> rbody(this->rbody.size() + add->rbody.size());
-  for (int i = 0; i < this->rbody.size(); i++) {
-    rbody[i] = this->rbody[i];
-  }
-  j = 0;
-  for (size_t i = this->rbody.size(); i < rbody.size(); i++) {
-    rbody[i] = add->rbody[j];
-    rbody[i].bone = rbody[i].bone + this->bone.size();
-    j++;
+  rbody.reserve(this->rbody.size() + add->rbody.size());
+  for (auto &rb : add->rbody) {
+    rbody.push_back(rb);
+    rbody.back().bone += pre_bone_group_size;
   }
 
   // ジョイント
-  std::vector<JOINT> joint(this->joint.size() + add->joint.size());
-  for (int i = 0; i < this->joint.size(); i++) {
-    joint[i] = this->joint[i];
+  joint.reserve(this->joint.size() + add->joint.size());
+  for (auto &j : add->joint) {
+    joint.push_back(j);
+    joint.back().rbody[0] += pre_rbody_size;
+    joint.back().rbody[1] += pre_rbody_size;
   }
-  j = 0;
-  for (size_t i = this->joint.size(); i < joint.size(); i++) {
-    joint[i] = add->joint[j];
-    for (size_t k = 0; k < 2; k++) {
-      joint[i].rbody[k] = joint[i].rbody[k] + this->rbody.size();
-    }
-    j++;
-  }
-
-  std::swap(this->vt, vt);
-  std::swap(this->vt_index, vt_index);
-  std::swap(this->mat, mat);
-  std::swap(this->bone, bone);
-  std::swap(this->IK, IK);
-  std::swap(this->skin, skin);
-  std::swap(this->skin_disp, skin_disp);
-  std::swap(this->bone_group, bone_group);
-  std::swap(this->bone_disp, bone_disp);
-  std::swap(this->rbody, rbody);
-  std::swap(this->joint, joint);
 
   return 0;
 }

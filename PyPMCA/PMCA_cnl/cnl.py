@@ -19,7 +19,7 @@ class CnlInfo:
 
         self.tree = NODE(None, PMCA_asset.PARTS(name="ROOT", joint=["root"]))
         self.mat_rep = MAT_REP()
-        self.transform_data: list[PMCA_asset.MODEL_TRANS_DATA] = [
+        self.transform_data_list: list[PMCA_asset.MODEL_TRANS_DATA] = [
             PMCA_asset.MODEL_TRANS_DATA("cnl")
         ]
 
@@ -121,8 +121,8 @@ class CnlInfo:
         lines, mat_rep = MAT_REP.parse(lines, data.mats_list)
         self.mat_rep.mat_map = mat_rep
 
-        assert len(self.transform_data) > 0
-        self._read_transform(lines, self.transform_data[0])
+        assert len(self.transform_data_list) > 0
+        self._read_transform(lines, self.transform_data_list[0])
 
     def save_CNL_File(
         self, file: pathlib.Path, name: str, name_l: str, comment: str
@@ -139,7 +139,7 @@ class CnlInfo:
         lines.extend(self.mat_rep.list_to_text())
 
         lines.append("TRANSFORM")
-        lines.extend(self.transform_data[0].list_to_text())
+        lines.extend(self.transform_data_list[0].list_to_text())
 
         with file.open("w", encoding="utf-8") as fp:
             for x in lines:

@@ -92,7 +92,7 @@ class SCALE_DIALOG_FANC(tkinter.Toplevel):
         self.sel = sel
         self.title(data.transform_list[self.sel].name)
 
-        self.cnl.transform_data.append(
+        self.cnl.transform_data_list.append(
             PMCA_asset.MODEL_TRANS_DATA(
                 name=data.transform_list[self.sel].name,
                 scale=1.0,
@@ -101,7 +101,7 @@ class SCALE_DIALOG_FANC(tkinter.Toplevel):
                 rot=(0.0, 0.0, 0.0),
             )
         )
-        self.transform_data = self.cnl.transform_data[-1]
+        self.transform_data = self.cnl.transform_data_list[-1]
         for x in data.transform_list[self.sel].bones:
             self.transform_data.bones.append(PMCA_asset.BONE_TRANS_DATA(name=x.name))
 
@@ -128,26 +128,26 @@ class SCALE_DIALOG_FANC(tkinter.Toplevel):
         self.mainloop()
 
     def CANCEL(self):
-        self.cnl.transform_data.remove(self.transform_data)
+        self.cnl.transform_data_list.remove(self.transform_data)
         self.cnl.raise_refresh()
         self.winfo_toplevel().destroy()
         self.quit()
 
     def OK(self):
-        self.cnl.transform_data[0].scale = (
-            self.transform_data.scale * self.cnl.transform_data[0].scale
+        self.cnl.transform_data_list[0].scale = (
+            self.transform_data.scale * self.cnl.transform_data_list[0].scale
         )
         for x in self.transform_data.bones:
             tmp = None
-            for y in self.cnl.transform_data[0].bones:
+            for y in self.cnl.transform_data_list[0].bones:
                 if y.name == x.name:
                     tmp = y
                     break
             else:
-                self.cnl.transform_data[0].bones.append(
+                self.cnl.transform_data_list[0].bones.append(
                     PMCA_asset.BONE_TRANS_DATA(name=x.name)
                 )
-                tmp = self.cnl.transform_data[0].bones[-1]
+                tmp = self.cnl.transform_data_list[0].bones[-1]
 
             tmp.length = tmp.length * x.length
             tmp.thick = tmp.thick * x.thick
@@ -155,7 +155,7 @@ class SCALE_DIALOG_FANC(tkinter.Toplevel):
                 y += x.pos[i]
             for i, y in enumerate(tmp.rot):
                 y += x.rot[i]
-        self.cnl.transform_data.remove(self.transform_data)
+        self.cnl.transform_data_list.remove(self.transform_data)
         self.cnl.raise_refresh()
 
         self.winfo_toplevel().destroy()
