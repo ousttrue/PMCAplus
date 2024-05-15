@@ -6,6 +6,7 @@ from .bone import BONE, BONE_DISP, BONE_GROUP
 from .ik import IK_LIST
 from .skin import SKIN
 from .rigidbody import RB, JOINT
+from .parser import parse
 
 __all__ = [
     "PMD",
@@ -21,4 +22,5 @@ __all__ = [
     "SKIN",
     "RB",
     "JOINT",
+    "parse",
 ]

@@ -1,4 +1,5 @@
 from typing import Any
+import pathlib
 import logging
 import sys
 import traceback
@@ -336,6 +337,9 @@ def _assemble_child(self: PMCA_cnl.NODE, num: int, context: AssembleContext):
     LOGGER.info("パーツのパス:%s" % (self.parts.path))
 
     # 4 にロード
+    pmd_parts = pmd_type.parse(pathlib.Path(self.parts.path).read_bytes())
+    LOGGER.debug(pmd_parts)
+
     ret = PMCA.Load_PMD(4, self.parts.path.encode(sys.getdefaultencoding(), "replace"))
     assert ret
 
