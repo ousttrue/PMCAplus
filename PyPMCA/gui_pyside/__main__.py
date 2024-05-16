@@ -21,12 +21,17 @@ def main(dir: pathlib.Path):
     if list_txt:
         native.set_list(*list_txt)
 
-    cnl = PMCA_cnl.CnlInfo()
+    def raise_refresh(c: PMCA_cnl.CnlInfo):
+        native.refresh(data, c)
+
+    cnl = PMCA_cnl.CnlInfo(raise_refresh)
     cnl.load_CNL_File(cnl_file, data)
 
     # gui
     with native.Renderer():
         app = pyside_gui.MainFrame(APPNAME, data, cnl)
+        cnl.on_reflesh.append(app.on_refresh)
+        native.refresh(data, cnl)
 
         app.mainloop()
 

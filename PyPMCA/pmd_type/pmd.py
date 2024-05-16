@@ -30,79 +30,95 @@ class PMD:
 
         bool MODEL::add_PMD(const std::shared_ptr<MODEL> &add)
         """
-        pass
-        # auto pre_vt_size = this->vt.size();
-        # auto pre_bone_size = this->bone.size();
-        # auto pre_skin_disp_size = this->skin_disp.size();
-        # auto pre_bone_group_size = this->bone_group.size();
-        # auto pre_rbody_size = this->rbody.size();
+        pre_vt_size = len(self.vt) if self.vt else 0
+        pre_face_size = len(self.face) if self.face else 0
+        pre_mat_size = len(self.mat) if self.mat else 0
+        pre_bone_size = len(self.bone) if self.bone else 0
+        # pre_skin_disp_size = len(self.skin_disp) if self.info.skin_index
+        pre_bone_group_size = len(self.bone_group)
+        pre_rbody_size = len(self.rb) if self.rb else 0
 
-        # // 頂点
-        # this->vt.reserve(this->vt.size() + add->vt.size());
-        # for (auto &v : add->vt) {
-        #     vt.push_back(v);
-        #     // fix bone index
-        #     vt.back().bone_num[0] += pre_bone_size;
-        #     vt.back().bone_num[1] += pre_bone_size;
-        # }
+        # 頂点
+        assert parts.vt
+        vt = (Vertex * (pre_vt_size + len(parts.vt)))()
+        if self.vt:
+            for i, v in enumerate(self.vt):
+                vt[i] = v
+        index = pre_vt_size
+        for v in parts.vt:
+            vt[index] = v
+            # fix bone index
+            vt[index].bone0 += pre_bone_size
+            vt[index].bone1 += pre_bone_size
+            index += 1
+        self.vt = vt
 
-        # // 面頂点
-        # this->vt_index.reserve(this->vt_index.size() + add->vt_index.size());
-        # for (auto index : add->vt_index) {
-        #     // fix index
-        #     vt_index.push_back(index + pre_vt_size);
-        # }
+        # 面頂点
+        assert parts.face
+        faces = (ctypes.c_uint16 * (pre_face_size + len(parts.face)))()
+        if self.face:
+            for i, f in enumerate(self.face):
+                faces[i] = f
+        index = pre_face_size
+        for f in parts.face:
+            # fix index
+            faces[index] = f + pre_face_size
+            index += 1
+        parts.face = faces
 
-        # // 材質
-        # this->mat.reserve(this->mat.size() + add->mat.size());
-        # for (auto &m : add->mat) {
-        #     mat.push_back(m);
-        # }
+        # 材質
+        assert parts.mat
+        mat = (Submesh * (pre_mat_size + len(parts.mat)))()
+        if self.mat:
+            for i, m in enumerate(self.mat):
+                mat[i] = m
+        index = pre_mat_size
+        for m in parts.mat:
+            mat[index] = m
+            index += 1
+        parts.mat = mat
 
-        # // ボーン
-        # this->bone.reserve(this->bone.size() + add->bone.size());
-        # for (auto &b : add->bone) {
-        #     bone.push_back(b);
-        #     // fix bone index
-        #     if (bone.back().PBone_index != USHORT_MAX)
-        #     bone.back().PBone_index += pre_bone_size;
-        #     if (bone.back().TBone_index != 0)
-        #     bone.back().TBone_index += pre_bone_size;
-        #     if (bone.back().IKBone_index != 0)
-        #     bone.back().IKBone_index += pre_bone_size;
-        # }
+        # ボーン
+        for b in parts.bone:
+            self.bone.append(BONE(**dataclasses.asdict(b)))
+            # fix bone index
+            if self.bone[-1].parent_index != 65535:
+                self.bone[-1].parent_index += pre_bone_size
+            if self.bone[-1].tail_index != 0:
+                self.bone[-1].tail_index += pre_bone_size
+            if self.bone[-1].ik != 0:
+                self.bone[-1].ik += pre_bone_size
 
-        # // IKリスト
-        # this->IK.reserve(this->IK.size() + add->IK.size());
-        # for (auto &ik : add->IK) {
-        #     IK.push_back(ik);
-        #     IK.back().IKBone_index += pre_bone_size;
-        #     IK.back().IKTBone_index += pre_bone_size;
-        #     for (size_t k = 0; k < IK.back().IK_chain.size(); k++) {
-        #     IK.back().IK_chain[k] += pre_bone_size;
-        #     }
-        # }
+        # IKリスト
+        for ik in parts.IK:
+            self.IK.append(ik)
+            self.IK[-1].index += pre_bone_size
+            self.IK[-1].target_index += pre_bone_size
+            for k in range(len(self.IK[-1].chain)):
+                self.IK[-1].chain[k] += pre_bone_size
 
-        # // 表情
-        # if (add->skin.size() == 0) {
-        #     // nothing
-        # } else if (this->skin.size() == 0) {
-        #     // copy
-        #     this->skin.assign(add->skin.begin(), add->skin.end());
-        # } else if (this->skin.size() != 0 && add->skin.size() != 0) {
-        #     // 0番を合成
+        # 表情
+        if len(parts.skin) == 0:
+            pass
+        elif len(self.skin) == 0:
+            # copy
+            for skin in parts.skin:
+                self.skin.append(skin)
+        else:
+            # 0番を合成
+            pass
         #     skin[0].skin_vt.reserve(this->skin[0].skin_vt.size() +
-        #                             add->skin[0].skin_vt.size());
-        #     for (auto &skin_vt : add->skin[0].skin_vt) {
+        #                             parts.skin[0].skin_vt.size());
+        #     for (auto &skin_vt : parts.skin[0].skin_vt) {
         #     this->skin[0].skin_vt.push_back(skin_vt);
         #     // index 補正
         #     this->skin[0].skin_vt.back().index += pre_vt_size;
         #     }
 
         #     // 1以降追加
-        #     this->skin.reserve(this->skin.size() + add->skin.size() - 1);
-        #     for (size_t i = 1; i < add->skin.size(); i++) {
-        #     skin.push_back(add->skin[i]);
+        #     this->skin.reserve(this->skin.size() + parts.skin.size() - 1);
+        #     for (size_t i = 1; i < parts.skin.size(); i++) {
+        #     skin.push_back(parts.skin[i]);
         #     for (size_t k = 0; k < skin.back().skin_vt.size(); k++) {
         #         // index 補正
         #         skin.back().skin_vt[k].index += pre_vt_size;
@@ -111,36 +127,36 @@ class PMD:
         # }
 
         # // 表情表示
-        # skin_disp.reserve(this->skin_disp.size() + add->skin_disp.size());
-        # for (auto &sd : add->skin_disp) {
+        # skin_disp.reserve(this->skin_disp.size() + parts.skin_disp.size());
+        # for (auto &sd : parts.skin_disp) {
         #     skin_disp.push_back(sd + pre_skin_disp_size);
         # }
 
         # // ボーン表示
-        # bone_group.reserve(this->bone_group.size() + add->bone_group.size());
-        # for (auto &bg : add->bone_group) {
+        # bone_group.reserve(this->bone_group.size() + parts.bone_group.size());
+        # for (auto &bg : parts.bone_group) {
         #     bone_group.push_back(bg);
         # }
-        # bone_disp.reserve(this->bone_disp.size() + add->bone_disp.size());
-        # for (auto &bd : add->bone_disp) {
+        # bone_disp.reserve(this->bone_disp.size() + parts.bone_disp.size());
+        # for (auto &bd : parts.bone_disp) {
         #     bone_disp.push_back(bd);
         #     bone_disp.back().index += pre_bone_size;
         #     bone_disp.back().bone_group += pre_bone_group_size;
         # }
 
         # // 英名
-        # this->eng_support = add->eng_support;
+        # this->eng_support = parts.eng_support;
 
         # // 剛体
-        # rbody.reserve(this->rbody.size() + add->rbody.size());
-        # for (auto &rb : add->rbody) {
+        # rbody.reserve(this->rbody.size() + parts.rbody.size());
+        # for (auto &rb : parts.rbody) {
         #     rbody.push_back(rb);
         #     rbody.back().bone += pre_bone_group_size;
         # }
 
         # // ジョイント
-        # joint.reserve(this->joint.size() + add->joint.size());
-        # for (auto &j : add->joint) {
+        # joint.reserve(this->joint.size() + parts.joint.size());
+        # for (auto &j : parts.joint) {
         #     joint.push_back(j);
         #     joint.back().rbody[0] += pre_rbody_size;
         #     joint.back().rbody[1] += pre_rbody_size;

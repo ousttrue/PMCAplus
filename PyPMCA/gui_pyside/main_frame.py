@@ -31,7 +31,7 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__()
         self.data = data
         self.cnl = cnl
-        self.cnl.on_updated.append(self.on_cnl_updated)
+        self.cnl.on_reflesh.append(self.on_refresh)
 
         self.setWindowTitle(title)
         self.resize(800, 800)
@@ -68,8 +68,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.model_dock.raise_()
 
-        self.on_cnl_updated()
-
     def _add_dock(self, name: str, widget: QtWidgets.QWidget) -> QtWidgets.QDockWidget:
         dock = QtWidgets.QDockWidget(name, self)
         dock.setWidget(widget)
@@ -81,8 +79,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def closeEvent(self, _) -> None:  # type: ignore
         self.scene.shutdown()
 
-    def on_cnl_updated(self):
-        native.refresh(self.data, self.cnl)
+    def on_refresh(self):
         data = PMCA.Get_PMD(0)
         if data:
             self.scene.set_model(PmdSrc(*data))
@@ -98,6 +95,9 @@ class App:
 
     def mainloop(self):
         self.app.exec()
+
+    def on_refresh(self):
+        self.window.on_refresh()
 
 
 def MainFrame(
