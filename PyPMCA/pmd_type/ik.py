@@ -1,4 +1,5 @@
 import dataclasses
+import ctypes
 
 
 @dataclasses.dataclass
@@ -7,4 +8,4 @@ class IK_LIST:
     target_index: int
     iterations: int
     weight: float
-    chain: list[int]
+    chain: ctypes.Array[ctypes.c_uint16]

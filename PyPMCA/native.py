@@ -308,7 +308,7 @@ def Set_PMD(num: int, model: pmd_type.PMD):
 def _assemble(self: PMCA_cnl.NODE, num: int) -> AssembleContext:
     context = AssembleContext()
 
-    LOGGER.info(f"assemble[{num}]: {self.parts.path}")
+    LOGGER.info(f"assemble[{num}]: {self.parts.path if self.parts else 'NO PARTS'}")
 
     # 空モデル
     ret = PMCA.Load_PMD(
@@ -316,15 +316,18 @@ def _assemble(self: PMCA_cnl.NODE, num: int) -> AssembleContext:
     )
     assert ret
 
+    pmd0 = pmd_type.PMD()
+
     info_data = PMCA.getInfo(0)
 
-    context.pre_process(info_data, self.parts.props)
-    context.post_process(self.parts.props)
+    if self.parts:
+        context.pre_process(info_data, self.parts.props)
+        context.post_process(self.parts.props)
 
     # Parts を合体
     for x in self.children:
         if x.parts:
-            _assemble_child(x, num, context)
+            _assemble_child(pmd0, x, num, context)
 
     PMCA.Sort_PMD(num)
     context.finalize()
@@ -332,31 +335,37 @@ def _assemble(self: PMCA_cnl.NODE, num: int) -> AssembleContext:
     return context
 
 
-def _assemble_child(self: PMCA_cnl.NODE, num: int, context: AssembleContext):
-    assert self.parts
-    LOGGER.info("パーツのパス:%s" % (self.parts.path))
+def _assemble_child(
+    root: pmd_type.PMD, current: PMCA_cnl.NODE, num: int, context: AssembleContext
+):
+    assert current.parts
+    LOGGER.info("パーツのパス:%s" % (current.parts.path))
 
     # 4 にロード
-    pmd_parts = pmd_type.parse(pathlib.Path(self.parts.path).read_bytes())
-    LOGGER.debug(pmd_parts)
-
-    ret = PMCA.Load_PMD(4, self.parts.path.encode(sys.getdefaultencoding(), "replace"))
+    ret = PMCA.Load_PMD(
+        4, current.parts.path.encode(sys.getdefaultencoding(), "replace")
+    )
     assert ret
 
+    pmd_parts = pmd_type.parse(pathlib.Path(current.parts.path).read_bytes())
+    # LOGGER.debug(pmd_parts)
+    if pmd_parts:
+        root.add(pmd_parts)
+
     info_data = PMCA.getInfo(4)
-    context.pre_process(info_data, self.parts.props)
+    context.pre_process(info_data, current.parts.props)
 
     # 0 に 4 を合成
     PMCA.Add_PMD(num, 4)
     ret = PMCA.Marge_PMD(num)
     assert ret
 
-    context.post_process(self.parts.props)
+    context.post_process(current.parts.props)
 
     # 再帰
-    for x in self.children:
+    for x in current.children:
         if x.parts:
-            _assemble_child(x, num, context)
+            _assemble_child(root, x, num, context)
 
 
 def _get_material() -> list[pmd_type.MATERIAL]:

@@ -114,8 +114,10 @@ class TOON:
         )
 
     @staticmethod
-    def from_bytes(name: Sequence[bytes], path: Sequence[bytes]) -> "TOON":
+    def from_bytes(
+        name: Sequence[bytes], path: Sequence[bytes] | None = None
+    ) -> "TOON":
         return TOON(
             tuple(x.decode("cp932", "replace") for x in name),  # type: ignore
-            tuple(x.decode("cp932", "replace") for x in path),  # type: ignore
+            tuple(x.decode("cp932", "replace") for x in path) if path else tuple([""] * 10),  # type: ignore
         )

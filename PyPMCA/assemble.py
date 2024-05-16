@@ -12,7 +12,7 @@ class AssembleContext(NamedTuple):
     licenses: list[str] = []
 
     def pre_process(self, info_data: pmd_type.InfoData, props: dict[str, str]):
-        info = pmd_type.INFO(info_data)
+        info = pmd_type.INFO.from_data(info_data)
         flag_author = False
         flag_license = False
 

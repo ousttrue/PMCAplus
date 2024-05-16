@@ -3,13 +3,28 @@ import logging
 import dataclasses
 import struct
 import ctypes
+
+from .types import Vertex, Submesh, Bone, MoprhVertex, BoneDisplay, RigidBody, Joint
 from .pmd import PMD
+from .info import INFO
+from .ik import IK_LIST
+from .skin import SKIN
+from .bone import BONE, BONE_DISP, BONE_GROUP
+from .material import TOON
 
 
 LOGGER = logging.getLogger(__name__)
 
 
 T = TypeVar("T")
+
+
+def decode_co032_bytes(src: bytes) -> str:
+    i = 0
+    for i, b in enumerate(src):
+        if b == 0:
+            break
+    return src[:i+1].decode("cp932", "replace")
 
 
 @dataclasses.dataclass
@@ -27,11 +42,7 @@ class BinaryReader:
 
     def string(self, byte_len: int, encoding: str = "cp932") -> str:
         span = self.read(byte_len)
-        i = 0
-        for i, b in enumerate(span):
-            if b == 0:
-                break
-        return span[0:i].decode(encoding)
+        return decode_co032_bytes(span)
 
     def i32(self) -> int:
         span = self.read(4)
@@ -54,143 +65,6 @@ class BinaryReader:
         return t.from_buffer_copy(span)  # type:ignore
 
 
-class Float2(ctypes.Structure):
-    _fields_ = [
-        ("x", ctypes.c_float),
-        ("y", ctypes.c_float),
-    ]
-
-
-class Float3(ctypes.Structure):
-    _fields_ = [
-        ("x", ctypes.c_float),
-        ("y", ctypes.c_float),
-        ("z", ctypes.c_float),
-    ]
-
-
-class Float4(ctypes.Structure):
-    _fields_ = [
-        ("x", ctypes.c_float),
-        ("y", ctypes.c_float),
-        ("z", ctypes.c_float),
-        ("w", ctypes.c_float),
-    ]
-
-
-class Vertex(ctypes.Structure):
-    _pack_ = 1
-    _fields_ = [
-        ("position", Float3),
-        ("normal", Float3),
-        ("uv", Float2),
-        ("bone0", ctypes.c_uint16),
-        ("bone1", ctypes.c_uint16),
-        ("weight", ctypes.c_ubyte),  # 0 to 100
-        ("flag", ctypes.c_ubyte),
-    ]
-
-
-assert ctypes.sizeof(Vertex) == 38
-
-
-class Submesh(ctypes.Structure):
-    _pack_ = 1
-    _fields_ = [
-        ("diffuse_rgba", Float4),
-        ("specularity", ctypes.c_float),
-        ("specular_rgb", Float3),
-        ("ambient_rgb", Float3),
-        ("toon_index", ctypes.c_ubyte),
-        ("flag", ctypes.c_ubyte),
-        ("index_count", ctypes.c_uint),
-        ("texture_file", (ctypes.c_char * 20)),
-    ]
-
-
-assert ctypes.sizeof(Submesh) == 70
-
-
-class Bone(ctypes.Structure):
-    _pack_ = 1
-    _fields_ = [
-        ("name", ctypes.c_char * 20),
-        ("parent_index", ctypes.c_uint16),
-        ("tail_index", ctypes.c_uint16),
-        ("type", ctypes.c_ubyte),
-        ("ik_index", ctypes.c_uint16),
-        ("position", Float3),
-    ]
-
-
-assert ctypes.sizeof(Bone) == 39
-
-
-class MoprhVertex(ctypes.Structure):
-    _pack_ = 1
-    _fields_ = [
-        ("vertex_index", ctypes.c_int32),
-        ("position", Float3),
-    ]
-
-
-assert ctypes.sizeof(MoprhVertex) == 16
-
-
-class BoneDisplay(ctypes.Structure):
-    _pack_ = 1
-    _fields_ = [
-        ("bone_index", ctypes.c_int16),
-        ("bone_disp_index", ctypes.c_uint8),
-    ]
-
-
-assert ctypes.sizeof(BoneDisplay) == 3
-
-
-class RigidBody(ctypes.Structure):
-    _pack_ = 1
-    _fields_ = [
-        ("rigidbody_name", ctypes.c_char * 20),
-        ("rigidbody_rel_bone_index", ctypes.c_uint16),
-        ("rigidbody_group_index", ctypes.c_uint8),
-        ("rigidbody_group_target", ctypes.c_uint16),
-        ("shape_type", ctypes.c_uint8),
-        ("shape_xuz", Float3),
-        ("pos_pos", Float3),
-        ("pos_rot", Float3),
-        ("rigidbody_weight", ctypes.c_float),
-        ("rigidbody_pos_dim", ctypes.c_float),
-        ("rigidbody_rot_dim", ctypes.c_float),
-        ("rigidbody_recoil", ctypes.c_float),
-        ("rigidbody_friction", ctypes.c_float),
-        ("rigidbody_type", ctypes.c_uint8),
-    ]
-
-
-assert ctypes.sizeof(RigidBody) == 83
-
-
-class Joint(ctypes.Structure):
-    _pack_ = 1
-    _fields_ = [
-        ("joint_name", ctypes.c_char * 20),
-        ("joint_rigidbody_a", ctypes.c_int),
-        ("joint_rigidbody_b", ctypes.c_int),
-        ("joint_pos", Float3),
-        ("joint_rot", Float3),
-        ("constrain_pos_1", Float3),
-        ("constrain_pos_2", Float3),
-        ("constrain_rot_1", Float3),
-        ("constrain_rot_2", Float3),
-        ("spring_pos", Float3),
-        ("spring_rot", Float3),
-    ]
-
-
-assert ctypes.sizeof(Joint) == 124
-
-
 def parse(data: bytes) -> PMD | None:
     r = BinaryReader(data)
 
@@ -198,9 +72,7 @@ def parse(data: bytes) -> PMD | None:
     assert r.read(3) == b"Pmd"
     assert r.f32() == 1.0
     name = r.string(20)
-    LOGGER.debug(name)
     comment = r.string(256)
-    LOGGER.debug(comment)
 
     # vertex
     vertex_count = r.i32()
@@ -221,47 +93,91 @@ def parse(data: bytes) -> PMD | None:
     bone_count = r.u16()
     bones = r.read_type(Bone * bone_count)
     assert len(bones) == bone_count
+    bone_list: list[BONE] = [
+        BONE(
+            name=decode_co032_bytes(bytes(b.name)),
+            name_eng="",
+            parent_index=b.parent_index,
+            tail_index=b.tail_index,
+            bone_type=b.type,
+            ik=b.ik_index,
+            loc=b.position,
+        )
+        for b in bones
+    ]
 
     # ik
+    ik_list: list[IK_LIST] = []
     ik_count = r.u16()
-    for i in range(ik_count):
+    for _ in range(ik_count):
         target_index = r.u16()
         effector_index = r.u16()
         chain_count = r.u8()
         iteration = r.u16()
         angle_limit = r.f32()
         chains = r.read_type(ctypes.c_uint16 * chain_count)
+        ik_list.append(
+            IK_LIST(
+                target_index,
+                effector_index,
+                iteration,
+                angle_limit,
+                chains,
+            )
+        )
 
     # morph
+    skins: list[SKIN] = []
     morph_count = r.u16()
-    for i in range(morph_count):
-        name = r.string(20)
+    for _ in range(morph_count):
+        morph_name = r.string(20)
         morph_vertex_count = r.i32()
         morph_type = r.u8()
         morph_vertices = r.read_type(MoprhVertex * morph_vertex_count)
+        skins.append(
+            SKIN(
+                morph_name,
+                "",
+                morph_type,
+                morph_vertices,
+            )
+        )
 
     # ui
     morph_disp_count = r.u8()
     morph_disp_list = r.read_type(ctypes.c_uint16 * morph_disp_count)
+
     bone_disp_name_count = r.u8()
     bone_disp_name_list = r.read_type((ctypes.c_char * 50) * bone_disp_name_count)
+    bone_group: list[BONE_GROUP] = [
+        BONE_GROUP(decode_co032_bytes(bytes(g)), "") for g in bone_disp_name_list
+    ]
+
     bone_disp_count = r.i32()
     bone_disp_list = r.read_type(BoneDisplay * bone_disp_count)
+    bone_dsp: list[BONE_DISP] = [
+        BONE_DISP(
+            d.bone_index,
+            d.bone_disp_index,
+        )
+        for d in bone_disp_list
+    ]
 
     # extension
     has_english = r.u8()
+    english_name = ""
+    english_comment = ""
     if has_english != 0:
         english_name = r.string(20)
-        LOGGER.info(english_name)
         english_comment = r.string(256)
-        LOGGER.info(english_comment)
         english_bone_names = r.read_type((ctypes.c_char * 20) * bone_count)
         if morph_count > 1:
             english_morph_names = r.read_type((ctypes.c_char * 20) * (morph_count - 1))
         english_disp_names = r.read_type((ctypes.c_char * 50) * bone_disp_name_count)
 
     # toon
-    r.read_type((ctypes.c_char * 100) * 10)
+    toons = r.read_type((ctypes.c_char * 100) * 10)
+    toon = TOON.from_bytes([bytes(t) for t in toons])
 
     # rigidbody
     rigidbody_count = r.i32()
@@ -275,4 +191,25 @@ def parse(data: bytes) -> PMD | None:
 
     assert r.is_end()
 
-    assert False
+    info = INFO(
+        name,
+        english_name,
+        comment,
+        english_comment,
+        has_english,
+        skin_index=[int(x) for x in morph_disp_list],
+    )
+    return PMD(
+        info,
+        vertices,
+        indices,
+        submeshes,
+        bone_list,
+        ik_list,
+        skins,
+        bone_group,
+        bone_dsp,
+        toon,
+        rigidbodies,
+        joints,
+    )
