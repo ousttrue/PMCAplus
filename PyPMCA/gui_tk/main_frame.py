@@ -102,7 +102,7 @@ class MainFrame(tkinter.ttk.Frame):
         )
         editing.add_command(label="PMCA設定", underline=0, command=self.setting_dialog)
 
-    def on_refresh(self):
+    def update_scene(self):
         data = PMCA.Get_PMD(0)
         if data:
             self.scene.set_model(PmdSrc(*data))

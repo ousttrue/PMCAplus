@@ -159,4 +159,4 @@ class ModelTab(tkinter.ttk.Frame):
                 #     self.comment.set("comment:")
                 #     node = None
 
-        self.app.cnl.raise_refresh()
+        self.app.assemble()

@@ -1,6 +1,7 @@
 import logging
 import sys
 from PySide6 import QtWidgets, QtCore
+from ..app import App
 from .. import PMCA_asset
 from .. import PMCA_cnl
 import PMCA  # type: ignore
@@ -26,11 +27,9 @@ class InfoTab(QtWidgets.QWidget):
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self, title: str, data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo):
+    def __init__(self, title: str, app: App):
         super().__init__()
-        self.data = data
-        self.cnl = cnl
-        self.cnl.on_reflesh.append(self.on_refresh)
+        self.app = app
 
         self.setWindowTitle(title)
         self.resize(800, 800)
@@ -47,21 +46,21 @@ class MainWindow(QtWidgets.QMainWindow):
 
         ## tabs
         # model
-        self.model_tab = ModelTab(data, cnl)
+        self.model_tab = ModelTab(self.app)
         self.model_dock = self._add_dock("Model", self.model_tab)
 
         # color
-        self.color_tab = ColorTab(data, cnl)
+        self.color_tab = ColorTab(self.app.data, self.app.cnl)
         self.color_dock = self._add_dock("Color", self.color_tab)
         self.tabifyDockWidget(self.model_dock, self.color_dock)
 
         # transform
-        self.transform_tab = TransformTab(data, cnl)
+        self.transform_tab = TransformTab(self.app.data, self.app.cnl)
         self.transform_dock = self._add_dock("Transform", self.transform_tab)
         self.tabifyDockWidget(self.model_dock, self.transform_dock)
 
         # info
-        self.info_tab = InfoTab(data, cnl)
+        self.info_tab = InfoTab(self.app.data, self.app.cnl)
         self.info_dock = self._add_dock("Info", self.info_tab)
         self.tabifyDockWidget(self.model_dock, self.info_dock)
 
@@ -86,22 +85,18 @@ class MainWindow(QtWidgets.QMainWindow):
             self.glwidget.repaint()
 
 
-class App:
-    def __init__(self, title: str, data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo):
-        self.app = QtWidgets.QApplication(sys.argv)
-        self.window = MainWindow(title, data, cnl)
+class Gui:
+    def __init__(self, title: str, app: App):
+        self.gui = QtWidgets.QApplication(sys.argv)
+        self.window = MainWindow(title, app)
         self.window.show()
 
     def mainloop(self):
-        self.app.exec()
+        self.gui.exec()
 
-    def on_refresh(self):
+    def update_scene(self):
         self.window.on_refresh()
 
 
-def MainFrame(
-    title: str,
-    data: PMCA_asset.PMCAData,
-    cnl: PMCA_cnl.CnlInfo,
-) -> App:
-    return App(title, data, cnl)
+def MainFrame(title: str, app: App) -> Gui:
+    return Gui(title, app)

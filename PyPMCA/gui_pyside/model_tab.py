@@ -4,6 +4,7 @@ from PySide6 import QtWidgets, QtCore
 from .generic_tree_model import GenericTreeModel, GenericListModel
 from .. import PMCA_asset
 from .. import PMCA_cnl
+from ..app import App
 
 
 LOGGER = logging.getLogger(__name__)
@@ -49,10 +50,9 @@ class ModelTab(QtWidgets.QWidget):
     +----------+
     """
 
-    def __init__(self, data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo):
+    def __init__(self, app: App):
         super().__init__()
-        self.data = data
-        self.cnl = cnl
+        self.app = app
 
         vbox = QtWidgets.QVBoxLayout()
         self.setLayout(vbox)
@@ -74,10 +74,10 @@ class ModelTab(QtWidgets.QWidget):
         self.comment.setText("comment:")
         vbox.addWidget(self.comment)
 
-        self.set_tree_model(self.cnl.tree.children[0])
+        self.set_tree_model(self.app.cnl.tree.children[0])
 
     def set_tree_model(self, selected: PMCA_cnl.NODE):
-        tree_model = PmcaNodeModel(self.cnl.tree)
+        tree_model = PmcaNodeModel(self.app.cnl.tree)
         self.tree.setModel(tree_model)
         self.tree.expandAll()
         self.tree.selectionModel().selectionChanged.connect(self.onJointSelected)
@@ -97,7 +97,7 @@ class ModelTab(QtWidgets.QWidget):
         assert item.parent
 
         parts = [
-            parts for parts in self.data.parts_list if item.parent.joint in parts.type
+            parts for parts in self.app.data.parts_list if item.parent.joint in parts.type
         ]
         list_model = GenericListModel(
             parts, [f"[{item.parent.joint}] parts"], lambda item, col: item.name
@@ -177,4 +177,4 @@ class ModelTab(QtWidgets.QWidget):
 
         self.set_tree_model(new_node)
 
-        self.cnl.raise_refresh()
+        self.app.assemble()

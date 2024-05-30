@@ -12,7 +12,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class CnlInfo:
-    def __init__(self, raise_refresh: Callable[["CnlInfo"], None]):
+    def __init__(self):
         self.name: str = ""
         self.name_l: str = ""
         self.comment: list[str] = dataclasses.field(default_factory=list)
@@ -22,16 +22,6 @@ class CnlInfo:
         self.transform_data_list: list[PMCA_asset.MODEL_TRANS_DATA] = [
             PMCA_asset.MODEL_TRANS_DATA("cnl")
         ]
-
-        self._raise_refresh = raise_refresh
-        self.on_reflesh: list[Callable[[], None]] = []
-
-    def raise_refresh(self):
-        self._raise_refresh(self)
-
-    def on_refresh(self):
-        for callback in self.on_reflesh:
-            callback()
 
     def get_node(self, target: int) -> NODE:
         for i, (node, _) in enumerate(self.tree.traverse()):

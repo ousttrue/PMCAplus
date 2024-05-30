@@ -1,7 +1,6 @@
 import logging
 import pathlib
 from ..color_logger import ColorfulHandler
-from .. import native
 from . import main_frame as tkinter_gui
 from ..app import App
 import PMCA
@@ -20,8 +19,8 @@ def main(dir: pathlib.Path, cnl_file: pathlib.Path):
     PMCA.Init_PMD()
 
     window = tkinter_gui.MainFrame(APPNAME, app)
-    app.cnl.on_reflesh.append(window.on_refresh)
-    native.refresh(app.data, app.cnl)
+    app.on_assemble.append(window.update_scene)
+    app.assemble()
     window.mainloop()
 
     # model_info = app.get_info()

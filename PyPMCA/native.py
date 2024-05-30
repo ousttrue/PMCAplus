@@ -287,7 +287,7 @@ def Set_PMD(num: int, model: pmd_type.PMD):
         )
 
 
-def _assemble(self: PMCA_cnl.NODE, num: int) -> AssembleContext:
+def assemble(self: PMCA_cnl.NODE, num: int) -> AssembleContext:
     context = AssembleContext()
 
     LOGGER.info(f"assemble[{num}]: {self.parts.path if self.parts else 'NO PARTS'}")
@@ -350,7 +350,7 @@ def _assemble_child(
             _assemble_child(root, x, num, context)
 
 
-def _get_material() -> list[pmd_type.MATERIAL]:
+def get_material() -> list[pmd_type.MATERIAL]:
     info_data = PMCA.getInfo(0)
     materials: list[pmd_type.MATERIAL] = []
     for i in range(info_data["mat_count"]):
@@ -360,7 +360,7 @@ def _get_material() -> list[pmd_type.MATERIAL]:
     return materials
 
 
-def _set_material(
+def set_material(
     context: AssembleContext,
     cnl: PMCA_cnl.MAT_REP,
 ):
@@ -429,7 +429,7 @@ def check_PMD(self) -> None:
     root.mainloop()
 
 
-def _get_bones(info_data) -> list[pmd_type.BONE]:
+def get_bones(info_data: pmd_type.InfoData) -> list[pmd_type.BONE]:
     tmpbone: list[pmd_type.BONE] = []
     for i in range(info_data["bone_count"]):
         tmp = PMCA.getBone(0, i)
@@ -446,95 +446,6 @@ def _get_bones(info_data) -> list[pmd_type.BONE]:
             )
         )
     return tmpbone
-
-
-def refresh(data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo):
-    """
-    cnl の変更を MODEL=0 に反映して描画を更新する
-    """
-    LOGGER.info("モデル組立て")
-    context = _assemble(cnl.tree, 0)
-
-    # PMCA.Copy_PMD(0, 1)
-
-    LOGGER.info("材質置換")
-    materials = _get_material()
-    cnl.update_mat_rep(data, materials)
-    _set_material(context, cnl.mat_rep)
-
-    # PMCA.Copy_PMD(0, 2)
-
-    LOGGER.info("体型調整")
-    info_data = PMCA.getInfo(0)
-    tmpbone = _get_bones(info_data)
-
-    refbone = None
-    refbone_index = None
-    for i, transform_bone in enumerate(tmpbone):
-        if transform_bone.name == "右足首":
-            refbone = transform_bone
-            refbone_index = i
-            break
-
-    for transform_data in cnl.transform_data_list:
-        PMCA.Resize_Model(0, transform_data.scale)
-        for transform_bone in transform_data.bones:
-            PMCA.Resize_Bone(
-                0,
-                transform_bone.name.encode("cp932", "replace"),
-                transform_bone.length,
-                transform_bone.thick,
-            )
-            PMCA.Move_Bone(
-                0,
-                transform_bone.name.encode("cp932", "replace"),
-                transform_bone.pos[0],
-                transform_bone.pos[1],
-                transform_bone.pos[2],
-            )
-
-    if refbone:
-        assert refbone_index
-        newbone = None
-        tmp = PMCA.getBone(0, refbone_index)
-        assert tmp
-        newbone = pmd_type.BONE(
-            tmp["name"],
-            tmp["name_eng"],
-            tmp["parent"],
-            tmp["tail"],
-            tmp["type"],
-            tmp["IK"],
-            tmp["loc"],
-        )
-
-        # 体型調整による足首の移動量で設置を調整
-        dy = refbone.loc[1] - newbone.loc[1]
-        for transform_bone in tmpbone:
-            i = transform_bone.parent
-            count = 0
-            while i < info_data["bone_count"] and count < info_data["bone_count"]:
-                if tmpbone[i].name == "センター":
-                    PMCA.Move_Bone(
-                        0, transform_bone.name.encode("cp932", "replace"), 0, dy, 0
-                    )
-                    break
-                i = tmpbone[i].parent
-                count += 1
-
-        PMCA.Move_Bone(0, "センター".encode("cp932", "replace"), 0, dy, 0)
-        PMCA.Move_Bone(0, "+センター".encode("cp932", "replace"), 0, -dy, 0)
-
-    for transform_data in cnl.transform_data_list:
-        PMCA.Move_Model(
-            0, transform_data.pos[0], transform_data.pos[1], transform_data.pos[2]
-        )
-
-    PMCA.Update_Skin(0)
-    PMCA.Adjust_Joints(0)
-
-    w, h, t = PMCA.getWHT(0)
-    cnl.on_refresh()
 
 
 def save_PMD(self, name: str):
