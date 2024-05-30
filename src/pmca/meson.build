@@ -34,9 +34,6 @@ deps = [py_dep, glfw_dep, imgui_dep, gl_dep, glu_dep, plog_dep, glew_dep]
 py.extension_module(
     'PMCA',
     'PMCA_PyMod.cpp',
-    'PMCA_glfw.cpp',
-    'PMCA_renderer.cpp',
-    'dsp_model.cpp',
     'pmd_model.cpp',
     'quat.cpp',
     'ioutil.cpp',

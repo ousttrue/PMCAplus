@@ -2,8 +2,6 @@
 #include <thread>
 
 #include "PMCA_PyMod.h"
-#include "dsp_model.h"
-#include "flags.h"
 #include "pmd_model.h"
 
 #define PMCA_MODULE
@@ -964,21 +962,6 @@ static PyObject *Adjust_Joints(PyObject *self, PyObject *args) {
   Py_RETURN_TRUE;
 }
 
-static PyObject *PMD_view_set(PyObject *self, PyObject *args) {
-  const char *str;
-  int num;
-  if (!PyArg_ParseTuple(args, "is", &num, &str))
-    Py_RETURN_FALSE;
-
-  if (strcmp(str, "replace") != 0) {
-    printf("unexpected string '%s'\n", str);
-    Py_RETURN_FALSE;
-  }
-
-  myflags.current_model = g_model[num];
-  Py_RETURN_TRUE;
-}
-
 static PyObject *Get_PMD(PyObject *self, PyObject *args) {
   int num;
   if (!PyArg_ParseTuple(args, "i", &num))
@@ -1003,25 +986,6 @@ static PyObject *Get_PMD(PyObject *self, PyObject *args) {
                        model->vt.size() * sizeof(VERTEX),
                        model->vt_index.data(),
                        model->vt_index.size() * sizeof(unsigned short), l);
-}
-
-static PyObject *MODEL_LOCK(PyObject *self, PyObject *args) {
-  int num;
-  if (!PyArg_ParseTuple(args, "i", &num))
-    Py_RETURN_FALSE;
-
-  if (num == 1) {
-    while (myflags.model_lock != 0) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(30));
-      // printf("C");
-    }
-    myflags.model_lock = 1;
-
-  } else {
-    myflags.model_lock = 0;
-  }
-  printf("Lockstate %d\n", myflags.model_lock);
-  Py_RETURN_TRUE;
 }
 
 static PyObject *getWHT(PyObject *self, PyObject *args) {
@@ -1093,7 +1057,6 @@ static PyMethodDef PMCAMethods[] = {
     {"Copy_PMD", Copy_PMD, METH_VARARGS, "Copy PMD"},
     {"Marge_PMD", Marge_PMD, METH_VARARGS, "Marge PMD"},
     {"Sort_PMD", Sort_PMD, METH_VARARGS, "Sort PMD"},
-    {"PMD_view_set", PMD_view_set, METH_VARARGS, "Set selected PMD to dispray"},
     {"Get_PMD", Get_PMD, METH_VARARGS, "Get PMD Vertices, Indices, Submeshes"},
     /***********************************************************************/
     {"Resize_Model", Resize_Model, METH_VARARGS, "Resize_Model"},
@@ -1104,17 +1067,7 @@ static PyMethodDef PMCAMethods[] = {
     {"Adjust_Joints", Adjust_Joints, METH_VARARGS, "Adjust_Joints"},
 
     /***********************************************************************/
-    {"MODEL_LOCK", MODEL_LOCK, METH_VARARGS, "Lock/Unlock model"},
     {"getWHT", getWHT, METH_VARARGS, "get height, width, thickness from model"},
-    /***********************************************************************/
-    {"CretateViewerThread", CreateViewerThread, METH_VARARGS,
-     "CretateViewerThread"},
-    {"WaitViewerThread", WaitViewerThread, METH_VARARGS, "WaitViewerThread"},
-    {"QuitViewerThread", QuitViewerThread, METH_VARARGS, "QuitViewerThread"},
-    {"KillViewerThread", KillViewerThread, METH_VARARGS, "KillViewerThread"},
-    {"GetViewerThreadState", GetViewerThreadState, METH_VARARGS,
-     "GetViewerThreadState"},
-    {"show3Dview", show3Dview, METH_VARARGS, "show3Dview"},
     {NULL, NULL, 0, NULL}};
 
 static struct PyModuleDef PMCAmodule = {PyModuleDef_HEAD_INIT,

@@ -489,50 +489,8 @@ def Adjust_Joints(num: int) -> None:
     """
     ...
 
-def MODEL_LOCK(mode: int) -> None:
-    """
-    Lock/Unlock model"
-    """
-    ...
-
 def getWHT(num: int) -> tuple[float, float, float]:
     """
     get height, width, thickness from model"
-    """
-    ...
-
-def CretateViewerThread() -> None:
-    """
-    CretateViewerThread
-    """
-    ...
-
-def WaitViewerThread():
-    """
-    WaitViewerThread"
-    """
-    ...
-
-def QuitViewerThread() -> None:
-    """
-    QuitViewerThread"
-    """
-    ...
-
-def KillViewerThread():
-    """
-    KillViewerThread"
-    """
-    ...
-
-def GetViewerThreadState():
-    """
-    GetViewerThreadState
-    """
-    ...
-
-def show3Dview():
-    """
-    show3Dview"
     """
     ...

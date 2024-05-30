@@ -1,8 +1,7 @@
-from typing import Any
 import pathlib
 import logging
 import sys
-import traceback
+
 
 import PMCA  # type: ignore
 from . import pmd_type
@@ -12,23 +11,6 @@ from .assemble import AssembleContext
 
 
 LOGGER = logging.getLogger(__name__)
-
-
-class Renderer:
-    def __init__(self):
-        PMCA.Init_PMD()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, _exception_type: Any, _exception_value: Any, _traceback: Any):
-        if _exception_value:
-            traceback.print_tb(_traceback)
-            print(_exception_value)
-        PMCA.QuitViewerThread()
-
-    def start_thread(self):
-        PMCA.CretateViewerThread()
 
 
 def Set_Name_Comment(
@@ -470,8 +452,7 @@ def refresh(data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo):
     """
     cnl の変更を MODEL=0 に反映して描画を更新する
     """
-    PMCA.MODEL_LOCK(1)
-    LOGGER.info("モデル組立て(MODEL_LOCK=1)")
+    LOGGER.info("モデル組立て")
     context = _assemble(cnl.tree, 0)
 
     # PMCA.Copy_PMD(0, 1)
@@ -551,11 +532,6 @@ def refresh(data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo):
 
     PMCA.Update_Skin(0)
     PMCA.Adjust_Joints(0)
-    # PMCA.Copy_PMD(0, 3)
-    PMCA.PMD_view_set(0, "replace")  # テクスチャを変更しない
-
-    PMCA.MODEL_LOCK(0)
-    LOGGER.info(f"(MODEL_LOCK=0)")
 
     w, h, t = PMCA.getWHT(0)
     cnl.on_refresh()
