@@ -5,19 +5,13 @@ import shutil
 import random
 import logging
 import tkinter.ttk
-
 from OpenGL import GL
 from pyopengltk import OpenGLFrame
-# pip install pyopengltk
-
-from .model_tab import ModelTab
-from .color_tab import ColorTab
-from .transform_tab import TransformTab
-from .info_tab import InfoTab, MODELINFO
 from .. import PMCA_asset
 from .. import PMCA_cnl
 from .. import pmd_type
 from .. import native
+from . import tabs
 
 
 LOGGER = logging.getLogger(__name__)
@@ -33,46 +27,25 @@ class MainFrame(tkinter.ttk.Frame):
     ):
         if not master:
             master = tkinter.Tk()
+        master.title(title)
         super().__init__(master)
 
-        self.data = data
-        self.cnl = cnl
         self.export2folder = False
-        self.root = master
-        self.root.title(title)
+
         self.target_dir = "./model/"
-        self.cur_parts = 0
-        self.cur_mat = 0
         self.pack()
 
-        # タブを作成
-        notebook = tkinter.ttk.Notebook(self.root)
-        notebook.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
-
-        def add_tab(x: Any):
-            notebook.insert(tkinter.END, x, text=x.text)  # type: ignore
-
-        self.model_tab = ModelTab(self.root, self.data, self.cnl)
-        add_tab(self.model_tab)
-
-        self.color_tab = ColorTab(self.root, self.cnl)
-        add_tab(self.color_tab)
-
-        self.transform_tab = TransformTab(self.root, self.data, self.cnl)
-        self.transform_tab.tfgroup.set_entry([x.name for x in self.data.transform_list])  # type: ignore
-        add_tab(self.transform_tab)
-
-        self.info_tab = InfoTab(self.root)
-        add_tab(self.info_tab)
+        self.notebook = tabs.Tabs(master, data, cnl)
+        self.notebook.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
 
         # Buttons
-        self.frame_button = tkinter.ttk.Frame(self.root)
+        self.frame_button = tkinter.ttk.Frame(master)
         self.QUIT = tkinter.ttk.Button(self.frame_button)
         self.QUIT["text"] = "QUIT"
 
         def quit():
-            self.root.winfo_toplevel().destroy()
-            self.root.quit()
+            master.winfo_toplevel().destroy()
+            master.quit()
 
         self.QUIT["command"] = quit
         self.QUIT.pack(side=tkinter.RIGHT)
@@ -116,17 +89,6 @@ class MainFrame(tkinter.ttk.Frame):
             label="材質をランダム選択", underline=0, command=self.rand_mat
         )
         editing.add_command(label="PMCA設定", underline=0, command=self.setting_dialog)
-
-    def on_refresh(self):
-        self.model_tab.set_tree(self.cnl.tree, True)
-        self.color_tab.l_tree.set_entry(self.cnl.mat_rep.get_entries(), sel=self.cur_mat)  # type: ignore
-        self.info_tab.refresh()
-        # self.transform_tab.info_frame.strvar.set(  # type: ignore
-        #     "height     = %f\nwidth      = %f\nthickness = %f\n" % (w, h, t)
-        # )
-
-    def get_info(self) -> MODELINFO:
-        return self.info_tab.modelinfo
 
     # functions menu
     def clear(self):

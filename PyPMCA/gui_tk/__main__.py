@@ -29,7 +29,7 @@ def main(dir: pathlib.Path):
     # gui
     with native.Renderer() as r:
         app = tkinter_gui.MainFrame(APPNAME, data, cnl)
-        cnl.on_reflesh.append(app.on_refresh)
+        cnl.on_reflesh.append(app.notebook.on_refresh)
         native.refresh(data, cnl)
 
         r.start_thread()
