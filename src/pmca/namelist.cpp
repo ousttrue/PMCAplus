@@ -1,4 +1,4 @@
-#include "list.h"
+#include "namelist.h"
 #include <plog/Log.h>
 #include <stdio.h>
 
@@ -12,7 +12,7 @@ void *FGETS(char *p, size_t s, FILE *fp) {
   return r;
 }
 
-int LIST::load(const std::string &file_name) {
+int NameList::_load(const std::string &file_name) {
 
   if (file_name.empty()) {
     printf("ファイル名がありません\n");
@@ -91,15 +91,5 @@ int LIST::load(const std::string &file_name) {
   }
   fclose(lst_file);
 
-  return 0;
-}
-
-int delete_list(LIST *list) {
-  list->bone.clear();
-  list->bone_eng.clear();
-  list->skin.clear();
-  list->skin_eng.clear();
-  list->disp.clear();
-  list->disp_eng.clear();
   return 0;
 }

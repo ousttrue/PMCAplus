@@ -5,7 +5,7 @@
 
 #define NAME_LEN 128
 
-struct LIST {
+struct NameList {
   std::vector<std::array<char, NAME_LEN>> bone;
   std::vector<std::array<char, NAME_LEN>> bone_eng;
 
@@ -15,7 +15,5 @@ struct LIST {
   std::vector<std::array<char, NAME_LEN>> disp;
   std::vector<std::array<char, NAME_LEN>> disp_eng;
 
-  int load(const std::string &file_name);
+  int _load(const std::string &file_name);
 };
-
-// int delete_list(LIST *list);

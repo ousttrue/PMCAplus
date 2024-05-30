@@ -5,6 +5,7 @@
 #include "dsp_model.h"
 #include "flags.h"
 #include "pmd_model.h"
+#include "namelist.h"
 
 #define PMCA_MODULE
 #define MODEL_COUNT 16
@@ -12,7 +13,7 @@
 static PyObject *PMCAError;
 
 static std::shared_ptr<MODEL> g_model[16];
-static LIST list;
+static NameList list;
 
 #include <plog/Appenders/ColorConsoleAppender.h>
 #include <plog/Formatters/TxtFormatter.h>
@@ -781,7 +782,7 @@ static PyObject *Load_PMD(PyObject *self, PyObject *args) {
     Py_RETURN_FALSE;
   }
 
-  auto model = load_PMD(str);
+  auto model = MODEL::load(str);
   if (model) {
     g_model[num] = model;
   } else {

@@ -40,7 +40,7 @@ py.extension_module(
     'pmd_model.cpp',
     'quat.cpp',
     'ioutil.cpp',
-    'list.cpp',
+    'namelist.cpp',
     install: true,
     install_dir: 'bin',
     dependencies: deps,

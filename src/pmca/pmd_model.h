@@ -1,10 +1,9 @@
 #pragma once
-#include "list.h"
 #include <memory>
 #include <span>
-#include <stdio.h>
 #include <string>
 #include <vector>
+#include <array>
 
 #define USHORT_MAX 65535
 
@@ -133,15 +132,14 @@ struct MODEL {
   std::vector<JOINT> joint;
 
 private:
-  MODEL() {}
+  MODEL();
 
 public:
-  ~MODEL(){
-    auto a=0;
-  }
+  ~MODEL();
   static std::shared_ptr<MODEL> create() {
     return std::shared_ptr<MODEL>(new MODEL);
   }
+  static std::shared_ptr<MODEL> load(const std::string &path);
   bool load(std::span<uint8_t> bytes, const std::string &file_name);
   bool write(const std::string &file_name) const;
   bool add_PMD(const std::shared_ptr<MODEL> &add);
@@ -152,10 +150,10 @@ public:
   void marge_bone_disp();
   void marge_rb();
   void update_bone_index(std::span<int> index);
-  void translate(LIST *list, short mode);
-  void sort_bone(LIST *list);
-  void sort_skin(LIST *list);
-  void sort_disp(LIST *list);
+  void translate(struct NameList *list, short mode);
+  void sort_bone(struct NameList *list);
+  void sort_skin(struct NameList *list);
+  void sort_disp(struct NameList *list);
   void rename_tail();
   bool scale_bone(int index, double sx, double sy, double sz);
   bool bone_vec(int index, double loc[], double vec[]);
@@ -169,14 +167,3 @@ public:
   int print_PMD(const std::string &file_name);
   int listup_bone(const std::string &file_name);
 };
-
-double angle_from_vec(double u, double v);
-void coordtrans(double array[][3], unsigned int len, double loc[],
-                double mtr[3][3]);
-void coordtrans_inv(double array[][3], unsigned int len, double loc[],
-                    double mtr[3][3]);
-std::shared_ptr<MODEL> load_PMD(const std::string &file_name);
-int get_file_name(char file_name[]);
-void *dbg_fgets(char *, size_t, FILE *);
-void *dbg_malloc(size_t);
-void dbg_free(void *);

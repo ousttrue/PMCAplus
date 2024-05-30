@@ -1,12 +1,81 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+#include "namelist.h"
 #include "ioutil.h"
 #include "pmd_model.h"
 #include <plog/Log.h>
 #include <string.h>
 
-void *MALLOC(size_t s) {
+static double angle_from_vec(double u, double v) {
+  double angle;
+  double pi = M_PI;
+  // ベクトルがv軸方向を向く回転を求める
+
+  angle = asin(u / sqrt(u * u + v * v));
+  // printf("angle %f\n", angle);
+  if (v < 0) {
+    angle = pi - angle;
+  }
+
+  return angle;
+}
+
+static void coordtrans(double array[][3], unsigned int len, double loc[],
+                       double mtr[3][3]) {
+  /*配列は大きさ[len][3]の2次元配列で、点の座標が格納されている
+   */
+  int i, j, k;
+  double tmp[3];
+
+  // 座標変換
+  for (i = 0; i < len; i++) {
+    if (&loc != 0) {
+      for (j = 0; j < 3; j++) {
+        tmp[j] = array[i][j] - loc[j];
+      }
+    }
+    for (j = 0; j < 3; j++) {
+      array[i][j] = 0;
+      for (k = 0; k < 3; k++) {
+        array[i][j] = array[i][j] + mtr[j][k] * tmp[k];
+      }
+    }
+  }
+}
+
+static void coordtrans_inv(double array[][3], unsigned int len, double loc[],
+                           double mtr[3][3]) {
+  /*配列は大きさ[len][3]の2次元配列で、点の座標が格納されている
+   */
+  int i, j, k;
+  double tmp[3];
+  double inverse_mtr[3][3];
+
+  // 転置行列
+  for (i = 0; i < 3; i++) {
+    for (j = 0; j < 3; j++) {
+      inverse_mtr[i][j] = mtr[j][i];
+    }
+  }
+
+  // 座標変換
+  for (i = 0; i < len; i++) {
+    for (j = 0; j < 3; j++) {
+      tmp[j] = 0;
+      for (k = 0; k < 3; k++) {
+        tmp[j] = tmp[j] + inverse_mtr[j][k] * array[i][k];
+      }
+    }
+
+    if (&loc != 0) {
+      for (j = 0; j < 3; j++) {
+        array[i][j] = tmp[j] + loc[j];
+      }
+    }
+  }
+}
+static void *MALLOC(size_t s) {
   auto p = malloc(s);
   if (p == NULL) {
     PLOG_ERROR << "メモリの確保に失敗しました";
@@ -16,11 +85,15 @@ void *MALLOC(size_t s) {
   return p;
 }
 
-void FREE(void *p) {
+static void FREE(void *p) {
   if (p == NULL)
     return;
   free(p);
 }
+
+MODEL::MODEL() {}
+
+MODEL::~MODEL() {}
 
 bool MODEL::load(std::span<uint8_t> bytes, const std::string &file_name) {
   this->path = file_name;
@@ -273,7 +346,7 @@ bool MODEL::load(std::span<uint8_t> bytes, const std::string &file_name) {
   return true;
 }
 
-std::shared_ptr<MODEL> load_PMD(const std::string &file_name) {
+std::shared_ptr<MODEL> MODEL::load(const std::string &file_name) {
   if (file_name.empty()) {
     PLOG_WARNING << "ファイル名がありません";
     return nullptr;
@@ -900,7 +973,7 @@ int get_file_name(char file_name[]) {
   return 0;
 }
 
-void MODEL::translate(LIST *list, short mode) {
+void MODEL::translate(NameList *list, short mode) {
   /*
   モード1 英名追加
   モード2 日本語名を英語名に(ボーン、スキンのみ)
@@ -1021,7 +1094,7 @@ void MODEL::translate(LIST *list, short mode) {
   }
 }
 
-void MODEL::sort_bone(LIST *list) {
+void MODEL::sort_bone(NameList *list) {
   std::vector<int> index(this->bone.size());
   std::vector<BONE> bone(this->bone.size());
 
@@ -1174,7 +1247,7 @@ void MODEL::update_bone_index(std::span<int> index) {
   PLOG_DEBUG << "ボーンインデックス更新完了";
 }
 
-void MODEL::sort_skin(LIST *list) {
+void MODEL::sort_skin(NameList *list) {
 
   std::vector<int> index(this->skin.size());
   std::vector<SKIN> skin(this->skin.size());
@@ -1231,7 +1304,7 @@ void MODEL::sort_skin(LIST *list) {
   std::swap(this->skin, skin);
 }
 
-void MODEL::sort_disp(LIST *list) {
+void MODEL::sort_disp(NameList *list) {
   std::vector<int> index(this->bone_group.size());
   std::vector<BONE_GROUP> bone_group(this->bone_group.size());
   std::vector<BONE_DISP> bone_disp(this->bone_disp.size());
@@ -1557,75 +1630,6 @@ bool MODEL::bone_vec(int index, double loc[], double vec[]) {
   }
 
   return true;
-}
-
-double angle_from_vec(double u, double v) {
-  double angle;
-  double pi = M_PI;
-  // ベクトルがv軸方向を向く回転を求める
-
-  angle = asin(u / sqrt(u * u + v * v));
-  // printf("angle %f\n", angle);
-  if (v < 0) {
-    angle = pi - angle;
-  }
-
-  return angle;
-}
-
-void coordtrans(double array[][3], unsigned int len, double loc[],
-                double mtr[3][3]) {
-  /*配列は大きさ[len][3]の2次元配列で、点の座標が格納されている
-   */
-  int i, j, k;
-  double tmp[3];
-
-  // 座標変換
-  for (i = 0; i < len; i++) {
-    if (&loc != 0) {
-      for (j = 0; j < 3; j++) {
-        tmp[j] = array[i][j] - loc[j];
-      }
-    }
-    for (j = 0; j < 3; j++) {
-      array[i][j] = 0;
-      for (k = 0; k < 3; k++) {
-        array[i][j] = array[i][j] + mtr[j][k] * tmp[k];
-      }
-    }
-  }
-}
-
-void coordtrans_inv(double array[][3], unsigned int len, double loc[],
-                    double mtr[3][3]) {
-  /*配列は大きさ[len][3]の2次元配列で、点の座標が格納されている
-   */
-  int i, j, k;
-  double tmp[3];
-  double inverse_mtr[3][3];
-
-  // 転置行列
-  for (i = 0; i < 3; i++) {
-    for (j = 0; j < 3; j++) {
-      inverse_mtr[i][j] = mtr[j][i];
-    }
-  }
-
-  // 座標変換
-  for (i = 0; i < len; i++) {
-    for (j = 0; j < 3; j++) {
-      tmp[j] = 0;
-      for (k = 0; k < 3; k++) {
-        tmp[j] = tmp[j] + inverse_mtr[j][k] * array[i][k];
-      }
-    }
-
-    if (&loc != 0) {
-      for (j = 0; j < 3; j++) {
-        array[i][j] = tmp[j] + loc[j];
-      }
-    }
-  }
 }
 
 void MODEL::move_bone(unsigned int index, double diff[]) {
