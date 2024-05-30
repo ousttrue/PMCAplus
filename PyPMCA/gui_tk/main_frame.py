@@ -5,14 +5,16 @@ import shutil
 import random
 import logging
 import tkinter.ttk
-from OpenGL import GL
-from pyopengltk import OpenGLFrame
 from .. import PMCA_asset
 from .. import PMCA_cnl
 from .. import pmd_type
 from .. import native
 from . import tabs
 from ..app import App
+from ..gl_scene import GlScene, PmdSrc
+import glglue.tk_frame
+import PMCA
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -47,8 +49,16 @@ class MainFrame(tkinter.ttk.Frame):
         self.export2folder = False
         self.target_dir = "./model/"
 
+        # setup opengl widget
+        self.scene = GlScene()
+        self.glwidget = glglue.tk_frame.TkGlFrame(
+            master,
+            self.scene.render,
+        )
+        self.glwidget.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=True)
+
         self.notebook = tabs.Tabs(master, self.app)
-        self.notebook.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
+        self.notebook.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=0)
 
         self.frame_button = Buttons(master)
         self.frame_button.pack(padx=5, pady=5, side=tkinter.TOP, fill="x")
@@ -91,6 +101,13 @@ class MainFrame(tkinter.ttk.Frame):
             label="材質をランダム選択", underline=0, command=self.rand_mat
         )
         editing.add_command(label="PMCA設定", underline=0, command=self.setting_dialog)
+
+    def on_refresh(self):
+        data = PMCA.Get_PMD(0)
+        if data:
+            self.scene.set_model(PmdSrc(*data))
+            self.notebook.on_refresh()
+            self.glwidget.tkExpose(None)
 
     # functions menu
     def clear(self):

@@ -17,12 +17,10 @@ def main(dir: pathlib.Path, cnl_file: pathlib.Path):
     app.load(cnl_file)
 
     # gui
-    with native.Renderer() as r:
+    with native.Renderer():
         window = tkinter_gui.MainFrame(APPNAME, app)
-        app.cnl.on_reflesh.append(window.notebook.on_refresh)
-
-        r.start_thread()
-
+        app.cnl.on_reflesh.append(window.on_refresh)
+        native.refresh(app.data, app.cnl)
         window.mainloop()
 
         # model_info = app.get_info()

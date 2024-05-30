@@ -3,10 +3,9 @@ import sys
 from PySide6 import QtWidgets, QtCore
 from .. import PMCA_asset
 from .. import PMCA_cnl
-from .. import native
 import PMCA  # type: ignore
 import glglue.pyside6
-from .gl_scene import GlScene, PmdSrc
+from ..gl_scene import GlScene, PmdSrc
 from .model_tab import ModelTab
 from .color_tab import ColorTab
 
