@@ -1,7 +1,16 @@
 #include "list.h"
-#include "dbg.h"
 #include <plog/Log.h>
 #include <stdio.h>
+
+void *FGETS(char *p, size_t s, FILE *fp) {
+  auto r = fgets(p, s, fp);
+  if (r == NULL) {
+    PLOG_ERROR << "ファイル読み込みに失敗";
+    throw std::runtime_error("ファイル読み込みに失敗");
+  }
+
+  return r;
+}
 
 int LIST::load(const std::string &file_name) {
 

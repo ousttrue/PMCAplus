@@ -4,7 +4,7 @@
 #include "stb_image.h"
 
 #include "dsp_model.h"
-#include "mPMD.h"
+#include "pmd_model.h"
 #include <stdint.h>
 #include <vector>
 
