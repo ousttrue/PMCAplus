@@ -2,39 +2,28 @@ import logging
 import pathlib
 
 from ..color_logger import ColorfulHandler
-from .. import PMCA_asset
-from .. import PMCA_cnl
 from .. import native
 from . import main_frame as tkinter_gui
+from ..app import App
+
 
 APPNAME = "PMCA v0.0.6r10-tk"
 
 
-def main(dir: pathlib.Path):
+def main(dir: pathlib.Path, cnl_file: pathlib.Path):
     logging.basicConfig(handlers=[ColorfulHandler()], level=logging.DEBUG)
-    cnl_file = pathlib.Path("./last.cnl")
 
-    # data
-    data = PMCA_asset.PMCAData()
-    list_txt = data.load_asset(dir)
-    if list_txt:
-        native.set_list(*list_txt)
-
-    def raise_refresh(c: PMCA_cnl.CnlInfo):
-        native.refresh(data, c)
-
-    cnl = PMCA_cnl.CnlInfo(raise_refresh)
-    cnl.load_CNL_File(cnl_file, data)
+    app = App(dir)
+    app.load(cnl_file)
 
     # gui
     with native.Renderer() as r:
-        app = tkinter_gui.MainFrame(APPNAME, data, cnl)
-        cnl.on_reflesh.append(app.notebook.on_refresh)
-        native.refresh(data, cnl)
+        window = tkinter_gui.MainFrame(APPNAME, app)
+        app.cnl.on_reflesh.append(window.notebook.on_refresh)
 
         r.start_thread()
 
-        app.mainloop()
+        window.mainloop()
 
         # model_info = app.get_info()
         # data.save_CNL_File(
@@ -43,4 +32,4 @@ def main(dir: pathlib.Path):
 
 
 if __name__ == "__main__":
-    main(pathlib.Path(".").absolute())
+    main(pathlib.Path(".").absolute(), pathlib.Path("./last.cnl"))

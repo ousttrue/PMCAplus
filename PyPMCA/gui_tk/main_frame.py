@@ -12,7 +12,7 @@ from .. import PMCA_cnl
 from .. import pmd_type
 from .. import native
 from . import tabs
-
+from ..app import App
 
 LOGGER = logging.getLogger(__name__)
 
@@ -35,21 +35,19 @@ class MainFrame(tkinter.ttk.Frame):
     def __init__(
         self,
         title: str,
-        data: PMCA_asset.PMCAData,
-        cnl: PMCA_cnl.CnlInfo,
-        master: tkinter.Tk | None = None,
+        app: App,
     ):
-        if not master:
-            master = tkinter.Tk()
+        master = tkinter.Tk()
         master.title(title)
 
         super().__init__(master)
         self.pack()
 
+        self.app = app
         self.export2folder = False
         self.target_dir = "./model/"
 
-        self.notebook = tabs.Tabs(master, data, cnl)
+        self.notebook = tabs.Tabs(master, self.app)
         self.notebook.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
 
         self.frame_button = Buttons(master)
@@ -96,8 +94,7 @@ class MainFrame(tkinter.ttk.Frame):
 
     # functions menu
     def clear(self):
-        init(self)
-        self.refresh()
+        self.app.load()
 
     def savecheck_PMD(self):
         self.refresh(level=3)

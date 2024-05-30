@@ -5,7 +5,7 @@ import tkinter.ttk
 from .listbox import LISTBOX
 from .. import PMCA_asset
 from .. import PMCA_cnl
-
+from ..app import App
 
 LOGGER = logging.getLogger(__name__)
 
@@ -22,13 +22,11 @@ class ModelTab(tkinter.ttk.Frame):
     def __init__(
         self,
         root: tkinter.Tk,
-        data: PMCA_asset.PMCAData,
-        cnl: PMCA_cnl.CnlInfo,
+        app: App,
     ) -> None:
         super().__init__(root)
         self.text = "Model"
-        self.data = data
-        self.cnl = cnl
+        self.app = app
 
         self.frame = tkinter.ttk.Frame(self)
 
@@ -60,7 +58,7 @@ class ModelTab(tkinter.ttk.Frame):
         self.parts_entry: list[
             tuple[str, PMCA_asset.PARTS | Literal["load"] | None]
         ] = []
-        self.set_tree(self.cnl.tree)
+        self.set_tree(self.app.cnl.tree)
         self.set_parts()
 
     def set_tree(self, node: PMCA_cnl.NODE, use_sel: bool = False):
@@ -75,24 +73,24 @@ class ModelTab(tkinter.ttk.Frame):
 
     def set_parts(self):
         self.parts_entry.clear()
-        for x in self.data.parts_list:
+        for x in self.app.data.parts_list:
             for y in x.type:
                 if y == "root":
                     self.parts_entry.append((x.name, x))
                     break
         self.parts_entry.append(("#外部モデル読み込み", "load"))
-        self.l_sel.set_entry([k for k, _ in self.parts_entry], sel=self.get_sel_parts(self.cnl.tree.children[0]))  # type: ignore
+        self.l_sel.set_entry([k for k, _ in self.parts_entry], sel=self.get_sel_parts(self.app.cnl.tree.children[0]))  # type: ignore
 
     def tree_click(self, _event: Any):
         self.comment.set("comment:")
         sel_t = int(self.l_tree.curselection()[0]) + 1  # type: ignore
-        node = self.cnl.get_node(sel_t)
+        node = self.app.cnl.get_node(sel_t)
         self.update_parts_entry(node)
 
     def update_parts_entry(self, node: PMCA_cnl.NODE):
         assert node.parent
         self.parts_entry.clear()
-        for parts in self.data.parts_list:
+        for parts in self.app.data.parts_list:
             if node.parent.joint in parts.type:
                 self.parts_entry.append((parts.name, parts))
         self.parts_entry.append(("#外部モデル読み込み", "load"))
@@ -112,7 +110,7 @@ class ModelTab(tkinter.ttk.Frame):
     def parts_sel_click(self, _event: Any):
         sel = int(self.l_sel.curselection()[0])  # type: ignore
         sel_t = int(self.l_tree.curselection()[0]) + 1  # type: ignore
-        node = self.cnl.get_node(sel_t)
+        node = self.app.cnl.get_node(sel_t)
         assert node.parent
 
         match self.parts_entry[sel][1]:
@@ -161,4 +159,4 @@ class ModelTab(tkinter.ttk.Frame):
                 #     self.comment.set("comment:")
                 #     node = None
 
-        self.cnl.raise_refresh()
+        self.app.cnl.raise_refresh()
