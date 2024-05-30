@@ -5,7 +5,6 @@
 #include "dsp_model.h"
 #include "flags.h"
 #include "pmd_model.h"
-#include "namelist.h"
 
 #define PMCA_MODULE
 #define MODEL_COUNT 16

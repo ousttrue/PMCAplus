@@ -1,7 +1,6 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-#include "namelist.h"
 #include "ioutil.h"
 #include "pmd_model.h"
 #include <plog/Log.h>

@@ -6,6 +6,10 @@ import random
 import logging
 import tkinter.ttk
 
+from OpenGL import GL
+from pyopengltk import OpenGLFrame
+# pip install pyopengltk
+
 from .model_tab import ModelTab
 from .color_tab import ColorTab
 from .transform_tab import TransformTab

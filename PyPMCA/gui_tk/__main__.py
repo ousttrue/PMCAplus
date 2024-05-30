@@ -7,7 +7,6 @@ from .. import PMCA_cnl
 from .. import native
 from . import main_frame as tkinter_gui
 
-
 APPNAME = "PMCA v0.0.6r10-tk"
 
 

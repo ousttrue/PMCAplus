@@ -1,15 +1,26 @@
 #pragma once
+#include <array>
 #include <memory>
 #include <span>
 #include <string>
 #include <vector>
-#include <array>
 
 #define USHORT_MAX 65535
 
 #define PATH_LEN 256
 #define NAME_LEN 128
 #define COMMENT_LEN 256
+
+struct NameList {
+  std::vector<std::array<char, NAME_LEN>> bone;
+  std::vector<std::array<char, NAME_LEN>> bone_eng;
+
+  std::vector<std::array<char, NAME_LEN>> skin;
+  std::vector<std::array<char, NAME_LEN>> skin_eng;
+
+  std::vector<std::array<char, NAME_LEN>> disp;
+  std::vector<std::array<char, NAME_LEN>> disp_eng;
+};
 
 struct HEADER { /*283byte*/
   mutable std::array<char, 4> magic = {0};
