@@ -17,6 +17,20 @@ from . import tabs
 LOGGER = logging.getLogger(__name__)
 
 
+class Buttons(tkinter.ttk.Frame):
+    def __init__(self, master: tkinter.Tk):
+        super().__init__(master)
+        self.QUIT = tkinter.ttk.Button(self)
+        self.QUIT["text"] = "QUIT"
+
+        def quit():
+            master.winfo_toplevel().destroy()
+            master.quit()
+
+        self.QUIT["command"] = quit
+        self.QUIT.pack(side=tkinter.RIGHT)
+
+
 class MainFrame(tkinter.ttk.Frame):
     def __init__(
         self,
@@ -28,27 +42,17 @@ class MainFrame(tkinter.ttk.Frame):
         if not master:
             master = tkinter.Tk()
         master.title(title)
+
         super().__init__(master)
+        self.pack()
 
         self.export2folder = False
-
         self.target_dir = "./model/"
-        self.pack()
 
         self.notebook = tabs.Tabs(master, data, cnl)
         self.notebook.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
 
-        # Buttons
-        self.frame_button = tkinter.ttk.Frame(master)
-        self.QUIT = tkinter.ttk.Button(self.frame_button)
-        self.QUIT["text"] = "QUIT"
-
-        def quit():
-            master.winfo_toplevel().destroy()
-            master.quit()
-
-        self.QUIT["command"] = quit
-        self.QUIT.pack(side=tkinter.RIGHT)
+        self.frame_button = Buttons(master)
         self.frame_button.pack(padx=5, pady=5, side=tkinter.TOP, fill="x")
 
         # menu
