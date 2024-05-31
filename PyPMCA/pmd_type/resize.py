@@ -23,3 +23,20 @@ def Resize_Model(data: bytes, scale: float) -> bytes:
             x.position.z *= scale
 
     return to_bytes(pmd)
+
+
+def Move_Model(data: bytes, x: float, y: float, z: float) -> bytes:
+    pmd = parse(data)
+    assert pmd
+
+    for bone in pmd.bones:
+        bone.position.x += x
+        bone.position.y += y
+        bone.position.z += z
+
+    for v in pmd.vertices:
+        v.position.x += x
+        v.position.y += y
+        v.position.z += z
+
+    return to_bytes(pmd)

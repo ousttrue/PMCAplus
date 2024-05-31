@@ -3,7 +3,7 @@ import logging
 import pathlib
 import PMCA
 from . import pmd_type
-from .pmd_type.resize import Resize_Model
+from .pmd_type import resize
 from . import PMCA_asset
 from . import PMCA_cnl
 from . import native
@@ -107,7 +107,7 @@ class App:
                 break
 
         for transform_data in self.cnl.transform_data_list:
-            data0 = Resize_Model(data0, transform_data.scale)
+            data0 = resize.Resize_Model(data0, transform_data.scale)
             for transform_bone in transform_data.bones:
                 data0 = PMCA.Resize_Bone(
                     data0,
@@ -165,7 +165,7 @@ class App:
             )
 
         for transform_data in self.cnl.transform_data_list:
-            data0 = PMCA.Move_Model(
+            data0 = resize.Move_Model(
                 data0,
                 transform_data.pos[0],
                 transform_data.pos[1],

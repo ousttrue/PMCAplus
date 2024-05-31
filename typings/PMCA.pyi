@@ -10,18 +10,6 @@ def Marge_PMD(data: bytes) -> bytes:
     """
     ...
 
-def Resize_Model(data: bytes, scale: float) -> bytes:
-    """
-    Resize_Model"
-    """
-    ...
-
-def Move_Model(data: bytes, x: float, y: float, z: float) -> bytes:
-    """
-    Move_Model"
-    """
-    ...
-
 def Resize_Bone(data: bytes, name: bytes, length: float, thickness: float) -> bytes:
     """
     Resize_Bone"
