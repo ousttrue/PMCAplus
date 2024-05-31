@@ -79,7 +79,7 @@ class MainFrame(tkinter.ttk.Frame):
                 self.app.cnl_load, FileFilter("キャラクタノードリスト", ".cnl")
             ),
         )
-        files.add_separator
+        files.add_separator()
         files.add_command(
             label="保存(save cnl)",
             underline=0,
@@ -95,7 +95,7 @@ class MainFrame(tkinter.ttk.Frame):
                 self.app.pmd_save, FileFilter("Plygon Model Deta(for MMD)", ".pmd")
             ),
         )
-        files.add_separator
+        files.add_separator()
 
         # cnl を連続で pmd 化する
         # names = filedialog.askopenfilename(
@@ -105,7 +105,7 @@ class MainFrame(tkinter.ttk.Frame):
         #     multiple=True,
         # )
         # files.add_command(label="一括組立て", underline=0, command=self.batch_assemble)
-        # files.add_separator
+        # files.add_separator()
 
         files.add_command(
             label="PMDフォーマットチェック",
@@ -122,7 +122,7 @@ class MainFrame(tkinter.ttk.Frame):
             underline=0,
             command=self.app.pmd_property_check,
         )
-        files.add_separator
+        files.add_separator()
 
         def quit():
             master.winfo_toplevel().destroy()
@@ -132,12 +132,13 @@ class MainFrame(tkinter.ttk.Frame):
 
         # menu: editing
         editing = tkinter.Menu(self.menubar, tearoff=False)
-        self.menubar.add_cascade(label="編集", underline=0, menu=editing)
-        # editing.add_command(label="体型調整を初期化", underline=0, command=self.init_tf)
-        # editing.add_command(
-        #     label="材質をランダム選択", underline=0, command=self.rand_mat
-        # )
-        # editing.add_command(label="PMCA設定", underline=0, command=self.setting_dialog)
+        self.menubar.add_cascade(label="Edit", underline=0, menu=editing)
+        editing.add_command(
+            label="体型調整を初期化", underline=0, command=self.app.init_tf
+        )
+        editing.add_command(
+            label="材質をランダム選択", underline=0, command=self.app.rand_mat
+        )
 
     def update_scene(self):
         data = PMCA.Get_PMD(0)
@@ -177,17 +178,3 @@ class MainFrame(tkinter.ttk.Frame):
                 callback(path)
 
         return func
-
-    # def init_tf(self):
-    #     self.transform_data = [
-    #         pmd.MODEL_TRANS_DATA(
-    #             scale=1.0, pos=[0.0, 0.0, 0.0], rot=[0.0, 0.0, 0.0], bones=[], props={}
-    #         )
-    #     ]
-    #     self.refresh()
-
-    # def rand_mat(self):
-    #     for x in self.mat_rep.mat.items():
-    #         random.seed()
-    #         x[1].sel = x[1].mat.entries[random.randint(0, len(x[1].mat.entries) - 1)]
-    #     self.refresh()

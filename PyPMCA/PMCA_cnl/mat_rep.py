@@ -1,5 +1,6 @@
 import dataclasses
 import logging
+import random
 from .. import PMCA_asset
 from .. import pmd_type
 
@@ -32,6 +33,11 @@ class MAT_REP:
         self.mat_map: dict[str, MAT_REP_DATA] = {}
         self.mat_order: list[str] = []
         self.toon = pmd_type.TOON()
+
+    def rand_mat(self) -> None:
+        for x in self.mat_map.items():
+            random.seed()
+            x[1].sel = x[1].mat.entries[random.randint(0, len(x[1].mat.entries) - 1)]
 
     def get_material_entry(self, i: int) -> MAT_REP_DATA:
         return self.mat_map[self.mat_order[i]]

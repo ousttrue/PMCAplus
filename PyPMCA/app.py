@@ -1,6 +1,7 @@
 from typing import Callable
 import logging
 import pathlib
+import random
 import PMCA
 from . import pmd_type
 from . import PMCA_asset
@@ -160,267 +161,304 @@ class App:
         self.cnl_load(backup)
         self.assemble()
 
+    def init_tf(self) -> None:
+        self.cnl.transform_data_list = [
+            PMCA_asset.MODEL_TRANS_DATA(
+                "",
+            )
+        ]
+        self.assemble()
+
+    def rand_mat(self) -> None:
+        self.cnl.mat_rep.rand_mat()
+        self.assemble()
+
     def pmd_format_check(self):
-        self.refresh(level=3)
-        model = pmd.Get_PMD(0)
+        self.assemble()
 
-        errors = []
-
-        if len(model.info.name) > 20:
-            errors.append(
-                "モデル名の長さが20byteを超えています:"
-                + str(len(model.info.name))
-                + "byte"
+        model = PMCA.getInfo(0)
+        if len(model["name"]) > 20:
+            LOGGER.error(
+                f"モデル名の長さが20byteを超えています:{len(model['name'])}byte"
             )
-        if len(model.info.comment) > 256:
-            errors.append(
-                "モデルコメントの長さが256byteを超えています:"
-                + str(len(model.info.comment))
-                + "byte"
-            )
-        if len(model.info.name_eng) > 20:
-            errors.append(
-                "英語モデル名の長さが20byteを超えています:"
-                + str(len(model.info.name))
-                + "byte"
-            )
-        if len(model.info.comment_eng) > 256:
-            errors.append(
-                "英語モデルコメントの長さが256byteを超えています:"
-                + str(len(model.info.comment))
-                + "byte"
-            )
-        for x in model.mat:
-            if (len(x.tex) + len(x.sph)) > 20:
-                errors.append(
-                    '材質"'
-                    + x.name
-                    + '"のテクスチャ+スフィアマップの長さが20byteを超えています:'
-                    + str(len(x.tex) + len(x.sph))
-                    + "byte"
-                )
+        # if len(model.info.comment) > 256:
+        #     errors.append(
+        #         "モデルコメントの長さが256byteを超えています:"
+        #         + str(len(model.info.comment))
+        #         + "byte"
+        #     )
+        # if len(model.info.name_eng) > 20:
+        #     errors.append(
+        #         "英語モデル名の長さが20byteを超えています:"
+        #         + str(len(model.info.name))
+        #         + "byte"
+        #     )
+        # if len(model.info.comment_eng) > 256:
+        #     errors.append(
+        #         "英語モデルコメントの長さが256byteを超えています:"
+        #         + str(len(model.info.comment))
+        #         + "byte"
+        #     )
+        # for x in model.mat:
+        #     if (len(x.tex) + len(x.sph)) > 20:
+        #         errors.append(
+        #             '材質"'
+        #             + x.name
+        #             + '"のテクスチャ+スフィアマップの長さが20byteを超えています:'
+        #             + str(len(x.tex) + len(x.sph))
+        #             + "byte"
+        #         )
 
-        for x in model.bone:
-            if len(x.name) > 20:
-                errors.append(
-                    'ボーン"'
-                    + x.name
-                    + '"の名前の長さが20byteを超えています:'
-                    + str(len(x.name))
-                    + "byte"
-                )
-            if len(x.name_eng) > 20:
-                errors.append(
-                    'ボーン"'
-                    + x.name
-                    + '"の英語名の長さが20byteを超えています:'
-                    + str(len(x.name_eng))
-                    + "byte"
-                )
-            i = x.parent
-            count = 0
-            bone_count = len(model.bone)
-            while count < bone_count:
-                if i >= bone_count:
-                    break
-                i = model.bone[i].parent
-                count += 1
-            else:
-                errors.append("循環依存：%s" % (x.name))
+        # for x in model.bone:
+        #     if len(x.name) > 20:
+        #         errors.append(
+        #             'ボーン"'
+        #             + x.name
+        #             + '"の名前の長さが20byteを超えています:'
+        #             + str(len(x.name))
+        #             + "byte"
+        #         )
+        #     if len(x.name_eng) > 20:
+        #         errors.append(
+        #             'ボーン"'
+        #             + x.name
+        #             + '"の英語名の長さが20byteを超えています:'
+        #             + str(len(x.name_eng))
+        #             + "byte"
+        #         )
+        #     i = x.parent
+        #     count = 0
+        #     bone_count = len(model.bone)
+        #     while count < bone_count:
+        #         if i >= bone_count:
+        #             break
+        #         i = model.bone[i].parent
+        #         count += 1
+        #     else:
+        #         errors.append("循環依存：%s" % (x.name))
 
-        for x in model.skin:
-            if len(x.name) > 20:
-                errors.append(
-                    '表情"'
-                    + x.name
-                    + '"の名前の長さが20byteを超えています:'
-                    + str(len(x.name))
-                    + "byte"
-                )
-            if len(x.name_eng) > 20:
-                errors.append(
-                    '表情"'
-                    + x.name
-                    + '"の英語名の長さが20byteを超えています:'
-                    + str(len(x.name_eng))
-                    + "byte"
-                )
+        # for x in model.skin:
+        #     if len(x.name) > 20:
+        #         errors.append(
+        #             '表情"'
+        #             + x.name
+        #             + '"の名前の長さが20byteを超えています:'
+        #             + str(len(x.name))
+        #             + "byte"
+        #         )
+        #     if len(x.name_eng) > 20:
+        #         errors.append(
+        #             '表情"'
+        #             + x.name
+        #             + '"の英語名の長さが20byteを超えています:'
+        #             + str(len(x.name_eng))
+        #             + "byte"
+        #         )
 
-        for x in model.bone_grp:
-            if len(x.name) > 50:
-                errors.append(
-                    'ボーングループ"'
-                    + x.name
-                    + '"の名前の長さが50byteを超えています:'
-                    + str(len(x.name))
-                    + "byte"
-                )
-            if len(x.name_eng) > 50:
-                errors.append(
-                    'ボーングループ"'
-                    + x.name
-                    + '"の英語名の長さが50byteを超えています:'
-                    + str(len(x.name_eng))
-                    + "byte"
-                )
+        # for x in model.bone_grp:
+        #     if len(x.name) > 50:
+        #         errors.append(
+        #             'ボーングループ"'
+        #             + x.name
+        #             + '"の名前の長さが50byteを超えています:'
+        #             + str(len(x.name))
+        #             + "byte"
+        #         )
+        #     if len(x.name_eng) > 50:
+        #         errors.append(
+        #             'ボーングループ"'
+        #             + x.name
+        #             + '"の英語名の長さが50byteを超えています:'
+        #             + str(len(x.name_eng))
+        #             + "byte"
+        #         )
 
-        for x in model.rb:
-            if len(x.name) > 20:
-                errors.append(
-                    '剛体"'
-                    + x.name
-                    + '"の名前の長さが20byteを超えています:'
-                    + str(len(x.name))
-                    + "byte"
-                )
+        # for x in model.rb:
+        #     if len(x.name) > 20:
+        #         errors.append(
+        #             '剛体"'
+        #             + x.name
+        #             + '"の名前の長さが20byteを超えています:'
+        #             + str(len(x.name))
+        #             + "byte"
+        #         )
 
-        for x in model.joint:
-            if len(x.name) > 20:
-                errors.append(
-                    'ジョイント"'
-                    + x.name
-                    + '"の名前の長さが20byteを超えています:'
-                    + str(len(x.name))
-                    + "byte"
-                )
+        # for x in model.joint:
+        #     if len(x.name) > 20:
+        #         errors.append(
+        #             'ジョイント"'
+        #             + x.name
+        #             + '"の名前の長さが20byteを超えています:'
+        #             + str(len(x.name))
+        #             + "byte"
+        #         )
 
-        for i, x in enumerate(model.face):
-            for y in x:
-                if y >= len(model.vt):
-                    errors.append("面%dの頂点インデックスが不正です:%s" % (i, str(x)))
+        # for i, x in enumerate(model.face):
+        #     for y in x:
+        #         if y >= len(model.vt):
+        #             errors.append("面%dの頂点インデックスが不正です:%s" % (i, str(x)))
 
-        for i, x in enumerate(model.vt):
-            for y in x.bone_num:
-                if y >= len(model.bone):
-                    errors.append(
-                        "頂点%dのボーンインデックスが不正です:%s" % (i, str(x))
-                    )
+        # for i, x in enumerate(model.vt):
+        #     for y in x.bone_num:
+        #         if y >= len(model.bone):
+        #             errors.append(
+        #                 "頂点%dのボーンインデックスが不正です:%s" % (i, str(x))
+        #             )
 
-        if len(errors) == 0:
-            errors.append("PMDとして正常に保存できます")
+        # if len(errors) == 0:
+        #     errors.append("PMDとして正常に保存できます")
 
-        root = Toplevel()
-        root.transient(self)
-        close = QUIT(root)
-        frame = Frame(root)
-        frame.log = Text(frame)
-        for x in errors:
-            frame.log.insert(END, x + "\n")
-        frame.log["state"] = "disabled"
-        frame.yscroll = Scrollbar(frame, orient=VERTICAL, command=frame.log.yview)
-        frame.yscroll.pack(side=RIGHT, fill=Y, expand=0, anchor=E)
-        frame.log["yscrollcommand"] = frame.yscroll.set
-        frame.log.pack(side=RIGHT, fill=BOTH, expand=1)
-        frame.pack(fill=BOTH, expand=1)
-        Button(root, text="OK", command=close).pack()
-        root.mainloop()
+        # root = Toplevel()
+        # root.transient(self)
+        # close = QUIT(root)
+        # frame = Frame(root)
+        # frame.log = Text(frame)
+        # for x in errors:
+        #     frame.log.insert(END, x + "\n")
+        # frame.log["state"] = "disabled"
+        # frame.yscroll = Scrollbar(frame, orient=VERTICAL, command=frame.log.yview)
+        # frame.yscroll.pack(side=RIGHT, fill=Y, expand=0, anchor=E)
+        # frame.log["yscrollcommand"] = frame.yscroll.set
+        # frame.log.pack(side=RIGHT, fill=BOTH, expand=1)
+        # frame.pack(fill=BOTH, expand=1)
+        # Button(root, text="OK", command=close).pack()
+        # root.mainloop()
 
     def pmd_overview_check(self):
-        native.check_PMD(0)
+        self.assemble()
+        info_data = PMCA.getInfo(0)
+        string = "name :" + info_data["name"].decode("cp932")
+        string += "\ncomment :\n" + info_data["comment"].decode("cp932")
+        string += "\n頂点数 :" + str(info_data["vt_count"])
+        string += "\n面数　 :" + str(info_data["face_count"])
+        string += "\n材質数 :" + str(info_data["mat_count"])
+        string += "\nボーン数 :" + str(info_data["bone_count"])
+        string += "\nIK数   :" + str(info_data["IK_count"])
+        string += "\n表情数 :" + str(info_data["skin_count"])
+        string += "\nボーングループ数 :" + str(info_data["bone_group_count"])
+        string += "\nボーン表示数 :" + str(info_data["bone_disp_count"])
+        string += "\n\n英語対応 :" + str(info_data["eng_support"])
+        string += "\n剛体数 :" + str(info_data["rb_count"])
+        string += "\nジョイント数 :" + str(info_data["joint_count"])
+
+        # root = Toplevel()
+        # root.transient(self)
+        # close = QUIT(root)
+        # frame = Frame(root)
+        # frame.log = Text(frame)
+        # frame.log.insert(END, string)
+        # frame.log["state"] = "disabled"
+        # frame.yscroll = Scrollbar(frame, orient=VERTICAL, command=frame.log.yview)
+        # frame.yscroll.pack(side=RIGHT, fill=Y, expand=0, anchor=E)
+        # frame.log["yscrollcommand"] = frame.yscroll.set
+        # frame.log.pack(side=RIGHT, fill=BOTH, expand=1)
+        # frame.pack(fill=BOTH, expand=1)
+        # Button(root, text="OK", command=close).pack()
+        # root.mainloop()
+
+        LOGGER.info(string)
 
     def pmd_property_check(self):
-        self.refresh(level=3)
-        model = pmd.Get_PMD(0)
-        string = "name :" + model.info.name
-        string += "\ncomment :\n" + model.info.comment
-        string += "\n\nname_en :" + model.info.name_eng
-        string += "\ncomment_en :\n" + model.info.comment_eng
-        string += "\n\n頂点数 :" + str(model.info.data["vt_count"]) + "\n"
-        for i, x in enumerate(model.vt):
-            string += str(i) + "\n"
-            string += "loc:" + str(x.loc) + "\n"
-            string += "nor:" + str(x.nor) + "\n"
-            string += "uv:" + str(x.uv) + "\n"
-            string += "bone:" + str(x.bone_num) + "\n"
-            string += "weight:" + str(x.weight) + "\n"
-            string += "edge:" + str(x.edge) + "\n\n"
+        self.assemble()
+        model = PMCA.getInfo(0)
+        string = "name :" + model["name"].decode("cp932")
+        string += "\ncomment :\n" + model["comment"].decode("cp932")
+        string += "\n\nname_en :" + model["name_eng"].decode("cp932")
+        string += "\ncomment_en :\n" + model["comment_eng"].decode("cp932")
+        string += "\n\n頂点数 :" + str(model["vt_count"]) + "\n"
+        # for i, x in enumerate(model.vt):
+        #     string += str(i) + "\n"
+        #     string += "loc:" + str(x.loc) + "\n"
+        #     string += "nor:" + str(x.nor) + "\n"
+        #     string += "uv:" + str(x.uv) + "\n"
+        #     string += "bone:" + str(x.bone_num) + "\n"
+        #     string += "weight:" + str(x.weight) + "\n"
+        #     string += "edge:" + str(x.edge) + "\n\n"
 
-        string += "\n面数　 :" + str(model.info.data["face_count"]) + "\n"
-        for i, x in enumerate(model.face):
-            string += str(x) + "\n"
-        string += "\n材質数 :" + str(model.info.data["mat_count"]) + "\n"
-        for i, x in enumerate(model.mat):
-            string += str(i) + "\n"
-            string += "diff_col:" + str(x.diff_col) + "\n"
-            string += "mirr_col:" + str(x.mirr_col) + "\n"
-            string += "spec_col:" + str(x.spec_col) + "\n"
-            string += "spec:" + str(x.spec) + "\n"
-            string += "alpha:" + str(x.alpha) + "\n"
-            string += "toon:" + str(x.toon) + "\n"
-            string += "edge:" + str(x.edge) + "\n"
-            string += "tex:" + x.tex + "\n"
-            string += "sph:" + x.sph + "\n"
-            string += "face_count:" + str(x.face_count) + "\n\n"
+        string += "\n面数　 :" + str(model["face_count"]) + "\n"
+        # for i, x in enumerate(model.face):
+        #     string += str(x) + "\n"
+        string += "\n材質数 :" + str(model["mat_count"]) + "\n"
+        # for i, x in enumerate(model.mat):
+        #     string += str(i) + "\n"
+        #     string += "diff_col:" + str(x.diff_col) + "\n"
+        #     string += "mirr_col:" + str(x.mirr_col) + "\n"
+        #     string += "spec_col:" + str(x.spec_col) + "\n"
+        #     string += "spec:" + str(x.spec) + "\n"
+        #     string += "alpha:" + str(x.alpha) + "\n"
+        #     string += "toon:" + str(x.toon) + "\n"
+        #     string += "edge:" + str(x.edge) + "\n"
+        #     string += "tex:" + x.tex + "\n"
+        #     string += "sph:" + x.sph + "\n"
+        #     string += "face_count:" + str(x.face_count) + "\n\n"
 
-        string += "\nボーン数 :" + str(model.info.data["bone_count"]) + "\n"
-        for i, x in enumerate(model.bone):
-            string += str(i) + "\n"
-            string += "name:" + x.name + "\n"
-            string += "name_en:" + x.name_eng + "\n"
-            string += "parent:" + str(x.parent) + "\n"
-            string += "tail:" + str(x.tail) + "\n"
-            string += "type:" + str(x.type) + "\n"
-            string += "IK:" + str(x.IK) + "\n"
-            string += "loc:" + str(x.loc) + "\n\n"
+        string += "\nボーン数 :" + str(model["bone_count"]) + "\n"
+        # for i, x in enumerate(model.bone):
+        #     string += str(i) + "\n"
+        #     string += "name:" + x.name + "\n"
+        #     string += "name_en:" + x.name_eng + "\n"
+        #     string += "parent:" + str(x.parent) + "\n"
+        #     string += "tail:" + str(x.tail) + "\n"
+        #     string += "type:" + str(x.type) + "\n"
+        #     string += "IK:" + str(x.IK) + "\n"
+        #     string += "loc:" + str(x.loc) + "\n\n"
 
-        string += "\nIK数   :" + str(model.info.data["IK_count"]) + "\n"
-        for i, x in enumerate(model.IK_list):
-            string += str(i) + "\n"
-            string += "index:" + str(x.index) + "\n"
-            string += "tail_index:" + str(x.tail_index) + "\n"
-            string += "chain_len:" + str(x.chain_len) + "\n"
-            string += "iterations:" + str(x.iterations) + "\n"
-            string += "weight:" + str(x.weight) + "\n"
-            string += "child:" + str(x.child) + "\n\n"
+        string += "\nIK数   :" + str(model["IK_count"]) + "\n"
+        # for i, x in enumerate(model.IK_list):
+        #     string += str(i) + "\n"
+        #     string += "index:" + str(x.index) + "\n"
+        #     string += "tail_index:" + str(x.tail_index) + "\n"
+        #     string += "chain_len:" + str(x.chain_len) + "\n"
+        #     string += "iterations:" + str(x.iterations) + "\n"
+        #     string += "weight:" + str(x.weight) + "\n"
+        #     string += "child:" + str(x.child) + "\n\n"
 
-        string += "\n表情数 :" + str(model.info.data["skin_count"]) + "\n"
-        for i, x in enumerate(model.skin):
-            string += str(i) + "\n"
-            string += "name:" + x.name + "\n"
-            string += "name_en:" + x.name_eng + "\n"
-            string += "count:" + str(x.count) + "\n"
-            string += "type:" + str(x.type) + "\n\n"
-            # string += 'data:' + x.data + '\n'
+        string += "\n表情数 :" + str(model["skin_count"]) + "\n"
+        # for i, x in enumerate(model.skin):
+        #     string += str(i) + "\n"
+        #     string += "name:" + x.name + "\n"
+        #     string += "name_en:" + x.name_eng + "\n"
+        #     string += "count:" + str(x.count) + "\n"
+        #     string += "type:" + str(x.type) + "\n\n"
+        #     # string += 'data:' + x.data + '\n'
 
-        string += (
-            "\nボーングループ数 :" + str(model.info.data["bone_group_count"]) + "\n"
-        )
-        for i, x in enumerate(model.bone_grp):
-            string += str(i) + "\n"
-            string += "name:" + x.name + "\n"
-            string += "name_en:" + x.name_eng + "\n\n"
+        string += "\nボーングループ数 :" + str(model["bone_group_count"]) + "\n"
+        # for i, x in enumerate(model.bone_grp):
+        #     string += str(i) + "\n"
+        #     string += "name:" + x.name + "\n"
+        #     string += "name_en:" + x.name_eng + "\n\n"
 
-        string += "\nボーン表示数 :" + str(model.info.data["bone_disp_count"]) + "\n"
-        for i, x in enumerate(model.bone_dsp):
-            string += str(i) + "\n"
-            string += "index:" + str(x.index) + "\n"
-            string += "group:" + str(x.group) + "\n\n"
+        string += "\nボーン表示数 :" + str(model["bone_disp_count"]) + "\n"
+        # for i, x in enumerate(model.bone_dsp):
+        #     string += str(i) + "\n"
+        #     string += "index:" + str(x.index) + "\n"
+        #     string += "group:" + str(x.group) + "\n\n"
 
-        for i, x in enumerate(model.toon.name):
-            string += "%d %s\n" % (i, x)
+        # for i, x in enumerate(model.toon.name):
+        #     string += "%d %s\n" % (i, x)
 
-        string += "\n\n英語対応 :" + str(model.info.data["eng_support"])
-        string += "\n\n剛体数 :" + str(model.info.data["rb_count"]) + "\n"
-        for i, x in enumerate(model.rb):
-            string += str(i) + "\n"
-            string += "name:" + x.name + "\n\n"
+        string += "\n\n英語対応 :" + str(model["eng_support"])
+        string += "\n\n剛体数 :" + str(model["rb_count"]) + "\n"
+        # for i, x in enumerate(model.rb):
+        #     string += str(i) + "\n"
+        #     string += "name:" + x.name + "\n\n"
 
-        string += "\nジョイント数 :" + str(model.info.data["joint_count"]) + "\n"
-        for i, x in enumerate(model.joint):
-            string += str(i) + "\n"
-            string += "name:" + x.name + "\n\n"
+        string += "\nジョイント数 :" + str(model["joint_count"]) + "\n"
+        # for i, x in enumerate(model.joint):
+        #     string += str(i) + "\n"
+        #     string += "name:" + x.name + "\n\n"
 
-        root = Toplevel()
-        root.transient(self)
-        close = QUIT(root)
-        frame = Frame(root)
-        frame.log = Text(frame)
-        frame.log.insert(END, string)
-        frame.log["state"] = "disabled"
-        frame.yscroll = Scrollbar(frame, orient=VERTICAL, command=frame.log.yview)
-        frame.yscroll.pack(side=RIGHT, fill=Y, expand=0, anchor=E)
-        frame.log["yscrollcommand"] = frame.yscroll.set
-        frame.log.pack(side=RIGHT, fill=BOTH, expand=1)
-        frame.pack(fill=BOTH, expand=1)
-        Button(root, text="OK", command=close).pack()
-        root.mainloop()
+        # root = Toplevel()
+        # root.transient(self)
+        # close = QUIT(root)
+        # frame = Frame(root)
+        # frame.log = Text(frame)
+        # frame.log.insert(END, string)
+        # frame.log["state"] = "disabled"
+        # frame.yscroll = Scrollbar(frame, orient=VERTICAL, command=frame.log.yview)
+        # frame.yscroll.pack(side=RIGHT, fill=Y, expand=0, anchor=E)
+        # frame.log["yscrollcommand"] = frame.yscroll.set
+        # frame.log.pack(side=RIGHT, fill=BOTH, expand=1)
+        # frame.pack(fill=BOTH, expand=1)
+        # Button(root, text="OK", command=close).pack()
+        # root.mainloop()

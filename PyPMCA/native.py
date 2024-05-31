@@ -392,41 +392,6 @@ def set_material(
             )
 
 
-def check_PMD(self) -> None:
-    refresh(self, level=3)
-    info_data = PMCA.getInfo(0)
-    info = pmd.INFO(info_data)
-    string = "name :" + info.name
-    string += "\ncomment :\n" + info.comment
-    string += "\n頂点数 :" + str(info_data["vt_count"])
-    string += "\n面数　 :" + str(info_data["face_count"])
-    string += "\n材質数 :" + str(info_data["mat_count"])
-    string += "\nボーン数 :" + str(info_data["bone_count"])
-    string += "\nIK数   :" + str(info_data["IK_count"])
-    string += "\n表情数 :" + str(info_data["skin_count"])
-    string += "\nボーングループ数 :" + str(info_data["bone_group_count"])
-    string += "\nボーン表示数 :" + str(info_data["bone_disp_count"])
-
-    string += "\n\n英語対応 :" + str(info_data["eng_support"])
-    string += "\n剛体数 :" + str(info_data["rb_count"])
-    string += "\nジョイント数 :" + str(info_data["joint_count"])
-
-    root = Toplevel()
-    root.transient(self)
-    close = QUIT(root)
-    frame = Frame(root)
-    frame.log = Text(frame)
-    frame.log.insert(END, string)
-    frame.log["state"] = "disabled"
-    frame.yscroll = Scrollbar(frame, orient=VERTICAL, command=frame.log.yview)
-    frame.yscroll.pack(side=RIGHT, fill=Y, expand=0, anchor=E)
-    frame.log["yscrollcommand"] = frame.yscroll.set
-    frame.log.pack(side=RIGHT, fill=BOTH, expand=1)
-    frame.pack(fill=BOTH, expand=1)
-    Button(root, text="OK", command=close).pack()
-    root.mainloop()
-
-
 def get_bones(info_data: pmd_type.InfoData) -> list[pmd_type.BONE]:
     tmpbone: list[pmd_type.BONE] = []
     for i in range(info_data["bone_count"]):

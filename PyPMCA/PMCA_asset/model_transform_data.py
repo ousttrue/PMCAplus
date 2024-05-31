@@ -24,6 +24,7 @@ class MODEL_TRANS_DATA:
     scale_max: float = 2.0
     scale_default: float = 1.0
     scale: float = 1.0
+    props: dict[str, str] = dataclasses.field(default_factory=dict)
 
     def list_to_text(self) -> list[str]:
         lines: list[str] = []
