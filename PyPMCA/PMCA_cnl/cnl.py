@@ -143,7 +143,7 @@ class CnlInfo:
         return True
 
     def update_mat_rep(
-        self, data: PMCA_asset.PMCAData, materials: list[pmd_type.MATERIAL]
+        self, data: PMCA_asset.PMCAData, materials: list[pmd_type.Submesh]
     ):
         self.mat_rep.mat_order.clear()
 

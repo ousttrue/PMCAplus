@@ -1,7 +1,7 @@
-from .pmd import PMD
-from .info import INFO, InfoData
+from .pmd import PMD, Submesh
+from .info import INFO
 from .vt import VT
-from .material import MATERIAL, TOON
+from .material import TOON
 from .bone import BONE, BONE_DISP, BONE_GROUP
 from .ik import IK_LIST
 from .skin import SKIN
@@ -11,9 +11,8 @@ from .parser import parse
 __all__ = [
     "PMD",
     "INFO",
-    "InfoData",
     "VT",
-    "MATERIAL",
+    "Submesh",
     "TOON",
     "BONE",
     "BONE_DISP",

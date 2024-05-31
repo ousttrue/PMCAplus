@@ -2,34 +2,34 @@ from typing import Sequence
 import dataclasses
 
 
-class MATERIAL:
-    def __init__(
-        self,
-        diff_col: tuple[float, float, float],
-        alpha: float,
-        spec: float,
-        spec_col: tuple[float, float, float],
-        mirr_col: tuple[float, float, float],
-        toon: int,
-        edge: int,
-        face_count: int,
-        tex: bytes,
-        sph: bytes,
-        tex_path: bytes,
-        sph_path: bytes,
-    ):
-        self.diff_col = diff_col
-        self.alpha = alpha
-        self.spec = spec
-        self.spec_col = spec_col
-        self.mirr_col = mirr_col
-        self.toon = toon
-        self.edge = edge
-        self.face_count = face_count
-        self.tex = tex.decode("cp932", "replace")
-        self.sph = sph.decode("cp932", "replace")
-        self.tex_path = tex_path.decode("cp932", "replace")
-        self.sph_path = sph_path.decode("cp932", "replace")
+# class MATERIAL:
+#     def __init__(
+#         self,
+#         diff_col: tuple[float, float, float],
+#         alpha: float,
+#         spec: float,
+#         spec_col: tuple[float, float, float],
+#         mirr_col: tuple[float, float, float],
+#         toon: int,
+#         edge: int,
+#         face_count: int,
+#         tex: bytes,
+#         sph: bytes,
+#         tex_path: bytes,
+#         sph_path: bytes,
+#     ):
+#         self.diff_col = diff_col
+#         self.alpha = alpha
+#         self.spec = spec
+#         self.spec_col = spec_col
+#         self.mirr_col = mirr_col
+#         self.toon = toon
+#         self.edge = edge
+#         self.face_count = face_count
+#         self.tex = tex.decode("cp932", "replace")
+#         self.sph = sph.decode("cp932", "replace")
+#         self.tex_path = tex_path.decode("cp932", "replace")
+#         self.sph_path = sph_path.decode("cp932", "replace")
 
 
 @dataclasses.dataclass

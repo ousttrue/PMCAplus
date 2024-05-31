@@ -10,7 +10,11 @@ APPNAME = "PMCA v0.0.6r10-tk"
 
 
 def main(dir: pathlib.Path, cnl_file: pathlib.Path):
-    logging.basicConfig(handlers=[ColorfulHandler()], level=logging.DEBUG)
+    logging.basicConfig(
+        format="[%(levelname)s] %(name)s.%(funcName)s:%(lineno)d => %(message)s",
+        handlers=[ColorfulHandler()],
+        level=logging.DEBUG,
+    )
 
     app = App(dir, cnl_file)
 

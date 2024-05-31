@@ -82,266 +82,6 @@ std::vector<std::string> PyList_to_Array_Str(PyObject *List) {
 }
 
 /************************************************************/
-/*C-Pythonデータ変換関連*/
-static PyObject *getInfo(PyObject *self, PyObject *args) {
-  int num;
-  if (!PyArg_ParseTuple(args, "i", &num))
-    Py_RETURN_NONE;
-
-  auto model = g_model[num];
-  auto name = model->header.name;
-  auto name_eng = model->header.name_eng;
-  auto comment = model->header.comment;
-  auto comment_eng = model->header.comment_eng;
-  return Py_BuildValue(
-      "{s:y,s:y,s:y,s:y,"
-      "s:i,s:i,s:i,s:i,"
-      "s:i,s:i,s:i,s:i,"
-      "s:i,s:i,s:i,s:O}",
-      "name", name, "name_eng", name_eng, "comment", comment, "comment_eng",
-      comment_eng,
-
-      "vt_count", model->vt.size(), "face_count", model->vt_index.size() / 3,
-      "mat_count", model->mat.size(), "bone_count", model->bone.size(),
-
-      "IK_count", model->IK.size(), "skin_count", model->skin.size(),
-      "bone_group_count", model->bone_group.size(), "bone_disp_count",
-      model->bone_disp.size(),
-
-      "eng_support", model->eng_support, "rb_count", model->rbody.size(),
-      "joint_count", model->joint.size(), "skin_index",
-      Array_to_PyList_UShort(model->skin_disp.data(), model->skin_disp.size()));
-}
-
-static PyObject *getVt(PyObject *self, PyObject *args) {
-  int num, i;
-  if (!PyArg_ParseTuple(args, "ii", &num, &i))
-    Py_RETURN_NONE;
-
-  auto model = g_model[num];
-  if (model->vt.size() <= i)
-    Py_RETURN_NONE;
-
-  return Py_BuildValue("{s:O,s:O,s:O,"
-                       "s:i,s:i,"
-                       "s:i,s:i}",
-                       "loc", Array_to_PyList_Float(model->vt[i].loc, 3), "nor",
-                       Array_to_PyList_Float(model->vt[i].nor, 3), "uv",
-                       Array_to_PyList_Float(model->vt[i].uv, 2), "bone_num1",
-                       (int)model->vt[i].bone_num[0], "bone_num2",
-                       (int)model->vt[i].bone_num[1], "weight",
-                       (int)model->vt[i].bone_weight, "edge",
-                       (int)model->vt[i].edge_flag);
-}
-
-static PyObject *getFace(PyObject *self, PyObject *args) {
-  int num, i;
-  if (!PyArg_ParseTuple(args, "ii", &num, &i))
-    Py_RETURN_NONE;
-
-  auto model = g_model[num];
-  i = i * 3;
-  if (model->vt_index.size() + 3 < i)
-    Py_RETURN_NONE;
-
-  return Array_to_PyList_UShort(&model->vt_index[i], 3);
-}
-
-static PyObject *getMat(PyObject *self, PyObject *args) {
-  int num, i;
-  if (!PyArg_ParseTuple(args, "ii", &num, &i))
-    Py_RETURN_NONE;
-
-  auto model = g_model[num];
-  if (model->mat.size() <= i)
-    Py_RETURN_NONE;
-
-  return Py_BuildValue(
-      "{s:O,s:f,s:f,"
-      "s:O,s:O,"
-      "s:i,s:i,s:i,"
-      "s:y,s:y,s:y,s:y}",
-      "diff_col", Array_to_PyList_Float(model->mat[i].diffuse, 3), "alpha",
-      model->mat[i].alpha, "spec", model->mat[i].spec, "spec_col",
-      Array_to_PyList_Float(model->mat[i].spec_col, 3), "mirr_col",
-      Array_to_PyList_Float(model->mat[i].mirror_col, 3),
-
-      "toon", (int)model->mat[i].toon_index, "edge",
-      (int)model->mat[i].edge_flag, "face_count",
-      (int)model->mat[i].vt_index_count / 3, "tex", model->mat[i].tex, "sph",
-      model->mat[i].sph, "tex_path", model->mat[i].tex_path, "sph_path",
-      model->mat[i].sph_path);
-}
-
-static PyObject *getBone(PyObject *self, PyObject *args) {
-  int num, i;
-  if (!PyArg_ParseTuple(args, "ii", &num, &i))
-    Py_RETURN_NONE;
-
-  auto model = g_model[num];
-  if (model->bone.size() <= i)
-    Py_RETURN_NONE;
-
-  return Py_BuildValue(
-      "{s:y,s:y,"
-      "s:i,s:i,s:i,s:i"
-      "s:O}",
-      "name", model->bone[i].name, "name_eng", model->bone[i].name_eng,
-
-      "parent", model->bone[i].PBone_index, "tail", model->bone[i].TBone_index,
-      "type", model->bone[i].type, "IK", model->bone[i].IKBone_index,
-
-      "loc", Array_to_PyList_Float(model->bone[i].loc, 3));
-}
-
-static PyObject *getIK(PyObject *self, PyObject *args) {
-  int num, i;
-  if (!PyArg_ParseTuple(args, "ii", &num, &i))
-    Py_RETURN_NONE;
-
-  auto model = g_model[num];
-  if (model->IK.size() <= i)
-    Py_RETURN_NONE;
-
-  printf("IKchainlen :%zu\n", model->IK[i].IK_chain.size());
-  return Py_BuildValue(
-      "{s:i,s:i,s:i,s:i,s:f,s:O}", "index", (int)model->IK[i].IKBone_index,
-      "tail", (int)model->IK[i].IKTBone_index, "len",
-      (int)model->IK[i].IK_chain.size(), "ite", (int)model->IK[i].iterations,
-      "weight", (float)model->IK[i].weight, "child",
-      Array_to_PyList_UShort(model->IK[i].IK_chain.data(),
-                             (int)model->IK[i].IK_chain.size()));
-}
-
-static PyObject *getSkin(PyObject *self, PyObject *args) {
-  int num, i;
-  if (!PyArg_ParseTuple(args, "ii", &num, &i))
-    Py_RETURN_NONE;
-
-  auto model = g_model[num];
-  if (model->skin.size() <= i)
-    Py_RETURN_NONE;
-
-  return Py_BuildValue(
-      "{s:y,s:y,"
-      "s:i,s:i}",
-      "name", model->skin[i].name, "name_eng", model->skin[i].name_eng, "count",
-      (int)model->skin[i].skin_vt.size(), "type", (int)model->skin[i].type);
-}
-
-static PyObject *getSkindata(PyObject *self, PyObject *args) {
-  int num, i, j;
-  if (!PyArg_ParseTuple(args, "iii", &num, &i, &j))
-    Py_RETURN_NONE;
-
-  auto model = g_model[num];
-  return Py_BuildValue(
-      "{s:i,s:[fff]}", "index", model->skin[i].skin_vt[j].index, "loc",
-      model->skin[i].skin_vt[j].loc[0], model->skin[i].skin_vt[j].loc[1],
-      model->skin[i].skin_vt[j].loc[2]);
-}
-
-static PyObject *getBone_group(PyObject *self, PyObject *args) {
-  int num, i;
-  if (!PyArg_ParseTuple(args, "ii", &num, &i))
-    Py_RETURN_NONE;
-
-  auto model = g_model[num];
-  return Py_BuildValue("{s:y,s:y}", "name", model->bone_group[i].name,
-                       "name_eng", model->bone_group[i].name_eng);
-}
-
-static PyObject *getBone_disp(PyObject *self, PyObject *args) {
-  int num, i;
-  if (!PyArg_ParseTuple(args, "ii", &num, &i))
-    Py_RETURN_NONE;
-
-  auto model = g_model[num];
-  return Py_BuildValue("{s:i,s:i}", "index", (int)model->bone_disp[i].index,
-                       "bone_group", (int)model->bone_disp[i].bone_group);
-}
-
-static PyObject *getToon(PyObject *self, PyObject *args) {
-  int num;
-  if (!PyArg_ParseTuple(args, "i", &num))
-    Py_RETURN_NONE;
-
-  auto model = g_model[num];
-  return Py_BuildValue("[y,y,y,y,y,"
-                       "y,y,y,y,y]",
-                       model->toon[0].c_str(), model->toon[1].c_str(),
-                       model->toon[2].c_str(), model->toon[3].c_str(),
-                       model->toon[4].c_str(), model->toon[5].c_str(),
-                       model->toon[6].c_str(), model->toon[7].c_str(),
-                       model->toon[8].c_str(), model->toon[9].c_str());
-}
-
-static PyObject *getToonPath(PyObject *self, PyObject *args) {
-  int num;
-  if (!PyArg_ParseTuple(args, "i", &num))
-    Py_RETURN_NONE;
-
-  auto model = g_model[num];
-  // printf("%s\n", model->toon_path[0]);
-  return Py_BuildValue("[y,y,y,y,y,"
-                       "y,y,y,y,y]",
-                       model->toon_path[0].c_str(), model->toon_path[1].c_str(),
-                       model->toon_path[2].c_str(), model->toon_path[3].c_str(),
-                       model->toon_path[4].c_str(), model->toon_path[5].c_str(),
-                       model->toon_path[6].c_str(), model->toon_path[7].c_str(),
-                       model->toon_path[8].c_str(),
-                       model->toon_path[9].c_str());
-}
-
-static PyObject *getRb(PyObject *self, PyObject *args) {
-  int num, i;
-  if (!PyArg_ParseTuple(args, "ii", &num, &i))
-    Py_RETURN_NONE;
-
-  auto model = g_model[num];
-  return Py_BuildValue(
-      "{s:y,s:i,s:i,s:i,s:i,"
-      "s:[f,f,f],s:[f,f,f],s:[f,f,f],"
-      "s:[f,f,f,f,f],"
-      "s:i}",
-      "name", model->rbody[i].name, "bone", (int)model->rbody[i].bone, "group",
-      (int)model->rbody[i].group, "target", (int)model->rbody[i].target,
-      "shape", (int)model->rbody[i].shape, "size", model->rbody[i].size[0],
-      model->rbody[i].size[1], model->rbody[i].size[2], "loc",
-      model->rbody[i].loc[0], model->rbody[i].loc[1], model->rbody[i].loc[2],
-      "rot", model->rbody[i].rot[0], model->rbody[i].rot[1],
-      model->rbody[i].rot[2], "prop", model->rbody[i].property[0],
-      model->rbody[i].property[1], model->rbody[i].property[2],
-      model->rbody[i].property[3], model->rbody[i].property[4], "t",
-      (int)model->rbody[i].type);
-}
-
-static PyObject *getJoint(PyObject *self, PyObject *args) {
-  int num, i;
-  if (!PyArg_ParseTuple(args, "ii", &num, &i))
-    Py_RETURN_NONE;
-
-  auto model = g_model[num];
-  return Py_BuildValue(
-      "{s:y,s:[I,I],"
-      "s:[f,f,f],s:[f,f,f],"
-      "s:[f,f,f,f,f,f,f,f,f,f,f,f],"
-      "s:[f,f,f,f,f,f]}",
-      "name", model->joint[i].name, "rbody", model->joint[i].rbody[0],
-      model->joint[i].rbody[1], "loc", model->joint[i].loc[0],
-      model->joint[i].loc[1], model->joint[i].loc[2], "rot",
-      model->joint[i].rot[0], model->joint[i].rot[1], model->joint[i].rot[2],
-      "limit", model->joint[i].limit[0], model->joint[i].limit[1],
-      model->joint[i].limit[2], model->joint[i].limit[3],
-      model->joint[i].limit[4], model->joint[i].limit[5],
-      model->joint[i].limit[6], model->joint[i].limit[7],
-      model->joint[i].limit[8], model->joint[i].limit[9],
-      model->joint[i].limit[10], model->joint[i].limit[11], "spring",
-      model->joint[i].spring[0], model->joint[i].spring[1],
-      model->joint[i].spring[2], model->joint[i].spring[3],
-      model->joint[i].spring[4], model->joint[i].spring[5]);
-}
-
 static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
   auto model = MODEL::create();
   int num;
@@ -444,27 +184,36 @@ static PyObject *setMat(PyObject *self, PyObject *args) {
   int num, i;
   PyObject *PyTmp[3];
   MATERIAL mat;
-  char *str[4];
-  if (!PyArg_ParseTuple(args, "iiOffOOiiiyyyy", &num, &i, &PyTmp[0], &mat.alpha,
+  char *str;
+  if (!PyArg_ParseTuple(args, "iiOffOOiiiy*", &num, &i, &PyTmp[0], &mat.alpha,
                         &mat.spec, &PyTmp[1], &PyTmp[2],
 
                         &mat.toon_index, &mat.edge_flag, &mat.vt_index_count,
-                        &str[0], &str[1], &str[2], &str[3]))
+                        &str)) {
     Py_RETURN_FALSE;
+  }
 
   auto model = g_model[num];
-  if (model->mat.size() <= i)
+  if (i >= model->mat.size()) {
     Py_RETURN_FALSE;
+  }
 
-  mat.vt_index_count = mat.vt_index_count * 3;
-  PyList_to_Array_Float(mat.diffuse, PyTmp[0], 3);
-  PyList_to_Array_Float(mat.spec_col, PyTmp[1], 3);
-  PyList_to_Array_Float(mat.mirror_col, PyTmp[2], 3);
+  // PyList_to_Array_Float(mat.diffuse, PyTmp[0], 3);
+  // PyList_to_Array_Float(mat.spec_col, PyTmp[1], 3);
+  // PyList_to_Array_Float(mat.mirror_col, PyTmp[2], 3);
 
-  strncpy(mat.tex, str[0], NAME_LEN);
-  strncpy(mat.sph, str[1], NAME_LEN);
-  strncpy(mat.tex_path, str[2], PATH_LEN);
-  strncpy(mat.sph_path, str[3], PATH_LEN);
+  // mat.tex[0] = 0;
+  memset(mat.tex, 0, sizeof(mat.tex));
+  {
+    int j = 0;
+    for (; j < 20 && str[j]; ++j) {
+      mat.tex[j] = str[j];
+    }
+    mat.tex[j] = 0;
+  }
+  // strncpy(mat.sph, str[1], NAME_LEN);
+  // strncpy(mat.tex_path, str[2], PATH_LEN);
+  // strncpy(mat.sph_path, str[3], PATH_LEN);
   model->mat[i] = mat;
   Py_RETURN_TRUE;
 }
@@ -994,21 +743,6 @@ static PyObject *getWHT(PyObject *self, PyObject *args) {
 }
 
 static PyMethodDef PMCAMethods[] = {
-    {"getInfo", getInfo, METH_VARARGS, "Get Info of PMD"},
-    {"getVt", getVt, METH_VARARGS, "Get Vertex of PMD"},
-    {"getFace", getFace, METH_VARARGS, "Get Face of PMD"},
-    {"getMat", getMat, METH_VARARGS, "Get Material of PMD"},
-    {"getBone", getBone, METH_VARARGS, "Get Bone of PMD"},
-    {"getIK", getIK, METH_VARARGS, "Get IK_List of PMD"},
-    {"getSkin", getSkin, METH_VARARGS, "Get Skin of PMD"},
-    {"getSkindata", getSkindata, METH_VARARGS, "Get Skin_data of PMD"},
-    {"getBone_group", getBone_group, METH_VARARGS, "Get Bone_group of PMD"},
-    {"getBone_disp", getBone_disp, METH_VARARGS, "Get Bone_disp of PMD"},
-    {"getToon", getToon, METH_VARARGS, "Get Toon textures of PMD"},
-    {"getToonPath", getToonPath, METH_VARARGS, "Get Toon textures path of PMD"},
-    {"getRb", getRb, METH_VARARGS, "Get Rigid bodies of PMD"},
-    {"getJoint", getJoint, METH_VARARGS, "Get Joints of PMD"},
-    /******************************************************************/
     {"Create_FromInfo", Create_FromInfo, METH_VARARGS, "Create PMD"},
     {"setVt", setVt, METH_VARARGS, "Set Vertex of PMD"},
     {"setFace", setFace, METH_VARARGS, "Set Face of PMD"},

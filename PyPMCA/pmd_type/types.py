@@ -44,15 +44,32 @@ assert ctypes.sizeof(Vertex) == 38
 class Submesh(ctypes.Structure):
     _pack_ = 1
     _fields_ = [
-        ("diffuse_rgba", Float4),
+        ("diffuse_rgb", Float3),
+        ("alpha", ctypes.c_float),
         ("specularity", ctypes.c_float),
         ("specular_rgb", Float3),
         ("ambient_rgb", Float3),
         ("toon_index", ctypes.c_ubyte),
         ("flag", ctypes.c_ubyte),
         ("index_count", ctypes.c_uint),
-        ("texture_file", (ctypes.c_char * 20)),
+        ("texture_file", (ctypes.c_uint8 * 20)),
     ]
+
+    @property
+    def tex(self) -> str:
+        for i, c in enumerate(self.texture_file):
+            if c == 0 or c == ord("*"):
+                return bytes(self.texture_file)[0:i].decode("cp932")
+        return bytes(self.texture_file).decode("cp932")
+
+    @tex.setter
+    def tex(self, value: str) -> None:
+        data = value.encode("cp932")
+        assert len(data) < 20
+        for i, c in enumerate(data):
+            self.texture_file[i] = c
+        for i in range(len(data), 20):
+            self.texture_file[i] = 0
 
 
 assert ctypes.sizeof(Submesh) == 70

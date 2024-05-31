@@ -68,19 +68,21 @@ class App:
         # PMCA.Copy_PMD(0, 1)
 
         LOGGER.info("材質置換")
-        materials = native.get_material()
-        self.cnl.update_mat_rep(self.data, materials)
+        pmd = pmd_type.parse(PMCA.Get_PMD(0))
+        assert pmd
+        # materials = native.get_material()
+        self.cnl.update_mat_rep(self.data, pmd.submeshes)
         native.set_material(context, self.cnl.mat_rep)
 
         # PMCA.Copy_PMD(0, 2)
 
         LOGGER.info("体型調整")
-        info_data = PMCA.getInfo(0)
-        tmpbone = native.get_bones(info_data)
+        pmd = pmd_type.parse(PMCA.Get_PMD(0))
+        assert pmd
 
         refbone = None
         refbone_index = None
-        for i, transform_bone in enumerate(tmpbone):
+        for i, transform_bone in enumerate(pmd.bones):
             if transform_bone.name == "右足首":
                 refbone = transform_bone
                 refbone_index = i
@@ -106,30 +108,30 @@ class App:
         if refbone:
             assert refbone_index
             newbone = None
-            tmp = PMCA.getBone(0, refbone_index)
+            tmp = pmd.bones[refbone_index]
             assert tmp
             newbone = pmd_type.BONE(
-                tmp["name"],
-                tmp["name_eng"],
-                tmp["parent"],
-                tmp["tail"],
-                tmp["type"],
-                tmp["IK"],
-                tmp["loc"],
+                tmp.name,
+                tmp.name_eng,
+                tmp.parent_index,
+                tmp.tail_index,
+                tmp.bone_type,
+                tmp.ik,
+                tmp.loc,
             )
 
             # 体型調整による足首の移動量で設置を調整
-            dy = refbone.loc[1] - newbone.loc[1]
-            for transform_bone in tmpbone:
-                i = transform_bone.parent
+            dy = refbone.loc.y - newbone.loc.y
+            for transform_bone in pmd.bones:
+                i = transform_bone.parent_index
                 count = 0
-                while i < info_data["bone_count"] and count < info_data["bone_count"]:
-                    if tmpbone[i].name == "センター":
+                while i < len(pmd.bones) and count < len(pmd.bones):
+                    if pmd.bones[i].name == "センター":
                         PMCA.Move_Bone(
                             0, transform_bone.name.encode("cp932", "replace"), 0, dy, 0
                         )
                         break
-                    i = tmpbone[i].parent
+                    i = pmd.bones[i].parent_index
                     count += 1
 
             PMCA.Move_Bone(0, "センター".encode("cp932", "replace"), 0, dy, 0)

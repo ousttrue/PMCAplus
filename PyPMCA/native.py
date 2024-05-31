@@ -164,7 +164,7 @@ def Set_PMD(num: int, model: pmd_type.PMD):
         len(model.vertices),
         len(model.indices),
         len(model.submeshes),
-        len(model.bone),
+        len(model.bones),
         len(model.IK_list),
         len(model.skin),
         len(model.bone_grp),
@@ -202,7 +202,7 @@ def Set_PMD(num: int, model: pmd_type.PMD):
             x.sph_path.encode("cp932", "replace"),
         )
 
-    for i, x in enumerate(model.bone):
+    for i, x in enumerate(model.bones):
         PMCA.setBone(
             num,
             i,
@@ -298,10 +298,11 @@ def assemble(self: PMCA_cnl.NODE, num: int) -> AssembleContext:
 
     pmd0 = pmd_type.PMD.create()
 
-    info_data = PMCA.getInfo(0)
+    info_data = pmd_type.parse(PMCA.Get_PMD(0))
+    assert info_data
 
     if self.parts:
-        context.pre_process(info_data, self.parts.props)
+        context.pre_process(info_data.info, self.parts.props)
         context.post_process(self.parts.props)
 
     # Parts を合体
@@ -332,8 +333,9 @@ def _assemble_child(
     if pmd_parts:
         root.add(pmd_parts)
 
-    info_data = PMCA.getInfo(4)
-    context.pre_process(info_data, current.parts.props)
+    pmd4 = pmd_type.parse(PMCA.Get_PMD(4))
+    assert pmd4
+    context.pre_process(pmd4.info, current.parts.props)
 
     # 0 に 4 を合成
     PMCA.Add_PMD(num, 4)
@@ -348,28 +350,14 @@ def _assemble_child(
             _assemble_child(root, x, num, context)
 
 
-def get_material() -> list[pmd_type.MATERIAL]:
-    info_data = PMCA.getInfo(0)
-    materials: list[pmd_type.MATERIAL] = []
-    for i in range(info_data["mat_count"]):
-        tmp = PMCA.getMat(0, i)
-        assert tmp
-        materials.append(pmd_type.MATERIAL(**tmp))
-    return materials
-
-
 def set_material(
     context: AssembleContext,
     cnl: PMCA_cnl.MAT_REP,
 ):
-    materials: list[pmd_type.MATERIAL] = []
-    info_data = PMCA.getInfo(0)
-    assert info_data
-    for i in range(info_data["mat_count"]):
-        tmp = PMCA.getMat(0, i)
-        materials.append(pmd_type.MATERIAL(**tmp))
+    pmd = pmd_type.parse(PMCA.Get_PMD(0))
+    assert pmd
 
-    for i, x in enumerate(materials):
+    for i, x in enumerate(pmd.submeshes):
         rep_mat = cnl.mat_map.get(x.tex)
         if rep_mat:
             selected = rep_mat.sel
@@ -377,38 +365,16 @@ def set_material(
             PMCA.setMat(
                 0,
                 i,
-                x.diff_col,
+                x.diffuse_rgb,
                 x.alpha,
-                x.spec,
-                x.spec_col,
-                x.mirr_col,
-                x.toon,
-                x.edge,
-                x.face_count,
-                x.tex.encode("cp932", "replace"),
-                x.sph.encode("cp932", "replace"),
-                x.tex_path.encode("cp932", "replace"),
-                x.sph_path.encode("cp932", "replace"),
+                x.specularity,
+                x.specular_rgb,
+                x.ambient_rgb,
+                x.toon_index,
+                x.flag,
+                x.index_count,
+                x.texture_file,
             )
-
-
-def get_bones(info_data: pmd_type.InfoData) -> list[pmd_type.BONE]:
-    tmpbone: list[pmd_type.BONE] = []
-    for i in range(info_data["bone_count"]):
-        tmp = PMCA.getBone(0, i)
-        assert tmp
-        tmpbone.append(
-            pmd_type.BONE(
-                tmp["name"],
-                tmp["name_eng"],
-                tmp["parent"],
-                tmp["tail"],
-                tmp["type"],
-                tmp["IK"],
-                tmp["loc"],
-            )
-        )
-    return tmpbone
 
 
 def save_PMD(name: pathlib.Path):

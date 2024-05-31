@@ -24,7 +24,16 @@ class MATS_ENTRY:
     author: str | None = None
     license: str | None = None
 
-    def apply(self, x: pmd_type.MATERIAL, context: AssembleContext) -> None:
+    def apply(self, x: pmd_type.Submesh, context: AssembleContext) -> None:
+        if self.author != None:
+            for y in self.author.split(" "):
+                if y not in context.authors:
+                    context.authors.append(y)
+        if self.license != None:
+            for y in self.license.split(" "):
+                if y not in context.licenses:
+                    context.licenses.append(y)
+
         if self.tex != None:
             x.tex = self.tex
         if self.tex_path != None:
@@ -43,24 +52,16 @@ class MATS_ENTRY:
             x.mirr_col = list(self.mirr_rgb)
         if self.toon != None:
             # update toon list
-            name = list(PMCA.getToon(0))
-            name[self.toon[0]] = self.toon[1].encode("cp932", "replace")
-            PMCA.setToon(0, name)
+            pass
+            # name = list(PMCA.getToon(0))
+            # name[self.toon[0]] = self.toon[1].encode("cp932", "replace")
+            # PMCA.setToon(0, name)
 
-            path = list(PMCA.getToonPath(0))
-            path[self.toon[0]] = ("toon/" + self.toon[1]).encode("cp932", "replace")
-            PMCA.setToonPath(0, path)
+            # path = list(PMCA.getToonPath(0))
+            # path[self.toon[0]] = ("toon/" + self.toon[1]).encode("cp932", "replace")
+            # PMCA.setToonPath(0, path)
 
-            x.toon = self.toon[0]
-
-        if self.author != None:
-            for y in self.author.split(" "):
-                if y not in context.authors:
-                    context.authors.append(y)
-        if self.license != None:
-            for y in self.license.split(" "):
-                if y not in context.licenses:
-                    context.licenses.append(y)
+            # x.toon = self.toon[0]
 
 
 @dataclasses.dataclass

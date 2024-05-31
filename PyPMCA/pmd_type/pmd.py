@@ -15,7 +15,7 @@ class PMD:
     vertices: ctypes.Array[Vertex]
     indices: ctypes.Array[ctypes.c_uint16]
     submeshes: ctypes.Array[Submesh]
-    bone: list[BONE] = dataclasses.field(default_factory=list)
+    bones: list[BONE] = dataclasses.field(default_factory=list)
     IK: list[IK_LIST] = dataclasses.field(default_factory=list)
     skin: list[SKIN] = dataclasses.field(default_factory=list)
     bone_group: list[BONE_GROUP] = dataclasses.field(default_factory=list)
@@ -42,7 +42,7 @@ class PMD:
         pre_vt_size = len(self.vertices) if self.vertices else 0
         pre_face_size = len(self.indices) if self.indices else 0
         pre_mat_size = len(self.submeshes) if self.submeshes else 0
-        pre_bone_size = len(self.bone) if self.bone else 0
+        pre_bone_size = len(self.bones) if self.bones else 0
         # pre_skin_disp_size = len(self.skin_disp) if self.info.skin_index
         pre_bone_group_size = len(self.bone_group)
         pre_rbody_size = len(self.rb) if self.rb else 0
@@ -88,15 +88,15 @@ class PMD:
         parts.submeshes = mat
 
         # ボーン
-        for b in parts.bone:
-            self.bone.append(BONE(**dataclasses.asdict(b)))
+        for b in parts.bones:
+            self.bones.append(BONE(**dataclasses.asdict(b)))
             # fix bone index
-            if self.bone[-1].parent_index != 65535:
-                self.bone[-1].parent_index += pre_bone_size
-            if self.bone[-1].tail_index != 0:
-                self.bone[-1].tail_index += pre_bone_size
-            if self.bone[-1].ik != 0:
-                self.bone[-1].ik += pre_bone_size
+            if self.bones[-1].parent_index != 65535:
+                self.bones[-1].parent_index += pre_bone_size
+            if self.bones[-1].tail_index != 0:
+                self.bones[-1].tail_index += pre_bone_size
+            if self.bones[-1].ik != 0:
+                self.bones[-1].ik += pre_bone_size
 
         # IKリスト
         for ik in parts.IK:
