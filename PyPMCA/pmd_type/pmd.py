@@ -1,12 +1,102 @@
-﻿import dataclasses
+﻿from typing import Sequence
+import dataclasses
 import ctypes
-
-from .types import Vertex, Submesh, RigidBody, Joint
+from .types import Vertex, Submesh, Bone, RigidBody, Joint
 from .info import INFO
-from .material import TOON
-from .bone import BONE, BONE_DISP, BONE_GROUP
+from .bone import BONE_DISP, BONE_GROUP
 from .ik import IK_LIST
 from .skin import SKIN
+
+
+@dataclasses.dataclass
+class TOON:
+    name: tuple[
+        str,
+        str,
+        str,
+        str,
+        str,
+        str,
+        str,
+        str,
+        str,
+        str,
+    ] = (
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+    )
+    path: tuple[
+        str,
+        str,
+        str,
+        str,
+        str,
+        str,
+        str,
+        str,
+        str,
+        str,
+    ] = (
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+    )
+
+    def name_cp932(
+        self,
+    ) -> tuple[bytes, bytes, bytes, bytes, bytes, bytes, bytes, bytes, bytes, bytes]:
+        return (
+            self.name[0].encode("cp932", "replace"),
+            self.name[1].encode("cp932", "replace"),
+            self.name[2].encode("cp932", "replace"),
+            self.name[3].encode("cp932", "replace"),
+            self.name[4].encode("cp932", "replace"),
+            self.name[5].encode("cp932", "replace"),
+            self.name[6].encode("cp932", "replace"),
+            self.name[7].encode("cp932", "replace"),
+            self.name[8].encode("cp932", "replace"),
+            self.name[9].encode("cp932", "replace"),
+        )
+
+    def path_cp932(
+        self,
+    ) -> tuple[bytes, bytes, bytes, bytes, bytes, bytes, bytes, bytes, bytes, bytes]:
+        return (
+            self.path[0].encode("cp932", "replace"),
+            self.path[1].encode("cp932", "replace"),
+            self.path[2].encode("cp932", "replace"),
+            self.path[3].encode("cp932", "replace"),
+            self.path[4].encode("cp932", "replace"),
+            self.path[5].encode("cp932", "replace"),
+            self.path[6].encode("cp932", "replace"),
+            self.path[7].encode("cp932", "replace"),
+            self.path[8].encode("cp932", "replace"),
+            self.path[9].encode("cp932", "replace"),
+        )
+
+    @staticmethod
+    def from_bytes(
+        name: Sequence[bytes], path: Sequence[bytes] | None = None
+    ) -> "TOON":
+        return TOON(
+            tuple(x.decode("cp932", "replace") for x in name),  # type: ignore
+            tuple(x.decode("cp932", "replace") for x in path) if path else tuple([""] * 10),  # type: ignore
+        )
 
 
 @dataclasses.dataclass
@@ -15,14 +105,14 @@ class PMD:
     vertices: ctypes.Array[Vertex]
     indices: ctypes.Array[ctypes.c_uint16]
     submeshes: ctypes.Array[Submesh]
-    bones: list[BONE] = dataclasses.field(default_factory=list)
-    IK: list[IK_LIST] = dataclasses.field(default_factory=list)
-    skin: list[SKIN] = dataclasses.field(default_factory=list)
-    bone_group: list[BONE_GROUP] = dataclasses.field(default_factory=list)
-    bone_dsp: list[BONE_DISP] = dataclasses.field(default_factory=list)
-    toon: TOON = dataclasses.field(default_factory=TOON)
-    rb: ctypes.Array[RigidBody] | None = None
-    joint: ctypes.Array[Joint] | None = None
+    bones: ctypes.Array[Bone]
+    IK: list[IK_LIST]
+    morphs: list[SKIN]
+    bone_groups: list[BONE_GROUP]
+    bone_displays: list[BONE_DISP]
+    toon: TOON
+    rigidbodies: ctypes.Array[RigidBody]
+    joints: ctypes.Array[Joint]
 
     @staticmethod
     def create() -> "PMD":
@@ -31,6 +121,14 @@ class PMD:
             vertices=None,
             indices=None,
             submeshes=None,
+            bones=None,
+            IK=[],
+            morphs=[],
+            bone_groups=[],
+            bone_displays=[],
+            toon=TOON(),
+            rigidbodies=None,
+            joints=None,
         )
 
     def add(self, parts: "PMD") -> None:
@@ -44,8 +142,8 @@ class PMD:
         pre_mat_size = len(self.submeshes) if self.submeshes else 0
         pre_bone_size = len(self.bones) if self.bones else 0
         # pre_skin_disp_size = len(self.skin_disp) if self.info.skin_index
-        pre_bone_group_size = len(self.bone_group)
-        pre_rbody_size = len(self.rb) if self.rb else 0
+        pre_bone_group_size = len(self.bone_groups)
+        pre_rbody_size = len(self.rigidbodies) if self.rigidbodies else 0
 
         # 頂点
         assert parts.vertices
@@ -101,18 +199,18 @@ class PMD:
         # IKリスト
         for ik in parts.IK:
             self.IK.append(ik)
-            self.IK[-1].index += pre_bone_size
-            self.IK[-1].target_index += pre_bone_size
+            self.IK[-1].bone_index += pre_bone_size
+            self.IK[-1].target_boneindex += pre_bone_size
             for k in range(len(self.IK[-1].chain)):
                 self.IK[-1].chain[k] += pre_bone_size
 
         # 表情
-        if len(parts.skin) == 0:
+        if len(parts.morphs) == 0:
             pass
-        elif len(self.skin) == 0:
+        elif len(self.morphs) == 0:
             # copy
-            for skin in parts.skin:
-                self.skin.append(skin)
+            for skin in parts.morphs:
+                self.morphs.append(skin)
         else:
             # 0番を合成
             pass

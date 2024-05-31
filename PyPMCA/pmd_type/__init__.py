@@ -1,12 +1,12 @@
-from .pmd import PMD, Submesh
+from .pmd import PMD, Submesh, TOON
 from .info import INFO
 from .vt import VT
-from .material import TOON
-from .bone import BONE, BONE_DISP, BONE_GROUP
+from .bone import BONE_DISP, BONE_GROUP
 from .ik import IK_LIST
 from .skin import SKIN
 from .rigidbody import RB, JOINT
 from .parser import parse
+from .to_bytes import to_bytes
 
 __all__ = [
     "PMD",
@@ -14,7 +14,6 @@ __all__ = [
     "VT",
     "Submesh",
     "TOON",
-    "BONE",
     "BONE_DISP",
     "BONE_GROUP",
     "IK_LIST",
@@ -22,4 +21,5 @@ __all__ = [
     "RB",
     "JOINT",
     "parse",
+    "to_bytes",
 ]

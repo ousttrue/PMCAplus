@@ -154,33 +154,6 @@ def Get(num: int) -> pmd_type.PMD:
     )
 
 
-def set_material(
-    context: AssembleContext,
-    cnl: PMCA_cnl.MAT_REP,
-):
-    pmd = pmd_type.parse(PMCA.Get_PMD(0))
-    assert pmd
-
-    for i, x in enumerate(pmd.submeshes):
-        rep_mat = cnl.mat_map.get(x.tex)
-        if rep_mat:
-            selected = rep_mat.sel
-            context.apply(x, selected)
-            PMCA.setMat(
-                0,
-                i,
-                x.diffuse_rgb,
-                x.alpha,
-                x.specularity,
-                x.specular_rgb,
-                x.ambient_rgb,
-                x.toon_index,
-                x.flag,
-                x.index_count,
-                x.texture_file,
-            )
-
-
 def save_PMD(name: pathlib.Path):
     name.parent.mkdir(exist_ok=True, parents=True)
     data = PMCA.Get_PMD(0)

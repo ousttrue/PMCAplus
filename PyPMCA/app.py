@@ -65,26 +65,42 @@ class App:
         """
         LOGGER.info("モデル組立て")
         context = AssembleContext()
-        context.process(self.cnl.tree)
-
-        # PMCA.Copy_PMD(0, 1)
+        data0 = context.process(self.cnl.tree)
+        pmd0 = pmd_type.parse(data0)
+        assert pmd0
 
         LOGGER.info("材質置換")
-        pmd = pmd_type.parse(PMCA.Get_PMD(0))
-        assert pmd
-        # materials = native.get_material()
-        self.cnl.update_mat_rep(self.data, pmd.submeshes)
-        native.set_material(context, self.cnl.mat_rep)
+        self.cnl.update_mat_rep(self.data, [x for x in pmd0.submeshes])
+        # native.set_material(context, self.cnl.mat_rep)
+        # pmd = pmd_type.parse(PMCA.Get_PMD(0))
+        # assert pmd
 
-        # PMCA.Copy_PMD(0, 2)
+        for i, x in enumerate(pmd0.submeshes):
+            rep_mat = self.cnl.mat_rep.mat_map.get(x.tex)
+            if rep_mat:
+                selected = rep_mat.sel
+                context.apply(x, selected)
+                # PMCA.setMat(
+                #     0,
+                #     i,
+                #     x.diffuse_rgb,
+                #     x.alpha,
+                #     x.specularity,
+                #     x.specular_rgb,
+                #     x.ambient_rgb,
+                #     x.toon_index,
+                #     x.flag,
+                #     x.index_count,
+                #     x.texture_file,
+                # )
+
+        data0 = pmd_type.to_bytes(pmd0)
+        PMCA.Set_PMD(0, data0)
 
         LOGGER.info("体型調整")
-        pmd = pmd_type.parse(PMCA.Get_PMD(0))
-        assert pmd
-
         refbone = None
         refbone_index = None
-        for i, transform_bone in enumerate(pmd.bones):
+        for i, transform_bone in enumerate(pmd0.bones):
             if transform_bone.name == "右足首":
                 refbone = transform_bone
                 refbone_index = i
@@ -110,7 +126,7 @@ class App:
         if refbone:
             assert refbone_index
             newbone = None
-            tmp = pmd.bones[refbone_index]
+            tmp = pmd0.bones[refbone_index]
             assert tmp
             newbone = pmd_type.BONE(
                 tmp.name,
@@ -124,16 +140,16 @@ class App:
 
             # 体型調整による足首の移動量で設置を調整
             dy = refbone.loc.y - newbone.loc.y
-            for transform_bone in pmd.bones:
+            for transform_bone in pmd0.bones:
                 i = transform_bone.parent_index
                 count = 0
-                while i < len(pmd.bones) and count < len(pmd.bones):
-                    if pmd.bones[i].name == "センター":
+                while i < len(pmd0.bones) and count < len(pmd0.bones):
+                    if pmd0.bones[i].name == "センター":
                         PMCA.Move_Bone(
                             0, transform_bone.name.encode("cp932", "replace"), 0, dy, 0
                         )
                         break
-                    i = pmd.bones[i].parent_index
+                    i = pmd0.bones[i].parent_index
                     count += 1
 
             PMCA.Move_Bone(0, "センター".encode("cp932", "replace"), 0, dy, 0)

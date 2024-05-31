@@ -5,12 +5,11 @@ import struct
 import ctypes
 
 from .types import Vertex, Submesh, Bone, MoprhVertex, BoneDisplay, RigidBody, Joint
-from .pmd import PMD
+from .pmd import PMD, TOON
 from .info import INFO
 from .ik import IK_LIST
 from .skin import SKIN
-from .bone import BONE, BONE_DISP, BONE_GROUP
-from .material import TOON
+from .bone import BONE_DISP, BONE_GROUP
 
 
 LOGGER = logging.getLogger(__name__)
@@ -24,7 +23,7 @@ def decode_co032_bytes(src: bytes) -> str:
     for i, b in enumerate(src):
         if b == 0:
             break
-    return src[:i+1].decode("cp932", "replace")
+    return src[: i + 1].decode("cp932", "replace")
 
 
 @dataclasses.dataclass
@@ -92,19 +91,6 @@ def parse(data: bytes) -> PMD | None:
     # bone
     bone_count = r.u16()
     bones = r.read_type(Bone * bone_count)
-    assert len(bones) == bone_count
-    bone_list: list[BONE] = [
-        BONE(
-            name=decode_co032_bytes(bytes(b.name)),
-            name_eng="",
-            parent_index=b.parent_index,
-            tail_index=b.tail_index,
-            bone_type=b.type,
-            ik=b.ik_index,
-            loc=b.position,
-        )
-        for b in bones
-    ]
 
     # ik
     ik_list: list[IK_LIST] = []
@@ -127,14 +113,14 @@ def parse(data: bytes) -> PMD | None:
         )
 
     # morph
-    skins: list[SKIN] = []
+    morphs: list[SKIN] = []
     morph_count = r.u16()
     for _ in range(morph_count):
         morph_name = r.string(20)
         morph_vertex_count = r.i32()
         morph_type = r.u8()
         morph_vertices = r.read_type(MoprhVertex * morph_vertex_count)
-        skins.append(
+        morphs.append(
             SKIN(
                 morph_name,
                 "",
@@ -204,9 +190,9 @@ def parse(data: bytes) -> PMD | None:
         vertices,
         indices,
         submeshes,
-        bone_list,
+        bones,
         ik_list,
-        skins,
+        morphs,
         bone_group,
         bone_dsp,
         toon,

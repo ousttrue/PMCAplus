@@ -17,7 +17,7 @@ class AssembleContext:
         # 空モデル
         self.data0 = PMCA.Set_PMD(0, b"")
 
-    def process(self, tree: PMCA_cnl.NODE) -> None:
+    def process(self, tree: PMCA_cnl.NODE) -> bytes:
         if tree.parts:
             pmd0 = pmd_type.parse(self.data0)
             assert pmd0
@@ -32,6 +32,7 @@ class AssembleContext:
         PMCA.Set_PMD(0, self.data0)
         PMCA.Sort_PMD(0)
         self.finalize()
+        return PMCA.Get_PMD(0)
 
     def _assemble_child(self, current: PMCA_cnl.NODE) -> None:
         # 4 にロード

@@ -61,7 +61,7 @@ public:
 
   float f32() { return value<float>(); }
   uint8_t u8() { return value<uint8_t>(); }
-  uint8_t u16() { return value<uint16_t>(); }
+  uint16_t u16() { return value<uint16_t>(); }
   int32_t i32() { return value<int32_t>(); }
 };
 
