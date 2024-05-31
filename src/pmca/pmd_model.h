@@ -152,7 +152,7 @@ public:
   }
   static std::shared_ptr<MODEL> load(const std::string &path);
   bool load(std::span<uint8_t> bytes, const std::string &file_name);
-  bool write(const std::string &file_name) const;
+  std::vector<uint8_t> to_bytes() const;
   bool add_PMD(const std::shared_ptr<MODEL> &add);
 
   bool marge_bone();

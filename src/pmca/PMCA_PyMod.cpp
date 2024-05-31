@@ -1,5 +1,4 @@
 #include <memory>
-#include <thread>
 
 #include "PMCA_PyMod.h"
 #include "pmd_model.h"
@@ -793,11 +792,28 @@ static PyObject *Load_PMD(PyObject *self, PyObject *args) {
 static PyObject *Write_PMD(PyObject *self, PyObject *args) {
   const char *str;
   int num;
-  if (!PyArg_ParseTuple(args, "iy", &num, &str))
+  if (!PyArg_ParseTuple(args, "iy", &num, &str)) {
     Py_RETURN_FALSE;
+  }
 
-  auto ret = g_model[num]->write(str);
-  return Py_BuildValue("i", ret ? 0 : 1);
+  auto data = g_model[num]->to_bytes();
+
+  if (!str || !strlen(str)) {
+    printf("ファイル名がありません\n");
+    Py_RETURN_FALSE;
+  }
+
+  {
+    auto pmd = fopen(str, "wb");
+    if (!pmd) {
+      printf("ファイル %s を開けません\n", str);
+      Py_RETURN_FALSE;
+    }
+    fwrite(data.data(), data.size(), 1, pmd);
+    fclose(pmd);
+  }
+
+  return Py_BuildValue("i", 0);
 }
 
 static PyObject *Add_PMD(PyObject *self, PyObject *args) {
