@@ -82,86 +82,6 @@ std::vector<std::string> PyList_to_Array_Str(PyObject *List) {
 }
 
 /*******************************************************************************/
-static PyObject *Set_List(PyObject *self, PyObject *args) {
-  PyObject *bn, *bne, *sn, *sne, *gn, *gne;
-  int bone_count;
-  int skin_count;
-  int disp_count;
-  if (!PyArg_ParseTuple(args, "iOOiOOiOO", &bone_count, &bn, &bne, &skin_count,
-                        &sn, &sne, &disp_count, &gn, &gne))
-    Py_RETURN_FALSE;
-
-  list.bone.resize(bone_count);
-  list.bone_eng.resize(bone_count);
-  list.skin.resize(skin_count);
-  list.skin_eng.resize(skin_count);
-  list.disp.resize(disp_count);
-  list.disp_eng.resize(disp_count);
-
-  /*ボーン*/
-  for (int i = 0; i < bone_count; i++) {
-    auto tmp = PyList_GetItem(bn, i);
-    char *p = NULL;
-    Py_ssize_t len;
-    PyBytes_AsStringAndSize(tmp, &p, &len);
-    strncpy(list.bone[i].data(), p, NAME_LEN);
-
-    tmp = PyList_GetItem(bne, i);
-    PyBytes_AsStringAndSize(tmp, &p, &len);
-    strncpy(list.bone_eng[i].data(), p, NAME_LEN);
-    // printf("%d %s\n", i, list.bone[i]);
-  }
-
-  /*表情*/
-  for (int i = 0; i < skin_count; i++) {
-    auto tmp = PyList_GetItem(sn, i);
-    char *p = NULL;
-    Py_ssize_t len;
-    PyBytes_AsStringAndSize(tmp, &p, &len);
-    strncpy(list.skin[i].data(), p, NAME_LEN);
-
-    tmp = PyList_GetItem(sne, i);
-    PyBytes_AsStringAndSize(tmp, &p, &len);
-    strncpy(list.skin_eng[i].data(), p, NAME_LEN);
-  }
-
-  /*ボーングループ*/
-  for (int i = 0; i < disp_count; i++) {
-    auto tmp = PyList_GetItem(gn, i);
-    char *p = NULL;
-    Py_ssize_t len;
-    PyBytes_AsStringAndSize(tmp, &p, &len);
-    strncpy(list.disp[i].data(), p, NAME_LEN);
-
-    tmp = PyList_GetItem(gne, i);
-    PyBytes_AsStringAndSize(tmp, &p, &len);
-    strncpy(list.disp_eng[i].data(), p, NAME_LEN);
-  }
-
-  return Py_BuildValue("i", 0);
-}
-
-/*******************************************************************************/
-
-static PyObject *Set_Name_Comment(PyObject *self, PyObject *args) {
-  const char *name;
-  const char *comment;
-  const char *name_eng;
-  const char *comment_eng;
-  int num;
-  int ret;
-  if (!PyArg_ParseTuple(args, "iyyyy", &num, &name, &comment, &name_eng,
-                        &comment_eng))
-    Py_RETURN_FALSE;
-
-  strncpy(g_model[num]->header.name.data(), name, NAME_LEN);
-  strncpy(g_model[num]->header.comment.data(), comment, COMMENT_LEN);
-  strncpy(g_model[num]->header.name_eng.data(), name_eng, NAME_LEN);
-  strncpy(g_model[num]->header.comment_eng.data(), comment_eng, COMMENT_LEN);
-  return Py_BuildValue("i", 0);
-}
-
-/*******************************************************************************/
 static PyObject *Init_PMD(PyObject *self, PyObject *args) {
   for (int i = 0; i < MODEL_COUNT; i++) {
     g_model[i] = MODEL::create();
@@ -376,39 +296,7 @@ static PyObject *Get_PMD(PyObject *self, PyObject *args) {
   return Py_BuildValue("y#", bytes.data(), bytes.size());
 }
 
-static PyObject *getWHT(PyObject *self, PyObject *args) {
-  int num;
-  if (!PyArg_ParseTuple(args, "i", &num))
-    Py_RETURN_NONE;
-
-  auto model = g_model[num];
-  double min[3] = {0.0, 0.0, 0.0};
-  double max[3] = {0.0, 0.0, 0.0};
-  for (size_t i = 0; i < model->vt.size(); i++) {
-    for (size_t j = 0; j < 3; j++) {
-      if (model->vt[i].loc[j] > max[j]) {
-        max[j] = model->vt[i].loc[j];
-      } else if (model->vt[i].loc[j] < min[j]) {
-        min[j] = model->vt[i].loc[j];
-      }
-    }
-  }
-
-  double wht[3];
-  for (size_t i = 0; i < 3; i++) {
-    wht[i] = (max[i] - min[i]) * 8;
-  }
-
-  return Py_BuildValue("(fff)", wht[0], wht[1], wht[2]);
-}
-
 static PyMethodDef PMCAMethods[] = {
-    /***********************************************************************/
-    {"Set_List", Set_List, METH_VARARGS, "Set List of bone or things"},
-    /***********************************************************************/
-    {"Set_Name_Comment", Set_Name_Comment, METH_VARARGS,
-     "Set Name and Comment"},
-    /***********************************************************************/
     {"Init_PMD", Init_PMD, METH_VARARGS, "Initialize"},
     {"Set_PMD", Set_PMD, METH_VARARGS, "Set PMD bytes"},
     {"Add_PMD", Add_PMD, METH_VARARGS, "Add PMD from file"},
@@ -416,16 +304,12 @@ static PyMethodDef PMCAMethods[] = {
     {"Marge_PMD", Marge_PMD, METH_VARARGS, "Marge PMD"},
     {"Sort_PMD", Sort_PMD, METH_VARARGS, "Sort PMD"},
     {"Get_PMD", Get_PMD, METH_VARARGS, "Get PMD Vertices, Indices, Submeshes"},
-    /***********************************************************************/
     {"Resize_Model", Resize_Model, METH_VARARGS, "Resize_Model"},
     {"Move_Model", Move_Model, METH_VARARGS, "Move_Model"},
     {"Resize_Bone", Resize_Bone, METH_VARARGS, "Resize_Bone"},
     {"Move_Bone", Move_Bone, METH_VARARGS, "Move_Bone"},
     {"Update_Skin", Update_Skin, METH_VARARGS, "Update_Skin"},
     {"Adjust_Joints", Adjust_Joints, METH_VARARGS, "Adjust_Joints"},
-
-    /***********************************************************************/
-    {"getWHT", getWHT, METH_VARARGS, "get height, width, thickness from model"},
     {NULL, NULL, 0, NULL}};
 
 static struct PyModuleDef PMCAmodule = {PyModuleDef_HEAD_INIT,

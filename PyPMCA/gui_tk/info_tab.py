@@ -85,13 +85,13 @@ class InfoTab(tkinter.ttk.Frame):
         self.modelinfo.name = self.frame.name.get()
         self.modelinfo.name_l = self.frame.name_l.get()
         self.modelinfo.comment = self.frame.comment.get("1.0", tkinter.END)
-        native.Set_Name_Comment(
-            name=self.modelinfo.name,
-            comment="%s\nAuthor:%s\nLicense:%s\n%s"
-            % (self.modelinfo.name_l, str1, str2, self.modelinfo.comment),
-            name_eng=self.modelinfo.name_eng,
-            comment_eng="%s\nAuthor:%s\nLicense:%s\n%s"
-            % (self.modelinfo.name_l_eng, str1, str2, self.modelinfo.comment_eng),
-        )
+        # native.Set_Name_Comment(
+        #     name=self.modelinfo.name,
+        #     comment="%s\nAuthor:%s\nLicense:%s\n%s"
+        #     % (self.modelinfo.name_l, str1, str2, self.modelinfo.comment),
+        #     name_eng=self.modelinfo.name_eng,
+        #     comment_eng="%s\nAuthor:%s\nLicense:%s\n%s"
+        #     % (self.modelinfo.name_l_eng, str1, str2, self.modelinfo.comment_eng),
+        # )
 
         self.frame.text.set("Author : %s\nLicense : %s" % (str1, str2))

@@ -21,8 +21,8 @@ class App:
     def __init__(self, asset_dir: pathlib.Path, cnl_file: pathlib.Path):
         self.data = PMCA_asset.PMCAData()
         list_txt = self.data.load_asset(asset_dir)
-        if list_txt:
-            native.set_list(*list_txt)
+        # if list_txt:
+        #     native.set_list(*list_txt)
 
         self.cnl = PMCA_cnl.CnlInfo()
         self.default_cnl_file = cnl_file
@@ -167,6 +167,32 @@ class App:
         # self.cnl.on_refresh()
         for callback in self.on_assemble:
             callback()
+
+# static PyObject *getWHT(PyObject *self, PyObject *args) {
+#   int num;
+#   if (!PyArg_ParseTuple(args, "i", &num))
+#     Py_RETURN_NONE;
+#
+#   auto model = g_model[num];
+#   double min[3] = {0.0, 0.0, 0.0};
+#   double max[3] = {0.0, 0.0, 0.0};
+#   for (size_t i = 0; i < model->vt.size(); i++) {
+#     for (size_t j = 0; j < 3; j++) {
+#       if (model->vt[i].loc[j] > max[j]) {
+#         max[j] = model->vt[i].loc[j];
+#       } else if (model->vt[i].loc[j] < min[j]) {
+#         min[j] = model->vt[i].loc[j];
+#       }
+#     }
+#   }
+#
+#   double wht[3];
+#   for (size_t i = 0; i < 3; i++) {
+#     wht[i] = (max[i] - min[i]) * 8;
+#   }
+#
+#   return Py_BuildValue("(fff)", wht[0], wht[1], wht[2]);
+# }
 
     def batch_assemble(self, cnl_files: list[pathlib.Path]) -> None:
         # backup

@@ -11,40 +11,6 @@ from .assemble import AssembleContext
 LOGGER = logging.getLogger(__name__)
 
 
-def Set_Name_Comment(
-    num: int = 0,
-    name: str = "",
-    comment: str = "",
-    name_eng: str = "",
-    comment_eng: str = "",
-):
-    PMCA.Set_Name_Comment(
-        num,
-        name.encode("cp932", "replace"),
-        comment.encode("cp932", "replace"),
-        name_eng.encode("cp932", "replace"),
-        comment_eng.encode("cp932", "replace"),
-    )
-
-
-def set_list(
-    b: tuple[list[bytes], list[bytes]],
-    s: tuple[list[bytes], list[bytes]],
-    g: tuple[list[bytes], list[bytes]],
-):
-    PMCA.Set_List(
-        len(b[0]),
-        b[0],
-        b[1],
-        len(s[0]),
-        s[0],
-        s[1],
-        len(g[0]),
-        g[0],
-        g[1],
-    )
-
-
 def Get(num: int) -> pmd_type.PMD:
     info_data = PMCA.getInfo(num)
     info = pmd_type.INFO(info_data)
