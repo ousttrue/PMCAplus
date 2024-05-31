@@ -142,44 +142,6 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
   Py_RETURN_TRUE;
 }
 
-static PyObject *setVt(PyObject *self, PyObject *args) {
-  int num, i;
-  PyObject *PyTmp[3];
-  VERTEX vt;
-  if (!PyArg_ParseTuple(args,
-                        "iiOOO"
-                        "hh"
-                        "bb",
-                        &num, &i, &PyTmp[0], &PyTmp[1], &PyTmp[2],
-                        &vt.bone_num[0], &vt.bone_num[1], &vt.bone_weight,
-                        &vt.edge_flag))
-    Py_RETURN_FALSE;
-
-  PyList_to_Array_Float(vt.loc, PyTmp[0], 3);
-  PyList_to_Array_Float(vt.nor, PyTmp[1], 3);
-  PyList_to_Array_Float(vt.uv, PyTmp[2], 2);
-  auto model = g_model[num];
-  if (model->vt.size() <= i)
-    Py_RETURN_FALSE;
-
-  model->vt[i] = vt;
-  Py_RETURN_TRUE;
-}
-
-static PyObject *setFace(PyObject *self, PyObject *args) {
-  int num, i;
-  PyObject *PyTmp;
-  if (!PyArg_ParseTuple(args, "iiO", &num, &i, &PyTmp))
-    Py_RETURN_FALSE;
-
-  auto model = g_model[num];
-  if (model->vt_index.size() < i * 3 + 3)
-    Py_RETURN_FALSE;
-
-  PyList_to_Array_UShort(&model->vt_index[i * 3], PyTmp, 3);
-  Py_RETURN_TRUE;
-}
-
 static PyObject *setMat(PyObject *self, PyObject *args) {
   int num, i;
   PyObject *PyTmp[3];
@@ -739,8 +701,6 @@ static PyObject *getWHT(PyObject *self, PyObject *args) {
 
 static PyMethodDef PMCAMethods[] = {
     {"Create_FromInfo", Create_FromInfo, METH_VARARGS, "Create PMD"},
-    {"setVt", setVt, METH_VARARGS, "Set Vertex of PMD"},
-    {"setFace", setFace, METH_VARARGS, "Set Face of PMD"},
     {"setMat", setMat, METH_VARARGS, "Set Material of PMD"},
     {"setBone", setBone, METH_VARARGS, "Set Bone of PMD"},
     {"setIK", setIK, METH_VARARGS, "Set IK_List of PMD"},

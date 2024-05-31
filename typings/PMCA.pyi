@@ -1,27 +1,5 @@
 from typing import List
 
-def setVt(
-    num: int,
-    i: int,
-    loc: tuple[float, float, float],
-    normal: tuple[float, float, float],
-    uv: tuple[float, float],
-    bone0: int,
-    bone1: int,
-    weight: int,
-    edge: int,
-) -> None:
-    """
-    Set Vertex of PMD"
-    """
-    ...
-
-def setFace(num: int, i: int, face: tuple[int, int, int]) -> None:
-    """
-    Set Face of PMD"
-    """
-    ...
-
 def setMat(
     num: int,
     i: int,
