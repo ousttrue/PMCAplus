@@ -75,7 +75,7 @@ class PARTS:
 
         assert name
         p = PARTS(name, joint, path, comment, head_types, props)
-        LOGGER.debug(p)
+        # LOGGER.debug(p)
         return p
 
     @staticmethod

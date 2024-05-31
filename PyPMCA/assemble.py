@@ -63,14 +63,27 @@ class AssembleContext(NamedTuple):
                 else:
                     self.licenses.append("Nonfree")
 
-        if "script_pre" in props:
-            for x in props["script_pre"]:
-                LOGGER.debug("プレスクリプト実行")
-                argv = x.split()
-                fp = open(argv[0], "r", encoding="utf-8-sig")
-                script = fp.read()
-                exec(script)
-                fp.close
+        def run_script(x: str) -> None:
+            LOGGER.debug(f"プレスクリプト実行: {x}")
+            # argv = x.split()
+            # fp = open(argv[0], "r", encoding="utf-8-sig")
+            # script = fp.read()
+            # exec(script)
+            # fp.close
+
+        match props.get("script_pre"):
+            case str() as s:
+                run_script(s)
+
+            case list() as l:
+                for x in l:
+                    run_script(x)
+
+            case None:
+                pass
+
+            case _:
+                raise RuntimeError()
 
     def post_process(self, props: dict[str, str]):
         if "script_post" in props:

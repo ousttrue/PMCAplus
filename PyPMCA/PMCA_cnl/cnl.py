@@ -15,8 +15,7 @@ class CnlInfo:
     def __init__(self):
         self.name: str = ""
         self.name_l: str = ""
-        self.comment: list[str] = dataclasses.field(default_factory=list)
-
+        self.comment: list[str] = []
         self.tree = NODE(None, PMCA_asset.PARTS(name="ROOT", joint=["root"]))
         self.mat_rep = MAT_REP()
         self.transform_data_list: list[PMCA_asset.MODEL_TRANS_DATA] = [
@@ -83,6 +82,12 @@ class CnlInfo:
             if l == "NEXT":
                 continue
 
+            if l == "[Name]":
+                # 無名
+                transform.bones.append(PMCA_asset.BONE_TRANS_DATA(""))
+                continue
+
+            # print(l)
             k, v = [x.strip() for x in l.split(maxsplit=1)]
             match k:
                 case "[Name]":

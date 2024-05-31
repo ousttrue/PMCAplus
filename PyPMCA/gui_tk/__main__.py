@@ -12,8 +12,7 @@ APPNAME = "PMCA v0.0.6r10-tk"
 def main(dir: pathlib.Path, cnl_file: pathlib.Path):
     logging.basicConfig(handlers=[ColorfulHandler()], level=logging.DEBUG)
 
-    app = App(dir)
-    app.load(cnl_file)
+    app = App(dir, cnl_file)
 
     # gui
     PMCA.Init_PMD()

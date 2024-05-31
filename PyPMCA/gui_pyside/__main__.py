@@ -17,7 +17,7 @@ def main(dir: pathlib.Path, cnl_file: pathlib.Path):
     logging.basicConfig(handlers=[ColorfulHandler()], level=logging.DEBUG)
 
     app = App(dir)
-    app.load(cnl_file)
+    app.cnl_load(cnl_file)
 
     # gui
     PMCA.Init_PMD()

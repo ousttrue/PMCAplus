@@ -7,6 +7,7 @@ from . import PMCA_asset
 from . import PMCA_cnl
 from . import native
 
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -15,24 +16,41 @@ class App:
     UI 操作 => パーツ組み換え => 描画更新
     """
 
-    def __init__(self, asset_dir: pathlib.Path):
-        # data
+    def __init__(self, asset_dir: pathlib.Path, cnl_file: pathlib.Path):
         self.data = PMCA_asset.PMCAData()
         list_txt = self.data.load_asset(asset_dir)
         if list_txt:
             native.set_list(*list_txt)
 
         self.cnl = PMCA_cnl.CnlInfo()
-        self.cnl_file = pathlib.Path()
+        self.default_cnl_file = cnl_file
         self.on_assemble: list[Callable[[], None]] = []
+        self.cnl_reload()
 
-    def load(self, cnl_file: pathlib.Path | None = None):
-        if cnl_file:
-            self.cnl_file = cnl_file
-        else:
-            cnl_file = self.cnl_file
+    def cnl_reload(self):
+        self.cnl_load(self.default_cnl_file)
+
+    def cnl_load(self, cnl_file: pathlib.Path) -> None:
+        assert cnl_file
         self.cnl.load_CNL_File(cnl_file, self.data)
         self.assemble()
+
+        # pastnode = self.tree_list[0]
+        # self.tree_list[0].node = pmd.NODE(
+        #     parts=pmd.PARTS(name="ROOT", joint=["root"]), depth=-1, child=[None]
+        # )
+        # self.load_CNL_File(name)
+        # self.refresh()
+
+    def cnl_save(self, cnl_file: pathlib.Path) -> None:
+        assert cnl_file
+        x = self.cnl.tree.children[0]
+        if not x:
+            LOGGER.error("ノードが空です")
+            return
+
+        # self.refresh(level=3)
+        self.cnl.save_CNL_File(cnl_file, "name", "name_l", "comment")
 
     def assemble(self):
         """
