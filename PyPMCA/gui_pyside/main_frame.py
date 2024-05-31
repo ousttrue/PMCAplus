@@ -1,4 +1,5 @@
 import logging
+import pathlib
 import sys
 from PySide6 import QtWidgets, QtCore
 from ..app import App
@@ -7,7 +8,7 @@ from .. import PMCA_cnl
 from .. import pmd_type
 import PMCA  # type: ignore
 import glglue.pyside6
-from ..gl_scene import GlScene, PmdSrc
+from ..gl_scene import GlScene
 from .model_tab import ModelTab
 from .color_tab import ColorTab
 
@@ -78,12 +79,10 @@ class MainWindow(QtWidgets.QMainWindow):
     def closeEvent(self, _) -> None:  # type: ignore
         self.scene.shutdown()
 
-    def on_refresh(self):
-        data = PMCA.Get_PMD(0)
-        assert data
+    def update_scene(self, data: bytes):
         pmd = pmd_type.parse(data)
         assert pmd
-        self.scene.set_model(pmd)
+        self.scene.set_model(pmd, pathlib.Path("parts"))
         self.color_tab.update_list()
         self.glwidget.repaint()
 
@@ -96,9 +95,6 @@ class Gui:
 
     def mainloop(self):
         self.gui.exec()
-
-    def update_scene(self):
-        self.window.on_refresh()
 
 
 def MainFrame(title: str, app: App) -> Gui:

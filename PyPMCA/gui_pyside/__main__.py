@@ -16,18 +16,11 @@ APPNAME = "PMCA v0.0.6r10-pyside"
 def main(dir: pathlib.Path, cnl_file: pathlib.Path):
     logging.basicConfig(handlers=[ColorfulHandler()], level=logging.DEBUG)
 
-    app = App(dir)
-    app.cnl_load(cnl_file)
-
-    # gui
-    PMCA.Init_PMD()
-
-    # def raise_refresh(c: PMCA_cnl.CnlInfo):
-    #     native.refresh(data, c)
+    app = App(dir, cnl_file)
 
     # gui
     window = pyside_gui.MainFrame(APPNAME, app)
-    app.on_assemble.append(window.update_scene)
+    app.on_assemble.append(window.window.update_scene)
     app.assemble()
 
     window.mainloop()

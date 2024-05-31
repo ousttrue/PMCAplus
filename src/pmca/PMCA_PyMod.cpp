@@ -58,21 +58,6 @@ static PyObject *Marge_PMD(PyObject *self, PyObject *args) {
   return Py_BuildValue("y#", bytes.data(), bytes.size());
 }
 
-static PyObject *Resize_Model(PyObject *self, PyObject *args) {
-  const uint8_t *pa;
-  size_t sa;
-  double size;
-  if (!PyArg_ParseTuple(args, "y#d", &pa, &sa, &size)) {
-    Py_RETURN_NONE;
-  }
-
-  auto model = MODEL::from_bytes({pa, sa});
-  model->resize_model(size);
-
-  auto bytes = model->to_bytes();
-  return Py_BuildValue("y#", bytes.data(), bytes.size());
-}
-
 static PyObject *Move_Model(PyObject *self, PyObject *args) {
   const uint8_t *pa;
   size_t sa;
@@ -109,7 +94,7 @@ static PyObject *Resize_Bone(PyObject *self, PyObject *args) {
   }
 
   if (!model->scale_bone(index, thi, len, thi)) {
-    Py_RETURN_NONE;
+    // Py_RETURN_NONE;
   }
 
   auto bytes = model->to_bytes();
@@ -174,7 +159,6 @@ static PyObject *Adjust_Joints(PyObject *self, PyObject *args) {
 static PyMethodDef PMCAMethods[] = {
     {"Add_PMD", Add_PMD, METH_VARARGS, "Add PMD from file"},
     {"Marge_PMD", Marge_PMD, METH_VARARGS, "Marge PMD"},
-    {"Resize_Model", Resize_Model, METH_VARARGS, "Resize_Model"},
     {"Move_Model", Move_Model, METH_VARARGS, "Move_Model"},
     {"Resize_Bone", Resize_Bone, METH_VARARGS, "Resize_Bone"},
     {"Move_Bone", Move_Bone, METH_VARARGS, "Move_Bone"},

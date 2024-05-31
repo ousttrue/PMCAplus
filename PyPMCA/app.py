@@ -1,9 +1,9 @@
 from typing import Callable
 import logging
 import pathlib
-import random
 import PMCA
 from . import pmd_type
+from .pmd_type.resize import Resize_Model
 from . import PMCA_asset
 from . import PMCA_cnl
 from . import native
@@ -107,7 +107,7 @@ class App:
                 break
 
         for transform_data in self.cnl.transform_data_list:
-            data0 = PMCA.Resize_Model(data0, transform_data.scale)
+            data0 = Resize_Model(data0, transform_data.scale)
             for transform_bone in transform_data.bones:
                 data0 = PMCA.Resize_Bone(
                     data0,
@@ -115,6 +115,7 @@ class App:
                     transform_bone.length,
                     transform_bone.thick,
                 )
+                assert data0
                 data0 = PMCA.Move_Bone(
                     data0,
                     transform_bone.name.encode("cp932", "replace"),
