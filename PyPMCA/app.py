@@ -42,6 +42,11 @@ class App:
         # self.load_CNL_File(name)
         # self.refresh()
 
+    def pmd_save(self, pmd_file: pathlib.Path) -> None:
+        LOGGER.info(f"{pmd_file}")
+        # self.assemble()
+        native.save_PMD(pmd_file)
+
     def cnl_save(self, cnl_file: pathlib.Path) -> None:
         assert cnl_file
         x = self.cnl.tree.children[0]

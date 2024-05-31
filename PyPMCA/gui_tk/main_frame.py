@@ -45,7 +45,6 @@ class MainFrame(tkinter.ttk.Frame):
         self.pack()
 
         self.app = app
-        self.export2folder = False
         self.target_dir = pathlib.Path("./model/")
 
         # setup opengl widget
@@ -89,8 +88,16 @@ class MainFrame(tkinter.ttk.Frame):
                 self.app.cnl_save, FileFilter("キャラクタノードリスト", ".cnl")
             ),
         )
-        # files.add_command(label="モデル保存", underline=0, command=self.dialog_save_PMD)
-        # files.add_separator
+
+        files.add_command(
+            label="モデル保存(save pmd)",
+            underline=0,
+            command=self.make_save_file_dialog(
+                self.app.pmd_save, FileFilter("Plygon Model Deta(for MMD)", ".pmd")
+            ),
+        )
+        files.add_separator
+
         # files.add_command(label="一括組立て", underline=0, command=self.batch_assemble)
         # files.add_separator
         # files.add_command(
@@ -433,16 +440,6 @@ class MainFrame(tkinter.ttk.Frame):
     #         x[1].sel = x[1].mat.entries[random.randint(0, len(x[1].mat.entries) - 1)]
     #     self.refresh()
 
-    # def dialog_save_PMD(self):
-    #     name = filedialog.asksaveasfilename(
-    #         filetypes=[("Plygon Model Deta(for MMD)", ".pmd"), ("all", ".*")],
-    #         initialdir=self.target_dir,
-    #         defaultextension=".pmd",
-    #     )
-    #     self.refresh()
-    #     self.save_PMD(name)
-    #     self.target_dir = name.rsplit("/", 1)[0]
-
     # def batch_assemble(self):
     #     names = filedialog.askopenfilename(
     #         filetypes=[("キャラクタノードリスト", ".cnl"), ("all", ".*")],
@@ -474,14 +471,5 @@ class MainFrame(tkinter.ttk.Frame):
     #     close = QUIT(root)
     #     frame = Frame(root)
     #     fancs = PMCA_dialogs.SETTING_DIALOG_FANC(self, root)
-
-    #     frame.export2folder = Checkbutton(
-    #         root,
-    #         text="個別のフォルダを作成してPMDを保存する",
-    #         variable=fancs.flag_export2folder,
-    #         command=fancs.apply_all,
-    #     )
-
-    #     frame.export2folder.pack()
     #     Button(root, text="OK", command=close).pack(padx=5, pady=5, side=RIGHT)
     #     root.mainloop()

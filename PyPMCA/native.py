@@ -1,8 +1,6 @@
 import pathlib
 import logging
-import sys
-
-
+import sys, shutil
 import PMCA  # type: ignore
 from . import pmd_type
 from . import PMCA_asset
@@ -448,28 +446,23 @@ def get_bones(info_data: pmd_type.InfoData) -> list[pmd_type.BONE]:
     return tmpbone
 
 
-def save_PMD(self, name: str):
-    if self.export2folder:
-        dirc = name[0:-4]
-        os.mkdir(dirc)
-        tmp = name.rsplit("/", 1)
-        name = "%s/%s/%s" % (tmp[0], dirc.rsplit("/", 1)[1], tmp[1])
+def save_PMD(name: pathlib.Path):
+    name.parent.mkdir(exist_ok=True, parents=True)
 
-    if PMCA.Write_PMD(0, name.encode(sysenc, "replace")) == 0:
-        # テクスチャコピー
-        dirc = name.rsplit("/", 1)[0]
-        dirc += "/"
-        info_data = PMCA.getInfo(0)
-        info = pmd.INFO(info_data)
-        for i in range(info.data["mat_count"]):
-            mat = pmd.MATERIAL(**PMCA.getMat(0, i))
+    if PMCA.Write_PMD(0, str(name).encode("cp932", "replace")) == 0:
+        dirc = name.parent
+        info = PMCA.getInfo(0)
+        for i in range(info["mat_count"]):
+            mat = pmd_type.MATERIAL(**PMCA.getMat(0, i))
             if mat.tex != "":
                 try:
+                    # テクスチャコピー
                     shutil.copy(mat.tex_path, dirc)
                 except IOError:
                     LOGGER.error("コピー失敗:%s" % (mat.tex_path))
             if mat.sph != "":
                 try:
+                    # テクスチャコピー
                     shutil.copy(mat.sph_path, dirc)
                 except IOError:
                     LOGGER.error("コピー失敗:%s" % (mat.sph_path))
@@ -479,9 +472,11 @@ def save_PMD(self, name: str):
             toon[i] = toon[i].decode("cp932", "replace")
             if toon[i] != "":
                 try:
+                    # テクスチャコピー
                     shutil.copy("toon/" + toon[i], dirc)
                 except IOError:
                     try:
+                        # テクスチャコピー
                         shutil.copy("parts/" + toon[i], dirc)
                     except IOError:
                         LOGGER.error("コピー失敗:%s" % (toon[i]))
