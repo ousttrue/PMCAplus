@@ -1,8 +1,9 @@
 from typing import List
 import dataclasses
 import logging
-from .. import pmd_type
-from ..assemble import AssembleContext
+
+
+# from ..assemble import AssembleContext
 import PMCA  # type: ignore
 
 
@@ -23,45 +24,6 @@ class MATS_ENTRY:
     mirr_rgb: tuple[float, float, float] | None = None
     author: str | None = None
     license: str | None = None
-
-    def apply(self, x: pmd_type.Submesh, context: AssembleContext) -> None:
-        if self.author != None:
-            for y in self.author.split(" "):
-                if y not in context.authors:
-                    context.authors.append(y)
-        if self.license != None:
-            for y in self.license.split(" "):
-                if y not in context.licenses:
-                    context.licenses.append(y)
-
-        if self.tex != None:
-            x.tex = self.tex
-        if self.tex_path != None:
-            x.tex_path = self.tex_path
-        if self.sph != None:
-            x.sph = self.sph
-        if self.sph_path != None:
-            x.sph_path = self.sph_path
-        if self.diff_rgb != None:
-            x.diff_col = list(self.diff_rgb)
-        if self.alpha != None:
-            x.alpha = self.alpha
-        if self.spec_rgb != None:
-            x.spec_col = list(self.spec_rgb)
-        if self.mirr_rgb != None:
-            x.mirr_col = list(self.mirr_rgb)
-        if self.toon != None:
-            # update toon list
-            pass
-            # name = list(PMCA.getToon(0))
-            # name[self.toon[0]] = self.toon[1].encode("cp932", "replace")
-            # PMCA.setToon(0, name)
-
-            # path = list(PMCA.getToonPath(0))
-            # path[self.toon[0]] = ("toon/" + self.toon[1]).encode("cp932", "replace")
-            # PMCA.setToonPath(0, path)
-
-            # x.toon = self.toon[0]
 
 
 @dataclasses.dataclass

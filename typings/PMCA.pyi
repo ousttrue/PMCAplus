@@ -231,13 +231,13 @@ def Init_PMD() -> None:
     """
     ...
 
-def Set_PMD(num: int, data: bytes) -> None:
+def Set_PMD(num: int, data: bytes) -> bytes:
     """
     Load PMD from file"
     """
     ...
 
-def Add_PMD(num: int, i: int) -> None:
+def Add_PMD(a: bytes, b: bytes) -> bytes:
     """
     Add PMD from file"
     """
@@ -249,7 +249,7 @@ def Copy_PMD(src: int, dst: int) -> None:
     """
     ...
 
-def Marge_PMD(num: int) -> bool:
+def Marge_PMD(data: bytes) -> bytes:
     """
     Marge PMD"
     """

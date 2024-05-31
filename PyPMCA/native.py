@@ -285,68 +285,6 @@ def Set_PMD(num: int, model: pmd_type.PMD):
         )
 
 
-def assemble(self: PMCA_cnl.NODE, num: int) -> AssembleContext:
-    context = AssembleContext()
-
-    LOGGER.info(f"assemble[{num}]: {self.parts.path if self.parts else 'NO PARTS'}")
-
-    # 空モデル
-    data = b""
-    if self.parts and self.parts.path:
-        data = self.parts.path.read_bytes()
-
-    ret = PMCA.Set_PMD(num, data)
-    assert ret
-
-    pmd0 = pmd_type.PMD.create()
-
-    info_data = pmd_type.parse(PMCA.Get_PMD(0))
-    assert info_data
-
-    if self.parts:
-        context.pre_process(info_data.info, self.parts.props)
-        context.post_process(self.parts.props)
-
-    # Parts を合体
-    for x in self.children:
-        if x.parts:
-            _assemble_child(pmd0, x, num, context)
-
-    PMCA.Sort_PMD(num)
-    context.finalize()
-
-    return context
-
-
-def _assemble_child(
-    root: pmd_type.PMD, current: PMCA_cnl.NODE, num: int, context: AssembleContext
-):
-    # 4 にロード
-    assert current.parts and current.parts.path
-    PMCA.Set_PMD(4, current.parts.path.read_bytes())
-
-    pmd_parts = pmd_type.parse(pathlib.Path(current.parts.path).read_bytes())
-    # LOGGER.debug(pmd_parts)
-    if pmd_parts:
-        root.add(pmd_parts)
-
-    pmd4 = pmd_type.parse(PMCA.Get_PMD(4))
-    assert pmd4
-    context.pre_process(pmd4.info, current.parts.props)
-
-    # 0 に 4 を合成
-    PMCA.Add_PMD(num, 4)
-    ret = PMCA.Marge_PMD(num)
-    assert ret
-
-    context.post_process(current.parts.props)
-
-    # 再帰
-    for x in current.children:
-        if x.parts:
-            _assemble_child(root, x, num, context)
-
-
 def set_material(
     context: AssembleContext,
     cnl: PMCA_cnl.MAT_REP,
@@ -358,7 +296,7 @@ def set_material(
         rep_mat = cnl.mat_map.get(x.tex)
         if rep_mat:
             selected = rep_mat.sel
-            selected.apply(x, context)
+            context.apply(x, selected)
             PMCA.setMat(
                 0,
                 i,

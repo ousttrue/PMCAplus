@@ -509,30 +509,34 @@ static PyObject *Set_PMD(PyObject *self, PyObject *args) {
   const uint8_t *p;
   size_t size;
   if (!PyArg_ParseTuple(args, "iy#", &num, &p, &size)) {
-    Py_RETURN_FALSE;
+    Py_RETURN_NONE;
   }
 
   auto model = MODEL::create();
   if (size) {
     model->load({p, size});
   }
-  if (model) {
-    g_model[num] = model;
-  } else {
-    // clear
-    g_model[num] = MODEL::create();
-  }
+  g_model[num] = model;
 
-  Py_RETURN_TRUE;
+  auto bytes = model->to_bytes();
+  return Py_BuildValue("y#", bytes.data(), bytes.size());
 }
 
 static PyObject *Add_PMD(PyObject *self, PyObject *args) {
-  int num, add;
-  if (!PyArg_ParseTuple(args, "ii", &num, &add))
+  const uint8_t *pa;
+  size_t sa;
+  const uint8_t *pb;
+  size_t sb;
+  if (!PyArg_ParseTuple(args, "y#y#", &pa, &sa, &pb, &sb)) {
     Py_RETURN_FALSE;
+  }
 
-  g_model[num]->add_PMD(g_model[add]);
-  Py_RETURN_TRUE;
+  auto a = MODEL::from_bytes({pa, sa});
+  auto b = MODEL::from_bytes({pb, sb});
+  a->add_PMD(b);
+
+  auto bytes = a->to_bytes();
+  return Py_BuildValue("y#", bytes.data(), bytes.size());
 }
 
 static PyObject *Copy_PMD(PyObject *self, PyObject *args) {
@@ -545,19 +549,21 @@ static PyObject *Copy_PMD(PyObject *self, PyObject *args) {
 }
 
 static PyObject *Marge_PMD(PyObject *self, PyObject *args) {
-  int num;
-  if (!PyArg_ParseTuple(args, "i", &num))
-    Py_RETURN_FALSE;
+  const uint8_t *pa;
+  size_t sa;
+  if (!PyArg_ParseTuple(args, "y#", &pa, &sa)) {
+    Py_RETURN_NONE;
+  }
 
-  auto model = g_model[num];
+  auto model = MODEL::from_bytes({pa, sa});
   LOGD << "ボーンマージ";
   if (!model->marge_bone()) {
-    Py_RETURN_FALSE;
+    Py_RETURN_NONE;
   }
 
   LOGD << "材質マージ";
   if (!model->marge_mat()) {
-    Py_RETURN_FALSE;
+    Py_RETURN_NONE;
   }
 
   LOGD << "IKマージ";
@@ -569,7 +575,8 @@ static PyObject *Marge_PMD(PyObject *self, PyObject *args) {
   LOGD << "剛体マージ";
   model->marge_rb();
 
-  Py_RETURN_TRUE;
+  auto bytes = model->to_bytes();
+  return Py_BuildValue("y#", bytes.data(), bytes.size());
 }
 
 static PyObject *Sort_PMD(PyObject *self, PyObject *args) {

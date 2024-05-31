@@ -148,6 +148,13 @@ public:
   static std::shared_ptr<MODEL> create() {
     return std::shared_ptr<MODEL>(new MODEL);
   }
+  static std::shared_ptr<MODEL> from_bytes(std::span<const uint8_t> bytes) {
+    auto model = create();
+    if (model->load(bytes)) {
+      return model;
+    }
+    return {};
+  }
   bool load(std::span<const uint8_t> bytes);
   std::vector<uint8_t> to_bytes() const;
   bool add_PMD(const std::shared_ptr<MODEL> &add);

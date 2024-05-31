@@ -7,6 +7,7 @@ from . import pmd_type
 from . import PMCA_asset
 from . import PMCA_cnl
 from . import native
+from .assemble import AssembleContext
 
 
 LOGGER = logging.getLogger(__name__)
@@ -63,7 +64,8 @@ class App:
         cnl の変更を MODEL=0 に反映して描画を更新する
         """
         LOGGER.info("モデル組立て")
-        context = native.assemble(self.cnl.tree, 0)
+        context = AssembleContext()
+        context.process(self.cnl.tree)
 
         # PMCA.Copy_PMD(0, 1)
 
