@@ -29,6 +29,8 @@ public:
     _pos += size;
   }
 
+  template <typename T> void read(T &value) { read(&value, sizeof(value)); }
+
   std::span<const uint8_t> bytes(int size) {
     if (_pos + size > _data.size()) {
       PLOG_ERROR << _pos << "+" << size << "out of range";

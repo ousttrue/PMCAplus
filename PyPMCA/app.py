@@ -109,7 +109,7 @@ class App:
         for transform_data in self.cnl.transform_data_list:
             data0 = resize.Resize_Model(data0, transform_data.scale)
             for transform_bone in transform_data.bones:
-                data0 = PMCA.Resize_Bone(
+                data0 = resize.Resize_Bone(
                     data0,
                     transform_bone.name.encode("cp932", "replace"),
                     transform_bone.length,

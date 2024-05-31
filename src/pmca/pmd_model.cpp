@@ -20,60 +20,26 @@ static double angle_from_vec(double u, double v) {
   return angle;
 }
 
-static void coordtrans(double array[][3], unsigned int len, double loc[],
-                       double mtr[3][3]) {
-  /*配列は大きさ[len][3]の2次元配列で、点の座標が格納されている
-   */
-  int i, j, k;
-  double tmp[3];
-
-  // 座標変換
-  for (i = 0; i < len; i++) {
-    if (&loc != 0) {
-      for (j = 0; j < 3; j++) {
-        tmp[j] = array[i][j] - loc[j];
-      }
-    }
-    for (j = 0; j < 3; j++) {
-      array[i][j] = 0;
-      for (k = 0; k < 3; k++) {
-        array[i][j] = array[i][j] + mtr[j][k] * tmp[k];
-      }
-    }
+// 座標変換
+static void coordtrans(std::span<float3> array, const float3 &loc,
+                       const mat3 &mtr) {
+  for (auto &a : array) {
+    a = mtr.rotate(a - loc);
   }
 }
 
-static void coordtrans_inv(double array[][3], unsigned int len, double loc[],
-                           double mtr[3][3]) {
-  /*配列は大きさ[len][3]の2次元配列で、点の座標が格納されている
-   */
-  int i, j, k;
-  double tmp[3];
-  double inverse_mtr[3][3];
-
+static void coordtrans_inv(std::span<float3> array, const float3 &loc,
+                           const mat3 &mtr) {
   // 転置行列
-  for (i = 0; i < 3; i++) {
-    for (j = 0; j < 3; j++) {
-      inverse_mtr[i][j] = mtr[j][i];
-    }
-  }
+  auto inverse_mtr = mtr.transposed();
 
   // 座標変換
-  for (i = 0; i < len; i++) {
-    for (j = 0; j < 3; j++) {
-      tmp[j] = 0;
-      for (k = 0; k < 3; k++) {
-        tmp[j] = tmp[j] + inverse_mtr[j][k] * array[i][k];
-      }
-    }
-
-    if (&loc != 0) {
-      for (j = 0; j < 3; j++) {
-        array[i][j] = tmp[j] + loc[j];
-      }
-    }
+  for (auto &a : array) {
+    auto tmp = inverse_mtr.rotate(a);
+    a = tmp + loc;
   }
 }
+
 static void *MALLOC(size_t s) {
   auto p = malloc(s);
   if (p == NULL) {
@@ -149,7 +115,7 @@ bool MODEL::load(std::span<const uint8_t> bytes) {
     this->bone[i].TBone_index = r.u16();
     this->bone[i].type = r.u8();
     this->bone[i].IKBone_index = r.u16();
-    r.read(this->bone[i].loc, 12);
+    r.read(this->bone[i].loc);
     this->bone[i].name_eng[0] = '\0';
     this->bone[i].name[21] = '\0';
   }
@@ -306,7 +272,7 @@ bool MODEL::load(std::span<const uint8_t> bytes) {
   for (int i = 0; i < joint_count; i++) {
     r.read(this->joint[i].name, 20);
     r.read(this->joint[i].rbody, 8);
-    r.read(this->joint[i].loc, 12);
+    r.read(this->joint[i].loc);
     r.read(this->joint[i].rot, 12);
     r.read(this->joint[i].limit, 4 * 12);
     r.read(this->joint[i].spring, 4 * 6);
@@ -323,6 +289,10 @@ struct Writer {
     auto begin = buffer.size();
     buffer.resize(begin + len);
     memcpy(buffer.data() + begin, p, len);
+  }
+
+  template <typename T> void write(const T &value) {
+    write(&value, sizeof(value));
   }
 
   void write(const void *p, size_t len, int count) { write(p, len * count); }
@@ -395,7 +365,7 @@ std::vector<uint8_t> MODEL::to_bytes() const {
     w.write(&this->bone[i].TBone_index, 2);
     w.write(&this->bone[i].type, 1);
     w.write(&this->bone[i].IKBone_index, 2);
-    w.write(this->bone[i].loc, 4, 3);
+    w.write(this->bone[i].loc);
   }
 
   uint16_t IK_count = this->IK.size();
@@ -490,7 +460,7 @@ std::vector<uint8_t> MODEL::to_bytes() const {
   for (int i = 0; i < this->joint.size(); i++) {
     w.write(this->joint[i].name, 1, 20);
     w.write(this->joint[i].rbody, 4, 2);
-    w.write(this->joint[i].loc, 4, 3);
+    w.write(this->joint[i].loc);
     w.write(this->joint[i].rot, 4, 3);
     w.write(this->joint[i].limit, 4, 12);
     w.write(this->joint[i].spring, 4, 6);
@@ -1360,125 +1330,64 @@ void MODEL::rename_tail() {
 }
 
 bool MODEL::scale_bone(int index, double sx, double sy, double sz) {
-  int i, j, k, l;
-  double vec[3];
-  double vec_size;
-  double nor_vec[3];
-  double mtr[3][3];
-  double mtrz[3][3];
-  double mtrx[3][3];
-  double loc[3] = {0.0, 0.0, 0.0};
-  double rot[3]; // ZXY
-  double theta;
-
-  double tmp[3];
-
-  double(*tmp_vt)[3];
-  unsigned int len_vt;
-  unsigned int *index_vt;
-
-  double(*tmp_bone)[3];
-  unsigned int len_bone;
-  unsigned int *index_bone;
-  double(*diff_bone)[3];
-
-  // ベクトルがY軸に沿う向きになるようにする
-  if (!this->bone_vec(index, loc, vec)) {
+  auto tail_index = this->find_tail(index);
+  if (!tail_index) {
     return false;
   }
 
+  auto loc = this->bone[index].loc;
+
+  // ベクトルがY軸に沿う向きになるようにする
+  auto vec = this->bone[*tail_index].loc - this->bone[index].loc;
+
   // ベクトルのノーマライズ
-  vec_size = 0.0;
-  for (i = 0; i < 3; i++) {
-    vec_size = vec_size + vec[i] * vec[i];
-  }
-  vec_size = sqrt(vec_size);
-  for (i = 0; i < 3; i++) {
-    nor_vec[i] = vec[i] / vec_size;
-  }
+  vec = vec.normalized();
 
   // ベクトルのZXY角を求める
+  double rot[3]; // ZXY
   rot[0] = angle_from_vec(vec[0], vec[1]);
   rot[1] = angle_from_vec(vec[2], sqrt(vec[0] * vec[0] + vec[1] * vec[1]));
   rot[2] = 0;
 
-  // printf("%f %f %f\n", rot[0], rot[1], rot[2]);
-
-  // 行列初期化
-  memset(mtr, 0, 9 * sizeof(double));
-  memset(mtrz, 0, 9 * sizeof(double));
-  memset(mtrx, 0, 9 * sizeof(double));
-
   // 回転行列を求める
-  // Z軸
-  theta = rot[0];
-  mtrz[0][0] = cos(theta);
-  mtrz[1][0] = sin(theta);
-  mtrz[0][1] = -sin(theta);
-  mtrz[1][1] = cos(theta);
-  mtrz[2][2] = 1;
+  auto mtr = mat3::rotate_x(rot[1]) * mat3::rotate_z(rot[0]);
 
-  // X軸
-  theta = rot[1];
-  mtrx[0][0] = 1;
-  mtrx[1][1] = cos(theta);
-  mtrx[1][2] = sin(theta);
-  mtrx[2][1] = -sin(theta);
-  mtrx[2][2] = cos(theta);
-
-  // 合成
-  for (i = 0; i < 3; i++) {
-    for (j = 0; j < 3; j++) {
-      for (k = 0; k < 3; k++) {
-        mtr[i][j] = mtr[i][j] + mtrx[i][k] * mtrz[k][j];
-      }
-    }
-  }
-  /*
-  printf("\n");
-  for(i=0; i<3; i++){
-          for(j=0; j<3; j++){
-                  printf("%f ", mtr[i][j]);
-          }
-          printf("\n");
-  }
-  printf("\n");
-  */
   // 座標変換
   // 変換する頂点をtmp_vtに格納
-  len_vt = 0;
-  for (i = 0; i < (this->vt.size()); i++) {
+  auto len_vt = 0;
+  for (int i = 0; i < (this->vt.size()); i++) {
     if (this->vt[i].bone_num[0] == index || this->vt[i].bone_num[1] == index) {
       len_vt++;
     }
   }
-  tmp_vt = (double(*)[3])MALLOC(sizeof(double) * len_vt * 3);
-  index_vt = (unsigned int *)MALLOC(sizeof(unsigned int) * len_vt);
-  j = 0;
-  for (i = 0; i < this->vt.size(); i++) {
+  std::vector<float3> tmp_vt(len_vt);
+  std::vector<unsigned int> index_vt(len_vt);
+  int j = 0;
+  for (int i = 0; i < this->vt.size(); i++) {
     if (this->vt[i].bone_num[0] == index || this->vt[i].bone_num[1] == index) {
       index_vt[j] = i;
-      for (k = 0; k < 3; k++) {
+      for (int k = 0; k < 3; k++) {
         tmp_vt[j][k] = this->vt[i].loc[k];
       }
       j++;
     }
   }
+
   // 変換するボーンの子をtmp_boneに格納
-  len_bone = 0;
-  for (i = 0; i < (this->bone.size()); i++) {
+  int len_bone = 0;
+  for (int i = 0; i < (this->bone.size()); i++) {
     if (this->bone[i].PBone_index == index) {
       len_bone++;
     }
   }
-  tmp_bone = (double(*)[3])MALLOC(sizeof(double) * len_bone * 3);
-  diff_bone = (double(*)[3])MALLOC(sizeof(double) * len_bone * 3);
-  index_bone = (unsigned int *)MALLOC(sizeof(unsigned int) * len_bone);
+  std::vector<float3> tmp_bone(len_bone);
+  std::vector<float3> diff_bone(len_bone);
+  std::vector<unsigned int> index_bone(len_bone);
   j = 0;
-  for (i = 0; i < this->bone.size(); i++) {
+  for (int i = 0; i < this->bone.size(); i++) {
     if (this->bone[i].PBone_index == index) {
       index_bone[j] = i;
-      for (k = 0; k < 3; k++) {
+      for (int k = 0; k < 3; k++) {
         tmp_bone[j][k] = this->bone[i].loc[k];
         diff_bone[j][k] = tmp_bone[j][k];
       }
@@ -1486,28 +1395,29 @@ bool MODEL::scale_bone(int index, double sx, double sy, double sz) {
     }
   }
   // 変換
-  coordtrans(tmp_vt, len_vt, loc, mtr);
-  coordtrans(tmp_bone, len_bone, loc, mtr);
+  coordtrans(tmp_vt, loc, mtr);
+  coordtrans(tmp_bone, loc, mtr);
 
   // 変形
-  for (i = 0; i < len_vt; i++) {
+  for (int i = 0; i < len_vt; i++) {
     tmp_vt[i][0] = sx * tmp_vt[i][0];
     tmp_vt[i][1] = sy * tmp_vt[i][1];
     tmp_vt[i][2] = sz * tmp_vt[i][2];
   }
-  for (i = 0; i < len_bone; i++) {
+  for (int i = 0; i < len_bone; i++) {
     tmp_bone[i][0] = sx * tmp_bone[i][0];
     tmp_bone[i][1] = sy * tmp_bone[i][1];
     tmp_bone[i][2] = sz * tmp_bone[i][2];
   }
   // 逆変換
-  coordtrans_inv(tmp_vt, len_vt, loc, mtr);
-  coordtrans_inv(tmp_bone, len_bone, loc, mtr);
+  coordtrans_inv(tmp_vt, loc, mtr);
+  coordtrans_inv(tmp_bone, loc, mtr);
 
   // 変換結果を元のデータに書き込む
   // 頂点
-  for (i = 0; i < len_vt; i++) {
-    k = index_vt[i];
+  double tmp[3];
+  for (int i = 0; i < len_vt; i++) {
+    auto k = index_vt[i];
     tmp[0] = 0.0;
     if (this->vt[k].bone_num[0] == index) {
       tmp[0] += (double)this->vt[k].bone_weight / 100;
@@ -1524,14 +1434,14 @@ bool MODEL::scale_bone(int index, double sx, double sy, double sz) {
   }
 
   // ボーン
-  for (i = 0; i < len_bone; i++) {
-    for (j = 0; j < 3; j++) {
+  for (int i = 0; i < len_bone; i++) {
+    for (int j = 0; j < 3; j++) {
       diff_bone[i][j] = tmp_bone[i][j] - diff_bone[i][j];
     }
   }
 
-  for (i = 0; i < this->bone.size(); i++) {
-    l = i;
+  for (int i = 0; i < this->bone.size(); i++) {
+    auto l = i;
     for (j = 0; j < this->bone.size(); j++) {
       if (this->bone[l].PBone_index == 65535) {
         break;
@@ -1555,32 +1465,22 @@ bool MODEL::scale_bone(int index, double sx, double sy, double sz) {
   return true;
 }
 
-bool MODEL::bone_vec(int index, double loc[], double vec[]) {
-  for (int i = 0; i < 3; i++) {
-    loc[i] = this->bone[index].loc[i];
+std::optional<int> MODEL::find_tail(int index) const {
+  int tail = this->bone[index].TBone_index;
+  if (tail != 0) {
+    return tail;
   }
 
-  int tail = this->bone[index].TBone_index;
-  if (tail == 0) {
-    for (int i = 0; i < this->bone.size(); i++) {
-      if (this->bone[index].PBone_index == index)
-        tail = i;
-      break;
+  for (int i = 0; i < this->bone.size(); i++) {
+    if (this->bone[index].PBone_index == index) {
+      return i;
     }
   }
-  if (tail == 0) {
-    return false;
-  }
 
-  for (int i = 0; i < 3; i++) {
-    vec[i] = this->bone[tail].loc[i] - this->bone[index].loc[i];
-    // printf("%f ", vec[i]);
-  }
-
-  return true;
+  return {};
 }
 
-void MODEL::move_bone(unsigned int index, double diff[]) {
+void MODEL::move_bone(unsigned int index, const float3 &diff) {
   if (index > this->bone.size())
     return;
 
@@ -1668,7 +1568,7 @@ bool MODEL::marge_bone() {
             this->bone[i].TBone_index = this->bone[j].TBone_index;
             this->bone[i].type = this->bone[j].type;
             this->bone[i].IKBone_index = this->bone[j].IKBone_index;
-            memcpy(this->bone[i].loc, this->bone[j].loc, sizeof(float) * 3);
+            this->bone[i].loc = this->bone[j].loc;
           }
           index[j] = i - tmp;
           marge[j] = 1;
@@ -2020,7 +1920,7 @@ void MODEL::adjust_joint() {
   for (int i = 0; i < this->joint.size(); i++) {
     for (int j = 0; j < this->bone.size(); j++) {
       if (strcmp(this->joint[i].name, this->bone[j].name) == 0) {
-        memcpy(this->joint[i].loc, this->bone[j].loc, sizeof(float) * 3);
+        this->joint[i].loc = this->bone[j].loc;
       }
     }
   }

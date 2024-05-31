@@ -10,12 +10,6 @@ def Marge_PMD(data: bytes) -> bytes:
     """
     ...
 
-def Resize_Bone(data: bytes, name: bytes, length: float, thickness: float) -> bytes:
-    """
-    Resize_Bone"
-    """
-    ...
-
 def Move_Bone(data: bytes, name: bytes, x: float, y: float, z: float) -> bytes:
     """
     Move_Bone"
