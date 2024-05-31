@@ -231,7 +231,7 @@ def Init_PMD() -> None:
     """
     ...
 
-def Load_PMD(num: int, path: bytes) -> None:
+def Set_PMD(num: int, data: bytes) -> None:
     """
     Load PMD from file"
     """

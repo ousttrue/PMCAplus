@@ -291,9 +291,11 @@ def assemble(self: PMCA_cnl.NODE, num: int) -> AssembleContext:
     LOGGER.info(f"assemble[{num}]: {self.parts.path if self.parts else 'NO PARTS'}")
 
     # 空モデル
-    ret = PMCA.Load_PMD(
-        num, self.parts.path.encode(sys.getdefaultencoding(), "replace")
-    )
+    data = b""
+    if self.parts and self.parts.path:
+        data = self.parts.path.read_bytes()
+
+    ret = PMCA.Set_PMD(num, data)
     assert ret
 
     pmd0 = pmd_type.PMD.create()
@@ -319,14 +321,9 @@ def assemble(self: PMCA_cnl.NODE, num: int) -> AssembleContext:
 def _assemble_child(
     root: pmd_type.PMD, current: PMCA_cnl.NODE, num: int, context: AssembleContext
 ):
-    assert current.parts
-    LOGGER.info("パーツのパス:%s" % (current.parts.path))
-
     # 4 にロード
-    ret = PMCA.Load_PMD(
-        4, current.parts.path.encode(sys.getdefaultencoding(), "replace")
-    )
-    assert ret
+    assert current.parts and current.parts.path
+    PMCA.Set_PMD(4, current.parts.path.read_bytes())
 
     pmd_parts = pmd_type.parse(pathlib.Path(current.parts.path).read_bytes())
     # LOGGER.debug(pmd_parts)

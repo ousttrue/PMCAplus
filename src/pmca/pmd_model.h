@@ -125,7 +125,6 @@ struct JOINT { // 124byte
 };
 
 struct MODEL {
-  std::string path;
   HEADER header;
   std::vector<VERTEX> vt;
   std::vector<unsigned short> vt_index;
@@ -138,7 +137,6 @@ struct MODEL {
   std::vector<BONE_DISP> bone_disp;
   unsigned char eng_support = 0;
   std::string toon[10];
-  std::string toon_path[10];
   std::vector<RIGID_BODY> rbody;
   std::vector<JOINT> joint;
 
@@ -150,8 +148,7 @@ public:
   static std::shared_ptr<MODEL> create() {
     return std::shared_ptr<MODEL>(new MODEL);
   }
-  static std::shared_ptr<MODEL> load(const std::string &path);
-  bool load(std::span<uint8_t> bytes, const std::string &file_name);
+  bool load(std::span<const uint8_t> bytes);
   std::vector<uint8_t> to_bytes() const;
   bool add_PMD(const std::shared_ptr<MODEL> &add);
 

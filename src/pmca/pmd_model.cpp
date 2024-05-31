@@ -95,8 +95,7 @@ MODEL::MODEL() {}
 
 MODEL::~MODEL() {}
 
-bool MODEL::load(std::span<uint8_t> bytes, const std::string &file_name) {
-  this->path = file_name;
+bool MODEL::load(std::span<const uint8_t> bytes) {
 
   ioutil::binaryreader r(bytes);
 
@@ -137,29 +136,6 @@ bool MODEL::load(std::span<uint8_t> bytes, const std::string &file_name) {
   for (int i = 0; i < this->mat.size(); i++) {
     r.read(&this->mat[i], 70);
     this->mat[i].tex[21] = '\0';
-
-    auto str = file_name;
-    {
-      auto char_p = str.rfind('/');
-      if (char_p != std::string::npos) {
-        str = str.substr(0, char_p + 1);
-      } else {
-        str = {};
-      }
-    }
-
-    {
-      auto char_p = strchr(this->mat[i].tex, '*');
-      if (char_p != NULL) {
-        *char_p = '\0';
-        ++char_p;
-        strcpy(this->mat[i].sph, char_p);
-        sprintf(this->mat[i].sph_path, "%s%s\0", str.c_str(), this->mat[i].sph);
-      } else {
-        *this->mat[i].sph = '\0';
-      }
-    }
-    sprintf(this->mat[i].tex_path, "%s%s\0", str.c_str(), this->mat[i].tex);
   }
 
   uint16_t bone_count = r.u16();
@@ -237,16 +213,16 @@ bool MODEL::load(std::span<uint8_t> bytes, const std::string &file_name) {
   if (r.isend()) {
     PLOG_DEBUG << "拡張部分なし";
     this->eng_support = 0;
-    this->toon_path[0] = this->toon[0] = "toon01.bmp";
-    this->toon_path[1] = this->toon[1] = "toon02.bmp";
-    this->toon_path[2] = this->toon[2] = "toon03.bmp";
-    this->toon_path[3] = this->toon[3] = "toon04.bmp";
-    this->toon_path[4] = this->toon[4] = "toon05.bmp";
-    this->toon_path[5] = this->toon[5] = "toon06.bmp";
-    this->toon_path[6] = this->toon[6] = "toon07.bmp";
-    this->toon_path[7] = this->toon[7] = "toon08.bmp";
-    this->toon_path[8] = this->toon[8] = "toon09.bmp";
-    this->toon_path[9] = this->toon[9] = "toon10.bmp";
+    this->toon[0] = "toon01.bmp";
+    this->toon[1] = "toon02.bmp";
+    this->toon[2] = "toon03.bmp";
+    this->toon[3] = "toon04.bmp";
+    this->toon[4] = "toon05.bmp";
+    this->toon[5] = "toon06.bmp";
+    this->toon[6] = "toon07.bmp";
+    this->toon[7] = "toon08.bmp";
+    this->toon[8] = "toon09.bmp";
+    this->toon[9] = "toon10.bmp";
     this->rbody.clear();
     this->joint.clear();
     return 0;
@@ -303,14 +279,6 @@ bool MODEL::load(std::span<uint8_t> bytes, const std::string &file_name) {
     char buf[100];
     r.read(buf, 100);
     this->toon[i] = buf;
-    auto str = file_name;
-    auto char_p = str.rfind('/');
-    if (char_p != std::string::npos) {
-      str = str.substr(0, char_p + 1);
-    } else {
-      str = {};
-    }
-    this->toon_path[i] = (str + this->toon[i]);
   }
 
   int rbody_count = r.i32();
@@ -344,27 +312,6 @@ bool MODEL::load(std::span<uint8_t> bytes, const std::string &file_name) {
   }
 
   return true;
-}
-
-std::shared_ptr<MODEL> MODEL::load(const std::string &file_name) {
-  if (file_name.empty()) {
-    PLOG_WARNING << "ファイル名がありません";
-    return nullptr;
-  }
-
-  auto bytes = ioutil::readfile(file_name);
-  if (bytes.empty()) {
-    PLOG_ERROR << "Can't open file:" << file_name;
-    return nullptr;
-  }
-
-  PLOG_DEBUG << file_name;
-  auto model = MODEL::create();
-  if (!model->load(bytes, file_name)) {
-    return nullptr;
-  }
-
-  return model;
 }
 
 struct Writer {
@@ -771,7 +718,6 @@ int copy_PMD(MODEL *out, MODEL *model) {
   out->bone_disp = model->bone_disp;
 
   memcpy(out->toon, model->toon, sizeof(char) * 10 * 100);
-  memcpy(out->toon_path, model->toon_path, sizeof(char) * 10 * NAME_LEN);
 
   // 英名
   out->eng_support = model->eng_support;

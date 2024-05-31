@@ -1,4 +1,5 @@
 from typing import Iterator
+import pathlib
 import logging
 import re
 import dataclasses
@@ -28,15 +29,15 @@ class PARTS:
 
     name: str
     joint: list[str]
-    path: str = ""
+    path: pathlib.Path | None = None
     comment: str = ""
     type: list[str] = dataclasses.field(default_factory=list)
     props: dict[str, str] = dataclasses.field(default_factory=dict)
 
     @staticmethod
-    def from_lines(directory: str, lines: list[str]) -> "PARTS":
+    def from_lines(directory: pathlib.Path | None, lines: list[str]) -> "PARTS":
         name = ""
-        path = ""
+        path: pathlib.Path | None = None
         comment = ""
         head_types: list[str] = []
         joint: list[str] = []
@@ -55,7 +56,8 @@ class PARTS:
                     case "name":
                         name = m.group(2)
                     case "path":
-                        path = directory + m.group(2)
+                        assert directory
+                        path = directory / m.group(2)
                     case "comment":
                         comment = m.group(2)
                     case "type":
@@ -86,12 +88,12 @@ class PARTS:
         if lines[0].strip() == "PMCA Parts list v2.0":
             lines.pop(0)
 
-        directory = ""
+        directory: pathlib.Path | None = None
         start = 0
         for i, l in enumerate(lines):
             l = l.strip()
             if l.startswith("SETDIR"):
-                directory = l[6:].strip()
+                directory = pathlib.Path(l[6:].strip())
                 start = i + 1
             elif l == "NEXT":
                 yield PARTS.from_lines(directory, lines[start:i])

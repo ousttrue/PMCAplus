@@ -12,11 +12,11 @@ namespace ioutil {
 std::vector<uint8_t> readfile(const std::string &path);
 
 class binaryreader {
-  std::span<uint8_t> _data;
+  std::span<const uint8_t> _data;
   int _pos = 0;
 
 public:
-  binaryreader(std::span<uint8_t> data) : _data(data) {}
+  binaryreader(std::span<const uint8_t> data) : _data(data) {}
 
   bool isend() const { return _pos >= _data.size(); }
 
@@ -29,7 +29,7 @@ public:
     _pos += size;
   }
 
-  std::span<uint8_t> bytes(int size) {
+  std::span<const uint8_t> bytes(int size) {
     if (_pos + size > _data.size()) {
       PLOG_ERROR << _pos << "+" << size << "out of range";
       throw std::runtime_error("out of range");

@@ -364,22 +364,6 @@ static PyObject *setToon(PyObject *self, PyObject *args) {
   Py_RETURN_TRUE;
 }
 
-static PyObject *setToonPath(PyObject *self, PyObject *args) {
-  int num;
-  PyObject *tmp;
-  if (!PyArg_ParseTuple(args, "iO", &num, &tmp))
-    Py_RETURN_FALSE;
-
-  auto list = PyList_to_Array_Str(tmp);
-
-  auto model = g_model[num];
-  for (size_t i = 0; i < list.size() && i < 10; ++i) {
-    model->toon_path[i] = list[i];
-  }
-
-  Py_RETURN_TRUE;
-}
-
 static PyObject *setRb(PyObject *self, PyObject *args) {
   int num = 0, i = 0;
   RIGID_BODY rbody;
@@ -520,14 +504,18 @@ static PyObject *Init_PMD(PyObject *self, PyObject *args) {
   return Py_BuildValue("i", 0);
 }
 
-static PyObject *Load_PMD(PyObject *self, PyObject *args) {
-  const char *str;
+static PyObject *Set_PMD(PyObject *self, PyObject *args) {
   int num;
-  if (!PyArg_ParseTuple(args, "iy", &num, &str)) {
+  const uint8_t *p;
+  size_t size;
+  if (!PyArg_ParseTuple(args, "iy#", &num, &p, &size)) {
     Py_RETURN_FALSE;
   }
 
-  auto model = MODEL::load(str);
+  auto model = MODEL::create();
+  if (size) {
+    model->load({p, size});
+  }
   if (model) {
     g_model[num] = model;
   } else {
@@ -711,7 +699,7 @@ static PyObject *Get_PMD(PyObject *self, PyObject *args) {
     Py_RETURN_NONE;
   }
 
-  MODEL::create()->load(bytes, model->path);
+  MODEL::create()->load(bytes);
 
   return Py_BuildValue("y#", bytes.data(), bytes.size());
 }
@@ -754,7 +742,6 @@ static PyMethodDef PMCAMethods[] = {
     {"setBone_group", setBone_group, METH_VARARGS, "Set Bone_group of PMD"},
     {"setBone_disp", setBone_disp, METH_VARARGS, "Set Bone_disp of PMD"},
     {"setToon", setToon, METH_VARARGS, "Set Toon textures of PMD"},
-    {"setToonPath", setToonPath, METH_VARARGS, "Set Toon textures path of PMD"},
     {"setRb", setRb, METH_VARARGS, "Set Rigid bodies of PMD"},
     {"setJoint", setJoint, METH_VARARGS, "Set Joints of PMD"},
     /***********************************************************************/
@@ -764,7 +751,7 @@ static PyMethodDef PMCAMethods[] = {
      "Set Name and Comment"},
     /***********************************************************************/
     {"Init_PMD", Init_PMD, METH_VARARGS, "Initialize"},
-    {"Load_PMD", Load_PMD, METH_VARARGS, "Load PMD from file"},
+    {"Set_PMD", Set_PMD, METH_VARARGS, "Set PMD bytes"},
     {"Add_PMD", Add_PMD, METH_VARARGS, "Add PMD from file"},
     {"Copy_PMD", Copy_PMD, METH_VARARGS, "Copy PMD"},
     {"Marge_PMD", Marge_PMD, METH_VARARGS, "Marge PMD"},
