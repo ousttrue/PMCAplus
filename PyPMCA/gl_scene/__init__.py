@@ -1,5 +1,5 @@
 from typing import Callable
-import dataclasses
+import pathlib
 import logging
 from OpenGL import GL
 from glglue import glo
@@ -7,16 +7,10 @@ from glglue.camera.mouse_camera import MouseCamera
 from glglue.drawable import Drawable, axes, grid
 import glglue.frame_input
 from PIL import Image
+from .. import pmd_type
 
 
 LOGGER = logging.getLogger(__name__)
-
-
-@dataclasses.dataclass
-class PmdSrc:
-    vertices: bytes
-    indices: bytes
-    submeshes: list[tuple[int, str]]
 
 
 PmdVS = """#version 330
@@ -75,7 +69,8 @@ class GlScene:
         self.initialized = False
         self.mouse_camera = MouseCamera()
         self.drawables: list[Drawable] = []
-        self.model_src: PmdSrc | None = None
+        self.model_src: pmd_type.PMD | None = None
+        self.texture_dir = pathlib.Path()
         self.model_drawable: Drawable | None = None
         self.is_shutdown = False
         self.clear_color = (0.3, 0.4, 0.5, 1)
@@ -113,7 +108,7 @@ class GlScene:
                 vbo.set_vertices(memoryview(self.model_src.vertices))
 
                 ibo = glo.Ibo()
-                ibo.set_bytes(self.model_src.indices, 2)
+                ibo.set_indices(self.model_src.indices)
 
                 vao = glo.Vao(
                     vbo,
@@ -138,18 +133,24 @@ class GlScene:
                 props = shader.create_props(self.mouse_camera.camera)
                 u_texture = glo.UniformLocation.create(shader.program, "u_texture")
 
-                for draw_count, texture_path in self.model_src.submeshes:
+                for submesh in self.model_src.submeshes:
                     self.model_drawable.push_submesh(
                         shader,
-                        draw_count,
-                        props + [texture_func(texture_path, u_texture)],
+                        submesh.index_count,
+                        props
+                        + [
+                            texture_func(
+                                self.texture_dir / submesh.texture_file.decode('cp932'), u_texture
+                            )
+                        ],
                     )
 
                 LOGGER.info("create mesh drawable")
 
-    def set_model(self, src: PmdSrc) -> None:
+    def set_model(self, src: pmd_type.PMD, texture_dir: pathlib.Path) -> None:
         self.model_drawable = None
         self.model_src = src
+        self.texture_dir = texture_dir
 
     def render(self, frame: glglue.frame_input.FrameInput):
         self.lazy_initialize()

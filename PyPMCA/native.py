@@ -161,9 +161,9 @@ def Set_PMD(num: int, model: pmd_type.PMD):
         bytes(model.info.comment.encode("cp932", "replace")),
         bytes(model.info.name_eng.encode("cp932", "replace")),
         bytes(model.info.comment_eng.encode("cp932", "replace")),
-        len(model.vt),
-        len(model.face),
-        len(model.mat),
+        len(model.vertices),
+        len(model.indices),
+        len(model.submeshes),
         len(model.bone),
         len(model.IK_list),
         len(model.skin),
@@ -176,15 +176,15 @@ def Set_PMD(num: int, model: pmd_type.PMD):
         model.info.skin_index,
     )
 
-    for i, x in enumerate(model.vt):
+    for i, x in enumerate(model.vertices):
         PMCA.setVt(
             num, i, x.loc, x.nor, x.uv, x.bone_num0, x.bone_num1, x.weight, x.edge
         )
 
-    for i, x in enumerate(model.face):
+    for i, x in enumerate(model.indices):
         PMCA.setFace(num, i, x)
 
-    for i, x in enumerate(model.mat):
+    for i, x in enumerate(model.submeshes):
         PMCA.setMat(
             num,
             i,
@@ -296,7 +296,7 @@ def assemble(self: PMCA_cnl.NODE, num: int) -> AssembleContext:
     )
     assert ret
 
-    pmd0 = pmd_type.PMD()
+    pmd0 = pmd_type.PMD.create()
 
     info_data = PMCA.getInfo(0)
 
@@ -413,35 +413,37 @@ def get_bones(info_data: pmd_type.InfoData) -> list[pmd_type.BONE]:
 
 def save_PMD(name: pathlib.Path):
     name.parent.mkdir(exist_ok=True, parents=True)
+    data = PMCA.Get_PMD(0)
+    assert data
+    name.write_bytes(data)
 
-    if PMCA.Write_PMD(0, str(name).encode("cp932", "replace")) == 0:
-        dirc = name.parent
-        info = PMCA.getInfo(0)
-        for i in range(info["mat_count"]):
-            mat = pmd_type.MATERIAL(**PMCA.getMat(0, i))
-            if mat.tex != "":
-                try:
-                    # テクスチャコピー
-                    shutil.copy(mat.tex_path, dirc)
-                except IOError:
-                    LOGGER.error("コピー失敗:%s" % (mat.tex_path))
-            if mat.sph != "":
-                try:
-                    # テクスチャコピー
-                    shutil.copy(mat.sph_path, dirc)
-                except IOError:
-                    LOGGER.error("コピー失敗:%s" % (mat.sph_path))
+    dirc = name.parent
+    info = PMCA.getInfo(0)
+    for i in range(info["mat_count"]):
+        mat = pmd_type.MATERIAL(**PMCA.getMat(0, i))
+        if mat.tex != "":
+            try:
+                # テクスチャコピー
+                shutil.copy(mat.tex_path, dirc)
+            except IOError:
+                LOGGER.error("コピー失敗:%s" % (mat.tex_path))
+        if mat.sph != "":
+            try:
+                # テクスチャコピー
+                shutil.copy(mat.sph_path, dirc)
+            except IOError:
+                LOGGER.error("コピー失敗:%s" % (mat.sph_path))
 
-        toon = PMCA.getToon(0)
-        for i, x in enumerate(PMCA.getToonPath(0)):
-            toon[i] = toon[i].decode("cp932", "replace")
-            if toon[i] != "":
+    toon = PMCA.getToon(0)
+    for i, x in enumerate(PMCA.getToonPath(0)):
+        toon[i] = toon[i].decode("cp932", "replace")
+        if toon[i] != "":
+            try:
+                # テクスチャコピー
+                shutil.copy("toon/" + toon[i], dirc)
+            except IOError:
                 try:
                     # テクスチャコピー
-                    shutil.copy("toon/" + toon[i], dirc)
+                    shutil.copy("parts/" + toon[i], dirc)
                 except IOError:
-                    try:
-                        # テクスチャコピー
-                        shutil.copy("parts/" + toon[i], dirc)
-                    except IOError:
-                        LOGGER.error("コピー失敗:%s" % (toon[i]))
+                    LOGGER.error("コピー失敗:%s" % (toon[i]))

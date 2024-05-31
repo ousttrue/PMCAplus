@@ -11,10 +11,10 @@ from .skin import SKIN
 
 @dataclasses.dataclass
 class PMD:
-    info: INFO = dataclasses.field(default_factory=INFO)
-    vt: ctypes.Array[Vertex] | None = None
-    face: ctypes.Array[ctypes.c_uint16] | None = None
-    mat: ctypes.Array[Submesh] | None = None
+    info: INFO
+    vertices: ctypes.Array[Vertex]
+    indices: ctypes.Array[ctypes.c_uint16]
+    submeshes: ctypes.Array[Submesh]
     bone: list[BONE] = dataclasses.field(default_factory=list)
     IK: list[IK_LIST] = dataclasses.field(default_factory=list)
     skin: list[SKIN] = dataclasses.field(default_factory=list)
@@ -24,59 +24,68 @@ class PMD:
     rb: ctypes.Array[RigidBody] | None = None
     joint: ctypes.Array[Joint] | None = None
 
+    @staticmethod
+    def create() -> "PMD":
+        return PMD(
+            info=INFO(),
+            vertices=None,
+            indices=None,
+            submeshes=None,
+        )
+
     def add(self, parts: "PMD") -> None:
         """
         port from c++
 
         bool MODEL::add_PMD(const std::shared_ptr<MODEL> &add)
         """
-        pre_vt_size = len(self.vt) if self.vt else 0
-        pre_face_size = len(self.face) if self.face else 0
-        pre_mat_size = len(self.mat) if self.mat else 0
+        pre_vt_size = len(self.vertices) if self.vertices else 0
+        pre_face_size = len(self.indices) if self.indices else 0
+        pre_mat_size = len(self.submeshes) if self.submeshes else 0
         pre_bone_size = len(self.bone) if self.bone else 0
         # pre_skin_disp_size = len(self.skin_disp) if self.info.skin_index
         pre_bone_group_size = len(self.bone_group)
         pre_rbody_size = len(self.rb) if self.rb else 0
 
         # 頂点
-        assert parts.vt
-        vt = (Vertex * (pre_vt_size + len(parts.vt)))()
-        if self.vt:
-            for i, v in enumerate(self.vt):
+        assert parts.vertices
+        vt = (Vertex * (pre_vt_size + len(parts.vertices)))()
+        if self.vertices:
+            for i, v in enumerate(self.vertices):
                 vt[i] = v
         index = pre_vt_size
-        for v in parts.vt:
+        for v in parts.vertices:
             vt[index] = v
             # fix bone index
             vt[index].bone0 += pre_bone_size
             vt[index].bone1 += pre_bone_size
             index += 1
-        self.vt = vt
+        self.vertices = vt
 
         # 面頂点
-        assert parts.face
-        faces = (ctypes.c_uint16 * (pre_face_size + len(parts.face)))()
-        if self.face:
-            for i, f in enumerate(self.face):
+        assert parts.indices
+        faces = (ctypes.c_uint16 * (pre_face_size + len(parts.indices)))()
+        if self.indices:
+            for i, f in enumerate(self.indices):
                 faces[i] = f
         index = pre_face_size
-        for f in parts.face:
+        for f in parts.indices:
             # fix index
             faces[index] = f + pre_face_size
             index += 1
-        parts.face = faces
+        parts.indices = faces
 
         # 材質
-        assert parts.mat
-        mat = (Submesh * (pre_mat_size + len(parts.mat)))()
-        if self.mat:
-            for i, m in enumerate(self.mat):
+        assert parts.submeshes
+        mat = (Submesh * (pre_mat_size + len(parts.submeshes)))()
+        if self.submeshes:
+            for i, m in enumerate(self.submeshes):
                 mat[i] = m
         index = pre_mat_size
-        for m in parts.mat:
+        for m in parts.submeshes:
             mat[index] = m
             index += 1
-        parts.mat = mat
+        parts.submeshes = mat
 
         # ボーン
         for b in parts.bone:

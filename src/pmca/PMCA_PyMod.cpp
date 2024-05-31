@@ -789,33 +789,6 @@ static PyObject *Load_PMD(PyObject *self, PyObject *args) {
   Py_RETURN_TRUE;
 }
 
-static PyObject *Write_PMD(PyObject *self, PyObject *args) {
-  const char *str;
-  int num;
-  if (!PyArg_ParseTuple(args, "iy", &num, &str)) {
-    Py_RETURN_FALSE;
-  }
-
-  auto data = g_model[num]->to_bytes();
-
-  if (!str || !strlen(str)) {
-    printf("ファイル名がありません\n");
-    Py_RETURN_FALSE;
-  }
-
-  {
-    auto pmd = fopen(str, "wb");
-    if (!pmd) {
-      printf("ファイル %s を開けません\n", str);
-      Py_RETURN_FALSE;
-    }
-    fwrite(data.data(), data.size(), 1, pmd);
-    fclose(pmd);
-  }
-
-  return Py_BuildValue("i", 0);
-}
-
 static PyObject *Add_PMD(PyObject *self, PyObject *args) {
   int num, add;
   if (!PyArg_ParseTuple(args, "ii", &num, &add))
@@ -980,28 +953,18 @@ static PyObject *Adjust_Joints(PyObject *self, PyObject *args) {
 
 static PyObject *Get_PMD(PyObject *self, PyObject *args) {
   int num;
-  if (!PyArg_ParseTuple(args, "i", &num))
-    Py_RETURN_FALSE;
-
-  auto model = g_model[num];
-  auto l = PyList_New(model->mat.size());
-  for (size_t i = 0; i < model->mat.size(); ++i) {
-    PyList_SetItem(l, i,
-                   Py_BuildValue("is", model->mat[i].vt_index_count,
-                                 model->mat[i].tex_path));
+  if (!PyArg_ParseTuple(args, "i", &num)) {
+    Py_RETURN_NONE;
   }
-  // auto vt = Py_BuildValue("y#", (const char *)model->vt.data(),
-  //                         model->vt.size() * sizeof(VERTEX));
-  // auto vt_index =
-  //     Py_BuildValue("y#", (const char *)model->vt_index.data(),
-  //                   model->vt_index.size() * sizeof(unsigned short));
-  //
-  // return Py_BuildValue("(OO)", vt, vt_index);
+  auto model = g_model[num];
+  auto bytes = model->to_bytes();
+  if (bytes.empty()) {
+    Py_RETURN_NONE;
+  }
 
-  return Py_BuildValue("y#y#O", model->vt.data(),
-                       model->vt.size() * sizeof(VERTEX),
-                       model->vt_index.data(),
-                       model->vt_index.size() * sizeof(unsigned short), l);
+  MODEL::create()->load(bytes, model->path);
+
+  return Py_BuildValue("y#", bytes.data(), bytes.size());
 }
 
 static PyObject *getWHT(PyObject *self, PyObject *args) {
@@ -1068,7 +1031,6 @@ static PyMethodDef PMCAMethods[] = {
     /***********************************************************************/
     {"Init_PMD", Init_PMD, METH_VARARGS, "Initialize"},
     {"Load_PMD", Load_PMD, METH_VARARGS, "Load PMD from file"},
-    {"Write_PMD", Write_PMD, METH_VARARGS, "Write PMD from file"},
     {"Add_PMD", Add_PMD, METH_VARARGS, "Add PMD from file"},
     {"Copy_PMD", Copy_PMD, METH_VARARGS, "Copy PMD"},
     {"Marge_PMD", Marge_PMD, METH_VARARGS, "Marge PMD"},

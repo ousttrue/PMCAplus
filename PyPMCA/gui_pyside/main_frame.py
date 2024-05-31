@@ -4,6 +4,7 @@ from PySide6 import QtWidgets, QtCore
 from ..app import App
 from .. import PMCA_asset
 from .. import PMCA_cnl
+from .. import pmd_type
 import PMCA  # type: ignore
 import glglue.pyside6
 from ..gl_scene import GlScene, PmdSrc
@@ -79,10 +80,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def on_refresh(self):
         data = PMCA.Get_PMD(0)
-        if data:
-            self.scene.set_model(PmdSrc(*data))
-            self.color_tab.update_list()
-            self.glwidget.repaint()
+        assert data
+        pmd = pmd_type.parse(data)
+        assert pmd
+        self.scene.set_model(pmd)
+        self.color_tab.update_list()
+        self.glwidget.repaint()
 
 
 class Gui:

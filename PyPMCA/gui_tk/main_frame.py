@@ -5,7 +5,8 @@ import tkinter.ttk
 import glglue.tk_frame
 import PMCA
 from ..app import App
-from ..gl_scene import GlScene, PmdSrc
+from ..gl_scene import GlScene
+from .. import pmd_type
 from . import tabs
 
 
@@ -142,10 +143,12 @@ class MainFrame(tkinter.ttk.Frame):
 
     def update_scene(self):
         data = PMCA.Get_PMD(0)
-        if data:
-            self.scene.set_model(PmdSrc(*data))
-            self.notebook.on_refresh()
-            self.glwidget.tkExpose(None)  # type: ignore
+        assert data
+        pmd = pmd_type.parse(data)
+        assert pmd
+        self.scene.set_model(pmd, pathlib.Path("parts"))
+        self.notebook.on_refresh()
+        self.glwidget.tkExpose(None)  # type: ignore
 
     def make_open_file_dialog(
         self, callback: Callable[[pathlib.Path], None], *filters: FileFilter

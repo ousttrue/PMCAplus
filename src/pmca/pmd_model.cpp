@@ -536,7 +536,7 @@ std::vector<uint8_t> MODEL::to_bytes() const {
   }
   PLOG_DEBUG << "剛体";
 
-  int joint_count;
+  int joint_count = this->joint.size();
   w.write(&joint_count, 4);
   for (int i = 0; i < this->joint.size(); i++) {
     w.write(this->joint[i].name, 1, 20);

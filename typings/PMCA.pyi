@@ -411,12 +411,6 @@ def Load_PMD(num: int, path: bytes) -> None:
     """
     ...
 
-def Write_PMD():
-    """
-    Write PMD from file"
-    """
-    ...
-
 def Add_PMD(num: int, i: int) -> None:
     """
     Add PMD from file"
@@ -447,7 +441,7 @@ def PMD_view_set(num: int, mode: str) -> None:
     """
     ...
 
-def Get_PMD(num: int) -> tuple[bytes, bytes, list[tuple[int, str]]] | None:
+def Get_PMD(num: int) -> bytes | None:
     """
     Get vertices, indices and vertex_count list
     """
