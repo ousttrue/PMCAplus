@@ -4,7 +4,6 @@
 #include "ioutil.h"
 #include "pmd_model.h"
 #include <plog/Log.h>
-#include <sstream>
 #include <string.h>
 
 static double angle_from_vec(double u, double v) {
@@ -96,6 +95,9 @@ MODEL::MODEL() {}
 MODEL::~MODEL() {}
 
 bool MODEL::load(std::span<const uint8_t> bytes) {
+  if (bytes.empty()) {
+    return false;
+  }
 
   ioutil::binaryreader r(bytes);
 

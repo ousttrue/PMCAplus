@@ -36,7 +36,6 @@ py.extension_module(
     'PMCA_PyMod.cpp',
     'pmd_model.cpp',
     'quat.cpp',
-    'ioutil.cpp',
     install: true,
     install_dir: 'bin',
     dependencies: deps,

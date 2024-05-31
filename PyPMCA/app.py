@@ -26,7 +26,7 @@ class App:
 
         self.cnl = PMCA_cnl.CnlInfo()
         self.default_cnl_file = cnl_file
-        self.on_assemble: list[Callable[[], None]] = []
+        self.on_assemble: list[Callable[[bytes], None]] = []
         self.cnl_reload()
 
     def cnl_reload(self):
@@ -95,7 +95,7 @@ class App:
                 # )
 
         data0 = pmd_type.to_bytes(pmd0)
-        PMCA.Set_PMD(0, data0)
+        # PMCA.Set_PMD(0, data0)
 
         LOGGER.info("体型調整")
         refbone = None
@@ -107,16 +107,16 @@ class App:
                 break
 
         for transform_data in self.cnl.transform_data_list:
-            PMCA.Resize_Model(0, transform_data.scale)
+            data0 = PMCA.Resize_Model(data0, transform_data.scale)
             for transform_bone in transform_data.bones:
-                PMCA.Resize_Bone(
-                    0,
+                data0 = PMCA.Resize_Bone(
+                    data0,
                     transform_bone.name.encode("cp932", "replace"),
                     transform_bone.length,
                     transform_bone.thick,
                 )
-                PMCA.Move_Bone(
-                    0,
+                data0 = PMCA.Move_Bone(
+                    data0,
                     transform_bone.name.encode("cp932", "replace"),
                     transform_bone.pos[0],
                     transform_bone.pos[1],
@@ -128,7 +128,7 @@ class App:
             newbone = None
             tmp = pmd0.bones[refbone_index]
             assert tmp
-            newbone = pmd_type.BONE(
+            newbone = pmd_type.Bone(
                 tmp.name,
                 tmp.name_eng,
                 tmp.parent_index,
@@ -145,54 +145,65 @@ class App:
                 count = 0
                 while i < len(pmd0.bones) and count < len(pmd0.bones):
                     if pmd0.bones[i].name == "センター":
-                        PMCA.Move_Bone(
-                            0, transform_bone.name.encode("cp932", "replace"), 0, dy, 0
+                        data0 = PMCA.Move_Bone(
+                            data0,
+                            transform_bone.name.encode("cp932", "replace"),
+                            0,
+                            dy,
+                            0,
                         )
                         break
                     i = pmd0.bones[i].parent_index
                     count += 1
 
-            PMCA.Move_Bone(0, "センター".encode("cp932", "replace"), 0, dy, 0)
-            PMCA.Move_Bone(0, "+センター".encode("cp932", "replace"), 0, -dy, 0)
-
-        for transform_data in self.cnl.transform_data_list:
-            PMCA.Move_Model(
-                0, transform_data.pos[0], transform_data.pos[1], transform_data.pos[2]
+            data0 = PMCA.Move_Bone(
+                data0, "センター".encode("cp932", "replace"), 0, dy, 0
+            )
+            data0 = PMCA.Move_Bone(
+                data0, "+センター".encode("cp932", "replace"), 0, -dy, 0
             )
 
-        PMCA.Update_Skin(0)
-        PMCA.Adjust_Joints(0)
+        for transform_data in self.cnl.transform_data_list:
+            data0 = PMCA.Move_Model(
+                data0,
+                transform_data.pos[0],
+                transform_data.pos[1],
+                transform_data.pos[2],
+            )
+
+        data0 = PMCA.Update_Skin(data0)
+        data0 = PMCA.Adjust_Joints(data0)
 
         # w, h, t = PMCA.getWHT(0)
         # self.cnl.on_refresh()
         for callback in self.on_assemble:
-            callback()
+            callback(data0)
 
-# static PyObject *getWHT(PyObject *self, PyObject *args) {
-#   int num;
-#   if (!PyArg_ParseTuple(args, "i", &num))
-#     Py_RETURN_NONE;
-#
-#   auto model = g_model[num];
-#   double min[3] = {0.0, 0.0, 0.0};
-#   double max[3] = {0.0, 0.0, 0.0};
-#   for (size_t i = 0; i < model->vt.size(); i++) {
-#     for (size_t j = 0; j < 3; j++) {
-#       if (model->vt[i].loc[j] > max[j]) {
-#         max[j] = model->vt[i].loc[j];
-#       } else if (model->vt[i].loc[j] < min[j]) {
-#         min[j] = model->vt[i].loc[j];
-#       }
-#     }
-#   }
-#
-#   double wht[3];
-#   for (size_t i = 0; i < 3; i++) {
-#     wht[i] = (max[i] - min[i]) * 8;
-#   }
-#
-#   return Py_BuildValue("(fff)", wht[0], wht[1], wht[2]);
-# }
+    # static PyObject *getWHT(PyObject *self, PyObject *args) {
+    #   int num;
+    #   if (!PyArg_ParseTuple(args, "i", &num))
+    #     Py_RETURN_NONE;
+    #
+    #   auto model = g_model[num];
+    #   double min[3] = {0.0, 0.0, 0.0};
+    #   double max[3] = {0.0, 0.0, 0.0};
+    #   for (size_t i = 0; i < model->vt.size(); i++) {
+    #     for (size_t j = 0; j < 3; j++) {
+    #       if (model->vt[i].loc[j] > max[j]) {
+    #         max[j] = model->vt[i].loc[j];
+    #       } else if (model->vt[i].loc[j] < min[j]) {
+    #         min[j] = model->vt[i].loc[j];
+    #       }
+    #     }
+    #   }
+    #
+    #   double wht[3];
+    #   for (size_t i = 0; i < 3; i++) {
+    #     wht[i] = (max[i] - min[i]) * 8;
+    #   }
+    #
+    #   return Py_BuildValue("(fff)", wht[0], wht[1], wht[2]);
+    # }
 
     def batch_assemble(self, cnl_files: list[pathlib.Path]) -> None:
         # backup

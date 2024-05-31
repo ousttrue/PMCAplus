@@ -3,109 +3,12 @@
 #include "PMCA_PyMod.h"
 #include "pmd_model.h"
 
-#define PMCA_MODULE
-#define MODEL_COUNT 16
-
 static PyObject *PMCAError;
-
-static std::shared_ptr<MODEL> g_model[16];
-static NameList list;
 
 #include <plog/Appenders/ColorConsoleAppender.h>
 #include <plog/Formatters/TxtFormatter.h>
 #include <plog/Init.h>
 #include <plog/Log.h>
-
-/*データ変換Utils*/
-PyObject *Array_to_PyList_UShort(const unsigned short *input, int count) {
-  auto l = PyList_New(0);
-  for (int i = 0; i < count; i++) {
-    auto x = PyLong_FromLong((int)input[i]);
-    if (x == NULL)
-      break;
-    PyList_Append(l, x);
-    Py_DECREF(x);
-  }
-  // Py_INCREF(l);
-  return l;
-}
-
-PyObject *Array_to_PyList_Float(const float *input, int count) {
-  auto l = PyList_New(0);
-  for (int i = 0; i < count; i++) {
-    auto x = PyFloat_FromDouble(input[i]);
-    if (x == NULL)
-      break;
-    PyList_Append(l, x);
-    Py_DECREF(x);
-  }
-  // Py_INCREF(l);
-  return l;
-}
-
-int PyList_to_Array_Float(float *output, PyObject *List, int size) {
-  for (int i = 0; i < size; i++) {
-    auto tmp = PyList_GetItem(List, i);
-    output[i] = PyFloat_AsDouble(tmp);
-  }
-  return 0;
-}
-
-int PyList_to_Array_UShort(unsigned short *output, PyObject *List, int size) {
-  if (size > PyList_Size(List))
-    return -1;
-  for (int i = 0; i < size; i++) {
-    auto tmp = PyList_GetItem(List, i);
-    if (tmp == NULL)
-      return -1;
-    output[i] = (unsigned short)PyLong_AsLong(tmp);
-    // printf("%d, ", (int)output[i]);
-  }
-  // printf("\n");
-  return 0;
-}
-
-std::vector<std::string> PyList_to_Array_Str(PyObject *List) {
-  auto size = PyList_GET_SIZE(List);
-  std::vector<std::string> list;
-  for (size_t i = 0; i < size; i++) {
-    auto tmp = PyList_GetItem(List, i);
-    char *p;
-    Py_ssize_t maxlen;
-    if (PyBytes_AsStringAndSize(tmp, &p, &maxlen) == 0) {
-      list.push_back(p);
-    } else {
-      list.push_back("");
-    }
-  }
-  return list;
-}
-
-/*******************************************************************************/
-static PyObject *Init_PMD(PyObject *self, PyObject *args) {
-  for (int i = 0; i < MODEL_COUNT; i++) {
-    g_model[i] = MODEL::create();
-  }
-  return Py_BuildValue("i", 0);
-}
-
-static PyObject *Set_PMD(PyObject *self, PyObject *args) {
-  int num;
-  const uint8_t *p;
-  size_t size;
-  if (!PyArg_ParseTuple(args, "iy#", &num, &p, &size)) {
-    Py_RETURN_NONE;
-  }
-
-  auto model = MODEL::create();
-  if (size) {
-    model->load({p, size});
-  }
-  g_model[num] = model;
-
-  auto bytes = model->to_bytes();
-  return Py_BuildValue("y#", bytes.data(), bytes.size());
-}
 
 static PyObject *Add_PMD(PyObject *self, PyObject *args) {
   const uint8_t *pa;
@@ -122,15 +25,6 @@ static PyObject *Add_PMD(PyObject *self, PyObject *args) {
 
   auto bytes = a->to_bytes();
   return Py_BuildValue("y#", bytes.data(), bytes.size());
-}
-
-static PyObject *Copy_PMD(PyObject *self, PyObject *args) {
-  int src, dst;
-  if (!PyArg_ParseTuple(args, "ii", &src, &dst))
-    Py_RETURN_FALSE;
-
-  g_model[dst] = g_model[src];
-  Py_RETURN_TRUE;
 }
 
 static PyObject *Marge_PMD(PyObject *self, PyObject *args) {
@@ -164,65 +58,46 @@ static PyObject *Marge_PMD(PyObject *self, PyObject *args) {
   return Py_BuildValue("y#", bytes.data(), bytes.size());
 }
 
-static PyObject *Sort_PMD(PyObject *self, PyObject *args) {
-  int num;
-  if (!PyArg_ParseTuple(args, "i", &num))
-    Py_RETURN_FALSE;
-
-  auto model = g_model[num];
-  LOGD << "ボーンマージ";
-  if (!model->marge_bone()) {
-    Py_RETURN_FALSE;
-  }
-
-  LOGD << "ボーンソート";
-  model->sort_bone(&list);
-
-  LOGD << "表情ソート";
-  model->sort_skin(&list);
-
-  LOGD << "ボーングループソート";
-  model->sort_disp(&list);
-
-  //-0ボーン削除
-  if (strcmp(model->bone[model->bone.size() - 1].name, "-0") == 0) {
-    model->bone.pop_back();
-  }
-
-  LOGD << "英語対応化";
-  model->translate(&list, 1);
-
-  Py_RETURN_TRUE;
-}
-
 static PyObject *Resize_Model(PyObject *self, PyObject *args) {
-  int num;
+  const uint8_t *pa;
+  size_t sa;
   double size;
-  if (!PyArg_ParseTuple(args, "id", &num, &size))
-    Py_RETURN_FALSE;
+  if (!PyArg_ParseTuple(args, "y#d", &pa, &sa, &size)) {
+    Py_RETURN_NONE;
+  }
 
-  g_model[num]->resize_model(size);
-  Py_RETURN_TRUE;
+  auto model = MODEL::from_bytes({pa, sa});
+  model->resize_model(size);
+
+  auto bytes = model->to_bytes();
+  return Py_BuildValue("y#", bytes.data(), bytes.size());
 }
 
 static PyObject *Move_Model(PyObject *self, PyObject *args) {
-  int num;
+  const uint8_t *pa;
+  size_t sa;
   double s[3];
-  if (!PyArg_ParseTuple(args, "iddd", &num, &s[0], &s[1], &s[2]))
-    Py_RETURN_FALSE;
+  if (!PyArg_ParseTuple(args, "y#ddd", &pa, &sa, &s[0], &s[1], &s[2])) {
+    Py_RETURN_NONE;
+  }
 
-  g_model[num]->move_model(s);
-  Py_RETURN_TRUE;
+  auto model = MODEL::from_bytes({pa, sa});
+  model->move_model(s);
+
+  auto bytes = model->to_bytes();
+  return Py_BuildValue("y#", bytes.data(), bytes.size());
 }
 
 static PyObject *Resize_Bone(PyObject *self, PyObject *args) {
-  int num;
+  const uint8_t *pa;
+  size_t sa;
   const char *str;
   double len, thi;
-  if (!PyArg_ParseTuple(args, "iydd", &num, &str, &len, &thi))
-    Py_RETURN_FALSE;
+  if (!PyArg_ParseTuple(args, "y#ydd", &pa, &sa, &str, &len, &thi)) {
+    Py_RETURN_NONE;
+  }
 
-  auto model = g_model[num];
+  auto model = MODEL::from_bytes({pa, sa});
   int index = 0;
   for (; index < model->bone.size(); index++) {
     if (strcmp(model->bone[index].name, str) == 0) {
@@ -230,24 +105,28 @@ static PyObject *Resize_Bone(PyObject *self, PyObject *args) {
     }
   }
   if (index == model->bone.size()) {
-    Py_RETURN_FALSE;
+    Py_RETURN_NONE;
   }
 
   if (!model->scale_bone(index, thi, len, thi)) {
-    Py_RETURN_FALSE;
+    Py_RETURN_NONE;
   }
 
-  Py_RETURN_TRUE;
+  auto bytes = model->to_bytes();
+  return Py_BuildValue("y#", bytes.data(), bytes.size());
 }
 
 static PyObject *Move_Bone(PyObject *self, PyObject *args) {
-  int num;
+  const uint8_t *pa;
+  size_t sa;
   const char *str;
   double pos[3];
-  if (!PyArg_ParseTuple(args, "iyddd", &num, &str, &pos[0], &pos[1], &pos[2]))
-    Py_RETURN_FALSE;
+  if (!PyArg_ParseTuple(args, "y#yddd", &pa, &sa, &str, &pos[0], &pos[1],
+                        &pos[2])) {
+    Py_RETURN_NONE;
+  }
 
-  auto model = g_model[num];
+  auto model = MODEL::from_bytes({pa, sa});
   int index = 0;
   for (; index < model->bone.size(); index++) {
     if (strcmp(model->bone[index].name, str) == 0) {
@@ -255,55 +134,46 @@ static PyObject *Move_Bone(PyObject *self, PyObject *args) {
     }
   }
   if (index == model->bone.size()) {
-    Py_RETURN_FALSE;
+    Py_RETURN_NONE;
   }
 
   model->move_bone(index, pos);
-  Py_RETURN_TRUE;
+
+  auto bytes = model->to_bytes();
+  return Py_BuildValue("y#", bytes.data(), bytes.size());
 }
 
 static PyObject *Update_Skin(PyObject *self, PyObject *args) {
-  int num;
-  if (!PyArg_ParseTuple(args, "i", &num))
-    Py_RETURN_FALSE;
+  const uint8_t *pa;
+  size_t sa;
+  if (!PyArg_ParseTuple(args, "y#", &pa, &sa)) {
+    Py_RETURN_NONE;
+  }
 
-  g_model[num]->update_skin();
-  Py_RETURN_FALSE;
+  auto model = MODEL::from_bytes({pa, sa});
+  model->update_skin();
+
+  auto bytes = model->to_bytes();
+  return Py_BuildValue("y#", bytes.data(), bytes.size());
 }
 
 static PyObject *Adjust_Joints(PyObject *self, PyObject *args) {
-  int num;
-  if (!PyArg_ParseTuple(args, "i", &num))
-    Py_RETURN_FALSE;
-
-  g_model[num]->adjust_joint();
-  Py_RETURN_TRUE;
-}
-
-static PyObject *Get_PMD(PyObject *self, PyObject *args) {
-  int num;
-  if (!PyArg_ParseTuple(args, "i", &num)) {
+  const uint8_t *pa;
+  size_t sa;
+  if (!PyArg_ParseTuple(args, "y#", &pa, &sa)) {
     Py_RETURN_NONE;
   }
-  auto model = g_model[num];
+
+  auto model = MODEL::from_bytes({pa, sa});
+  model->adjust_joint();
+
   auto bytes = model->to_bytes();
-  if (bytes.empty()) {
-    Py_RETURN_NONE;
-  }
-
-  MODEL::create()->load(bytes);
-
   return Py_BuildValue("y#", bytes.data(), bytes.size());
 }
 
 static PyMethodDef PMCAMethods[] = {
-    {"Init_PMD", Init_PMD, METH_VARARGS, "Initialize"},
-    {"Set_PMD", Set_PMD, METH_VARARGS, "Set PMD bytes"},
     {"Add_PMD", Add_PMD, METH_VARARGS, "Add PMD from file"},
-    {"Copy_PMD", Copy_PMD, METH_VARARGS, "Copy PMD"},
     {"Marge_PMD", Marge_PMD, METH_VARARGS, "Marge PMD"},
-    {"Sort_PMD", Sort_PMD, METH_VARARGS, "Sort PMD"},
-    {"Get_PMD", Get_PMD, METH_VARARGS, "Get PMD Vertices, Indices, Submeshes"},
     {"Resize_Model", Resize_Model, METH_VARARGS, "Resize_Model"},
     {"Move_Model", Move_Model, METH_VARARGS, "Move_Model"},
     {"Resize_Bone", Resize_Bone, METH_VARARGS, "Resize_Bone"},

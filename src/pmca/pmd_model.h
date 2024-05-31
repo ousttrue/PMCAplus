@@ -153,7 +153,8 @@ public:
     if (model->load(bytes)) {
       return model;
     }
-    return {};
+    return model;
+    // return {};
   }
   bool load(std::span<const uint8_t> bytes);
   std::vector<uint8_t> to_bytes() const;

@@ -141,8 +141,8 @@ class MainFrame(tkinter.ttk.Frame):
             label="材質をランダム選択", underline=0, command=self.app.rand_mat
         )
 
-    def update_scene(self):
-        data = PMCA.Get_PMD(0)
+    def update_scene(self, data: bytes):
+        # data = b''PMCA.Get_PMD(0)
         assert data
         pmd = pmd_type.parse(data)
         assert pmd

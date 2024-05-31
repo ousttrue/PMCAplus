@@ -15,7 +15,7 @@ class AssembleContext:
         self.authors: list[str] = []
         self.licenses: list[str] = []
         # 空モデル
-        self.data0 = PMCA.Set_PMD(0, b"")
+        self.data0 = b""
 
     def process(self, tree: PMCA_cnl.NODE) -> bytes:
         if tree.parts:
@@ -29,11 +29,41 @@ class AssembleContext:
             if child.parts:
                 self._assemble_child(child)
 
-        PMCA.Set_PMD(0, self.data0)
-        PMCA.Sort_PMD(0)
+        # PMCA.Set_PMD(0, self.data0)
+        # PMCA.Sort_PMD(0)
         self.finalize()
-        return PMCA.Get_PMD(0)
+        return self.data0
 
+    # static PyObject *Sort_PMD(PyObject *self, PyObject *args) {
+    #   int num;
+    #   if (!PyArg_ParseTuple(args, "i", &num))
+    #     Py_RETURN_FALSE;
+    #
+    #   auto model = g_model[num];
+    #   LOGD << "ボーンマージ";
+    #   if (!model->marge_bone()) {
+    #     Py_RETURN_FALSE;
+    #   }
+    #
+    #   LOGD << "ボーンソート";
+    #   model->sort_bone(&list);
+    #
+    #   LOGD << "表情ソート";
+    #   model->sort_skin(&list);
+    #
+    #   LOGD << "ボーングループソート";
+    #   model->sort_disp(&list);
+    #
+    #   //-0ボーン削除
+    #   if (strcmp(model->bone[model->bone.size() - 1].name, "-0") == 0) {
+    #     model->bone.pop_back();
+    #   }
+    #
+    #   LOGD << "英語対応化";
+    #   model->translate(&list, 1);
+    #
+    #   Py_RETURN_TRUE;
+    # }
     def _assemble_child(self, current: PMCA_cnl.NODE) -> None:
         # 4 にロード
         assert current.parts and current.parts.path

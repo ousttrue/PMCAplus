@@ -65,6 +65,21 @@ class BinaryReader:
 
 
 def parse(data: bytes) -> PMD | None:
+    if not data:
+        return PMD(
+            INFO(),
+            (Vertex * 0)(),
+            (ctypes.c_uint16 * 0)(),
+            (Submesh * 0)(),
+            (Bone * 0)(),
+            [],
+            [],
+            [],
+            [],
+            TOON(),
+            (RigidBody * 0)(),
+            (Joint * 0)(),
+        )
     r = BinaryReader(data)
 
     # ehader
