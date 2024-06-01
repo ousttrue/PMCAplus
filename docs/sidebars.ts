@@ -27,6 +27,15 @@ const sidebars: SidebarsConfig = {
         'data/cnl',
       ],
     },
+    {
+      type: 'category',
+      label: 'assemble',
+      link: { type: 'doc', id: 'assemble/index', },
+      items: [
+        'assemble/add',
+        'assemble/merge',
+      ]
+    },
   ],
 };
 

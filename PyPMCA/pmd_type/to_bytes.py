@@ -59,7 +59,7 @@ def to_bytes(model: PMD) -> bytes:
     w.u16(len(model.IK))
     for ik in model.IK:
         w.u16(ik.bone_index)
-        w.u16(ik.target_boneindex)
+        w.u16(ik.target_bone_index)
         w.u8(len(ik.chain))
         w.u16(ik.iterations)
         w.f32(ik.weight)

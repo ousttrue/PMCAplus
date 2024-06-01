@@ -15,10 +15,12 @@ PMD組み立てツールです。
 
 # 改造
 
-- [x] meson でビルドできるように修正 Python-3.12(64bit)
+- [x] ~~meson でビルドできるように修正 Python-3.12(64bit)~~
 - [x] 動作
-- [x] SDL_image => stb_image
-- [x] SDL => glfw
+- [x] ~~SDL_image => stb_image~~
+- [x] ~~SDL => glfw~~
+- [x] tkinter => pyside6
+- [ ] c のコードを python に移動 WIP
 
 # 内容物
 

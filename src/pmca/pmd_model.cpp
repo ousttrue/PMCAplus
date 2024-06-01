@@ -1186,9 +1186,6 @@ bool MODEL::marge_mat() {
     } else {
       tmp++;
     }
-#ifdef DEBUG
-    printf("%d:%d %d\n", i, index[i], marge[i]);
-#endif
   }
 
   // 面頂点リスト並び替え
@@ -1202,18 +1199,12 @@ bool MODEL::marge_mat() {
         size = this->mat[j].vt_index_count * sizeof(unsigned short);
 
         memcpy(&vt_index[k], &this->vt_index[sum], size);
-#ifdef DEBUG
-        printf("%d <- %d  %d\n", i, j, k);
-#endif
         k = k + this->mat[j].vt_index_count;
         vt_index_count = vt_index_count + this->mat[j].vt_index_count;
       }
       sum = sum + this->mat[j].vt_index_count;
     }
     tmp_count[i] = vt_index_count;
-#ifdef DEBUG
-    printf("%d %d %d\n", i, vt_index_count, this->mat[i].vt_index_count);
-#endif
   }
 
   // 材質並び替え
@@ -1226,10 +1217,6 @@ bool MODEL::marge_mat() {
   }
 
   this->mat.resize(this->mat.size() - tmp);
-
-#ifdef MEM_DBG
-  printf("FREE %p %p %p %p\n", index, marge, this->vt, tmp_count);
-#endif
 
   FREE(index);
   FREE(marge);

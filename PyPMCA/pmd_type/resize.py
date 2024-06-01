@@ -159,7 +159,7 @@ def Add_PMD(data: bytes, b: bytes) -> bytes:
     for ik in add.IK:
         pmd.IK.append(ik)
         pmd.IK[-1].bone_index += pre_bone_size
-        pmd.IK[-1].target_boneindex += pre_bone_size
+        pmd.IK[-1].target_bone_index += pre_bone_size
         for i, _ in enumerate(pmd.IK[-1].chain):
             pmd.IK[-1].chain[i] += pre_bone_size
 
@@ -225,22 +225,9 @@ def Marge_PMD(data: bytes) -> bytes:
     assert pmd
 
     pmd.merge_bone()
+    pmd.merge_mat()
+    pmd.merge_IK()
+    pmd.merge_bone_disp()
+    pmd.merge_rb()
 
-#   LOGD << "材質マージ"
-#   if (!model.marge_mat()) {
-#     Py_RETURN_NONE
-#   }
-
-#   LOGD << "IKマージ"
-#   model.marge_IK()
-
-#   LOGD << "ボーングループマージ"
-#   model.marge_bone_disp()
-
-#   LOGD << "剛体マージ"
-#   model.marge_rb()
-
-#   auto bytes = model.to_bytes()
-#   return Py_BuildValue("y#", bytes.data(), bytes.size())
-# }
     return to_bytes(pmd)

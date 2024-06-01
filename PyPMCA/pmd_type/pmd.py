@@ -1,4 +1,5 @@
 ﻿from typing import Sequence, Iterator
+import pathlib
 import logging
 import dataclasses
 import ctypes
@@ -101,6 +102,13 @@ class TOON:
             tuple(x.decode("cp932", "replace") for x in name),  # type: ignore
             tuple(x.decode("cp932", "replace") for x in path) if path else tuple([""] * 10),  # type: ignore
         )
+
+
+def inifinite() -> Iterator[int]:
+    i = 0
+    while True:
+        yield i
+        i += 1
 
 
 @dataclasses.dataclass
@@ -227,17 +235,202 @@ class PMD:
             if k:
                 v.position = v.position + diff * tmp
 
+    def merge_rb(self)->None:
+        # 同名の剛体を削除
+        pass
+
+        # std::vector<int> index(this->rbody.size());
+        # std::vector<char> marge(this->rbody.size());
+
+        # int tmp = 0;
+        # for (int i = 0; i < this->rbody.size(); i++) {
+        #     if (marge[i] == 0) {
+        #     index[i] = i - tmp;
+        #     for (int j = i + 1; j < this->rbody.size(); j++) {
+        #         if (strcmp(this->rbody[i].name, this->rbody[j].name) == 0) {
+        #         index[j] = i - tmp;
+        #         marge[j] = 1;
+        #         }
+        #     }
+        #     } else {
+        #     tmp++;
+        #     }
+        # }
+
+        # // ジョイント書き換え
+        # for (int i = 0; i < this->joint.size(); i++) {
+        #     this->joint[i].rigidbody_a = index[this->joint[i].rigidbody_a];
+        #     this->joint[i].rigidbody_b = index[this->joint[i].rigidbody_b];
+        # }
+
+        # // 重複削除
+        # for (int i = 0; i < this->rbody.size(); i++) {
+        #     if (marge[i] == 0 && index[i] != i) {
+        #     this->rbody[index[i]] = this->rbody[i];
+        #     }
+        # }
+        # this->rbody.resize(this->rbody.size() - tmp);
+
+    def merge_bone_disp(self):
+        pass
+
+    # // 同名枠をマージ
+    # PLOG_DEBUG << this->bone_group.size();
+
+    # std::vector<int> index(this->bone_group.size());
+    # std::vector<char> marge(this->bone_group.size());
+    # memset(marge.data(), 0, this->bone_group.size() * sizeof(char));
+    # std::vector<BONE_DISP> bone_disp(this->bone_disp.size());
+
+    # int tmp = 0;
+    # for (int i = 0; i < this->bone_group.size(); i++) {
+    #     if (marge[i] == 0) {
+    #     index[i] = i - tmp;
+    #     for (int j = i + 1; j < this->bone_group.size(); j++) {
+    #         if (strcmp(this->bone_group[i].name, this->bone_group[j].name) == 0) {
+    #         index[j] = i - tmp;
+    #         marge[j] = 1;
+    #         }
+    #     }
+    #     } else {
+    #     tmp++;
+    #     }
+    # }
+
+    # for (int i = 0; i < this->bone_group.size(); i++) {
+    #     if (marge[i] == 0 && index[i] != i) {
+    #     this->bone_group[index[i]] = this->bone_group[i];
+    #     }
+    # }
+
+    # int k = 0;
+    # for (int i = 0; i < this->bone_group.size(); i++) {
+    #     for (int j = 0; j < this->bone_disp.size(); j++) {
+    #     if (index[this->bone_disp[j].bone_group_index - 1] == i) {
+    #         bone_disp[k] = this->bone_disp[j];
+
+    #         bone_disp[k].bone_group_index =
+    #             index[bone_disp[k].bone_group_index - 1] + 1;
+
+    #         k++;
+    #     }
+    #     }
+    # }
+
+    # this->bone_group.resize(this->bone_group.size() - tmp);
+    # this->bone_disp.resize(k);
+
+    # this->bone_disp = bone_disp;
+
+    # // 重複登録ボーンを削除
+
+    # index.resize(this->bone_disp.size());
+    # marge.resize(this->bone_disp.size());
+    # memset(marge.data(), 0, this->bone_disp.size() * sizeof(char));
+
+    # tmp = 0;
+    # for (int i = 0; i < this->bone_disp.size(); i++) {
+    #     if (marge[i] == 0) {
+    #     index[i] = i - tmp;
+    #     for (int j = i + 1; j < this->bone_disp.size(); j++) {
+    #         if (this->bone_disp[i].bone_index == this->bone_disp[j].bone_index) {
+    #         index[j] = i - tmp;
+    #         marge[j] = 1;
+    #         }
+    #     }
+    #     } else {
+    #     tmp++;
+    #     }
+    # }
+
+    # for (int i = 0; i < this->bone_disp.size(); i++) {
+    #     if (marge[i] == 0 && index[i] != i) {
+    #     this->bone_disp[index[i]].bone_index = this->bone_disp[i].bone_index;
+    #     this->bone_disp[index[i]].bone_group_index =
+    #         this->bone_disp[i].bone_group_index;
+    #     }
+    # }
+
+    # this->bone_disp.resize(this->bone_disp.size() - tmp);
+    # }
+    def merge_IK(self) -> None:
+        pass
+        # 重複IKを削除
+        # std::vector<int> index(this->IK.size());
+        # std::vector<char> marge(this->IK.size());
+
+        # int tmp = 0;
+        # for (int i = 0; i < this->IK.size(); i++) {
+        #     if (marge[i] == 0) {
+        #     index[i] = i - tmp;
+        #     for (int j = i + 1; j < this->IK.size(); j++) {
+        #         if (this->IK[i].ik_index == this->IK[j].ik_index) {
+        #         index[j] = i - tmp;
+        #         marge[j] = 1;
+        #         }
+        #     }
+        #     } else {
+        #     tmp++;
+        #     }
+
+        #     // PLOG_DEBUG << i << ":" << index[i] << " " << marge[i];
+        # }
+
+        # for (int i = 0; i < this->IK.size(); i++) {
+        #     if (marge[i] == 0 && index[i] != i) {
+        #     this->IK[index[i]] = this->IK[i];
+        #     }
+        # }
+        # this->IK.resize(this->IK.size() - tmp);
+
+    def merge_mat(self) -> None:
+        merge: set[int] = set()
+        index: dict[int, int] = {}
+        it = inifinite()
+
+        for i, m in enumerate(self.submeshes):
+            if i not in merge:
+                new_index = next(it)
+                index[i] = new_index
+
+                if m.tex != "":
+                    for j in range(i + 1, len(self.submeshes)):
+                        merge_mat = self.submeshes[j]
+                        if m.tex == merge_mat.tex:
+                            suffix = pathlib.Path(m.tex).suffix
+                            assert suffix != ".sph" and suffix != ".spa"
+                            index[j] = new_index
+                            merge.add(j)
+
+        # 面頂点リスト並び替え
+        # for i, m in enumerate(self.submeshes):
+        #      vt_index_count = 0
+        #      sum = 0
+        #      for j, mm in enumerate(self.submeshes):
+        #      if (index[j] == i) :
+        #          size = mm.index_count * 2
+
+        #          memcpy(&vt_index[k], &this->vt_index[sum], size);
+        #          k = k + this->mat[j].vt_index_count;
+        #          vt_index_count = vt_index_count + this->mat[j].vt_index_count;
+
+        #      sum = sum + this->mat[j].vt_index_count;
+
+        #      tmp_count[i] = vt_index_count;
+
+        # 材質並び替え
+        # for (i = 0; i < this->mat.size(); i++) {
+        #     if (marge[i] == 0) {
+        #     if (index[i] != i)
+        #         this->mat[index[i]] = tmp_mat[i];
+        #     this->mat[index[i]].vt_index_count = tmp_count[index[i]];
+        #     }
+        # }
+
     def merge_bone(self) -> None:
         merge: set[int] = set()
         index: dict[int, int] = {}
-
-        def indexer() -> Iterator[int]:
-            i = 0
-            while True:
-                yield i
-                i += 1
-
-        it = indexer()
+        it = inifinite()
         for i, bone in enumerate(self.bones):
             if i not in merge:
                 new_index = next(it)
@@ -277,34 +470,31 @@ class PMD:
                 else:
                     b.ik_index = index[b.ik_index]
 
-        # self.update_bone_index(index)
+        self.update_bone_index(index)
 
         self.bones = (Bone * len(bones))(*bones)
 
-    # def update_bone_index(self, index: dict[int, int]) ->None:
-    #     # 頂点のボーン番号を書き換え
-    #     for (auto &v : this->vt) {
-    #         v.bone0 = index[v.bone0];
-    #         v.bone1 = index[v.bone1];
+    def update_bone_index(self, index: dict[int, int]) -> None:
+        # 頂点のボーン番号を書き換え
+        for v in self.vertices:
+            v.bone0 = index[v.bone0]
+            v.bone1 = index[v.bone1]
 
-    #     # IKリストのボーン番号を書き換え
-    #     for (auto &ik : this->IK) {
-    #         // PLOG_DEBUG << i;
-    #         ik.ik_index = index[ik.ik_index];
-    #         ik.ik_target_index = index[ik.ik_target_index];
-    #         for (int j = 0; j < ik.IK_chain.size(); j++) {
-    #         ik.IK_chain[j] = index[ik.IK_chain[j]];
-    #         }
+        # IKリストのボーン番号を書き換え
+        for ik in self.IK:
+            ik.bone_index = index[ik.bone_index]
+            ik.target_bone_index = index[ik.target_bone_index]
+            for j, c in enumerate(ik.chain):
+                ik.chain[j] = index[c]
 
-    #     # 表示ボーン番号を書き換え
-    #     for (auto &bd : this->bone_disp) {
-    #         bd.bone_index = index[bd.bone_index];
+        # 表示ボーン番号を書き換え
+        for bd in self.bone_displays:
+            bd.bone_index = index[bd.bone_index]
 
-    #     # 剛体ボーン番号を書き換え
-    #     for (auto &rb : this->rbody) {
-    #         if (rb.bone != USHORT_MAX) {
-    #         rb.bone = index[rb.bone];
-    #         }
+        # 剛体ボーン番号を書き換え
+        for rb in self.rigidbodies:
+            if rb.rigidbody_rel_bone_index != 65535:
+                rb.rigidbody_rel_bone_index = index[rb.rigidbody_rel_bone_index]
 
     def add(self, parts: "PMD") -> None:
         """
