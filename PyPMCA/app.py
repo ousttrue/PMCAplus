@@ -144,7 +144,7 @@ class App:
                 count = 0
                 while i < len(pmd0.bones) and count < len(pmd0.bones):
                     if pmd0.bones[i].name == "センター":
-                        data0 = PMCA.Move_Bone(
+                        data0 = resize.Move_Bone(
                             data0,
                             transform_bone.name.encode("cp932", "replace"),
                             0,
@@ -155,10 +155,10 @@ class App:
                     i = pmd0.bones[i].parent_index
                     count += 1
 
-            data0 = PMCA.Move_Bone(
+            data0 = resize.Move_Bone(
                 data0, "センター".encode("cp932", "replace"), 0, dy, 0
             )
-            data0 = PMCA.Move_Bone(
+            data0 = resize.Move_Bone(
                 data0, "+センター".encode("cp932", "replace"), 0, -dy, 0
             )
 
@@ -170,8 +170,8 @@ class App:
                 transform_data.pos[2],
             )
 
-        data0 = PMCA.Update_Skin(data0)
-        data0 = PMCA.Adjust_Joints(data0)
+        data0 = resize.Update_Skin(data0)
+        data0 = resize.Adjust_Joints(data0)
 
         # w, h, t = PMCA.getWHT(0)
         # self.cnl.on_refresh()

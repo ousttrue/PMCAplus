@@ -260,7 +260,7 @@ assert ctypes.sizeof(BoneDisplay) == 3
 class RigidBody(ctypes.Structure):
     _pack_ = 1
     _fields_ = [
-        ("rigidbody_name", ctypes.c_char * 20),
+        ("rigidbody_name", ctypes.c_uint8 * 20),
         ("rigidbody_rel_bone_index", ctypes.c_uint16),
         ("rigidbody_group_index", ctypes.c_uint8),
         ("rigidbody_group_target", ctypes.c_uint16),
@@ -283,7 +283,7 @@ assert ctypes.sizeof(RigidBody) == 83
 class Joint(ctypes.Structure):
     _pack_ = 1
     _fields_ = [
-        ("joint_name", ctypes.c_char * 20),
+        ("joint_name", ctypes.c_uint8 * 20),
         ("joint_rigidbody_a", ctypes.c_int),
         ("joint_rigidbody_b", ctypes.c_int),
         ("joint_pos", Float3),
@@ -295,6 +295,13 @@ class Joint(ctypes.Structure):
         ("spring_pos", Float3),
         ("spring_rot", Float3),
     ]
+
+    @property
+    def str_name(self) -> str:
+        for i, c in enumerate(self.joint_name):
+            if c == 0:
+                return bytes(self.joint_name)[0:i].decode("cp932")
+        return bytes(self.joint_name).decode("cp932")
 
 
 assert ctypes.sizeof(Joint) == 124

@@ -58,39 +58,9 @@ static PyObject *Marge_PMD(PyObject *self, PyObject *args) {
   return Py_BuildValue("y#", bytes.data(), bytes.size());
 }
 
-static PyObject *Update_Skin(PyObject *self, PyObject *args) {
-  const uint8_t *pa;
-  size_t sa;
-  if (!PyArg_ParseTuple(args, "y#", &pa, &sa)) {
-    Py_RETURN_NONE;
-  }
-
-  auto model = MODEL::from_bytes({pa, sa});
-  model->update_skin();
-
-  auto bytes = model->to_bytes();
-  return Py_BuildValue("y#", bytes.data(), bytes.size());
-}
-
-static PyObject *Adjust_Joints(PyObject *self, PyObject *args) {
-  const uint8_t *pa;
-  size_t sa;
-  if (!PyArg_ParseTuple(args, "y#", &pa, &sa)) {
-    Py_RETURN_NONE;
-  }
-
-  auto model = MODEL::from_bytes({pa, sa});
-  model->adjust_joint();
-
-  auto bytes = model->to_bytes();
-  return Py_BuildValue("y#", bytes.data(), bytes.size());
-}
-
 static PyMethodDef PMCAMethods[] = {
     {"Add_PMD", Add_PMD, METH_VARARGS, "Add PMD from file"},
     {"Marge_PMD", Marge_PMD, METH_VARARGS, "Marge PMD"},
-    {"Update_Skin", Update_Skin, METH_VARARGS, "Update_Skin"},
-    {"Adjust_Joints", Adjust_Joints, METH_VARARGS, "Adjust_Joints"},
     {NULL, NULL, 0, NULL}};
 
 static struct PyModuleDef PMCAmodule = {PyModuleDef_HEAD_INIT,

@@ -69,3 +69,32 @@ def Move_Bone(data: bytes, name: str, diff: Float3) -> bytes:
             break
 
     return to_bytes(pmd)
+
+
+def Adjust_Joints(data: bytes) -> bytes:
+    """
+    同じ名前のボーンにジョイントの位置を合わせる
+    """
+    pmd = parse(data)
+    assert pmd
+
+    for joint in pmd.joints:
+        for bone in pmd.bones:
+            if joint.str_name == bone.str_name:
+                joint.position = bone.position
+                break
+
+    return to_bytes(pmd)
+
+
+def Update_Skin(data: bytes) -> bytes:
+    """
+    表情baseの頂点位置を更新する
+    """
+    pmd = parse(data)
+    assert pmd
+
+    for v in pmd.morphs[0].data:
+        v.position = pmd.vertices[v.vertex_index].position
+
+    return to_bytes(pmd)
