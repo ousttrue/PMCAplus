@@ -201,6 +201,19 @@ public:
   }
   void scale_vertices(int bone_index, const mat3 &mtr, const float3 &scale);
   void scale_bones(int bone_index, const mat3 &mtr, const float3 &scale);
+  bool has_parent(int bone_index, int parent_index, bool recursive) {
+    auto current = &this->bone[bone_index];
+    while (current->PBone_index != USHORT_MAX) {
+      if (current->PBone_index == parent_index) {
+        return true;
+      }
+      if (!recursive) {
+        return false;
+      }
+      current = &this->bone[current->PBone_index];
+    }
+    return false;
+  }
   std::optional<int> find_tail(int index) const;
   void move_bone(unsigned int index, const float3 &diff);
   void resize_model(double size);

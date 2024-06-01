@@ -1345,59 +1345,22 @@ void MODEL::scale_vertices(int index, const mat3 &mtr, const float3 &scale) {
 
 void MODEL::scale_bones(int index, const mat3 &mtr, const float3 &scale) {
   auto loc = this->bone[index].loc;
-
-  // 変換するボーンの子をtmp_boneに格納
-  int len_bone = 0;
-  for (int i = 0; i < (this->bone.size()); i++) {
-    if (this->bone[i].PBone_index == index) {
-      len_bone++;
-    }
-  }
-  std::vector<float3> tmp_bone(len_bone);
-  std::vector<float3> diff_bone(len_bone);
-  std::vector<unsigned int> index_bone(len_bone);
-  int j = 0;
-  for (int i = 0; i < this->bone.size(); i++) {
-    if (this->bone[i].PBone_index == index) {
-      index_bone[j] = i;
-      tmp_bone[j] = this->bone[i].loc;
-      diff_bone[j] = tmp_bone[j];
-      j++;
-    }
-  }
-  // 変換
-  coordtrans(tmp_bone, loc, mtr);
-
-  // 変形
-  for (auto &v : tmp_bone) {
-    v = v.scale(scale);
-  }
-
-  // 逆変換
-  coordtrans_inv(tmp_bone, loc, mtr);
-
-  // ボーン
-  for (int i = 0; i < len_bone; i++) {
-    diff_bone[i] = tmp_bone[i] - diff_bone[i];
-  }
-
-  for (int i = 0; i < this->bone.size(); i++) {
-    auto l = i;
-    for (j = 0; j < this->bone.size(); j++) {
-      if (this->bone[l].PBone_index == 65535) {
-        break;
-      } else if (this->bone[l].PBone_index == index) {
-        break;
-      }
-      l = this->bone[l].PBone_index;
-    }
-    if (this->bone[l].PBone_index != 65535) {
-      for (j = 0; j < len_bone; j++) {
-        if (index_bone[j] == l) {
-          this->move_bone(i, diff_bone[j]);
-          // printf("%d %s %f %f %f\n", j, this->bone[i].name,
-          // diff_bone[j][0], diff_bone[j][1], diff_bone[j][2]);
-          break;
+  for (int i = 0; i < this->bone.size(); ++i) {
+    auto &b = this->bone[i];
+    if (b.PBone_index == index) {
+      // to local
+      auto local = mtr.rotate(b.loc - loc);
+      // scale
+      local = local.scale(scale);
+      // to world
+      auto world = mtr.transposed().rotate(local) + loc;
+      // diff in world
+      auto diff = world - b.loc;
+      this->move_bone(i, diff);
+      // apply descendants
+      for (int j = 0; j < this->bone.size(); ++j) {
+        if (has_parent(j, i, true)) {
+          this->move_bone(j, diff);
         }
       }
     }
