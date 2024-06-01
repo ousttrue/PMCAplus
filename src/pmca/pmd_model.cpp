@@ -6,7 +6,7 @@
 #include <plog/Log.h>
 #include <string.h>
 
-static double angle_from_vec(double u, double v) {
+double angle_from_vec(double u, double v) {
   double angle;
   double pi = M_PI;
   // ベクトルがv軸方向を向く回転を求める
@@ -149,7 +149,7 @@ bool MODEL::load(std::span<const uint8_t> bytes) {
       if (this->skin[i].skin_vt[j].index > this->vt.size()) {
         exit(1);
       }
-      r.read(this->skin[i].skin_vt[j].loc, 12);
+      r.read(this->skin[i].skin_vt[j].loc);
     }
     this->skin[i].name_eng[0] = '\0';
     this->skin[i].name[20] = '\0';
@@ -313,7 +313,7 @@ std::vector<uint8_t> MODEL::to_bytes() const {
   int vt_count = this->vt.size();
   w.write(&vt_count, 4);
   for (size_t i = 0; i < this->vt.size(); i++) {
-    w.write(this->vt[i].loc, 4, 3);
+    w.write(this->vt[i].loc);
     w.write(this->vt[i].nor, 4, 3);
     w.write(this->vt[i].uv, 4, 2);
     w.write(this->vt[i].bone_num, 2, 2);
@@ -390,7 +390,7 @@ std::vector<uint8_t> MODEL::to_bytes() const {
     w.write(&this->skin[i].type, 1);
     for (size_t j = 0; j < this->skin[i].skin_vt.size(); j++) {
       w.write(&this->skin[i].skin_vt[j].index, 4);
-      w.write(this->skin[i].skin_vt[j].loc, 4, 3);
+      w.write(this->skin[i].skin_vt[j].loc);
     }
   }
   PLOG_DEBUG << "表情";
@@ -488,26 +488,25 @@ int print_PMD(MODEL *model, const char file_name[]) {
           model->header.version, model->header.name.data(),
           model->header.comment.data());
 
-  for (i = 0; i < model->vt.size(); i++) {
-    fprintf(txt, "No:%d\n", i);
+  i = 0;
+  for (auto &v : model->vt) {
+    fprintf(txt, "No:%d\n", i++);
     fprintf(txt, "Loc:");
-    for (int j = 0; j < 3; j++) {
-      fprintf(txt, "%f ", model->vt[i].loc[j]);
-    }
+    fprintf(txt, "%f, %f, %f", v.loc.x, v.loc.y, v.loc.z);
     fprintf(txt, "\nNor:");
     for (int j = 0; j < 3; j++) {
-      fprintf(txt, "%f ", model->vt[i].nor[j]);
+      fprintf(txt, "%f ", v.nor[j]);
     }
     fprintf(txt, "\nUV:");
     for (int j = 0; j < 2; j++) {
-      fprintf(txt, "%f ", model->vt[i].uv[j]);
+      fprintf(txt, "%f ", v.uv[j]);
     }
     fprintf(txt, "\nBONE:");
     for (int j = 0; j < 2; j++) {
-      fprintf(txt, "%d ", model->vt[i].bone_num[j]);
+      fprintf(txt, "%d ", v.bone_num[j]);
     }
-    fprintf(txt, "\nbone_weight:%d\n", model->vt[i].bone_weight);
-    fprintf(txt, "edge_flag:%d\n\n", model->vt[i].edge_flag);
+    fprintf(txt, "\nbone_weight:%d\n", v.bone_weight);
+    fprintf(txt, "edge_flag:%d\n\n", v.edge_flag);
   }
 
   fprintf(txt, "面頂点数:%zu\n", model->vt_index.size());
@@ -541,16 +540,13 @@ int print_PMD(MODEL *model, const char file_name[]) {
   }
 
   fprintf(txt, "ボーン数:%zu\n", model->bone.size());
-  for (i = 0; i < model->bone.size(); i++) {
-    fprintf(txt, "ボーン名:%s\n", model->bone[i].name);
-    fprintf(txt, "親ボーン:%d\n", model->bone[i].PBone_index);
-    fprintf(txt, "テイルボーン:%d\n", model->bone[i].TBone_index);
-    fprintf(txt, "タイプ:%d\n", model->bone[i].type);
-    fprintf(txt, "IKボーン:%d\n", model->bone[i].IKBone_index);
-    fprintf(txt, "位置:");
-    for (int j = 0; j < 3; j++) {
-      fprintf(txt, "%f ", model->bone[i].loc[j]);
-    }
+  for (auto &b : model->bone) {
+    fprintf(txt, "ボーン名:%s\n", b.name);
+    fprintf(txt, "親ボーン:%d\n", b.PBone_index);
+    fprintf(txt, "テイルボーン:%d\n", b.TBone_index);
+    fprintf(txt, "タイプ:%d\n", b.type);
+    fprintf(txt, "IKボーン:%d\n", b.IKBone_index);
+    fprintf(txt, "位置: %f, %f, %f", b.loc.x, b.loc.y, b.loc.z);
     fprintf(txt, "\n\n");
   }
 
@@ -572,11 +568,9 @@ int print_PMD(MODEL *model, const char file_name[]) {
     fprintf(txt, "表情名:%s\n", model->skin[i].name);
     fprintf(txt, "表情頂点数:%zu\n", model->skin[i].skin_vt.size());
     fprintf(txt, "表情タイプ:%d\n", model->skin[i].type);
-    for (int j = 0; j < model->skin[i].skin_vt.size(); j++) {
-      fprintf(txt, "%d ", model->skin[i].skin_vt[j].index);
-      for (int k = 0; k < 3; k++) {
-        fprintf(txt, "%f ", model->skin[i].skin_vt[j].loc[k]);
-      }
+    for (auto &skin_vt : model->skin[i].skin_vt) {
+      fprintf(txt, "%d ", skin_vt.index);
+      fprintf(txt, "%f, %f, %f ", skin_vt.loc.x, skin_vt.loc.y, skin_vt.loc.z);
       fprintf(txt, "\n");
     }
     fprintf(txt, "\n");
@@ -647,27 +641,25 @@ int print_PMD(MODEL *model, const char file_name[]) {
   }
 
   fprintf(txt, "ジョイント数:%zu\n", model->joint.size());
-  for (int i = 0; i < model->joint.size(); i++) {
-    fprintf(txt, "%s\n", model->joint[i].name);
+  for (auto &joint : model->joint) {
+    fprintf(txt, "%s\n", joint.name);
     fprintf(txt, "剛体:");
     for (int j = 0; j < 2; j++) {
-      fprintf(txt, "%d ", model->joint[i].rbody[j]);
+      fprintf(txt, "%d ", joint.rbody[j]);
     }
     fprintf(txt, "\nloc:");
-    for (int j = 0; j < 3; j++) {
-      fprintf(txt, "%f ", model->joint[i].loc[j]);
-    }
+    fprintf(txt, "%f, %f, %f", joint.loc.x, joint.loc.y, joint.loc.z);
     fprintf(txt, "\nrot:");
     for (int j = 0; j < 3; j++) {
-      fprintf(txt, "%f ", model->joint[i].rot[j]);
+      fprintf(txt, "%f ", joint.rot[j]);
     }
     fprintf(txt, "\nlimit:");
     for (int j = 0; j < 12; j++) {
-      fprintf(txt, "%f ", model->joint[i].limit[j]);
+      fprintf(txt, "%f ", joint.limit[j]);
     }
     fprintf(txt, "\nspring:");
     for (int j = 0; j < 6; j++) {
-      fprintf(txt, "%f ", model->joint[i].spring[j]);
+      fprintf(txt, "%f ", joint.spring[j]);
     }
     fprintf(txt, "\n");
   }
@@ -1102,9 +1094,7 @@ void MODEL::sort_bone(NameList *list) {
     } else {
       bone[index[i]].IKBone_index = index[this->bone[i].IKBone_index];
     }
-    for (int j = 0; j < 3; j++) {
-      bone[index[i]].loc[j] = this->bone[i].loc[j];
-    }
+    bone[index[i]].loc = this->bone[i].loc;
   }
 
   this->update_bone_index(index);
@@ -1329,30 +1319,10 @@ void MODEL::rename_tail() {
   }
 }
 
-bool MODEL::scale_bone(int index, double sx, double sy, double sz) {
-  auto tail_index = this->find_tail(index);
-  if (!tail_index) {
-    return false;
-  }
+void MODEL::scale_vertices(int index, const mat3 &mtr, const float3 &scale) {
 
   auto loc = this->bone[index].loc;
 
-  // ベクトルがY軸に沿う向きになるようにする
-  auto vec = this->bone[*tail_index].loc - this->bone[index].loc;
-
-  // ベクトルのノーマライズ
-  vec = vec.normalized();
-
-  // ベクトルのZXY角を求める
-  double rot[3]; // ZXY
-  rot[0] = angle_from_vec(vec[0], vec[1]);
-  rot[1] = angle_from_vec(vec[2], sqrt(vec[0] * vec[0] + vec[1] * vec[1]));
-  rot[2] = 0;
-
-  // 回転行列を求める
-  auto mtr = mat3::rotate_x(rot[1]) * mat3::rotate_z(rot[0]);
-
-  // 座標変換
   // 変換する頂点をtmp_vtに格納
   auto len_vt = 0;
   for (int i = 0; i < (this->vt.size()); i++) {
@@ -1366,12 +1336,41 @@ bool MODEL::scale_bone(int index, double sx, double sy, double sz) {
   for (int i = 0; i < this->vt.size(); i++) {
     if (this->vt[i].bone_num[0] == index || this->vt[i].bone_num[1] == index) {
       index_vt[j] = i;
-      for (int k = 0; k < 3; k++) {
-        tmp_vt[j][k] = this->vt[i].loc[k];
-      }
+      tmp_vt[j] = this->vt[i].loc;
       j++;
     }
   }
+  // 変換
+  coordtrans(tmp_vt, loc, mtr);
+
+  // 変形
+  for (auto &v : tmp_vt) {
+    v = v.scale(scale);
+  }
+
+  // 逆変換
+  coordtrans_inv(tmp_vt, loc, mtr);
+
+  // 変換結果を元のデータに書き込む
+  // 頂点
+  // double tmp[3];
+  for (int i = 0; i < len_vt; i++) {
+    auto k = index_vt[i];
+    auto tmp = 0.0;
+    if (this->vt[k].bone_num[0] == index) {
+      tmp += (double)this->vt[k].bone_weight / 100;
+    }
+    if (this->vt[k].bone_num[1] == index) {
+      tmp += 1.0 - (double)this->vt[k].bone_weight / 100;
+    }
+    // printf("%f %f\n", tmp[0], tmp[1]);
+
+    this->vt[k].loc = this->vt[k].loc * (1 - tmp) + tmp_vt[i] * tmp;
+  }
+}
+
+void MODEL::scale_bones(int index, const mat3 &mtr, const float3 &scale) {
+  auto loc = this->bone[index].loc;
 
   // 変換するボーンの子をtmp_boneに格納
   int len_bone = 0;
@@ -1383,61 +1382,29 @@ bool MODEL::scale_bone(int index, double sx, double sy, double sz) {
   std::vector<float3> tmp_bone(len_bone);
   std::vector<float3> diff_bone(len_bone);
   std::vector<unsigned int> index_bone(len_bone);
-  j = 0;
+  int j = 0;
   for (int i = 0; i < this->bone.size(); i++) {
     if (this->bone[i].PBone_index == index) {
       index_bone[j] = i;
-      for (int k = 0; k < 3; k++) {
-        tmp_bone[j][k] = this->bone[i].loc[k];
-        diff_bone[j][k] = tmp_bone[j][k];
-      }
+      tmp_bone[j] = this->bone[i].loc;
+      diff_bone[j] = tmp_bone[j];
       j++;
     }
   }
   // 変換
-  coordtrans(tmp_vt, loc, mtr);
   coordtrans(tmp_bone, loc, mtr);
 
   // 変形
-  for (int i = 0; i < len_vt; i++) {
-    tmp_vt[i][0] = sx * tmp_vt[i][0];
-    tmp_vt[i][1] = sy * tmp_vt[i][1];
-    tmp_vt[i][2] = sz * tmp_vt[i][2];
+  for (auto &v : tmp_bone) {
+    v = v.scale(scale);
   }
-  for (int i = 0; i < len_bone; i++) {
-    tmp_bone[i][0] = sx * tmp_bone[i][0];
-    tmp_bone[i][1] = sy * tmp_bone[i][1];
-    tmp_bone[i][2] = sz * tmp_bone[i][2];
-  }
+
   // 逆変換
-  coordtrans_inv(tmp_vt, loc, mtr);
   coordtrans_inv(tmp_bone, loc, mtr);
-
-  // 変換結果を元のデータに書き込む
-  // 頂点
-  double tmp[3];
-  for (int i = 0; i < len_vt; i++) {
-    auto k = index_vt[i];
-    tmp[0] = 0.0;
-    if (this->vt[k].bone_num[0] == index) {
-      tmp[0] += (double)this->vt[k].bone_weight / 100;
-    }
-    if (this->vt[k].bone_num[1] == index) {
-      tmp[0] += 1.0 - (double)this->vt[k].bone_weight / 100;
-    }
-    // printf("%f %f\n", tmp[0], tmp[1]);
-
-    tmp[1] = 1 - tmp[0];
-    for (j = 0; j < 3; j++) {
-      this->vt[k].loc[j] = this->vt[k].loc[j] * tmp[1] + tmp_vt[i][j] * tmp[0];
-    }
-  }
 
   // ボーン
   for (int i = 0; i < len_bone; i++) {
-    for (int j = 0; j < 3; j++) {
-      diff_bone[i][j] = tmp_bone[i][j] - diff_bone[i][j];
-    }
+    diff_bone[i] = tmp_bone[i] - diff_bone[i];
   }
 
   for (int i = 0; i < this->bone.size(); i++) {
@@ -1454,15 +1421,13 @@ bool MODEL::scale_bone(int index, double sx, double sy, double sz) {
       for (j = 0; j < len_bone; j++) {
         if (index_bone[j] == l) {
           this->move_bone(i, diff_bone[j]);
-          // printf("%d %s %f %f %f\n", j, this->bone[i].name, diff_bone[j][0],
-          // diff_bone[j][1], diff_bone[j][2]);
+          // printf("%d %s %f %f %f\n", j, this->bone[i].name,
+          // diff_bone[j][0], diff_bone[j][1], diff_bone[j][2]);
           break;
         }
       }
     }
   }
-
-  return true;
 }
 
 std::optional<int> MODEL::find_tail(int index) const {
@@ -1484,9 +1449,7 @@ void MODEL::move_bone(unsigned int index, const float3 &diff) {
   if (index > this->bone.size())
     return;
 
-  for (int i = 0; i < 3; i++) {
-    this->bone[index].loc[i] = this->bone[index].loc[i] + diff[i];
-  }
+  this->bone[index].loc = this->bone[index].loc + diff;
   for (int i = 0; i < this->vt.size(); i++) {
     int k = 0;
     double tmp = 0.0;
@@ -1500,9 +1463,7 @@ void MODEL::move_bone(unsigned int index, const float3 &diff) {
     }
 
     if (k == 1) {
-      for (int j = 0; j < 3; j++) {
-        this->vt[i].loc[j] = this->vt[i].loc[j] + diff[j] * tmp;
-      }
+      this->vt[i].loc = this->vt[i].loc + diff * tmp;
     }
   }
 }
@@ -1518,37 +1479,25 @@ int MODEL::index_bone(const char bone[]) const {
   return index;
 }
 
-void MODEL::move_model(double diff[]) {
+void MODEL::move_model(const float3 &diff) {
   for (int i = 0; i < this->bone.size(); i++) {
-    for (int j = 0; j < 3; j++) {
-      this->bone[i].loc[j] = this->bone[i].loc[j] + diff[j];
-    }
+    this->bone[i].loc = this->bone[i].loc + diff;
   }
   for (int i = 0; i < this->vt.size(); i++) {
-    for (int j = 0; j < 3; j++) {
-      this->vt[i].loc[j] = this->vt[i].loc[j] + diff[j];
-    }
+    this->vt[i].loc = this->vt[i].loc + diff;
   }
 }
 
 void MODEL::resize_model(double size) {
-  for (int i = 0; i < this->bone.size(); i++) {
-    for (int j = 0; j < 3; j++) {
-      this->bone[i].loc[j] = this->bone[i].loc[j] * size;
-    }
+  for (auto &b : this->bone) {
+    b.loc = b.loc * size;
   }
-  for (int i = 0; i < this->vt.size(); i++) {
-    for (int j = 0; j < 3; j++) {
-      this->vt[i].loc[j] = this->vt[i].loc[j] * size;
-    }
+  for (auto &v : this->vt) {
+    v.loc = v.loc * size;
   }
-
-  for (int i = 1; i < this->skin.size(); i++) {
-    for (int j = 0; j < this->skin[i].skin_vt.size(); j++) {
-      for (int k = 0; k < 3; k++) {
-        this->skin[i].skin_vt[j].loc[k] =
-            this->skin[i].skin_vt[j].loc[k] * size;
-      }
+  for (auto &s : this->skin) {
+    for (auto &sv : s.skin_vt) {
+      sv.loc = sv.loc * size;
     }
   }
 }
@@ -1907,10 +1856,8 @@ void MODEL::update_skin() {
   // 表情baseの頂点位置を更新する
   if (this->skin.size()) {
     for (int i = 0; i < this->skin[0].skin_vt.size(); i++) {
-      for (int j = 0; j < 3; j++) {
-        int k = this->skin[0].skin_vt[i].index;
-        this->skin[0].skin_vt[i].loc[j] = this->vt[k].loc[j];
-      }
+      int k = this->skin[0].skin_vt[i].index;
+      this->skin[0].skin_vt[i].loc = this->vt[k].loc;
     }
   }
 }
