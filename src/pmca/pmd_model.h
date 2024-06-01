@@ -39,7 +39,8 @@ struct VERTEX {
   float3 loc;
   float nor[3];
   float uv[2];
-  unsigned short bone_num[2];
+  uint16_t bone0;
+  uint16_t bone1;
   unsigned char bone_weight;
   unsigned char edge_flag;
 };

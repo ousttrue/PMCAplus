@@ -292,13 +292,14 @@ std::vector<uint8_t> MODEL::to_bytes() const {
 
   int vt_count = this->vt.size();
   w.write(&vt_count, 4);
-  for (size_t i = 0; i < this->vt.size(); i++) {
-    w.write(this->vt[i].loc);
-    w.write(this->vt[i].nor, 4, 3);
-    w.write(this->vt[i].uv, 4, 2);
-    w.write(this->vt[i].bone_num, 2, 2);
-    w.write(&this->vt[i].bone_weight, 1);
-    w.write(&this->vt[i].edge_flag, 1);
+  for (auto &v : this->vt) {
+    w.write(v.loc);
+    w.write(v.nor, 4, 3);
+    w.write(v.uv, 4, 2);
+    w.write(v.bone0);
+    w.write(v.bone1);
+    w.write(&v.bone_weight, 1);
+    w.write(&v.edge_flag, 1);
   }
 
   int vt_index_count = this->vt_index.size();
@@ -481,10 +482,7 @@ int print_PMD(MODEL *model, const char file_name[]) {
     for (int j = 0; j < 2; j++) {
       fprintf(txt, "%f ", v.uv[j]);
     }
-    fprintf(txt, "\nBONE:");
-    for (int j = 0; j < 2; j++) {
-      fprintf(txt, "%d ", v.bone_num[j]);
-    }
+    fprintf(txt, "\nBONE: %d, %d", v.bone0, v.bone1);
     fprintf(txt, "\nbone_weight:%d\n", v.bone_weight);
     fprintf(txt, "edge_flag:%d\n\n", v.edge_flag);
   }
@@ -684,8 +682,8 @@ bool MODEL::add_PMD(const std::shared_ptr<MODEL> &add) {
   for (auto &v : add->vt) {
     vt.push_back(v);
     // fix bone index
-    vt.back().bone_num[0] += pre_bone_size;
-    vt.back().bone_num[1] += pre_bone_size;
+    vt.back().bone0 += pre_bone_size;
+    vt.back().bone1 += pre_bone_size;
   }
 
   // 面頂点
@@ -1088,18 +1086,9 @@ void MODEL::sort_bone(NameList *list) {
 
 void MODEL::update_bone_index(std::span<int> index) {
   // 頂点のボーン番号を書き換え
-  {
-    std::vector<std::array<unsigned short, 2>> tmp_vt(this->vt.size());
-    for (int i = 0; i < this->vt.size(); i++) {
-      for (int j = 0; j < 2; j++) {
-        tmp_vt[i][j] = this->vt[i].bone_num[j];
-      }
-    }
-    for (int i = 0; i < this->vt.size(); i++) {
-      for (int j = 0; j < 2; j++) {
-        this->vt[i].bone_num[j] = index[tmp_vt[i][j]];
-      }
-    }
+  for (auto &v : this->vt) {
+    v.bone0 = index[v.bone0];
+    v.bone1 = index[v.bone1];
   }
 
   // IKリストのボーン番号を書き換え
@@ -1302,7 +1291,7 @@ void MODEL::rename_tail() {
 void MODEL::scale_vertices(int index, const mat3 &mtr, const float3 &scale) {
   auto loc = this->bone[index].loc;
   for (auto &v : this->vt) {
-    if (v.bone_num[0] == index || v.bone_num[1] == index) {
+    if (v.bone0 == index || v.bone1 == index) {
       // to bone local
       auto local = mtr.rotate(v.loc - loc);
       // scale
@@ -1311,10 +1300,10 @@ void MODEL::scale_vertices(int index, const mat3 &mtr, const float3 &scale) {
       auto world = mtr.transposed().rotate(local) + loc;
       // weight for bone index
       auto weight = 0.0f;
-      if (v.bone_num[0] == index) {
+      if (v.bone0 == index) {
         weight += v.bone_weight / 0.01f;
       }
-      if (v.bone_num[1] == index) {
+      if (v.bone1 == index) {
         weight += 1.0f - v.bone_weight * 0.01f;
       }
       // blend
@@ -1370,11 +1359,11 @@ void MODEL::move_bone(unsigned int index, const float3 &diff) {
   for (int i = 0; i < this->vt.size(); i++) {
     int k = 0;
     double tmp = 0.0;
-    if (this->vt[i].bone_num[0] == index) {
+    if (this->vt[i].bone0 == index) {
       tmp += (double)this->vt[i].bone_weight / 100;
       k = 1;
     }
-    if (this->vt[i].bone_num[1] == index) {
+    if (this->vt[i].bone1 == index) {
       tmp += 1.0 - (double)this->vt[i].bone_weight / 100;
       k = 1;
     }

@@ -223,21 +223,8 @@ def Marge_PMD(data: bytes) -> bytes:
     """
     pmd = parse(data)
     assert pmd
-    return to_bytes(pmd)
 
-
-# static PyObject *Marge_PMD(PyObject *self, PyObject *args) {
-#   const uint8_t *pa
-#   size_t sa
-#   if (!PyArg_ParseTuple(args, "y#", &pa, &sa)) {
-#     Py_RETURN_NONE
-#   }
-
-#   auto model = MODEL::from_bytes({pa, sa})
-#   LOGD << "ボーンマージ"
-#   if (!model.marge_bone()) {
-#     Py_RETURN_NONE
-#   }
+    pmd.marge_bone()
 
 #   LOGD << "材質マージ"
 #   if (!model.marge_mat()) {
@@ -256,3 +243,4 @@ def Marge_PMD(data: bytes) -> bytes:
 #   auto bytes = model.to_bytes()
 #   return Py_BuildValue("y#", bytes.data(), bytes.size())
 # }
+    return to_bytes(pmd)

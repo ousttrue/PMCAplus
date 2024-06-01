@@ -219,6 +219,9 @@ class PMD:
             if k:
                 v.position = v.position + diff * tmp
 
+    def merge_bone(self)->None:
+        pass
+
     def add(self, parts: "PMD") -> None:
         """
         port from c++
