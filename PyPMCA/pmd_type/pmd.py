@@ -1,4 +1,5 @@
-﻿from typing import Sequence
+﻿from typing import Sequence, Iterator
+import logging
 import dataclasses
 import ctypes
 from .types import Vertex, Submesh, Bone, RigidBody, Joint, Float3, Mat3
@@ -6,6 +7,9 @@ from .info import INFO
 from .bone import BONE_DISP, BONE_GROUP
 from .ik import IK_LIST
 from .skin import SKIN
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
@@ -197,11 +201,15 @@ class PMD:
 
     def has_parent(self, bone_index: int, parent_index: int, recursive: bool) -> bool:
         current = self.bones[bone_index]
+        used: set[int] = set()
+        used.add(bone_index)
         while current.parent_index != 65535:
             if current.parent_index == parent_index:
                 return True
             if not recursive:
                 return False
+            assert current.parent_index not in used
+            used.add(current.parent_index)
             current = self.bones[current.parent_index]
         return False
 
@@ -219,8 +227,84 @@ class PMD:
             if k:
                 v.position = v.position + diff * tmp
 
-    def merge_bone(self)->None:
-        pass
+    def merge_bone(self) -> None:
+        merge: set[int] = set()
+        index: dict[int, int] = {}
+
+        def indexer() -> Iterator[int]:
+            i = 0
+            while True:
+                yield i
+                i += 1
+
+        it = indexer()
+        for i, bone in enumerate(self.bones):
+            if i not in merge:
+                new_index = next(it)
+                index[i] = new_index
+                count = 0
+                for j in range(i + 1, len(self.bones)):
+                    merge_bone = self.bones[j]
+                    if bone.str_name == merge_bone.str_name:
+                        # 同名
+                        assert count == 0
+                        count += 1
+                        if bone.type == 7:
+                            bone.tail_index = merge_bone.tail_index
+                            bone.type = merge_bone.type
+                            bone.ik_index = merge_bone.ik_index
+                            bone.position = merge_bone.position
+                        index[j] = new_index
+                        merge.add(j)
+
+        bones: list[Bone] = []
+        for i, b in enumerate(self.bones):
+            if i not in merge:
+                assert index[i] == len(bones)
+                bones.append(b)
+                if b.parent_index >= len(self.bones):
+                    b.parent_index = 65535
+                else:
+                    b.parent_index = index[b.parent_index]
+
+                if b.tail_index == 0 or b.tail_index >= len(self.bones):
+                    b.tail_index = 0
+                else:
+                    b.tail_index = index[b.tail_index]
+
+                if b.ik_index == 0 or b.ik_index >= len(self.bones):
+                    b.ik_index = 0
+                else:
+                    b.ik_index = index[b.ik_index]
+
+        # self.update_bone_index(index)
+
+        self.bones = (Bone * len(bones))(*bones)
+
+    # def update_bone_index(self, index: dict[int, int]) ->None:
+    #     # 頂点のボーン番号を書き換え
+    #     for (auto &v : this->vt) {
+    #         v.bone0 = index[v.bone0];
+    #         v.bone1 = index[v.bone1];
+
+    #     # IKリストのボーン番号を書き換え
+    #     for (auto &ik : this->IK) {
+    #         // PLOG_DEBUG << i;
+    #         ik.ik_index = index[ik.ik_index];
+    #         ik.ik_target_index = index[ik.ik_target_index];
+    #         for (int j = 0; j < ik.IK_chain.size(); j++) {
+    #         ik.IK_chain[j] = index[ik.IK_chain[j]];
+    #         }
+
+    #     # 表示ボーン番号を書き換え
+    #     for (auto &bd : this->bone_disp) {
+    #         bd.bone_index = index[bd.bone_index];
+
+    #     # 剛体ボーン番号を書き換え
+    #     for (auto &rb : this->rbody) {
+    #         if (rb.bone != USHORT_MAX) {
+    #         rb.bone = index[rb.bone];
+    #         }
 
     def add(self, parts: "PMD") -> None:
         """

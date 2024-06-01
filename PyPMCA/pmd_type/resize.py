@@ -224,7 +224,7 @@ def Marge_PMD(data: bytes) -> bytes:
     pmd = parse(data)
     assert pmd
 
-    pmd.marge_bone()
+    pmd.merge_bone()
 
 #   LOGD << "材質マージ"
 #   if (!model.marge_mat()) {
