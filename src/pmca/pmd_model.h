@@ -83,7 +83,7 @@ struct BONE { /*39byte*/
     auto rot_z = angle_from_vec(vec.x, vec.y);
     auto rot_x = angle_from_vec(vec.z, sqrt(vec.x * vec.x + vec.y * vec.y));
     // 回転行列を求める
-    return mat3::rotate_x(rot_x) * mat3::rotate_z(rot_z);
+    return mat3::rotation_x(rot_x) * mat3::rotation_z(rot_z);
   }
 };
 

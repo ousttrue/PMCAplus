@@ -1,5 +1,6 @@
 from .parser import parse
 from .to_bytes import to_bytes
+from .types import Float3
 
 
 def Resize_Model(data: bytes, scale: float) -> bytes:
@@ -42,35 +43,29 @@ def Move_Model(data: bytes, x: float, y: float, z: float) -> bytes:
     return to_bytes(pmd)
 
 
-def Resize_Bone(data: bytes, name: bytes, length: float, thickness: float) -> bytes:
+def Resize_Bone(data: bytes, name: str, length: float, thickness: float) -> bytes:
     pmd = parse(data)
     assert pmd
+
+    for i, bone in enumerate(pmd.bones):
+        if bone.str_name == name:
+            tail = pmd.find_tail(i)
+            if tail:
+                rot = bone.rotation_to_tail(tail.position)
+                pmd.scale_vertices(i, rot, Float3(thickness, length, thickness))
+                pmd.scale_bones(i, rot, Float3(thickness, length, thickness))
+            break
+
     return to_bytes(pmd)
 
 
-#   const uint8_t *pa;
-#   size_t sa;
-#   const char *str;
-#   double len, thi;
-#   if (!PyArg_ParseTuple(args, "y#ydd", &pa, &sa, &str, &len, &thi)) {
-#     Py_RETURN_NONE;
-#   }
+def Move_Bone(data: bytes, name: str, diff: Float3) -> bytes:
+    pmd = parse(data)
+    assert pmd
 
-#   auto model = MODEL::from_bytes({pa, sa});
-#   int index = 0;
-#   for (; index < model->bone.size(); index++) {
-#     if (strcmp(model->bone[index].name, str) == 0) {
-#       break;
-#     }
-#   }
-#   if (index == model->bone.size()) {
-#     Py_RETURN_NONE;
-#   }
+    for i, bone in enumerate(pmd.bones):
+        if bone.str_name == name:
+            pmd.move_bone(i, diff)
+            break
 
-#   if (!model->scale_bone(index, thi, len, thi)) {
-#     // Py_RETURN_NONE;
-#   }
-
-#   auto bytes = model->to_bytes();
-#   return Py_BuildValue("y#", bytes.data(), bytes.size());
-# }
+    return to_bytes(pmd)

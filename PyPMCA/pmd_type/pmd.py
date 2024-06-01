@@ -1,7 +1,7 @@
 ﻿from typing import Sequence
 import dataclasses
 import ctypes
-from .types import Vertex, Submesh, Bone, RigidBody, Joint
+from .types import Vertex, Submesh, Bone, RigidBody, Joint, Float3, Mat3
 from .info import INFO
 from .bone import BONE_DISP, BONE_GROUP
 from .ik import IK_LIST
@@ -130,6 +130,55 @@ class PMD:
             rigidbodies=None,
             joints=None,
         )
+
+    def move_bone(self, bone_index: int, diff: Float3) -> None:
+        bone = self.bones[bone_index]
+        bone.position = bone.position + diff
+        for v in self.vertices:
+            k = 0
+            tmp = 0.0
+            if v.bone0 == bone_index:
+                tmp += v.weight / 100
+                k = 1
+            if v.bone1 == bone_index:
+                tmp += 1.0 - v.weight / 100
+                k = 1
+            if k == 1:
+                v.position = v.position + diff * tmp
+
+    def find_tail(self, bone_index: int) -> Bone | None:
+        children: list[tuple[int, Bone]] = [
+            (i, bone)
+            for (i, bone) in enumerate(self.bones)
+            if bone.parent_index == bone_index
+        ]
+        for i, child in children:
+            if i == self.bones[bone_index].tail_index:
+                return child
+        if len(children) > 0:
+            return children[0][1]
+
+    def scale_vertices(self, bone_index: int, rot: Mat3, scale: Float3) -> None:
+        bone_position = self.bones[bone_index].position
+        for v in self.vertices:
+            if v.bone0 == bone_index or v.bone1 == bone_index:
+                # to bone local
+                local = rot.rotate(v.position - bone_position)
+                # scale
+                local = local.scale(scale)
+                # to world
+                world = rot.transposed().rotate(local) + bone_position
+                # weight for bone index
+                weight = 0.0
+                if v.bone0 == bone_index:
+                    weight += v.weight * 0.01
+                if v.bone1 == bone_index:
+                    weight += 1.0 - v.weight * 0.01
+                # blend
+                v.position = v.position * (1 - weight) + world * weight
+
+    def scale_bones(self, bone_index: int, rot: Mat3, scale: Float3) -> None:
+        pass
 
     def add(self, parts: "PMD") -> None:
         """

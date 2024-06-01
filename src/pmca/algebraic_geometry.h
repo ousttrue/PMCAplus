@@ -69,9 +69,9 @@ union mat3 {
   float3 col2() const { return {m02, m12, m22}; }
   mat3 transposed() const {
     return {
-        .row0 = {m00, m10, m20},
-        .row1 = {m01, m11, m21},
-        .row2 = {m02, m12, m22},
+        .row0 = col0(),
+        .row1 = col1(),
+        .row2 = col2(),
     };
   }
   float3 rotate(const float3 &rhs) const {
@@ -81,7 +81,7 @@ union mat3 {
         float3::dot(row2, rhs),
     };
   }
-  static mat3 rotate_z(float theta) {
+  static mat3 rotation_z(float theta) {
     auto c = std::cos(theta);
     auto s = std::sin(theta);
     return {
@@ -90,7 +90,7 @@ union mat3 {
         .row2 = {0, 0, 1},
     };
   }
-  static mat3 rotate_x(float theta) {
+  static mat3 rotation_x(float theta) {
     auto c = std::cos(theta);
     auto s = std::sin(theta);
     return {

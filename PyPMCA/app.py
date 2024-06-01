@@ -111,17 +111,15 @@ class App:
             for transform_bone in transform_data.bones:
                 data0 = resize.Resize_Bone(
                     data0,
-                    transform_bone.name.encode("cp932", "replace"),
+                    transform_bone.name,
                     transform_bone.length,
                     transform_bone.thick,
                 )
                 assert data0
-                data0 = PMCA.Move_Bone(
+                data0 = resize.Move_Bone(
                     data0,
-                    transform_bone.name.encode("cp932", "replace"),
-                    transform_bone.pos[0],
-                    transform_bone.pos[1],
-                    transform_bone.pos[2],
+                    transform_bone.name,
+                    pmd_type.Float3(*transform_bone.pos),
                 )
 
         if refbone:

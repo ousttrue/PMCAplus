@@ -7,6 +7,7 @@ from .skin import SKIN
 from .rigidbody import RB, JOINT
 from .parser import parse
 from .to_bytes import to_bytes
+from .types import Float3
 
 __all__ = [
     "PMD",
@@ -22,4 +23,5 @@ __all__ = [
     "JOINT",
     "parse",
     "to_bytes",
+    "Float3",
 ]

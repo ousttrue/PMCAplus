@@ -20,26 +20,6 @@ double angle_from_vec(double u, double v) {
   return angle;
 }
 
-// 座標変換
-static void coordtrans(std::span<float3> array, const float3 &loc,
-                       const mat3 &mtr) {
-  for (auto &a : array) {
-    a = mtr.rotate(a - loc);
-  }
-}
-
-static void coordtrans_inv(std::span<float3> array, const float3 &loc,
-                           const mat3 &mtr) {
-  // 転置行列
-  auto inverse_mtr = mtr.transposed();
-
-  // 座標変換
-  for (auto &a : array) {
-    auto tmp = inverse_mtr.rotate(a);
-    a = tmp + loc;
-  }
-}
-
 static void *MALLOC(size_t s) {
   auto p = malloc(s);
   if (p == NULL) {
