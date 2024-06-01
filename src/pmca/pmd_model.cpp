@@ -66,73 +66,51 @@ bool MODEL::load(std::span<const uint8_t> bytes) {
   PLOG_DEBUG << this->header.comment.data();
 
   int vt_count = r.i32();
-  ;
   PLOG_DEBUG << "頂点数:" << vt_count;
   this->vt.resize(vt_count);
-  r.read(this->vt.data(), vt_count * sizeof(VERTEX));
+  r.read_vector(this->vt);
 
   int vt_index_count = r.i32();
-  ;
   PLOG_DEBUG << "面頂点数:" << vt_index_count;
   this->vt_index.resize(vt_index_count);
-  r.read(this->vt_index.data(), vt_index_count * 2);
+  r.read_vector(this->vt_index);
 
   int mat_count = r.i32();
-  ;
   PLOG_DEBUG << "材質数:" << mat_count;
   this->mat.resize(mat_count);
-  for (int i = 0; i < this->mat.size(); i++) {
-    r.read(&this->mat[i], 70);
-    this->mat[i].tex[21] = '\0';
-  }
+  r.read_vector(this->mat);
 
   uint16_t bone_count = r.u16();
   PLOG_DEBUG << "ボーン数:" << bone_count;
   this->bone.resize(bone_count);
-  for (int i = 0; i < this->bone.size(); i++) {
-    r.read(this->bone[i].name, 20);
-    this->bone[i].PBone_index = r.u16();
-    this->bone[i].TBone_index = r.u16();
-    this->bone[i].type = r.u8();
-    this->bone[i].IKBone_index = r.u16();
-    r.read(this->bone[i].loc);
-    this->bone[i].name_eng[0] = '\0';
-    this->bone[i].name[21] = '\0';
-  }
+  r.read_vector(this->bone);
 
   uint16_t IK_count = r.u16();
   PLOG_DEBUG << "IKデータ数:" << IK_count;
-  this->IK.resize(IK_count);
-  for (int i = 0; i < this->IK.size(); i++) {
-    this->IK[i].IKBone_index = r.u16();
-    this->IK[i].IKTBone_index = r.u16();
+  for (int i = 0; i < IK_count; i++) {
+    this->IK.push_back({});
+    auto &ik = this->IK.back();
+    ik.ik_index = r.u16();
+    ik.ik_target_index = r.u16();
     char IK_chain_len = r.u8();
-    ;
-    this->IK[i].iterations = r.u16();
-    this->IK[i].weight = r.f32();
-    this->IK[i].IK_chain.resize(IK_chain_len);
+    ik.iterations = r.u16();
+    ik.weight = r.f32();
+    ik.IK_chain.resize(IK_chain_len);
     if (IK_chain_len > 0) {
-      r.read(this->IK[i].IK_chain.data(), 2 * IK_chain_len);
+      r.read(ik.IK_chain.data(), 2 * IK_chain_len);
     }
   }
 
   uint16_t skin_count = r.u16();
   PLOG_DEBUG << "表情数:" << skin_count;
-  this->skin.resize(skin_count);
   for (int i = 0; i < skin_count; i++) {
-    r.read(this->skin[i].name, 20);
+    this->skin.push_back({});
+    auto &morph = this->skin.back();
+    r.read(morph.name, 20);
     int skin_vt_count = r.i32();
-    this->skin[i].type = r.u8();
-    this->skin[i].skin_vt.resize(skin_vt_count);
-    for (int j = 0; j < skin_vt_count; j++) {
-      this->skin[i].skin_vt[j].index = r.i32();
-      if (this->skin[i].skin_vt[j].index > this->vt.size()) {
-        exit(1);
-      }
-      r.read(this->skin[i].skin_vt[j].loc);
-    }
-    this->skin[i].name_eng[0] = '\0';
-    this->skin[i].name[20] = '\0';
+    morph.type = r.u8();
+    morph.skin_vt.resize(skin_vt_count);
+    r.read_vector(morph.skin_vt);
   }
 
   uint8_t skin_disp_count = r.u8();
@@ -143,18 +121,12 @@ bool MODEL::load(std::span<const uint8_t> bytes) {
   uint8_t bone_group_count = r.u8();
   PLOG_DEBUG << "ボーン枠:" << bone_group_count;
   this->bone_group.resize(bone_group_count);
-  for (int i = 0; i < bone_group_count; i++) {
-    r.read(&this->bone_group[i].name, 50);
-    this->bone_group[i].name_eng[0] = '\0';
-  }
+  r.read_vector(this->bone_group);
 
   int bone_disp_count = r.i32();
   PLOG_DEBUG << "表示ボーン数:" << bone_disp_count;
   this->bone_disp.resize(bone_disp_count);
-  for (int i = 0; i < bone_disp_count; i++) {
-    this->bone_disp[i].index = r.u16();
-    this->bone_disp[i].bone_group = r.u8();
-  }
+  r.read_vector(this->bone_disp);
 
   this->eng_support = r.u8();
 
@@ -187,22 +159,25 @@ bool MODEL::load(std::span<const uint8_t> bytes) {
     this->header.comment_eng[255] = '\0';
 
     for (int i = 0; i < this->bone.size(); i++) {
-      r.read(this->bone[i].name_eng, 20);
-      this->bone[i].name_eng[20] = '\0';
+      char buf[20];
+      r.read(buf, 20);
+      // this->bone[i].name_eng[20] = '\0';
     }
 
     // skin:0
-    if (this->skin.size() > 0) {
-      strcpy(this->skin[0].name_eng, "base");
-    }
+    // if (this->skin.size() > 0) {
+    //   strcpy(this->skin[0].name_eng, "base");
+    // }
     // skin:1~
     for (int i = 1; i < this->skin.size(); i++) {
-      r.read(this->skin[i].name_eng, 20);
-      this->skin[i].name_eng[20] = '\0';
+      char buf[20];
+      r.read(buf, 20);
+      // this->skin[i].name_eng[20] = '\0';
     }
     for (int i = 0; i < this->bone_group.size(); i++) {
-      r.read(this->bone_group[i].name_eng, 50);
-      this->bone_group[i].name_eng[50] = '\0';
+      char buf[50];
+      r.read(buf, 50);
+      // this->bone_group[i].name_eng[50] = '\0';
     }
   } else {
     PLOG_DEBUG << "英名非対応PMD";
@@ -210,17 +185,17 @@ bool MODEL::load(std::span<const uint8_t> bytes) {
     this->header.name_eng[0] = '\0';
     this->header.comment_eng[0] = '\0';
 
-    for (int i = 0; i < this->bone.size(); i++) {
-      *this->bone[i].name_eng = '\0';
-    }
-
-    for (int i = 0; i < this->skin.size(); i++) {
-      *this->skin[i].name_eng = '\0';
-    }
-
-    for (int i = 0; i < this->bone_group.size(); i++) {
-      *this->bone_group[i].name_eng = '\0';
-    }
+    // for (int i = 0; i < this->bone.size(); i++) {
+    //   *this->bone[i].name_eng = '\0';
+    // }
+    //
+    // for (int i = 0; i < this->skin.size(); i++) {
+    //   *this->skin[i].name_eng = '\0';
+    // }
+    //
+    // for (int i = 0; i < this->bone_group.size(); i++) {
+    //   *this->bone_group[i].name_eng = '\0';
+    // }
   }
 
   for (int i = 0; i < 10; i++) {
@@ -232,58 +207,22 @@ bool MODEL::load(std::span<const uint8_t> bytes) {
   int rbody_count = r.i32();
   PLOG_DEBUG << "剛体数:" << rbody_count;
   this->rbody.resize(rbody_count);
-  for (int i = 0; i < this->rbody.size(); i++) {
-    r.read(this->rbody[i].name, 20);
-    this->rbody[i].bone = r.u16();
-    this->rbody[i].group = r.u8();
-    this->rbody[i].target = r.u16();
-    this->rbody[i].shape = r.u8();
-    r.read(this->rbody[i].size, 12);
-    r.read(this->rbody[i].loc, 12);
-    r.read(this->rbody[i].rot, 12);
-    r.read(this->rbody[i].property, 20);
-    this->rbody[i].type = r.u8();
-    this->rbody[i].name[21] = '\0';
-  }
+  r.read_vector(this->rbody);
 
   int joint_count = r.i32();
   PLOG_DEBUG << "ジョイント数:" << joint_count;
   this->joint.resize(joint_count);
-  for (int i = 0; i < joint_count; i++) {
-    r.read(this->joint[i].name, 20);
-    r.read(this->joint[i].rbody, 8);
-    r.read(this->joint[i].loc);
-    r.read(this->joint[i].rot, 12);
-    r.read(this->joint[i].limit, 4 * 12);
-    r.read(this->joint[i].spring, 4 * 6);
-    this->joint[i].name[20] = '\0';
-  }
+  r.read_vector(this->joint);
 
   return true;
 }
-
-struct Writer {
-  std::vector<uint8_t> buffer;
-
-  void write(const void *p, size_t len) {
-    auto begin = buffer.size();
-    buffer.resize(begin + len);
-    memcpy(buffer.data() + begin, p, len);
-  }
-
-  template <typename T> void write(const T &value) {
-    write(&value, sizeof(value));
-  }
-
-  void write(const void *p, size_t len, int count) { write(p, len * count); }
-};
 
 std::vector<uint8_t> MODEL::to_bytes() const {
   // ヘッダー書き換え
   this->header.magic = {'P', 'm', 'd', '\0'};
   this->header.version = 1.0;
 
-  Writer w;
+  ioutil::Writer w;
 
   w.write(this->header.magic.data(), 3);
   w.write(&this->header.version, 4);
@@ -292,15 +231,7 @@ std::vector<uint8_t> MODEL::to_bytes() const {
 
   int vt_count = this->vt.size();
   w.write(&vt_count, 4);
-  for (auto &v : this->vt) {
-    w.write(v.loc);
-    w.write(v.nor, 4, 3);
-    w.write(v.uv, 4, 2);
-    w.write(v.bone0);
-    w.write(v.bone1);
-    w.write(&v.bone_weight, 1);
-    w.write(&v.edge_flag, 1);
-  }
+  w.write_vector(this->vt);
 
   int vt_index_count = this->vt_index.size();
   w.write(&vt_index_count, 4);
@@ -314,46 +245,17 @@ std::vector<uint8_t> MODEL::to_bytes() const {
 
   int mat_count = this->mat.size();
   w.write(&mat_count, 4);
-  for (size_t i = 0; i < this->mat.size(); i++) {
-    // 70bytes
-    w.write(this->mat[i].diffuse, 4, 3);
-    w.write(&this->mat[i].alpha, 4);
-    w.write(&this->mat[i].spec, 4);
-    w.write(this->mat[i].spec_col, 4, 3);
-    w.write(this->mat[i].mirror_col, 4, 3);
-    w.write(&this->mat[i].toon_index, 1);
-    w.write(&this->mat[i].edge_flag, 1);
-    w.write(&this->mat[i].vt_index_count, 4);
-
-    if (*this->mat[i].sph != '\0') {
-      char str[PATH_LEN];
-      sprintf(str, "%s*%s\0", this->mat[i].tex, this->mat[i].sph);
-      if (strlen(str) > 20) {
-        PLOGW << "not zero terminated";
-        // ret = 2;
-      }
-      w.write(str, 1, 20);
-    } else {
-      w.write(this->mat[i].tex, 1, 20);
-    }
-  }
+  w.write_vector(this->mat);
 
   uint16_t bone_count = this->bone.size();
   w.write(&bone_count, 2);
-  for (size_t i = 0; i < this->bone.size(); i++) {
-    w.write(this->bone[i].name, 1, 20);
-    w.write(&this->bone[i].PBone_index, 2);
-    w.write(&this->bone[i].TBone_index, 2);
-    w.write(&this->bone[i].type, 1);
-    w.write(&this->bone[i].IKBone_index, 2);
-    w.write(this->bone[i].loc);
-  }
+  w.write_vector(this->bone);
 
   uint16_t IK_count = this->IK.size();
   w.write(&IK_count, 2);
   for (int i = 0; i < this->IK.size(); i++) {
-    w.write(&this->IK[i].IKBone_index, 2);
-    w.write(&this->IK[i].IKTBone_index, 2);
+    w.write(&this->IK[i].ik_index, 2);
+    w.write(&this->IK[i].ik_target_index, 2);
     uint8_t IK_chain_len = this->IK[i].IK_chain.size();
     w.write(&IK_chain_len, 1);
     w.write(&this->IK[i].iterations, 2);
@@ -371,7 +273,7 @@ std::vector<uint8_t> MODEL::to_bytes() const {
     w.write(&this->skin[i].type, 1);
     for (size_t j = 0; j < this->skin[i].skin_vt.size(); j++) {
       w.write(&this->skin[i].skin_vt[j].index, 4);
-      w.write(this->skin[i].skin_vt[j].loc);
+      w.write_value(this->skin[i].skin_vt[j].loc);
     }
   }
   PLOG_DEBUG << "表情";
@@ -390,8 +292,8 @@ std::vector<uint8_t> MODEL::to_bytes() const {
   int bone_disp_count = this->bone_disp.size();
   w.write(&bone_disp_count, 4);
   for (int i = 0; i < this->bone_disp.size(); i++) {
-    w.write(&this->bone_disp[i].index, 2);
-    w.write(&this->bone_disp[i].bone_group, 1);
+    w.write(&this->bone_disp[i].bone_index, 2);
+    w.write(&this->bone_disp[i].bone_group_index, 1);
   }
   PLOG_DEBUG << "ボーン表示";
 
@@ -402,13 +304,16 @@ std::vector<uint8_t> MODEL::to_bytes() const {
     w.write(this->header.name_eng.data(), 1, 20);
     w.write(this->header.comment_eng.data(), 1, 256);
     for (size_t i = 0; i < this->bone.size(); i++) {
-      w.write(this->bone[i].name_eng, 1, 20);
+      char buf[20];
+      w.write(buf, 1, 20);
     }
     for (size_t i = 1; i < this->skin.size(); i++) {
-      w.write(this->skin[i].name_eng, 1, 20);
+      char buf[20];
+      w.write(buf, 1, 20);
     }
     for (size_t i = 0; i < this->bone_group.size(); i++) {
-      w.write(this->bone_group[i].name_eng, 1, 50);
+      char buf[50];
+      w.write(buf, 1, 50);
     }
   }
   PLOG_DEBUG << "英名";
@@ -422,38 +327,18 @@ std::vector<uint8_t> MODEL::to_bytes() const {
 
   int rbody_count = this->rbody.size();
   w.write(&rbody_count, 4);
-  for (int i = 0; i < this->rbody.size(); i++) {
-    w.write(this->rbody[i].name, 1, 20);
-    w.write(&this->rbody[i].bone, 2);
-    w.write(&this->rbody[i].group, 1);
-    w.write(&this->rbody[i].target, 2);
-    w.write(&this->rbody[i].shape, 1);
-    w.write(this->rbody[i].size, 4, 3);
-    w.write(this->rbody[i].loc, 4, 3);
-    w.write(this->rbody[i].rot, 4, 3);
-    w.write(this->rbody[i].property, 4, 5);
-    w.write(&this->rbody[i].type, 1);
-  }
+  w.write_vector(this->rbody);
   PLOG_DEBUG << "剛体";
 
   int joint_count = this->joint.size();
   w.write(&joint_count, 4);
-  for (int i = 0; i < this->joint.size(); i++) {
-    w.write(this->joint[i].name, 1, 20);
-    w.write(this->joint[i].rbody, 4, 2);
-    w.write(this->joint[i].loc);
-    w.write(this->joint[i].rot, 4, 3);
-    w.write(this->joint[i].limit, 4, 12);
-    w.write(this->joint[i].spring, 4, 6);
-  }
+  w.write_vector(this->joint);
   PLOG_DEBUG << "ジョイント";
 
   return w.buffer;
 }
 
 int print_PMD(MODEL *model, const char file_name[]) {
-  int i;
-
   if (strcmp(file_name, "") == 0) {
     printf("ファイル名がありません\n");
     return 1;
@@ -469,21 +354,14 @@ int print_PMD(MODEL *model, const char file_name[]) {
           model->header.version, model->header.name.data(),
           model->header.comment.data());
 
-  i = 0;
+  int i = 0;
   for (auto &v : model->vt) {
-    fprintf(txt, "No:%d\n", i++);
-    fprintf(txt, "Loc:");
-    fprintf(txt, "%f, %f, %f", v.loc.x, v.loc.y, v.loc.z);
-    fprintf(txt, "\nNor:");
-    for (int j = 0; j < 3; j++) {
-      fprintf(txt, "%f ", v.nor[j]);
-    }
-    fprintf(txt, "\nUV:");
-    for (int j = 0; j < 2; j++) {
-      fprintf(txt, "%f ", v.uv[j]);
-    }
-    fprintf(txt, "\nBONE: %d, %d", v.bone0, v.bone1);
-    fprintf(txt, "\nbone_weight:%d\n", v.bone_weight);
+    fprintf(txt, "No: %d\n", i++);
+    fprintf(txt, "Loc: %f, %f, %f\n", v.loc.x, v.loc.y, v.loc.z);
+    fprintf(txt, "Nor: %f, %f, %f\n", v.nor.x, v.nor.y, v.nor.z);
+    fprintf(txt, "UV: %f, %f\n", v.uv.x, v.uv.y);
+    fprintf(txt, "BONE: %d, %d\n", v.bone0, v.bone1);
+    fprintf(txt, "bone_weight:%d\n", v.bone_weight);
     fprintf(txt, "edge_flag:%d\n\n", v.edge_flag);
   }
 
@@ -494,44 +372,38 @@ int print_PMD(MODEL *model, const char file_name[]) {
   }
   fprintf(txt, "\n");
 
-  fprintf(txt, "材質数:%zu\n", model->mat.size());
-  for (i = 0; i < model->mat.size(); i++) {
-    fprintf(txt, "No:%d\n", i);
-    fprintf(txt, "diffuse:");
-    for (int j = 0; j < 3; j++) {
-      fprintf(txt, "%f ", model->mat[i].diffuse[j]);
-    }
-    fprintf(txt, "\n%f", model->mat[i].alpha);
-    fprintf(txt, "\n%f", model->mat[i].spec);
-    fprintf(txt, "\nspec_col:");
-    for (int j = 0; j < 3; j++) {
-      fprintf(txt, "%f ", model->mat[i].spec_col[j]);
-    }
-    fprintf(txt, "\nmirror_col:");
-    for (int j = 0; j < 3; j++) {
-      fprintf(txt, "%f ", model->mat[i].mirror_col[j]);
-    }
-    fprintf(txt, "\ntoon_index:%d\n", model->mat[i].toon_index);
-    fprintf(txt, "edge_flag:%d\n", model->mat[i].edge_flag);
-    fprintf(txt, "vt_index_count:%d\n", model->mat[i].vt_index_count);
-    fprintf(txt, "texture:%s\n\n", model->mat[i].tex);
+  fprintf(txt, "材質数: %zu\n", model->mat.size());
+  for (auto &m : model->mat) {
+    fprintf(txt, "No: %d\n", i);
+    fprintf(txt, "diffuse: %f, %f, %f\n", m.diffuse.x, m.diffuse.y,
+            m.diffuse.z);
+    fprintf(txt, "alpha: %f\n", m.alpha);
+    fprintf(txt, "specularity: %f\n", m.spec);
+    fprintf(txt, "spec_col: %f, %f, %f\n", m.spec_col.x, m.spec_col.y,
+            m.spec_col.z);
+    fprintf(txt, "mirror_col: %f, %f, %f\n", m.mirror_col.x, m.mirror_col.y,
+            m.mirror_col.z);
+    fprintf(txt, "toon_index: %d\n", m.toon_index);
+    fprintf(txt, "edge_flag:%d\n", m.edge_flag);
+    fprintf(txt, "vt_index_count:%d\n", m.vt_index_count);
+    fprintf(txt, "texture:%s\n\n", m.tex);
   }
 
   fprintf(txt, "ボーン数:%zu\n", model->bone.size());
   for (auto &b : model->bone) {
     fprintf(txt, "ボーン名:%s\n", b.name);
-    fprintf(txt, "親ボーン:%d\n", b.PBone_index);
-    fprintf(txt, "テイルボーン:%d\n", b.TBone_index);
+    fprintf(txt, "親ボーン:%d\n", b.parent_index);
+    fprintf(txt, "テイルボーン:%d\n", b.tail_index);
     fprintf(txt, "タイプ:%d\n", b.type);
-    fprintf(txt, "IKボーン:%d\n", b.IKBone_index);
+    fprintf(txt, "IKボーン:%d\n", b.ik_index);
     fprintf(txt, "位置: %f, %f, %f", b.loc.x, b.loc.y, b.loc.z);
     fprintf(txt, "\n\n");
   }
 
   fprintf(txt, "IKデータ数:%zu\n", model->IK.size());
   for (int i = 0; i < model->IK.size(); i++) {
-    fprintf(txt, "IKボーン:%d\n", model->IK[i].IKBone_index);
-    fprintf(txt, "IKテイルボーン:%d\n", model->IK[i].IKTBone_index);
+    fprintf(txt, "IKボーン:%d\n", model->IK[i].ik_index);
+    fprintf(txt, "IKテイルボーン:%d\n", model->IK[i].ik_target_index);
     fprintf(txt, "IKチェーン長:%zu\n", model->IK[i].IK_chain.size());
     fprintf(txt, "iteration:%d\n", model->IK[i].iterations);
     fprintf(txt, "ウエイト:%f\n", model->IK[i].weight);
@@ -567,24 +439,24 @@ int print_PMD(MODEL *model, const char file_name[]) {
 
   fprintf(txt, "\n表示ボーン数:%zu\n", model->bone_disp.size());
 
-  for (i = 0; i < model->bone_disp.size(); i++) {
-    fprintf(txt, "ボーン番号:%d\n", model->bone_disp[i].index);
-    fprintf(txt, "表示番号:%d\n", model->bone_disp[i].bone_group);
+  for (auto &bd : model->bone_disp) {
+    fprintf(txt, "ボーン番号:%d\n", bd.bone_index);
+    fprintf(txt, "表示番号:%d\n", bd.bone_group_index);
   }
 
   fprintf(txt, "英名対応:%d\n", model->eng_support);
   if (model->eng_support == 1) {
     fprintf(txt, "%s\n", model->header.name_eng.data());
     fprintf(txt, "%s\n", model->header.comment_eng.data());
-    for (i = 0; i < model->bone.size(); i++) {
-      fprintf(txt, "%s\n", model->bone[i].name_eng);
-    }
-    for (i = 0; i < model->skin.size(); i++) {
-      fprintf(txt, "%s\n", model->skin[i].name_eng);
-    }
-    for (i = 0; i < model->bone_group.size(); i++) {
-      fprintf(txt, "%s\n", model->bone_group[i].name_eng);
-    }
+    // for (i = 0; i < model->bone.size(); i++) {
+    //   fprintf(txt, "%s\n", model->bone[i].name_eng);
+    // }
+    // for (i = 0; i < model->skin.size(); i++) {
+    //   fprintf(txt, "%s\n", model->skin[i].name_eng);
+    // }
+    // for (i = 0; i < model->bone_group.size(); i++) {
+    //   fprintf(txt, "%s\n", model->bone_group[i].name_eng);
+    // }
   }
 
   for (i = 0; i < 10; i++) {
@@ -592,80 +464,41 @@ int print_PMD(MODEL *model, const char file_name[]) {
   }
 
   fprintf(txt, "剛体数:%zu\n", model->rbody.size());
-  for (int i = 0; i < model->rbody.size(); i++) {
-    fprintf(txt, "%s\n", model->rbody[i].name);
-    fprintf(txt, "ボーン:%d\n", model->rbody[i].bone);
-    fprintf(txt, "グループ:%d\n", model->rbody[i].group);
-    fprintf(txt, "ターゲット:%d\n", model->rbody[i].target);
-    fprintf(txt, "形状:%d\n", model->rbody[i].shape);
-    fprintf(txt, "size:");
-    for (int j = 0; j < 3; j++) {
-      fprintf(txt, "%f ", model->rbody[i].size[j]);
-    }
-    fprintf(txt, "\nloc:");
-    for (int j = 0; j < 3; j++) {
-      fprintf(txt, "%f ", model->rbody[i].loc[j]);
-    }
-    fprintf(txt, "\nrot:");
-    for (int j = 0; j < 3; j++) {
-      fprintf(txt, "%f ", model->rbody[i].rot[j]);
-    }
-    fprintf(txt, "\nproperty:");
-    for (int j = 0; j < 5; j++) {
-      fprintf(txt, "%f ", model->rbody[i].property[j]);
-    }
-    fprintf(txt, "\n");
-    fprintf(txt, "タイプ:%d\n\n", model->rbody[i].type);
+  for (auto &rb : model->rbody) {
+    fprintf(txt, "%s\n", rb.name);
+    fprintf(txt, "ボーン:%d\n", rb.bone);
+    fprintf(txt, "グループ:%d\n", rb.group);
+    fprintf(txt, "ターゲット:%d\n", rb.target);
+    fprintf(txt, "形状:%d\n", rb.shape);
+    fprintf(txt, "size: %f, %f, %f\n", rb.size.x, rb.size.y, rb.size.z);
+    fprintf(txt, "loc: %f, %f, %f\n", rb.loc.x, rb.loc.y, rb.loc.z);
+    fprintf(txt, "rot: %f, %f, %f\n", rb.rot.x, rb.rot.y, rb.rot.z);
+    fprintf(txt, "property: %f, %f, %f, %f, %f\n", rb.mass, rb.dump, rb.rotdamp,
+            rb.restitution, rb.friction);
+    fprintf(txt, "タイプ:%d\n\n", rb.type);
   }
 
   fprintf(txt, "ジョイント数:%zu\n", model->joint.size());
   for (auto &joint : model->joint) {
     fprintf(txt, "%s\n", joint.name);
-    fprintf(txt, "剛体:");
-    for (int j = 0; j < 2; j++) {
-      fprintf(txt, "%d ", joint.rbody[j]);
-    }
-    fprintf(txt, "\nloc:");
-    fprintf(txt, "%f, %f, %f", joint.loc.x, joint.loc.y, joint.loc.z);
-    fprintf(txt, "\nrot:");
-    for (int j = 0; j < 3; j++) {
-      fprintf(txt, "%f ", joint.rot[j]);
-    }
-    fprintf(txt, "\nlimit:");
-    for (int j = 0; j < 12; j++) {
-      fprintf(txt, "%f ", joint.limit[j]);
-    }
-    fprintf(txt, "\nspring:");
-    for (int j = 0; j < 6; j++) {
-      fprintf(txt, "%f ", joint.spring[j]);
-    }
+    fprintf(txt, "剛体 : %d, %d\n", joint.rigidbody_a, joint.rigidbody_b);
+    fprintf(txt, "loc: %f, %f, %f\n", joint.loc.x, joint.loc.y, joint.loc.z);
+    fprintf(txt, "rot: %f, %f, %f\n", joint.rot.x, joint.rot.y, joint.rot.z);
+    fprintf(txt,
+            "limit: (%f, %f, %f), (%f, %f, %f), (%f, %f, %f), (%f, %f, %f)\n",
+            joint.loc_lower_limit.x, joint.loc_lower_limit.y,
+            joint.loc_lower_limit.z, joint.loc_upper_limit.x,
+            joint.loc_upper_limit.y, joint.loc_upper_limit.z,
+            joint.rot_lower_limit.x, joint.rot_lower_limit.y,
+            joint.rot_lower_limit.z, joint.rot_upper_limit.x,
+            joint.rot_upper_limit.y, joint.rot_upper_limit.z);
+    fprintf(txt, "spring: (%f, %f, %f), (%f, %f, %f)\n", joint.loc_spring.x,
+            joint.loc_spring.y, joint.loc_spring.z, joint.rot_spring.x,
+            joint.rot_spring.y, joint.rot_spring.z);
     fprintf(txt, "\n");
   }
 
   fclose(txt);
-
-  return 0;
-}
-
-int copy_PMD(MODEL *out, MODEL *model) {
-  out->header = model->header;
-  out->vt = model->vt;
-  out->vt_index = model->vt_index;
-  out->mat = model->mat;
-  out->bone = model->bone;
-  out->IK = model->IK;
-  out->skin = model->skin;
-  out->skin_disp = model->skin_disp;
-  out->bone_group = model->bone_group;
-  out->bone_disp = model->bone_disp;
-
-  memcpy(out->toon, model->toon, sizeof(char) * 10 * 100);
-
-  // 英名
-  out->eng_support = model->eng_support;
-
-  out->rbody = model->rbody;
-  out->joint = model->joint;
 
   return 0;
 }
@@ -704,20 +537,20 @@ bool MODEL::add_PMD(const std::shared_ptr<MODEL> &add) {
   for (auto &b : add->bone) {
     bone.push_back(b);
     // fix bone index
-    if (bone.back().PBone_index != USHORT_MAX)
-      bone.back().PBone_index += pre_bone_size;
-    if (bone.back().TBone_index != 0)
-      bone.back().TBone_index += pre_bone_size;
-    if (bone.back().IKBone_index != 0)
-      bone.back().IKBone_index += pre_bone_size;
+    if (bone.back().parent_index != USHORT_MAX)
+      bone.back().parent_index += pre_bone_size;
+    if (bone.back().tail_index != 0)
+      bone.back().tail_index += pre_bone_size;
+    if (bone.back().ik_index != 0)
+      bone.back().ik_index += pre_bone_size;
   }
 
   // IKリスト
   this->IK.reserve(this->IK.size() + add->IK.size());
   for (auto &ik : add->IK) {
     IK.push_back(ik);
-    IK.back().IKBone_index += pre_bone_size;
-    IK.back().IKTBone_index += pre_bone_size;
+    IK.back().ik_index += pre_bone_size;
+    IK.back().ik_target_index += pre_bone_size;
     for (size_t k = 0; k < IK.back().IK_chain.size(); k++) {
       IK.back().IK_chain[k] += pre_bone_size;
     }
@@ -764,8 +597,8 @@ bool MODEL::add_PMD(const std::shared_ptr<MODEL> &add) {
   bone_disp.reserve(this->bone_disp.size() + add->bone_disp.size());
   for (auto &bd : add->bone_disp) {
     bone_disp.push_back(bd);
-    bone_disp.back().index += pre_bone_size;
-    bone_disp.back().bone_group += pre_bone_group_size;
+    bone_disp.back().bone_index += pre_bone_size;
+    bone_disp.back().bone_group_index += pre_bone_group_size;
   }
 
   // 英名
@@ -782,210 +615,15 @@ bool MODEL::add_PMD(const std::shared_ptr<MODEL> &add) {
   joint.reserve(this->joint.size() + add->joint.size());
   for (auto &j : add->joint) {
     joint.push_back(j);
-    joint.back().rbody[0] += pre_rbody_size;
-    joint.back().rbody[1] += pre_rbody_size;
+    joint.back().rigidbody_a += pre_rbody_size;
+    joint.back().rigidbody_b += pre_rbody_size;
   }
 
   return 0;
-}
-
-int listup_bone(MODEL *model, const char file_name[]) {
-  int i;
-  char str[64], *p;
-
-  FILE *txt;
-
-  if (strcmp(file_name, "") == 0) {
-    printf("ファイル名がありません\n");
-    return 1;
-  }
-  txt = fopen(file_name, "w");
-  if (txt == NULL) {
-    fprintf(txt, "出力テキストファイルを開けません\n");
-    return 1;
-  }
-
-  if (model->eng_support == 0) {
-    printf("リスト出力ができるのは英名対応モデルのみです\n");
-    return 1;
-  }
-
-  fprintf(txt, "%s \n %f \n %s \n %s \n", model->header.magic.data(),
-          model->header.version, model->header.name.data(),
-          model->header.comment.data());
-
-  fprintf(txt, "ボーン数:%zu\n", model->bone.size());
-
-  for (i = 0; i < model->bone.size(); i++) {
-    fprintf(txt, "%s %s\n", model->bone[i].name, model->bone[i].name_eng);
-  }
-
-  fprintf(txt, "表情数:%zu\n", model->skin.size());
-  for (i = 0; i < model->skin.size(); i++) {
-    fprintf(txt, "%s %s\n", model->skin[i].name, model->skin[i].name_eng);
-  }
-  fprintf(txt, "ボーン枠数:%zu\n", model->bone_group.size());
-  for (i = 0; i < model->bone_group.size(); i++) {
-    strcpy(str, model->bone_group[i].name);
-    p = strchr(str, '\n');
-    if (p != NULL)
-      *p = '\0';
-    fprintf(txt, "%s %s\n", str, model->bone_group[i].name_eng);
-  }
-
-  fclose(txt);
-
-  return 0;
-}
-
-int get_file_name(char file_name[]) {
-  int i;
-  char input[256];
-  printf("ファイル名:");
-  gets_s(input);
-  if (input[0] == '\"') {
-    for (i = 1; i < 256; i++) {
-      file_name[i - 1] = input[i];
-      if (input[i] == '\"') {
-        file_name[i - 1] = '\0';
-        input[i] = '\0';
-        break;
-      } else if (input[i] == '\0') {
-        break;
-      }
-    }
-  } else {
-    strcpy(file_name, input);
-  }
-
-  return 0;
-}
-
-void MODEL::translate(NameList *list, short mode) {
-  /*
-  モード1 英名追加
-  モード2 日本語名を英語名に(ボーン、スキンのみ)
-  モード3 英語名を日本語名に(ボーン、スキンのみ)
-  */
-
-  if (mode == 1) {
-
-    if (this->eng_support != 1) {
-      this->eng_support = 1;
-      this->header.name_eng = this->header.name;
-      this->header.comment_eng = this->header.comment;
-    }
-
-    for (int i = 0; i < this->bone.size(); i++) {
-      int j = 0;
-      for (; j < list->bone.size(); j++) {
-        if (strcmp(this->bone[i].name, list->bone[j].data()) == 0) {
-          strncpy(this->bone[i].name_eng, list->bone_eng[j].data(), NAME_LEN);
-          j = -1;
-          break;
-        }
-      }
-      if (j != -1) {
-        if (this->bone[i].name[0] == '\0') {
-          strncpy(this->bone[i].name_eng, this->bone[i].name, NAME_LEN);
-        }
-      }
-    }
-
-    for (int i = 1; i < this->skin.size(); i++) {
-      int j = 1;
-      for (; j < list->skin.size(); j++) {
-        if (strcmp(this->skin[i].name, list->skin[j].data()) == 0) {
-          strncpy(this->skin[i].name_eng, list->skin_eng[j].data(), NAME_LEN);
-          j = -1;
-          break;
-        }
-      }
-      if (j != -1) {
-        strncpy(this->skin[i].name_eng, this->skin[i].name, NAME_LEN);
-      }
-    }
-
-    for (int i = 0; i < this->bone_group.size(); i++) {
-      char str[NAME_LEN];
-      strncpy(str, this->bone_group[i].name, NAME_LEN);
-      auto p = strchr(str, '\n');
-      if (p != NULL)
-        *p = '\0';
-
-      int j = 0;
-      for (; j < list->disp.size(); j++) {
-        if (strcmp(str, list->disp[j].data()) == 0) {
-          strncpy(this->bone_group[i].name_eng, list->disp_eng[j].data(),
-                  NAME_LEN);
-          j = -1;
-          break;
-        }
-      }
-#ifdef DEBUG
-      printf("%d ", i);
-#endif
-      if (j != -1) {
-        strncpy(this->bone_group[i].name_eng, str, NAME_LEN);
-      }
-    }
-
-#ifdef DEBUG
-    printf("\nbone表示枠\n");
-#endif
-
-  } else if (mode == 2) {
-    for (int i = 0; i < this->bone.size(); i++) {
-      int j = 0;
-      for (; j < list->bone.size(); j++) {
-        if (strcmp(this->bone[i].name, list->bone[j].data()) == 0) {
-          strncpy(this->bone[i].name, list->bone_eng[j].data(), NAME_LEN);
-          j = -1;
-          break;
-        }
-      }
-      if (j != -1 && this->eng_support == 1) {
-        strncpy(this->bone[i].name, this->bone[i].name_eng, NAME_LEN);
-      }
-    }
-    for (int i = 0; i < this->skin.size(); i++) {
-      int j = 0;
-      for (; j < list->skin.size(); j++) {
-        if (strcmp(this->skin[i].name, list->skin[j].data()) == 0) {
-          strncpy(this->skin[i].name, list->skin_eng[j].data(), NAME_LEN);
-          j = -1;
-          break;
-        }
-      }
-      if (j != -1 && this->eng_support == 1) {
-        strncpy(this->skin[i].name, this->skin[i].name_eng, NAME_LEN);
-      }
-    }
-  } else if (mode == 3) {
-    for (int i = 0; i < this->bone.size(); i++) {
-      ;
-      for (int j = 0; j < list->bone.size(); j++) {
-        if (strcmp(this->bone[i].name, list->bone_eng[j].data()) == 0) {
-          strncpy(this->bone[i].name, list->bone[j].data(), NAME_LEN);
-          break;
-        }
-      }
-    }
-    for (int i = 0; i < this->skin.size(); i++) {
-      for (int j = 0; j < list->skin.size(); j++) {
-        if (strcmp(this->skin[i].name, list->skin_eng[j].data()) == 0) {
-          strncpy(this->skin[i].name, list->skin[j].data(), NAME_LEN);
-          break;
-        }
-      }
-    }
-  }
 }
 
 void MODEL::sort_bone(NameList *list) {
   std::vector<int> index(this->bone.size());
-  std::vector<BONE> bone(this->bone.size());
-
   for (int i = 0; i < this->bone.size(); i++) {
     index[i] = -1; // リストに無いボーンには-1
     for (int j = 0; j < list->bone.size(); j++) {
@@ -1031,18 +669,18 @@ void MODEL::sort_bone(NameList *list) {
 
   {
     for (int i = 0; i < this->bone.size(); i++) {
-      if (this->bone[i].PBone_index != 65535 &&
-          index[this->bone[i].PBone_index] > index[i] &&
+      if (this->bone[i].parent_index != 65535 &&
+          index[this->bone[i].parent_index] > index[i] &&
           strcmp(this->bone[i].name, "-0") != 0) {
 
-        tmp = index[this->bone[i].PBone_index];
+        tmp = index[this->bone[i].parent_index];
         int tmp_PBone_index = index[i];
         for (int j = 0; j < this->bone.size(); j++) {
           if (index[j] >= tmp_PBone_index && index[j] < tmp) {
             index[j]++; // 一つ後ろにずらす
           }
         }
-        index[this->bone[i].PBone_index] =
+        index[this->bone[i].parent_index] =
             tmp_PBone_index; // ボーンの一つ前に親ボーンを移動
       }
     }
@@ -1053,24 +691,24 @@ void MODEL::sort_bone(NameList *list) {
     printf("index[%d]=%d\n", i, index[i]);
 #endif
     strcpy(bone[index[i]].name, this->bone[i].name);
-    strcpy(bone[index[i]].name_eng, this->bone[i].name_eng);
-    if (this->bone[i].PBone_index == 65535) {
-      bone[index[i]].PBone_index = 65535;
+    // strcpy(bone[index[i]].name_eng, this->bone[i].name_eng);
+    if (this->bone[i].parent_index == 65535) {
+      bone[index[i]].parent_index = 65535;
     } else {
-      bone[index[i]].PBone_index = index[this->bone[i].PBone_index];
+      bone[index[i]].parent_index = index[this->bone[i].parent_index];
     }
-    if (this->bone[i].TBone_index == 0) {
-      bone[index[i]].TBone_index = 0;
+    if (this->bone[i].tail_index == 0) {
+      bone[index[i]].tail_index = 0;
     } else {
-      bone[index[i]].TBone_index = index[this->bone[i].TBone_index];
+      bone[index[i]].tail_index = index[this->bone[i].tail_index];
     }
 
     bone[index[i]].type = this->bone[i].type;
 
-    if (this->bone[i].IKBone_index == 0) {
-      bone[index[i]].IKBone_index = 0;
+    if (this->bone[i].ik_index == 0) {
+      bone[index[i]].ik_index = 0;
     } else {
-      bone[index[i]].IKBone_index = index[this->bone[i].IKBone_index];
+      bone[index[i]].ik_index = index[this->bone[i].ik_index];
     }
     bone[index[i]].loc = this->bone[i].loc;
   }
@@ -1092,32 +730,24 @@ void MODEL::update_bone_index(std::span<int> index) {
   }
 
   // IKリストのボーン番号を書き換え
-  std::vector<IK_LIST> tmp_ik = this->IK;
-  for (int i = 0; i < this->IK.size(); i++) {
+  for (auto &ik : this->IK) {
     // PLOG_DEBUG << i;
-    this->IK[i].IKBone_index = index[tmp_ik[i].IKBone_index];
-    this->IK[i].IKTBone_index = index[tmp_ik[i].IKTBone_index];
-    for (int j = 0; j < tmp_ik[i].IK_chain.size(); j++) {
-      this->IK[i].IK_chain[j] = index[tmp_ik[i].IK_chain[j]];
+    ik.ik_index = index[ik.ik_index];
+    ik.ik_target_index = index[ik.ik_target_index];
+    for (int j = 0; j < ik.IK_chain.size(); j++) {
+      ik.IK_chain[j] = index[ik.IK_chain[j]];
     }
   }
 
   // 表示ボーン番号を書き換え
-  auto tmp_disp = this->bone_disp;
-  for (int i = 0; i < this->bone_disp.size(); i++) {
-    this->bone_disp[i].index = index[tmp_disp[i].index];
+  for (auto &bd : this->bone_disp) {
+    bd.bone_index = index[bd.bone_index];
   }
 
   // 剛体ボーン番号を書き換え
-  std::vector<unsigned short> tmp_rb(this->rbody.size());
-  for (int i = 0; i < this->rbody.size(); i++) {
-    tmp_rb[i] = this->rbody[i].bone;
-  }
-  for (int i = 0; i < this->rbody.size(); i++) {
-    if (tmp_rb[i] == USHORT_MAX) {
-      this->rbody[i].bone = USHORT_MAX;
-    } else {
-      this->rbody[i].bone = index[tmp_rb[i]];
+  for (auto &rb : this->rbody) {
+    if (rb.bone != USHORT_MAX) {
+      rb.bone = index[rb.bone];
     }
   }
 
@@ -1127,8 +757,6 @@ void MODEL::update_bone_index(std::span<int> index) {
 void MODEL::sort_skin(NameList *list) {
 
   std::vector<int> index(this->skin.size());
-  std::vector<SKIN> skin(this->skin.size());
-
   for (int i = 0; i < this->skin.size(); i++) {
     index[i] = -1; // リストに無い表情には-1
     for (int j = 0; j < list->skin.size(); j++) {
@@ -1238,14 +866,14 @@ void MODEL::sort_disp(NameList *list) {
   }
 
   for (int i = 0; i < this->bone_disp.size(); i++) { // 表示ボーン並び変え
-    this->bone_disp[i].bone_group =
-        index[this->bone_disp[i].bone_group - 1] + 1;
+    this->bone_disp[i].bone_group_index =
+        index[this->bone_disp[i].bone_group_index - 1] + 1;
   }
 
   tmp = 0;
   for (int i = 1; i <= this->bone_group.size(); i++) {
     for (int j = 0; j < this->bone_disp.size(); j++) {
-      if (this->bone_disp[j].bone_group == i) {
+      if (this->bone_disp[j].bone_group_index == i) {
         bone_disp[tmp] = this->bone_disp[j];
         tmp++;
       }
@@ -1261,25 +889,25 @@ void MODEL::rename_tail() {
     if (this->bone[i].type == 6 || this->bone[i].type == 7) {
       int flag = 0;
       for (int j = 0; j < this->bone.size(); j++) {
-        if (this->bone[j].TBone_index == i) {
+        if (this->bone[j].tail_index == i) {
           flag = 1;
           break;
         }
       }
       if (flag == 1) {
         strncpy(this->bone[i].name, "-0", 4);
-        strncpy(this->bone[i].name_eng, "-0", 4);
+        // strncpy(this->bone[i].name_eng, "-0", 4);
       }
     }
   }
 
   // 子ボーンがtailならば+親ボーン名という名前にする
   for (int i = 0; i < this->bone.size(); i++) {
-    int tmp = this->bone[i].TBone_index;
+    int tmp = this->bone[i].tail_index;
     if (tmp < this->bone.size()) {
       if (this->bone[tmp].type == 6 || this->bone[tmp].type == 7) {
         sprintf(this->bone[tmp].name, "+%s", this->bone[i].name);
-        sprintf(this->bone[tmp].name_eng, "+%s", this->bone[i].name_eng);
+        // sprintf(this->bone[tmp].name_eng, "+%s", this->bone[i].name_eng);
         // printf("%s\n", this->bone[tmp].name);
       }
     } else {
@@ -1316,7 +944,7 @@ void MODEL::scale_bones(int index, const mat3 &mtr, const float3 &scale) {
   auto loc = this->bone[index].loc;
   for (int i = 0; i < this->bone.size(); ++i) {
     auto &b = this->bone[i];
-    if (b.PBone_index == index) {
+    if (b.parent_index == index) {
       // to local
       auto local = mtr.rotate(b.loc - loc);
       // scale
@@ -1337,13 +965,13 @@ void MODEL::scale_bones(int index, const mat3 &mtr, const float3 &scale) {
 }
 
 std::optional<int> MODEL::find_tail(int index) const {
-  int tail = this->bone[index].TBone_index;
+  int tail = this->bone[index].tail_index;
   if (tail != 0) {
     return tail;
   }
 
   for (int i = 0; i < this->bone.size(); i++) {
-    if (this->bone[index].PBone_index == index) {
+    if (this->bone[index].parent_index == index) {
       return i;
     }
   }
@@ -1411,7 +1039,6 @@ void MODEL::resize_model(double size) {
 bool MODEL::marge_bone() {
   std::vector<int> index(this->bone.size());
   std::vector<char> marge(this->bone.size());
-  std::vector<BONE> bone(this->bone.size());
 
   int tmp = 0;
   for (int i = 0; i < this->bone.size(); i++) {
@@ -1420,9 +1047,9 @@ bool MODEL::marge_bone() {
       for (int j = i + 1; j < this->bone.size(); j++) {
         if (strcmp(this->bone[i].name, this->bone[j].name) == 0) {
           if (this->bone[i].type == 7) {
-            this->bone[i].TBone_index = this->bone[j].TBone_index;
+            this->bone[i].tail_index = this->bone[j].tail_index;
             this->bone[i].type = this->bone[j].type;
-            this->bone[i].IKBone_index = this->bone[j].IKBone_index;
+            this->bone[i].ik_index = this->bone[j].ik_index;
             this->bone[i].loc = this->bone[j].loc;
           }
           index[j] = i - tmp;
@@ -1441,25 +1068,25 @@ bool MODEL::marge_bone() {
       return false;
     } else if (marge[i] == 0) {
       bone[index[i]] = this->bone[i];
-      if (this->bone[i].PBone_index >= this->bone.size()) {
-        bone[index[i]].PBone_index = 65535;
+      if (this->bone[i].parent_index >= this->bone.size()) {
+        bone[index[i]].parent_index = 65535;
       } else {
-        // PLOG_DEBUG << i << ":" << this->bone[i].PBone_index << " " <<
-        // bone[index[i]].PBone_index;
-        bone[index[i]].PBone_index = index[this->bone[i].PBone_index];
+        // PLOG_DEBUG << i << ":" << this->bone[i].parent_index << " " <<
+        // bone[index[i]].parent_index;
+        bone[index[i]].parent_index = index[this->bone[i].parent_index];
       }
-      if (this->bone[i].TBone_index == 0 ||
-          this->bone[i].TBone_index >= this->bone.size()) {
-        bone[index[i]].TBone_index = 0;
+      if (this->bone[i].tail_index == 0 ||
+          this->bone[i].tail_index >= this->bone.size()) {
+        bone[index[i]].tail_index = 0;
       } else {
-        bone[index[i]].TBone_index = index[this->bone[i].TBone_index];
+        bone[index[i]].tail_index = index[this->bone[i].tail_index];
       }
       bone[index[i]].type = this->bone[i].type;
-      if (this->bone[i].IKBone_index == 0 ||
-          this->bone[i].IKBone_index >= this->bone.size()) {
-        bone[index[i]].IKBone_index = 0;
+      if (this->bone[i].ik_index == 0 ||
+          this->bone[i].ik_index >= this->bone.size()) {
+        bone[index[i]].ik_index = 0;
       } else {
-        bone[index[i]].IKBone_index = index[this->bone[i].IKBone_index];
+        bone[index[i]].ik_index = index[this->bone[i].ik_index];
       }
     }
   }
@@ -1622,7 +1249,7 @@ void MODEL::marge_IK() {
     if (marge[i] == 0) {
       index[i] = i - tmp;
       for (int j = i + 1; j < this->IK.size(); j++) {
-        if (this->IK[i].IKBone_index == this->IK[j].IKBone_index) {
+        if (this->IK[i].ik_index == this->IK[j].ik_index) {
           index[j] = i - tmp;
           marge[j] = 1;
         }
@@ -1675,10 +1302,11 @@ void MODEL::marge_bone_disp() {
   int k = 0;
   for (int i = 0; i < this->bone_group.size(); i++) {
     for (int j = 0; j < this->bone_disp.size(); j++) {
-      if (index[this->bone_disp[j].bone_group - 1] == i) {
+      if (index[this->bone_disp[j].bone_group_index - 1] == i) {
         bone_disp[k] = this->bone_disp[j];
 
-        bone_disp[k].bone_group = index[bone_disp[k].bone_group - 1] + 1;
+        bone_disp[k].bone_group_index =
+            index[bone_disp[k].bone_group_index - 1] + 1;
 
         k++;
       }
@@ -1701,7 +1329,7 @@ void MODEL::marge_bone_disp() {
     if (marge[i] == 0) {
       index[i] = i - tmp;
       for (int j = i + 1; j < this->bone_disp.size(); j++) {
-        if (this->bone_disp[i].index == this->bone_disp[j].index) {
+        if (this->bone_disp[i].bone_index == this->bone_disp[j].bone_index) {
           index[j] = i - tmp;
           marge[j] = 1;
         }
@@ -1713,8 +1341,9 @@ void MODEL::marge_bone_disp() {
 
   for (int i = 0; i < this->bone_disp.size(); i++) {
     if (marge[i] == 0 && index[i] != i) {
-      this->bone_disp[index[i]].index = this->bone_disp[i].index;
-      this->bone_disp[index[i]].bone_group = this->bone_disp[i].bone_group;
+      this->bone_disp[index[i]].bone_index = this->bone_disp[i].bone_index;
+      this->bone_disp[index[i]].bone_group_index =
+          this->bone_disp[i].bone_group_index;
     }
   }
 
@@ -1744,9 +1373,8 @@ void MODEL::marge_rb() {
 
   // ジョイント書き換え
   for (int i = 0; i < this->joint.size(); i++) {
-    for (int j = 0; j < 2; j++) {
-      this->joint[i].rbody[j] = index[this->joint[i].rbody[j]];
-    }
+    this->joint[i].rigidbody_a = index[this->joint[i].rigidbody_a];
+    this->joint[i].rigidbody_b = index[this->joint[i].rigidbody_b];
   }
 
   // 重複削除

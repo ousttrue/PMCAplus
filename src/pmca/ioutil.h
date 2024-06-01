@@ -29,7 +29,13 @@ public:
     _pos += size;
   }
 
-  template <typename T> void read(T &value) { read(&value, sizeof(value)); }
+  template <typename T> void read_value(T &value) {
+    read(&value, sizeof(value));
+  }
+
+  template <typename T> void read_vector(std::vector<T> &value) {
+    read(value.data(), sizeof(T) * value.size());
+  }
 
   std::span<const uint8_t> bytes(int size) {
     if (_pos + size > _data.size()) {
@@ -65,6 +71,26 @@ public:
   uint8_t u8() { return value<uint8_t>(); }
   uint16_t u16() { return value<uint16_t>(); }
   int32_t i32() { return value<int32_t>(); }
+};
+
+struct Writer {
+  std::vector<uint8_t> buffer;
+
+  void write(const void *p, size_t len) {
+    auto begin = buffer.size();
+    buffer.resize(begin + len);
+    memcpy(buffer.data() + begin, p, len);
+  }
+
+  template <typename T> void write_value(const T &value) {
+    write(&value, sizeof(value));
+  }
+
+  template <typename T> void write_vector(const std::vector<T> &value) {
+    write(value.data(), sizeof(T) * value.size());
+  }
+
+  void write(const void *p, size_t len, int count) { write(p, len * count); }
 };
 
 } // namespace ioutil

@@ -1,6 +1,11 @@
 #pragma once
 #include <cmath>
 
+struct float2 {
+  float x = 0;
+  float y = 0;
+};
+
 struct float3 {
   float x = 0;
   float y = 0;

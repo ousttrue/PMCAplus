@@ -9,6 +9,124 @@ from .model_transform_data import MODEL_TRANS_DATA
 
 LOGGER = logging.getLogger(__name__)
 
+# void MODEL::translate(NameList *list, short mode) {
+#   /*
+#   モード1 英名追加
+#   モード2 日本語名を英語名に(ボーン、スキンのみ)
+#   モード3 英語名を日本語名に(ボーン、スキンのみ)
+#   */
+#
+#   if (mode == 1) {
+#
+#     if (this->eng_support != 1) {
+#       this->eng_support = 1;
+#       this->header.name_eng = this->header.name;
+#       this->header.comment_eng = this->header.comment;
+#     }
+#
+#     for (int i = 0; i < this->bone.size(); i++) {
+#       int j = 0;
+#       for (; j < list->bone.size(); j++) {
+#         if (strcmp(this->bone[i].name, list->bone[j].data()) == 0) {
+#           strncpy(this->bone[i].name_eng, list->bone_eng[j].data(),
+#           NAME_LEN); j = -1; break;
+#         }
+#       }
+#       if (j != -1) {
+#         if (this->bone[i].name[0] == '\0') {
+#           strncpy(this->bone[i].name_eng, this->bone[i].name, NAME_LEN);
+#         }
+#       }
+#     }
+#
+#     for (int i = 1; i < this->skin.size(); i++) {
+#       int j = 1;
+#       for (; j < list->skin.size(); j++) {
+#         if (strcmp(this->skin[i].name, list->skin[j].data()) == 0) {
+#           strncpy(this->skin[i].name_eng, list->skin_eng[j].data(),
+#           NAME_LEN); j = -1; break;
+#         }
+#       }
+#       if (j != -1) {
+#         strncpy(this->skin[i].name_eng, this->skin[i].name, NAME_LEN);
+#       }
+#     }
+#
+#     for (int i = 0; i < this->bone_group.size(); i++) {
+#       char str[NAME_LEN];
+#       strncpy(str, this->bone_group[i].name, NAME_LEN);
+#       auto p = strchr(str, '\n');
+#       if (p != NULL)
+#         *p = '\0';
+#
+#       int j = 0;
+#       for (; j < list->disp.size(); j++) {
+#         if (strcmp(str, list->disp[j].data()) == 0) {
+#           strncpy(this->bone_group[i].name_eng, list->disp_eng[j].data(),
+#                   NAME_LEN);
+#           j = -1;
+#           break;
+#         }
+#       }
+# #ifdef DEBUG
+#       printf("%d ", i);
+# #endif
+#       if (j != -1) {
+#         strncpy(this->bone_group[i].name_eng, str, NAME_LEN);
+#       }
+#     }
+#
+# #ifdef DEBUG
+#     printf("\nbone表示枠\n");
+# #endif
+#
+#   } else if (mode == 2) {
+#     for (int i = 0; i < this->bone.size(); i++) {
+#       int j = 0;
+#       for (; j < list->bone.size(); j++) {
+#         if (strcmp(this->bone[i].name, list->bone[j].data()) == 0) {
+#           strncpy(this->bone[i].name, list->bone_eng[j].data(), NAME_LEN);
+#           j = -1;
+#           break;
+#         }
+#       }
+#       if (j != -1 && this->eng_support == 1) {
+#         strncpy(this->bone[i].name, this->bone[i].name_eng, NAME_LEN);
+#       }
+#     }
+#     for (int i = 0; i < this->skin.size(); i++) {
+#       int j = 0;
+#       for (; j < list->skin.size(); j++) {
+#         if (strcmp(this->skin[i].name, list->skin[j].data()) == 0) {
+#           strncpy(this->skin[i].name, list->skin_eng[j].data(), NAME_LEN);
+#           j = -1;
+#           break;
+#         }
+#       }
+#       if (j != -1 && this->eng_support == 1) {
+#         strncpy(this->skin[i].name, this->skin[i].name_eng, NAME_LEN);
+#       }
+#     }
+#   } else if (mode == 3) {
+#     for (int i = 0; i < this->bone.size(); i++) {
+#       ;
+#       for (int j = 0; j < list->bone.size(); j++) {
+#         if (strcmp(this->bone[i].name, list->bone_eng[j].data()) == 0) {
+#           strncpy(this->bone[i].name, list->bone[j].data(), NAME_LEN);
+#           break;
+#         }
+#       }
+#     }
+#     for (int i = 0; i < this->skin.size(); i++) {
+#       for (int j = 0; j < list->skin.size(); j++) {
+#         if (strcmp(this->skin[i].name, list->skin_eng[j].data()) == 0) {
+#           strncpy(this->skin[i].name, list->skin[j].data(), NAME_LEN);
+#           break;
+#         }
+#       }
+#     }
+#   }
+# }
 
 class LIST(NamedTuple):
     b: tuple[list[bytes], list[bytes]]

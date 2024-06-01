@@ -37,43 +37,40 @@ struct HEADER { /*283byte*/
 #pragma pack(push, r1, 1)
 struct VERTEX {
   float3 loc;
-  float nor[3];
-  float uv[2];
+  float3 nor;
+  float2 uv;
   uint16_t bone0;
   uint16_t bone1;
-  unsigned char bone_weight;
-  unsigned char edge_flag;
+  uint8_t bone_weight;
+  uint8_t edge_flag;
 };
 #pragma pack(pop)
 static_assert(sizeof(VERTEX) == 38, "sizeof VERTEX");
 
 #pragma pack(push, r1, 1)
 struct MATERIAL {
-  float diffuse[3];
+  float3 diffuse;
   float alpha;
   float spec;
-  float spec_col[3];
-  float mirror_col[3];
+  float3 spec_col;
+  float3 mirror_col;
   unsigned char toon_index;
   unsigned char edge_flag;
   unsigned int vt_index_count;
-  char tex[NAME_LEN];
-  char sph[NAME_LEN];
-  char tex_path[PATH_LEN];
-  char sph_path[PATH_LEN];
+  char tex[20];
 };
 #pragma pack(pop)
-static_assert(offsetof(MATERIAL, tex) == 50, "sizeof MATERIAL");
+static_assert(sizeof(MATERIAL) == 70, "sizeof MATERIAL");
 
 double angle_from_vec(double u, double v);
 
+#pragma pack(push, r1, 1)
 struct BONE { /*39byte*/
-  char name[NAME_LEN];
-  char name_eng[NAME_LEN];
-  unsigned short PBone_index;
-  unsigned short TBone_index;
-  unsigned char type;
-  unsigned short IKBone_index;
+  char name[20];
+  uint16_t parent_index;
+  uint16_t tail_index;
+  uint8_t type;
+  uint16_t ik_index;
   float3 loc;
 
   mat3 rotationToTail(const float3 &tail) const {
@@ -87,59 +84,77 @@ struct BONE { /*39byte*/
     return mat3::rotation_x(rot_x) * mat3::rotation_z(rot_z);
   }
 };
+#pragma pack(pop)
+static_assert(sizeof(BONE) == 39, "sizeof BONE");
 
 struct IK_LIST { /*11+2*IK_chain_len byte*/
-  unsigned short IKBone_index;
-  unsigned short IKTBone_index;
-  unsigned short iterations;
+  uint16_t ik_index;
+  uint16_t ik_target_index;
+  uint16_t iterations;
   float weight;
-  std::vector<unsigned short> IK_chain;
+  std::vector<uint16_t> IK_chain;
 };
 
-struct SKIN_DATA { /*16byte*/
-  unsigned int index;
+struct MORPH_DATA { /*16byte*/
+  uint32_t index;
   float3 loc;
 };
+static_assert(sizeof(MORPH_DATA) == 16, "sizeof MORPH_DATA");
 
-struct SKIN { /*25+16*skin_vt_count byte*/
-  char name[NAME_LEN];
-  char name_eng[NAME_LEN];
-  unsigned char type;
-  std::vector<SKIN_DATA> skin_vt;
+struct MORPH { /*25+16*skin_vt_count byte*/
+  char name[20];
+  uint8_t type;
+  std::vector<MORPH_DATA> skin_vt;
 };
 
 struct BONE_GROUP { /*3 byte*/
-  char name[NAME_LEN];
-  char name_eng[NAME_LEN];
+  char name[50];
 };
 
+#pragma pack(push, r1, 1)
 struct BONE_DISP { /*3 byte*/
-  unsigned short index;
-  unsigned char bone_group;
+  uint16_t bone_index;
+  uint8_t bone_group_index;
 };
+#pragma pack(pop)
+static_assert(sizeof(BONE_DISP) == 3, "sizeof BONE_DISP");
 
+#pragma pack(push, r1, 1)
 struct RIGID_BODY { // 83byte
-  char name[NAME_LEN];
-  unsigned short bone;
-  unsigned char group;
-  unsigned short target;
-  unsigned char shape;
-  float size[3]; // w h d
-  float loc[3];
-  float rot[3];      // radian
-  float property[5]; // mass damp rotdamp restitution friction
-  unsigned char type;
-};
-
-struct JOINT { // 124byte
-  char name[NAME_LEN];
-  unsigned int rbody[2];
+  char name[20];
+  uint16_t bone;
+  uint8_t group;
+  uint16_t target;
+  uint8_t shape;
+  float3 size; // w h d
   float3 loc;
-  float rot[3];    // radian
-  float limit[12]; // lower_limit_loc upper_limit_loc lower_limit_rot
-                   // upper_limit_rot
-  float spring[6]; // loc rot
+  float3 rot; // radian
+  float mass;
+  float dump;
+  float rotdamp;
+  float restitution;
+  float friction;
+  uint8_t type;
 };
+#pragma pack(pop)
+static_assert(sizeof(RIGID_BODY) == 83, "sizeof RIGID_BODY");
+
+#pragma pack(push, r1, 1)
+struct JOINT { // 124byte
+  char name[20];
+  uint32_t rigidbody_a;
+  uint32_t rigidbody_b;
+  float3 loc;
+  float3 rot; // radian
+  float3 loc_lower_limit;
+  float3 loc_upper_limit;
+  float3 rot_lower_limit;
+  float3 rot_upper_limit;
+  float3 loc_spring;
+  float3 rot_spring;
+};
+#pragma pack(pop)
+static_assert(sizeof(JOINT) == 124, "sizeof JOINT");
 
 struct MODEL {
   HEADER header;
@@ -148,7 +163,7 @@ struct MODEL {
   std::vector<MATERIAL> mat;
   std::vector<BONE> bone;
   std::vector<IK_LIST> IK;
-  std::vector<SKIN> skin;
+  std::vector<MORPH> skin;
   std::vector<unsigned short> skin_disp;
   std::vector<BONE_GROUP> bone_group;
   std::vector<BONE_DISP> bone_disp;
@@ -183,7 +198,7 @@ public:
   void marge_bone_disp();
   void marge_rb();
   void update_bone_index(std::span<int> index);
-  void translate(struct NameList *list, short mode);
+  // void translate(struct NameList *list, short mode);
   void sort_bone(struct NameList *list);
   void sort_skin(struct NameList *list);
   void sort_disp(struct NameList *list);
@@ -204,14 +219,14 @@ public:
   void scale_bones(int bone_index, const mat3 &mtr, const float3 &scale);
   bool has_parent(int bone_index, int parent_index, bool recursive) {
     auto current = &this->bone[bone_index];
-    while (current->PBone_index != USHORT_MAX) {
-      if (current->PBone_index == parent_index) {
+    while (current->parent_index != USHORT_MAX) {
+      if (current->parent_index == parent_index) {
         return true;
       }
       if (!recursive) {
         return false;
       }
-      current = &this->bone[current->PBone_index];
+      current = &this->bone[current->parent_index];
     }
     return false;
   }
