@@ -1320,52 +1320,26 @@ void MODEL::rename_tail() {
 }
 
 void MODEL::scale_vertices(int index, const mat3 &mtr, const float3 &scale) {
-
   auto loc = this->bone[index].loc;
-
-  // 変換する頂点をtmp_vtに格納
-  auto len_vt = 0;
-  for (int i = 0; i < (this->vt.size()); i++) {
-    if (this->vt[i].bone_num[0] == index || this->vt[i].bone_num[1] == index) {
-      len_vt++;
+  for (auto &v : this->vt) {
+    if (v.bone_num[0] == index || v.bone_num[1] == index) {
+      // to bone local
+      auto local = mtr.rotate(v.loc - loc);
+      // scale
+      local = local.scale(scale);
+      // to world
+      auto world = mtr.transposed().rotate(local) + loc;
+      // weight for bone index
+      auto weight = 0.0f;
+      if (v.bone_num[0] == index) {
+        weight += v.bone_weight / 0.01f;
+      }
+      if (v.bone_num[1] == index) {
+        weight += 1.0f - v.bone_weight * 0.01f;
+      }
+      // blend
+      v.loc = v.loc * (1 - weight) + world * weight;
     }
-  }
-  std::vector<float3> tmp_vt(len_vt);
-  std::vector<unsigned int> index_vt(len_vt);
-  int j = 0;
-  for (int i = 0; i < this->vt.size(); i++) {
-    if (this->vt[i].bone_num[0] == index || this->vt[i].bone_num[1] == index) {
-      index_vt[j] = i;
-      tmp_vt[j] = this->vt[i].loc;
-      j++;
-    }
-  }
-  // 変換
-  coordtrans(tmp_vt, loc, mtr);
-
-  // 変形
-  for (auto &v : tmp_vt) {
-    v = v.scale(scale);
-  }
-
-  // 逆変換
-  coordtrans_inv(tmp_vt, loc, mtr);
-
-  // 変換結果を元のデータに書き込む
-  // 頂点
-  // double tmp[3];
-  for (int i = 0; i < len_vt; i++) {
-    auto k = index_vt[i];
-    auto tmp = 0.0;
-    if (this->vt[k].bone_num[0] == index) {
-      tmp += (double)this->vt[k].bone_weight / 100;
-    }
-    if (this->vt[k].bone_num[1] == index) {
-      tmp += 1.0 - (double)this->vt[k].bone_weight / 100;
-    }
-    // printf("%f %f\n", tmp[0], tmp[1]);
-
-    this->vt[k].loc = this->vt[k].loc * (1 - tmp) + tmp_vt[i] * tmp;
   }
 }
 
