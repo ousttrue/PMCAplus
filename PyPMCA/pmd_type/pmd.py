@@ -178,7 +178,46 @@ class PMD:
                 v.position = v.position * (1 - weight) + world * weight
 
     def scale_bones(self, bone_index: int, rot: Mat3, scale: Float3) -> None:
-        pass
+        bone_position = self.bones[bone_index].position
+        for i, b in enumerate(self.bones):
+            if b.parent_index == bone_index:
+                # to local
+                local = rot.rotate(b.position - bone_position)
+                # scale
+                local = local.scale(scale)
+                # to world
+                world = rot.transposed().rotate(local) + bone_position
+                # diff in world
+                diff = world - b.position
+                self.move_bone(i, diff)
+                # apply descendants
+                for j, _ in enumerate(self.bones):
+                    if self.has_parent(j, i, True):
+                        self.move_bone(j, diff)
+
+    def has_parent(self, bone_index: int, parent_index: int, recursive: bool) -> bool:
+        current = self.bones[bone_index]
+        while current.parent_index != 65535:
+            if current.parent_index == parent_index:
+                return True
+            if not recursive:
+                return False
+            current = self.bones[current.parent_index]
+        return False
+
+    def move_bone(self, index: int, diff: Float3) -> None:
+        self.bones[index].position = self.bones[index].position + diff
+        for v in self.vertices:
+            k = False
+            tmp = 0.0
+            if v.bone0 == index:
+                tmp += v.weight * 0.01
+                k = True
+            if v.bone1 == index:
+                tmp += 1.0 - v.weight * 0.01
+                k = True
+            if k:
+                v.position = v.position + diff * tmp
 
     def add(self, parts: "PMD") -> None:
         """
