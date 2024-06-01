@@ -3,7 +3,6 @@ import pathlib, logging
 import tkinter.filedialog
 import tkinter.ttk
 import glglue.tk_frame
-import PMCA
 from ..app import App
 from ..gl_scene import GlScene
 from .. import pmd_type

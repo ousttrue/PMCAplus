@@ -1,8 +1,8 @@
 import logging
 from . import pmd_type
+from .pmd_type import resize
 from . import PMCA_cnl
 from . import PMCA_asset
-import PMCA
 
 
 LOGGER = logging.getLogger(__name__)
@@ -78,8 +78,8 @@ class AssembleContext:
         self.pre_process(pmd4.info, current.parts.props)
 
         # 0 に 4 を合成
-        self.data0 = PMCA.Add_PMD(self.data0, data4)
-        self.data0 = PMCA.Marge_PMD(self.data0)
+        self.data0 = resize.Add_PMD(self.data0, data4)
+        self.data0 = resize.Marge_PMD(self.data0)
 
         self.post_process(current.parts.props)
 

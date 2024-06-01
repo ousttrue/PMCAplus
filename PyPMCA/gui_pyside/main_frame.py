@@ -6,7 +6,6 @@ from ..app import App
 from .. import PMCA_asset
 from .. import PMCA_cnl
 from .. import pmd_type
-import PMCA  # type: ignore
 import glglue.pyside6
 from ..gl_scene import GlScene
 from .model_tab import ModelTab

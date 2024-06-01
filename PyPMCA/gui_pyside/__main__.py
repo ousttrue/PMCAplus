@@ -3,10 +3,6 @@ import pathlib
 
 from ..color_logger import ColorfulHandler
 from ..app import App
-import PMCA
-from .. import PMCA_asset
-from .. import PMCA_cnl
-from .. import native
 from . import main_frame as pyside_gui
 
 

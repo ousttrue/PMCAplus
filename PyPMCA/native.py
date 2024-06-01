@@ -1,11 +1,7 @@
 import pathlib
 import logging
-import sys, shutil
-import PMCA  # type: ignore
+import shutil
 from . import pmd_type
-from . import PMCA_asset
-from . import PMCA_cnl
-from .assemble import AssembleContext
 
 
 LOGGER = logging.getLogger(__name__)

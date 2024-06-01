@@ -1,7 +1,6 @@
 from typing import Callable
 import logging
 import pathlib
-import PMCA
 from . import pmd_type
 from .pmd_type import resize
 from . import PMCA_asset

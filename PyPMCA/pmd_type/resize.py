@@ -1,6 +1,11 @@
+from typing import TypeVar, Type
+import ctypes
+
+T = TypeVar("T")
+
 from .parser import parse
 from .to_bytes import to_bytes
-from .types import Float3
+from .types import Float3, Vertex, Submesh, Bone, MoprhVertex, RigidBody, Joint
 
 
 def Resize_Model(data: bytes, scale: float) -> bytes:
@@ -94,7 +99,160 @@ def Update_Skin(data: bytes) -> bytes:
     pmd = parse(data)
     assert pmd
 
-    for v in pmd.morphs[0].data:
-        v.position = pmd.vertices[v.vertex_index].position
+    if len(pmd.morphs) > 0:
+        for v in pmd.morphs[0].data:
+            v.position = pmd.vertices[v.vertex_index].position
 
     return to_bytes(pmd)
+
+
+def concat_array(t: Type[T], a: ctypes.Array[T], b: ctypes.Array[T]) -> ctypes.Array[T]:
+    size = len(a) + len(b)
+    return (t * size)(*a, *b)
+
+
+def Add_PMD(data: bytes, b: bytes) -> bytes:
+    """
+    Add PMD from file"
+    """
+    pmd = parse(data)
+    assert pmd
+    add = parse(b)
+    assert add
+
+    pre_vt_size = len(pmd.vertices)
+    pre_indices_size = len(pmd.indices)
+    pre_bone_size = len(pmd.bones)
+    pre_skin_disp_size = len(pmd.info.skin_index)
+    pre_bone_group_size = len(pmd.bone_groups)
+    pre_rbody_size = len(pmd.rigidbodies)
+    pre_joint_isze = len(pmd.joints)
+
+    # 頂点
+    pmd.vertices = concat_array(Vertex, pmd.vertices, add.vertices)
+    for i in range(pre_vt_size, len(pmd.vertices)):
+        # fix bone index
+        pmd.vertices[i].bone0 += pre_bone_size
+        pmd.vertices[i].bone1 += pre_bone_size
+
+    # 面頂点
+    pmd.indices = concat_array(ctypes.c_uint16, pmd.indices, add.indices)
+    for i in range(pre_indices_size, len(pmd.indices)):
+        # fix index
+        pmd.indices[i] += pre_vt_size
+
+    # 材質
+    pmd.submeshes = concat_array(Submesh, pmd.submeshes, add.submeshes)
+
+    # ボーン
+    pmd.bones = concat_array(Bone, pmd.bones, add.bones)
+    for i in range(pre_bone_size, len(pmd.bones)):
+        # fix bone index
+        if pmd.bones[i].parent_index != 65535:
+            pmd.bones[i].parent_index += pre_bone_size
+        if pmd.bones[i].tail_index != 0:
+            pmd.bones[i].tail_index += pre_bone_size
+        if pmd.bones[i].ik_index != 0:
+            pmd.bones[i].ik_index += pre_bone_size
+
+    # IKリスト
+    for ik in add.IK:
+        pmd.IK.append(ik)
+        pmd.IK[-1].bone_index += pre_bone_size
+        pmd.IK[-1].target_boneindex += pre_bone_size
+        for i, _ in enumerate(pmd.IK[-1].chain):
+            pmd.IK[-1].chain[i] += pre_bone_size
+
+    # 表情
+    if len(add.morphs) == 0:
+        # nothing
+        pass
+    elif len(pmd.morphs) == 0:
+        # copy
+        pmd.morphs = add.morphs.copy()
+    elif len(pmd.morphs) != 0 and len(add.morphs) != 0:
+        # 0番を合成
+        pre_len = len(pmd.morphs[0].data)
+        pmd.morphs[0].data = concat_array(
+            MoprhVertex, pmd.morphs[0].data, add.morphs[0].data
+        )
+        for i in range(pre_len, len(pmd.morphs[0].data)):
+            # index 補正
+            pmd.morphs[0].data[i].vertex_index += pre_vt_size
+
+        # 1以降追加
+        for morph in add.morphs[1:]:
+            pmd.morphs.append(morph)
+            for v in pmd.morphs[-1].data:
+                # index 補正
+                v.vertex_index += pre_vt_size
+
+    # 表情表示
+    for sd in add.info.skin_index:
+        pmd.info.skin_index.append(sd + pre_skin_disp_size)
+
+    # ボーン表示
+    for bg in add.bone_groups:
+        pmd.bone_groups.append(bg)
+
+    for bd in add.bone_displays:
+        pmd.bone_displays.append(bd)
+        pmd.bone_displays[-1].bone_group_index += pre_bone_group_size
+        pmd.bone_displays[-1].bone_index += pre_bone_size
+
+    # 英名
+    # pmd.eng_support = add.eng_support
+
+    # 剛体
+    pmd.rigidbodies = concat_array(RigidBody, pmd.rigidbodies, add.rigidbodies)
+    for i in range(pre_rbody_size, len(pmd.rigidbodies)):
+        pmd.rigidbodies[i].rigidbody_rel_bone_index += pre_bone_group_size
+
+    # ジョイント
+    pmd.joints = concat_array(Joint, pmd.joints, add.joints)
+    for i in range(pre_joint_isze, len(pmd.joints)):
+        pmd.joints[i].joint_rigidbody_a += pre_rbody_size
+        pmd.joints[i].joint_rigidbody_b += pre_rbody_size
+
+    return to_bytes(pmd)
+
+
+def Marge_PMD(data: bytes) -> bytes:
+    """
+    Marge PMD"
+    """
+    pmd = parse(data)
+    assert pmd
+    return to_bytes(pmd)
+
+
+# static PyObject *Marge_PMD(PyObject *self, PyObject *args) {
+#   const uint8_t *pa
+#   size_t sa
+#   if (!PyArg_ParseTuple(args, "y#", &pa, &sa)) {
+#     Py_RETURN_NONE
+#   }
+
+#   auto model = MODEL::from_bytes({pa, sa})
+#   LOGD << "ボーンマージ"
+#   if (!model.marge_bone()) {
+#     Py_RETURN_NONE
+#   }
+
+#   LOGD << "材質マージ"
+#   if (!model.marge_mat()) {
+#     Py_RETURN_NONE
+#   }
+
+#   LOGD << "IKマージ"
+#   model.marge_IK()
+
+#   LOGD << "ボーングループマージ"
+#   model.marge_bone_disp()
+
+#   LOGD << "剛体マージ"
+#   model.marge_rb()
+
+#   auto bytes = model.to_bytes()
+#   return Py_BuildValue("y#", bytes.data(), bytes.size())
+# }

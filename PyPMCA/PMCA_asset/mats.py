@@ -3,10 +3,6 @@ import dataclasses
 import logging
 
 
-# from ..assemble import AssembleContext
-import PMCA  # type: ignore
-
-
 LOGGER = logging.getLogger(__name__)
 
 
