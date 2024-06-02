@@ -143,6 +143,11 @@ class PMD:
             joints=None,
         )
 
+    def find_bone(self, name: str) -> tuple[int, Bone] | None:
+        for i, b in enumerate(self.bones):
+            if b.str_name == name:
+                return i, b
+
     def move_bone(self, bone_index: int, diff: Float3) -> None:
         bone = self.bones[bone_index]
         bone.position = bone.position + diff
@@ -235,7 +240,7 @@ class PMD:
             if k:
                 v.position = v.position + diff * tmp
 
-    def merge_rb(self)->None:
+    def merge_rb(self) -> None:
         # 同名の剛体を削除
         pass
 

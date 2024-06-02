@@ -1,8 +1,8 @@
 import logging
-from . import pmd_type
-from .pmd_type import resize
-from . import PMCA_cnl
-from . import PMCA_asset
+from .. import pmd_type
+from ..pmd_type import resize
+from .. import PMCA_cnl
+from .. import PMCA_asset
 
 
 LOGGER = logging.getLogger(__name__)

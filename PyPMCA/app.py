@@ -6,7 +6,7 @@ from . import pmd_type
 from .pmd_type import resize
 from . import PMCA_asset
 from . import PMCA_cnl
-from .assemble import AssembleContext
+from .PMCA_cnl.assemble import AssembleContext
 
 
 LOGGER = logging.getLogger(__name__)
@@ -30,7 +30,7 @@ class App:
 
     def cnl_reload(self):
         if not self.default_cnl_file.exists():
-            cnl = pkgutil.get_data("PyPMCA", f"default.cnl")
+            cnl = pkgutil.get_data("PyPMCA.PMCA_cnl", f"default.cnl")
             assert cnl
             self.default_cnl_file.write_bytes(cnl)
 
@@ -133,15 +133,10 @@ class App:
         data0 = pmd_type.to_bytes(pmd0)
         # PMCA.Set_PMD(0, data0)
 
-        LOGGER.info("体型調整")
-        refbone = None
-        refbone_index = None
-        for i, transform_bone in enumerate(pmd0.bones):
-            if transform_bone.str_name == "右足首":
-                refbone = transform_bone
-                refbone_index = i
-                break
+        ref = pmd0.find_bone("右足首")
+        assert ref
 
+        LOGGER.info("体型調整")
         for transform_data in self.cnl.transform_data_list:
             data0 = resize.Resize_Model(data0, transform_data.scale)
             for transform_bone in transform_data.bones:
@@ -157,39 +152,28 @@ class App:
                     transform_bone.name,
                     pmd_type.Float3(*transform_bone.pos),
                 )
+        pmd0 = pmd_type.parse(data0)
+        assert pmd0
 
-        if refbone:
-            assert refbone_index
-            # newbone = None
-            newbone = pmd0.bones[refbone_index]
-            assert newbone
-            # newbone = pmd_type.Bone(
-            #     tmp.name,
-            #     # tmp.name_eng,
-            #     tmp.parent_index,
-            #     tmp.tail_index,
-            #     tmp.type,
-            #     tmp.ik_index,
-            #     tmp.position,
-            # )
+        # 体型調整による足首の移動量で接地を調整
+        refbone_index, refbone = ref
+        newbone = pmd0.bones[refbone_index]
+        dy = refbone.position.y - newbone.position.y
+        LOGGER.info(f"ref: {refbone.position.y} - {newbone.position.y} = {dy}")
+        for transform_bone in pmd0.bones:
+            i = transform_bone.parent_index
+            count = 0
+            while i < len(pmd0.bones) and count < len(pmd0.bones):
+                if pmd0.bones[i].str_name == "センター":
+                    data0 = resize.Move_Bone(
+                        data0, transform_bone.str_name, pmd_type.Float3(0, dy, 0)
+                    )
+                    break
+                i = pmd0.bones[i].parent_index
+                count += 1
 
-            # 体型調整による足首の移動量で接地を調整
-            dy = refbone.position.y - newbone.position.y
-            LOGGER.info(f"ref: {refbone.position.y} - {newbone.position.y} = {dy}")
-            for transform_bone in pmd0.bones:
-                i = transform_bone.parent_index
-                count = 0
-                while i < len(pmd0.bones) and count < len(pmd0.bones):
-                    if pmd0.bones[i].str_name == "センター":
-                        data0 = resize.Move_Bone(
-                            data0, transform_bone.str_name, pmd_type.Float3(0, dy, 0)
-                        )
-                        break
-                    i = pmd0.bones[i].parent_index
-                    count += 1
-
-            data0 = resize.Move_Bone(data0, "センター", pmd_type.Float3(0, dy, 0))
-            data0 = resize.Move_Bone(data0, "+センター", pmd_type.Float3(0, -dy, 0))
+        data0 = resize.Move_Bone(data0, "センター", pmd_type.Float3(0, dy, 0))
+        data0 = resize.Move_Bone(data0, "+センター", pmd_type.Float3(0, -dy, 0))
 
         for transform_data in self.cnl.transform_data_list:
             data0 = resize.Move_Model(
