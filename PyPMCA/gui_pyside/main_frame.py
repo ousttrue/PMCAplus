@@ -1,7 +1,8 @@
+from typing import Callable, NamedTuple
 import logging
 import pathlib
 import sys
-from PySide6 import QtWidgets, QtCore
+from PySide6 import QtWidgets, QtCore, QtGui
 from ..app import App
 from .. import PMCA_asset
 from .. import PMCA_cnl
@@ -25,6 +26,11 @@ class InfoTab(QtWidgets.QWidget):
     def __init__(self, data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo):
         super().__init__()
         pass
+
+
+class FileFilter(NamedTuple):
+    label: str
+    ext: str  # ".cnl"
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -66,6 +72,85 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tabifyDockWidget(self.model_dock, self.info_dock)
 
         self.model_dock.raise_()
+        # self.glwidget.setFocus() # for mouse wheel
+
+        # menu: files
+        self.menu_file.addAction("新規(new cnl)", self.app.cnl_reload)  # type: ignore
+
+        self.menu_file.addAction(  # type: ignore
+            "読み込み(load cnl)",
+            self._make_open_file_dialog(
+                self.app.cnl_load, FileFilter("キャラクタノードリスト", ".cnl")
+            ),
+        )
+        self.menu_file.addSeparator()
+        self.menu_file.addAction(  # type: ignore
+            "保存(save cnl)",
+            self._make_save_file_dialog(
+                self.app.cnl_save, FileFilter("キャラクタノードリスト", ".cnl")
+            ),
+        )
+
+        self.menu_file.addAction(  # type: ignore
+            "モデル保存(save pmd)",
+            self._make_save_file_dialog(
+                self.app.pmd_save, FileFilter("Plygon Model Deta(for MMD)", ".pmd")
+            ),
+        )
+        self.menu_file.addSeparator()
+
+        # cnl を連続で pmd 化する
+        # names = filedialog.askopenfilename(
+        #     filetypes=[("キャラクタノードリスト", ".cnl"), ("all", ".*")],
+        #     initialdir=self.target_dir,
+        #     defaultextension=".cnl",
+        #     multiple=True,
+        # )
+        # files.add_command(label="一括組立て", underline=0, command=self.batch_assemble)
+        # files.add_separator()
+
+        # files.add_command(
+        #     label="PMDフォーマットチェック",
+        #     underline=0,
+        #     command=self.app.pmd_format_check,
+        # )
+        # files.add_command(
+        #     label="PMD概要確認",
+        #     underline=0,
+        #     command=self.app.pmd_overview_check,
+        # )
+        # files.add_command(
+        #     label="PMD詳細確認",
+        #     underline=0,
+        #     command=self.app.pmd_property_check,
+        # )
+        # files.add_separator()
+
+        # def quit():
+        #     master.winfo_toplevel().destroy()
+        #     master.quit()
+
+        self.menu_file.addAction("exit", self.close)  # type: ignore
+
+        # menu: editing
+        self.menu_edit.addAction("体型調整を初期化", self.app.init_tf)  # type: ignore
+        self.menu_edit.addAction("材質をランダム選択", self.app.rand_mat)  # type: ignore
+
+    def _make_open_file_dialog(
+        self, callback: Callable[[pathlib.Path], None], *filters: FileFilter
+    ) -> Callable[[], None]:
+        def func() -> None:
+            pass
+
+        return func
+
+    def _make_save_file_dialog(
+        self, callbck: Callable[[pathlib.Path], None], *filters: FileFilter
+    ) -> Callable[[], None]:
+        def func() -> None:
+            pass
+
+        return func
 
     def _add_dock(self, name: str, widget: QtWidgets.QWidget) -> QtWidgets.QDockWidget:
         dock = QtWidgets.QDockWidget(name, self)

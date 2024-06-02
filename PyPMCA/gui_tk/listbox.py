@@ -20,5 +20,7 @@ class LISTBOX(tkinter.Listbox):
         self.delete(0, tkinter.END)
         for x in entry:
             self.insert("end", x)
+
+        assert isinstance(sel, int)
         if sel >= 0:
             self.selection_set(sel)

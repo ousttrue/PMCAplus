@@ -15,6 +15,24 @@ def main(dir: pathlib.Path, cnl_file: pathlib.Path):
         level=logging.DEBUG,
     )
 
+    root_logger = logging.getLogger()
+    # module_log_pass_filter = logging.Filter(__name__)
+
+    class DropByNames(logging.Filter):
+
+        def __init__(self, *names: str) -> None:
+            super().__init__()
+            self.names = names
+
+        def filter(self, record: logging.LogRecord) -> bool:
+            for name in self.names:
+                if record.name.startswith(name):
+                    return False
+            return True
+
+    # root_logger.addFilter(module_log_pass_filter)
+    root_logger.handlers[0].addFilter(DropByNames("PIL", "glglue"))
+
     app = App(dir, cnl_file)
 
     # gui

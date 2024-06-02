@@ -134,7 +134,6 @@ class GlScene:
                 u_texture = glo.UniformLocation.create(shader.program, "u_texture")
 
                 for submesh in self.model_src.submeshes:
-                    print(submesh.texture_file)
                     self.model_drawable.push_submesh(
                         shader,
                         submesh.index_count,

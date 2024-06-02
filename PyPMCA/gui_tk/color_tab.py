@@ -11,6 +11,8 @@ class ColorTab(tkinter.ttk.Frame):
     ) -> None:
         super().__init__(root)
         self.cnl = cnl
+
+        self.sel_t = 0
         self.cur_mat: PMCA_cnl.MAT_REP_DATA | None = None
 
         self.frame = tkinter.ttk.Frame(self)
@@ -40,8 +42,8 @@ class ColorTab(tkinter.ttk.Frame):
         self.text_label.pack(padx=3, pady=3, side=tkinter.BOTTOM, fill=tkinter.X)
 
     def mats_click(self, _):
-        sel_t = int(self.l_tree.curselection()[0])  # type: ignore
-        mat_rep = self.cnl.mat_rep.get_material_entry(sel_t)
+        self.sel_t = int(self.l_tree.curselection()[0])  # type: ignore
+        mat_rep = self.cnl.mat_rep.get_material_entry(self.sel_t)
 
         tmp_list: list[str] = []
         for x in mat_rep.mat.entries:

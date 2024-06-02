@@ -36,7 +36,7 @@ class Tabs(tkinter.ttk.Notebook):
     def on_refresh(self) -> None:
         self.model_tab.set_tree(self.app.cnl.tree, True)
         if self.color_tab.cur_mat:
-            self.color_tab.l_tree.set_entry(self.app.cnl.mat_rep.get_entries(), sel=self.color_tab.cur_mat)  # type: ignore
+            self.color_tab.l_tree.set_entry(self.app.cnl.mat_rep.get_entries(), sel=self.color_tab.sel_t)  # type: ignore
         else:
             self.color_tab.l_tree.set_entry(self.app.cnl.mat_rep.get_entries())
         self.info_tab.refresh()

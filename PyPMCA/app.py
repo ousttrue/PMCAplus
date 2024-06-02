@@ -24,6 +24,7 @@ class App:
         #     native.set_list(*list_txt)
 
         self.cnl = PMCA_cnl.CnlInfo()
+        self.cnl.on_updated.append(self.assemble)
         self.default_cnl_file = cnl_file
         self.on_assemble: list[Callable[[bytes], None]] = []
         self.cnl_reload()
@@ -100,7 +101,7 @@ class App:
         refbone = None
         refbone_index = None
         for i, transform_bone in enumerate(pmd0.bones):
-            if transform_bone.name == "右足首":
+            if transform_bone.str_name == "右足首":
                 refbone = transform_bone
                 refbone_index = i
                 break
@@ -123,43 +124,36 @@ class App:
 
         if refbone:
             assert refbone_index
-            newbone = None
-            tmp = pmd0.bones[refbone_index]
-            assert tmp
-            newbone = pmd_type.Bone(
-                tmp.name,
-                tmp.name_eng,
-                tmp.parent_index,
-                tmp.tail_index,
-                tmp.bone_type,
-                tmp.ik,
-                tmp.loc,
-            )
+            # newbone = None
+            newbone = pmd0.bones[refbone_index]
+            assert newbone
+            # newbone = pmd_type.Bone(
+            #     tmp.name,
+            #     # tmp.name_eng,
+            #     tmp.parent_index,
+            #     tmp.tail_index,
+            #     tmp.type,
+            #     tmp.ik_index,
+            #     tmp.position,
+            # )
 
-            # 体型調整による足首の移動量で設置を調整
-            dy = refbone.loc.y - newbone.loc.y
+            # 体型調整による足首の移動量で接地を調整
+            dy = refbone.position.y - newbone.position.y
+            LOGGER.info(f"ref: {refbone.position.y} - {newbone.position.y} = {dy}")
             for transform_bone in pmd0.bones:
                 i = transform_bone.parent_index
                 count = 0
                 while i < len(pmd0.bones) and count < len(pmd0.bones):
-                    if pmd0.bones[i].name == "センター":
+                    if pmd0.bones[i].str_name == "センター":
                         data0 = resize.Move_Bone(
-                            data0,
-                            transform_bone.name.encode("cp932", "replace"),
-                            0,
-                            dy,
-                            0,
+                            data0, transform_bone.str_name, pmd_type.Float3(0, dy, 0)
                         )
                         break
                     i = pmd0.bones[i].parent_index
                     count += 1
 
-            data0 = resize.Move_Bone(
-                data0, "センター".encode("cp932", "replace"), 0, dy, 0
-            )
-            data0 = resize.Move_Bone(
-                data0, "+センター".encode("cp932", "replace"), 0, -dy, 0
-            )
+            data0 = resize.Move_Bone(data0, "センター", pmd_type.Float3(0, dy, 0))
+            data0 = resize.Move_Bone(data0, "+センター", pmd_type.Float3(0, -dy, 0))
 
         for transform_data in self.cnl.transform_data_list:
             data0 = resize.Move_Model(
