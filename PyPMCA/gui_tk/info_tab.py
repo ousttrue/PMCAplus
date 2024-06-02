@@ -1,6 +1,5 @@
 import tkinter.ttk
 import dataclasses
-from .. import native
 
 
 @dataclasses.dataclass

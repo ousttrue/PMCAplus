@@ -1,25 +1,18 @@
 from typing import Callable, NamedTuple
-import logging
-import pathlib
-import sys
-from PySide6 import QtWidgets, QtCore, QtGui
+import logging, pathlib, sys
+from PySide6 import QtWidgets, QtCore
+import glglue.pyside6
+from ..gl_scene import GlScene
 from ..app import App
 from .. import PMCA_asset
 from .. import PMCA_cnl
 from .. import pmd_type
-import glglue.pyside6
-from ..gl_scene import GlScene
 from .model_tab import ModelTab
 from .color_tab import ColorTab
+from .transform_tab import TransformTab
 
 
 LOGGER = logging.getLogger(__name__)
-
-
-class TransformTab(QtWidgets.QWidget):
-    def __init__(self, data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo):
-        super().__init__()
-        pass
 
 
 class InfoTab(QtWidgets.QWidget):
@@ -39,7 +32,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.app = app
 
         self.setWindowTitle(title)
-        self.resize(800, 800)
+        self.resize(1280, 768)
 
         self.scene = GlScene()
         self.glwidget = glglue.pyside6.Widget(self, render_gl=self.scene.render)
@@ -54,22 +47,29 @@ class MainWindow(QtWidgets.QMainWindow):
         ## tabs
         # model
         self.model_tab = ModelTab(self.app)
-        self.model_dock = self._add_dock("Model", self.model_tab)
+        self.model_dock = self._add_dock(
+            "Model", QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, self.model_tab
+        )
 
         # color
-        self.color_tab = ColorTab(self.app.data, self.app.cnl)
-        self.color_dock = self._add_dock("Color", self.color_tab)
-        self.tabifyDockWidget(self.model_dock, self.color_dock)
+        self.color_tab = ColorTab(self.app)
+        self.color_dock = self._add_dock(
+            "Color", QtCore.Qt.DockWidgetArea.RightDockWidgetArea, self.color_tab
+        )
 
         # transform
-        self.transform_tab = TransformTab(self.app.data, self.app.cnl)
-        self.transform_dock = self._add_dock("Transform", self.transform_tab)
-        self.tabifyDockWidget(self.model_dock, self.transform_dock)
+        self.transform_tab = TransformTab(self.app)
+        self.transform_dock = self._add_dock(
+            "Transform",
+            QtCore.Qt.DockWidgetArea.RightDockWidgetArea,
+            self.transform_tab,
+        )
 
         # info
         self.info_tab = InfoTab(self.app.data, self.app.cnl)
-        self.info_dock = self._add_dock("Info", self.info_tab)
-        self.tabifyDockWidget(self.model_dock, self.info_dock)
+        self.info_dock = self._add_dock(
+            "Info", QtCore.Qt.DockWidgetArea.BottomDockWidgetArea, self.info_tab
+        )
 
         self.model_dock.raise_()
         # self.glwidget.setFocus() # for mouse wheel
@@ -140,6 +140,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self, callback: Callable[[pathlib.Path], None], *filters: FileFilter
     ) -> Callable[[], None]:
         def func() -> None:
+            raise NotImplementedError()
             pass
 
         return func
@@ -148,16 +149,18 @@ class MainWindow(QtWidgets.QMainWindow):
         self, callbck: Callable[[pathlib.Path], None], *filters: FileFilter
     ) -> Callable[[], None]:
         def func() -> None:
+            raise NotImplementedError()
             pass
 
         return func
 
-    def _add_dock(self, name: str, widget: QtWidgets.QWidget) -> QtWidgets.QDockWidget:
+    def _add_dock(
+        self, name: str, area: QtCore.Qt.DockWidgetArea, widget: QtWidgets.QWidget
+    ) -> QtWidgets.QDockWidget:
         dock = QtWidgets.QDockWidget(name, self)
         dock.setWidget(widget)
-        self.addDockWidget(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea, dock)
+        self.addDockWidget(area, dock)
         self.menu_dock.addAction(dock.toggleViewAction())  # type: ignore
-
         return dock
 
     def closeEvent(self, _) -> None:  # type: ignore
@@ -183,3 +186,10 @@ class Gui:
 
 def MainFrame(title: str, app: App) -> Gui:
     return Gui(title, app)
+
+
+def run(name: str, app: App) -> None:
+    window = MainFrame(name, app)
+    app.on_assemble.append(window.window.update_scene)
+    app.assemble()
+    window.mainloop()

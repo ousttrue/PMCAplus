@@ -6,7 +6,10 @@ import glglue.tk_frame
 from ..app import App
 from ..gl_scene import GlScene
 from .. import pmd_type
-from . import tabs
+from .model_tab import ModelTab
+from .color_tab import ColorTab
+from .transform_tab import TransformTab
+from .info_tab import InfoTab
 
 
 LOGGER = logging.getLogger(__name__)
@@ -29,6 +32,43 @@ class Buttons(tkinter.ttk.Frame):
 class FileFilter(NamedTuple):
     label: str
     ext: str  # ".cnl"
+
+
+class Tabs(tkinter.ttk.Notebook):
+    def __init__(
+        self,
+        root: tkinter.Tk,
+        app: App,
+    ):
+        super().__init__(root)
+
+        self.app = app
+
+        self.model_tab = ModelTab(root, self.app)
+        self._add_tab(self.model_tab)
+
+        self.color_tab = ColorTab(root, self.app)
+        self._add_tab(self.color_tab)
+
+        self.transform_tab = TransformTab(root, self.app)
+        self._add_tab(self.transform_tab)
+
+        self.info_tab = InfoTab(root)
+        self._add_tab(self.info_tab)
+
+    def _add_tab(self, x: tkinter.ttk.Frame) -> None:
+        self.insert(tkinter.END, x, text=x.text)  # type: ignore
+
+    def on_refresh(self) -> None:
+        self.model_tab.set_tree(self.app.cnl.tree, True)
+        if self.color_tab.cur_mat:
+            self.color_tab.l_tree.set_entry(self.app.cnl.mat_rep.get_entries(), sel=self.color_tab.sel_t)  # type: ignore
+        else:
+            self.color_tab.l_tree.set_entry(self.app.cnl.mat_rep.get_entries())
+        self.info_tab.refresh()
+        # self.transform_tab.info_frame.strvar.set(  # type: ignore
+        #     "height     = %f\nwidth      = %f\nthickness = %f\n" % (w, h, t)
+        # )
 
 
 class MainFrame(tkinter.ttk.Frame):
@@ -54,7 +94,7 @@ class MainFrame(tkinter.ttk.Frame):
         )
         self.glwidget.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=True)
 
-        self.notebook = tabs.Tabs(master, self.app)
+        self.notebook = Tabs(master, self.app)
         self.notebook.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=0)
 
         self.frame_button = Buttons(master)
@@ -180,3 +220,10 @@ class MainFrame(tkinter.ttk.Frame):
                 callback(path)
 
         return func
+
+
+def run(name: str, app: App):
+    window = MainFrame(name, app)
+    app.on_assemble.append(window.update_scene)
+    app.assemble()
+    window.mainloop()

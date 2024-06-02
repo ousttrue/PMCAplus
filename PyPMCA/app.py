@@ -1,11 +1,11 @@
 from typing import Callable
+import pkgutil
 import logging
 import pathlib
 from . import pmd_type
 from .pmd_type import resize
 from . import PMCA_asset
 from . import PMCA_cnl
-from . import native
 from .assemble import AssembleContext
 
 
@@ -24,12 +24,16 @@ class App:
         #     native.set_list(*list_txt)
 
         self.cnl = PMCA_cnl.CnlInfo()
-        self.cnl.on_updated.append(self.assemble)
         self.default_cnl_file = cnl_file
         self.on_assemble: list[Callable[[bytes], None]] = []
         self.cnl_reload()
 
     def cnl_reload(self):
+        if not self.default_cnl_file.exists():
+            cnl = pkgutil.get_data("PyPMCA", f"default.cnl")
+            assert cnl
+            self.default_cnl_file.write_bytes(cnl)
+
         self.cnl_load(self.default_cnl_file)
 
     def cnl_load(self, cnl_file: pathlib.Path) -> None:
@@ -47,10 +51,45 @@ class App:
     def pmd_save(self, pmd_file: pathlib.Path) -> None:
         LOGGER.info(f"{pmd_file}")
         # self.assemble()
-        native.save_PMD(pmd_file)
+        name.parent.mkdir(exist_ok=True, parents=True)
+        data = PMCA.Get_PMD(0)
+        assert data
+        name.write_bytes(data)
 
-    def cnl_save(self, cnl_file: pathlib.Path) -> None:
-        assert cnl_file
+        dirc = name.parent
+        info = PMCA.getInfo(0)
+        for i in range(info["mat_count"]):
+            mat = pmd_type.MATERIAL(**PMCA.getMat(0, i))
+            if mat.tex != "":
+                try:
+                    # テクスチャコピー
+                    shutil.copy(mat.tex_path, dirc)
+                except IOError:
+                    LOGGER.error("コピー失敗:%s" % (mat.tex_path))
+            if mat.sph != "":
+                try:
+                    # テクスチャコピー
+                    shutil.copy(mat.sph_path, dirc)
+                except IOError:
+                    LOGGER.error("コピー失敗:%s" % (mat.sph_path))
+
+        toon = PMCA.getToon(0)
+        for i, x in enumerate(PMCA.getToonPath(0)):
+            toon[i] = toon[i].decode("cp932", "replace")
+            if toon[i] != "":
+                try:
+                    # テクスチャコピー
+                    shutil.copy("toon/" + toon[i], dirc)
+                except IOError:
+                    try:
+                        # テクスチャコピー
+                        shutil.copy("parts/" + toon[i], dirc)
+                    except IOError:
+                        LOGGER.error("コピー失敗:%s" % (toon[i]))
+
+    def cnl_save(self, cnl_file: pathlib.Path | None = None) -> None:
+        if not cnl_file:
+            cnl_file = self.default_cnl_file
         x = self.cnl.tree.children[0]
         if not x:
             LOGGER.error("ノードが空です")
@@ -71,9 +110,6 @@ class App:
 
         LOGGER.info("材質置換")
         self.cnl.update_mat_rep(self.data, [x for x in pmd0.submeshes])
-        # native.set_material(context, self.cnl.mat_rep)
-        # pmd = pmd_type.parse(PMCA.Get_PMD(0))
-        # assert pmd
 
         for i, x in enumerate(pmd0.submeshes):
             rep_mat = self.cnl.mat_rep.mat_map.get(x.tex)

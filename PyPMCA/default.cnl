@@ -1,5 +1,5 @@
-PMCAモデル
-PMCAモデル
+PMCA sample1
+PMCAv0.0.6 sample1
 
 
 PARTS
@@ -44,6 +44,9 @@ NEXT
 [Name] mt_sock1
 [Sel] 白
 NEXT
+[Name] mt_hair
+[Sel] 青色01 
+NEXT
 [Name] mt_slr1_s
 [Sel] 紺色
 NEXT
@@ -61,9 +64,6 @@ NEXT
 NEXT
 [Name] mt_skirt1
 [Sel] 紺色
-NEXT
-[Name] mt_hair
-[Sel] 青色01 
 NEXT
 TRANSFORM
 [Scale] 1.000000

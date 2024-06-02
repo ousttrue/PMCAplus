@@ -3,41 +3,30 @@ import logging
 from PySide6 import QtWidgets, QtCore
 from .. import PMCA_asset
 from .. import PMCA_cnl
+from ..app import App
 from .generic_tree_model import GenericListModel
 
 
 LOGGER = logging.getLogger(__name__)
 
 
-class ColorTab(QtWidgets.QWidget):
-    def __init__(self, data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo):
-        super().__init__()
-        self.data = data
-        self.cnl = cnl
-
-        vbox = QtWidgets.QVBoxLayout()
-        self.setLayout(vbox)
-
-        hbox = QtWidgets.QSplitter(QtCore.Qt.Orientation.Horizontal, self)
-        vbox.addWidget(hbox, stretch=2)
+class ColorTab(QtWidgets.QSplitter):
+    def __init__(self, app: App):
+        super().__init__(QtCore.Qt.Orientation.Horizontal)
+        self.app = app
 
         # left
         self.left = QtWidgets.QTreeView()
-        hbox.addWidget(self.left)
+        self.addWidget(self.left)
 
         # right
         self.right = QtWidgets.QTreeView()
-        hbox.addWidget(self.right)
-
-        # bottom
-        self.comment = QtWidgets.QLabel()
-        self.comment.setText("comment:")
-        vbox.addWidget(self.comment)
+        self.addWidget(self.right)
 
         self.entries: list[PMCA_cnl.MAT_REP_DATA] = []
 
     def update_list(self):
-        entries = self.cnl.mat_rep.get_entries()
+        entries = self.app.cnl.mat_rep.get_entries()
         if entries == self.entries:
             return
         self.entries = entries
@@ -91,4 +80,4 @@ class ColorTab(QtWidgets.QWidget):
 
         left_item.sel = item
         self.left.update(left_index)
-        self.cnl.raise_refresh()
+        self.app.assemble()

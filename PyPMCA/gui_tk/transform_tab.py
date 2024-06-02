@@ -3,7 +3,7 @@ import tkinter
 import tkinter.ttk
 from .listbox import LISTBOX
 from .. import PMCA_asset
-from .. import PMCA_cnl
+from ..app import App
 
 
 LOGGER = logging.getLogger(__name__)
@@ -82,39 +82,39 @@ class SCALE_DIALOG_FANC(tkinter.Toplevel):
     def __init__(
         self,
         master: tkinter.Tk,
-        data: PMCA_asset.PMCAData,
+        app: App,
         sel: int,
-        cnl: PMCA_cnl.CnlInfo,
     ):
         super().__init__()
-        self.data = data
-        self.cnl = cnl
+        self.app = app
         self.sel = sel
-        self.title(data.transform_list[self.sel].name)
+        self.title(self.app.data.transform_list[self.sel].name)
 
-        self.cnl.transform_data_list.append(
+        self.app.cnl.transform_data_list.append(
             PMCA_asset.MODEL_TRANS_DATA(
-                name=data.transform_list[self.sel].name,
+                name=self.app.data.transform_list[self.sel].name,
                 scale=1.0,
                 bones=[],
                 pos=(0.0, 0.0, 0.0),
                 rot=(0.0, 0.0, 0.0),
             )
         )
-        self.transform_data = self.cnl.transform_data_list[-1]
-        for x in data.transform_list[self.sel].bones:
+        self.transform_data = self.app.cnl.transform_data_list[-1]
+        for x in self.app.data.transform_list[self.sel].bones:
             self.transform_data.bones.append(PMCA_asset.BONE_TRANS_DATA(name=x.name))
 
-        t = self.data.transform_list[self.sel]
+        t = self.app.data.transform_list[self.sel]
 
         self.transient(master)
+
         # spinbox & slider
         self.frame1 = Frame1(self, t)
+
         # buttons
         self.frame2 = tkinter.Frame(self)
 
         buff = ""
-        for x in self.data.transform_list[sel].bones:
+        for x in self.app.data.transform_list[sel].bones:
             buff += "%s %f %f\n" % (x.name, x.length, x.thick)
         tkinter.Label(self, text=buff).grid(row=0, padx=10, pady=5)
 
@@ -128,26 +128,26 @@ class SCALE_DIALOG_FANC(tkinter.Toplevel):
         self.mainloop()
 
     def CANCEL(self):
-        self.cnl.transform_data_list.remove(self.transform_data)
-        self.cnl.raise_refresh()
+        self.app.cnl.transform_data_list.remove(self.transform_data)
+        self.app.assemble()
         self.winfo_toplevel().destroy()
         self.quit()
 
     def OK(self):
-        self.cnl.transform_data_list[0].scale = (
-            self.transform_data.scale * self.cnl.transform_data_list[0].scale
+        self.app.cnl.transform_data_list[0].scale = (
+            self.transform_data.scale * self.app.cnl.transform_data_list[0].scale
         )
         for x in self.transform_data.bones:
             tmp = None
-            for y in self.cnl.transform_data_list[0].bones:
+            for y in self.app.cnl.transform_data_list[0].bones:
                 if y.name == x.name:
                     tmp = y
                     break
             else:
-                self.cnl.transform_data_list[0].bones.append(
+                self.app.cnl.transform_data_list[0].bones.append(
                     PMCA_asset.BONE_TRANS_DATA(name=x.name)
                 )
-                tmp = self.cnl.transform_data_list[0].bones[-1]
+                tmp = self.app.cnl.transform_data_list[0].bones[-1]
 
             tmp.length = tmp.length * x.length
             tmp.thick = tmp.thick * x.thick
@@ -155,24 +155,24 @@ class SCALE_DIALOG_FANC(tkinter.Toplevel):
                 y += x.pos[i]
             for i, y in enumerate(tmp.rot):
                 y += x.rot[i]
-        self.cnl.transform_data_list.remove(self.transform_data)
-        self.cnl.raise_refresh()
+        self.app.cnl.transform_data_list.remove(self.transform_data)
+        self.app.assemble()
 
         self.winfo_toplevel().destroy()
         self.quit()
 
     def change_var(self, var: float):
-        weight = self.data.transform_list[self.sel].scale
+        weight = self.app.data.transform_list[self.sel].scale
         self.transform_data.scale = weight * var + 1 - weight
 
-        weight = self.data.transform_list[self.sel].pos
+        weight = self.app.data.transform_list[self.sel].pos
         self.transform_data.pos = (
             weight[0] * var,
             weight[1] * var,
             weight[2] * var,
         )
 
-        weight = self.data.transform_list[self.sel].rot
+        weight = self.app.data.transform_list[self.sel].rot
         self.transform_data.rot = (
             weight[0] * var,
             weight[1] * var,
@@ -185,12 +185,12 @@ class SCALE_DIALOG_FANC(tkinter.Toplevel):
             x, y, z = v
             return (x * var, y * var, z * var)
 
-        for i, bone in enumerate(self.data.transform_list[self.sel].bones):
+        for i, bone in enumerate(self.app.data.transform_list[self.sel].bones):
             self.transform_data.bones[i].length = bone.length * var + 1 - bone.length
             self.transform_data.bones[i].thick = bone.thick * var + 1 - bone.thick
             self.transform_data.bones[i].pos = scale(bone.pos, var)
             self.transform_data.bones[i].rot = scale(bone.rot, var)
-        self.cnl.raise_refresh()
+        self.app.assemble()
 
 
 class InfoFrame(tkinter.ttk.LabelFrame):
@@ -204,23 +204,20 @@ class InfoFrame(tkinter.ttk.LabelFrame):
 
 
 class TransformTab(tkinter.ttk.Frame):
-    def __init__(
-        self, root: tkinter.Tk, data: PMCA_asset.PMCAData, cnl: PMCA_cnl.CnlInfo
-    ) -> None:
+    def __init__(self, root: tkinter.Tk, app: App) -> None:
         super().__init__(root)
         self.root = root
         self.text = "Transform"
-        self.data = data
-        self.cnl = cnl
+        self.app = app
 
         # left
         self.tfgroup_frame = tkinter.ttk.LabelFrame(self, text="Groups")
         self.tfgroup = LISTBOX(self.tfgroup_frame)
-        # self.tfgroup.set_entry(tmp)
         self.tfgroup_frame.pack(
             padx=3, pady=3, side=tkinter.LEFT, fill=tkinter.BOTH, expand=1
         )
         self.tfgroup.bind("<ButtonRelease-1>", self.tf_click)  # type: ignore
+        self.tfgroup.set_entry([x.name for x in self.app.data.transform_list])
 
         # right
         self.info_frame = InfoFrame(self)
@@ -231,4 +228,4 @@ class TransformTab(tkinter.ttk.Frame):
     def tf_click(self, _: tkinter.Event) -> None:  # type: ignore
         sel = int(self.tfgroup.curselection()[0])  # type: ignore
 
-        SCALE_DIALOG_FANC(self.root, self.data, sel, self.cnl)
+        SCALE_DIALOG_FANC(self.root, self.app, sel)

@@ -1,16 +1,17 @@
 import tkinter.ttk
 from .listbox import LISTBOX
 from .. import PMCA_cnl
+from ..app import App
 
 
 class ColorTab(tkinter.ttk.Frame):
     def __init__(
         self,
         root: tkinter.Tk,
-        cnl: PMCA_cnl.CnlInfo,
+        app: App,
     ) -> None:
         super().__init__(root)
-        self.cnl = cnl
+        self.app = app
 
         self.sel_t = 0
         self.cur_mat: PMCA_cnl.MAT_REP_DATA | None = None
@@ -43,7 +44,7 @@ class ColorTab(tkinter.ttk.Frame):
 
     def mats_click(self, _):
         self.sel_t = int(self.l_tree.curselection()[0])  # type: ignore
-        mat_rep = self.cnl.mat_rep.get_material_entry(self.sel_t)
+        mat_rep = self.app.cnl.mat_rep.get_material_entry(self.sel_t)
 
         tmp_list: list[str] = []
         for x in mat_rep.mat.entries:
@@ -63,4 +64,4 @@ class ColorTab(tkinter.ttk.Frame):
         assert self.cur_mat
         self.cur_mat.select_entry(sel_t)
 
-        self.cnl.raise_refresh()
+        self.app.assemble()
