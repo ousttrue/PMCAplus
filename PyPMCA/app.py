@@ -1,4 +1,5 @@
 from typing import Callable
+import shutil
 import pkgutil
 import logging
 import pathlib
@@ -18,13 +19,14 @@ class App:
     """
 
     def __init__(self, asset_dir: pathlib.Path, cnl_file: pathlib.Path):
+        # パーツ(asset static)
         self.data = PMCA_asset.PMCAData()
-        list_txt = self.data.load_asset(asset_dir)
-        # if list_txt:
-        #     native.set_list(*list_txt)
+        self.data.load_asset(asset_dir)
 
+        # 組み立て情報(runtime dynamic)
         self.cnl = PMCA_cnl.CnlInfo()
         self.default_cnl_file = cnl_file
+
         self.on_assemble: list[Callable[[bytes], None]] = []
         self.cnl_reload()
 
@@ -50,42 +52,42 @@ class App:
 
     def pmd_save(self, pmd_file: pathlib.Path) -> None:
         LOGGER.info(f"{pmd_file}")
-        # self.assemble()
-        name.parent.mkdir(exist_ok=True, parents=True)
-        data = PMCA.Get_PMD(0)
-        assert data
-        name.write_bytes(data)
+        pmd_file.parent.mkdir(exist_ok=True, parents=True)
 
-        dirc = name.parent
-        info = PMCA.getInfo(0)
-        for i in range(info["mat_count"]):
-            mat = pmd_type.MATERIAL(**PMCA.getMat(0, i))
+        data = self.assemble()
+        pmd_file.write_bytes(data)
+
+        # dirc = pmd_file.parent
+        # info = PMCA.getInfo(0)
+        pmd = pmd_type.parse(data)
+        assert pmd
+        for mat in pmd.submeshes:
             if mat.tex != "":
                 try:
                     # テクスチャコピー
-                    shutil.copy(mat.tex_path, dirc)
+                    shutil.copy(mat.tex_path, pmd_file.parent)
                 except IOError:
-                    LOGGER.error("コピー失敗:%s" % (mat.tex_path))
-            if mat.sph != "":
-                try:
-                    # テクスチャコピー
-                    shutil.copy(mat.sph_path, dirc)
-                except IOError:
-                    LOGGER.error("コピー失敗:%s" % (mat.sph_path))
+                    LOGGER.error(f"コピー失敗: {mat}")
+            # if mat.sph != "":
+            #     try:
+            #         # テクスチャコピー
+            #         shutil.copy(mat.sph_path, dirc)
+            #     except IOError:
+            #         LOGGER.error("コピー失敗:%s" % (mat.sph_path))
 
-        toon = PMCA.getToon(0)
-        for i, x in enumerate(PMCA.getToonPath(0)):
-            toon[i] = toon[i].decode("cp932", "replace")
-            if toon[i] != "":
-                try:
-                    # テクスチャコピー
-                    shutil.copy("toon/" + toon[i], dirc)
-                except IOError:
-                    try:
-                        # テクスチャコピー
-                        shutil.copy("parts/" + toon[i], dirc)
-                    except IOError:
-                        LOGGER.error("コピー失敗:%s" % (toon[i]))
+        # toon = PMCA.getToon(0)
+        # for i, toon in enumerate(pmd.toon.name):
+        #     # toon[i] = toon[i].decode("cp932", "replace")
+        #     if toon != "":
+        #         try:
+        #             # テクスチャコピー
+        #             shutil.copy("toon/" + toon[i], dirc)
+        #         except IOError:
+        #             try:
+        #                 # テクスチャコピー
+        #                 shutil.copy("parts/" + toon[i], dirc)
+        #             except IOError:
+        #                 LOGGER.error("コピー失敗:%s" % (toon[i]))
 
     def cnl_save(self, cnl_file: pathlib.Path | None = None) -> None:
         if not cnl_file:
@@ -98,7 +100,7 @@ class App:
         # self.refresh(level=3)
         self.cnl.save_CNL_File(cnl_file, "name", "name_l", "comment")
 
-    def assemble(self):
+    def assemble(self) -> bytes:
         """
         cnl の変更を MODEL=0 に反映して描画を更新する
         """
@@ -190,6 +192,8 @@ class App:
         # self.cnl.on_refresh()
         for callback in self.on_assemble:
             callback(data0)
+
+        return data0
 
     # static PyObject *getWHT(PyObject *self, PyObject *args) {
     #   int num;

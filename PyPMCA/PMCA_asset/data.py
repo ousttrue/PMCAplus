@@ -128,6 +128,7 @@ LOGGER = logging.getLogger(__name__)
 #   }
 # }
 
+
 class LIST(NamedTuple):
     b: tuple[list[bytes], list[bytes]]
     s: tuple[list[bytes], list[bytes]]
@@ -179,10 +180,12 @@ class PMCAData:
         self.mats_list: list[MATS] = []
         self.parts_list: list[PARTS] = []
         self.transform_list: list[MODEL_TRANS_DATA] = []
+        self.list: LIST | None = None
+        self.asset_dir = pathlib.Path()
 
-    def load_asset(self, dir: pathlib.Path) -> LIST | None:
+    def load_asset(self, dir: pathlib.Path) -> None:
         LOGGER.info("PMCADATA: %s", dir.relative_to(pathlib.Path(".").absolute()))
-        list: LIST | None = None
+        self.asset_dir = dir
         for x in dir.iterdir():
             if not x.is_file():
                 continue
@@ -192,7 +195,7 @@ class PMCAData:
             src = x.read_text(encoding="utf-8-sig")
             if x.name == "list.txt":
                 LOGGER.info("list.txt")
-                list = LIST.load_list(src)
+                self.list = LIST.load_list(src)
                 continue
 
             lines = src.splitlines()
@@ -212,4 +215,3 @@ class PMCAData:
                 continue
 
             LOGGER.warn("skip: %s", x.relative_to(dir))
-        return list

@@ -23,13 +23,18 @@ class InfoTab(QtWidgets.QWidget):
 
 class FileFilter(NamedTuple):
     label: str
-    ext: str  # ".cnl"
+    exts: list[str]  # ["cnl", "pmd"]
+
+    def to_filter(self) -> str:
+        exts = " ".join(f"*.{ext}" for ext in self.exts)
+        return f"{self.label} ({exts})"
 
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, title: str, app: App):
         super().__init__()
         self.app = app
+        self.dialog_dir = self.app.data.asset_dir
 
         self.setWindowTitle(title)
         self.resize(1280, 768)
@@ -80,21 +85,21 @@ class MainWindow(QtWidgets.QMainWindow):
         self.menu_file.addAction(  # type: ignore
             "読み込み(load cnl)",
             self._make_open_file_dialog(
-                self.app.cnl_load, FileFilter("キャラクタノードリスト", ".cnl")
+                self.app.cnl_load, FileFilter("キャラクタノードリスト", ["cnl"])
             ),
         )
         self.menu_file.addSeparator()
         self.menu_file.addAction(  # type: ignore
             "保存(save cnl)",
             self._make_save_file_dialog(
-                self.app.cnl_save, FileFilter("キャラクタノードリスト", ".cnl")
+                self.app.cnl_save, FileFilter("キャラクタノードリスト", ["cnl"])
             ),
         )
 
         self.menu_file.addAction(  # type: ignore
             "モデル保存(save pmd)",
             self._make_save_file_dialog(
-                self.app.pmd_save, FileFilter("Plygon Model Deta(for MMD)", ".pmd")
+                self.app.pmd_save, FileFilter("Plygon Model Deta", ["pmd"])
             ),
         )
         self.menu_file.addSeparator()
@@ -140,17 +145,37 @@ class MainWindow(QtWidgets.QMainWindow):
         self, callback: Callable[[pathlib.Path], None], *filters: FileFilter
     ) -> Callable[[], None]:
         def func() -> None:
-            raise NotImplementedError()
-            pass
+            name, ok = QtWidgets.QFileDialog.getOpenFileName(
+                self,
+                "Open",
+                str(self.dialog_dir),
+                ";;".join(
+                    f.to_filter() for f in (list(filters) + [FileFilter("All", ["*"])])
+                ),
+            )
+            if ok:
+                path = pathlib.Path(name)
+                self.dialog_dir = path.parent
+                callback(path)
 
         return func
 
     def _make_save_file_dialog(
-        self, callbck: Callable[[pathlib.Path], None], *filters: FileFilter
+        self, callback: Callable[[pathlib.Path], None], *filters: FileFilter
     ) -> Callable[[], None]:
         def func() -> None:
-            raise NotImplementedError()
-            pass
+            name, ok = QtWidgets.QFileDialog.getSaveFileName(
+                self,
+                "Save",
+                str(self.dialog_dir),
+                ";;".join(
+                    f.to_filter() for f in (list(filters) + [FileFilter("All", ["*"])])
+                ),
+            )
+            if ok:
+                path = pathlib.Path(name)
+                self.dialog_dir = path.parent
+                callback(path)
 
         return func
 
