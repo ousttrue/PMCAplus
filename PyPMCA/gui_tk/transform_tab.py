@@ -14,7 +14,7 @@ class SpinBoxAndSlider(tkinter.Frame):
     def __init__(
         self,
         parent: tkinter.Toplevel,
-        change_var: Callable[[PMCA_asset.MODEL_TRANS_DATA, float], None],
+        app: App,
         selected: PMCA_asset.MODEL_TRANS_DATA,
         transform_data: PMCA_asset.MODEL_TRANS_DATA,
     ):
@@ -29,7 +29,7 @@ class SpinBoxAndSlider(tkinter.Frame):
         def change_spinbox() -> None:
             val = float(self.string_var.get())
             self.var.set(val)
-            change_var(transform_data, val)
+            app.preview_transform(selected, transform_data, val)
 
         self.spinbox = tkinter.Spinbox(
             self,
@@ -52,7 +52,7 @@ class SpinBoxAndSlider(tkinter.Frame):
 
             self.string_var.set("%.3f" % val)
             self.var.set(val)
-            change_var(transform_data, val)
+            app.preview_transform(selected, transform_data, val)
 
         self.spinbox.bind("<Return>", enter_spinbox)  # type: ignore
 
@@ -62,7 +62,7 @@ class SpinBoxAndSlider(tkinter.Frame):
         def change_scale(event: str) -> None:
             val = float(self.var.get())
             self.string_var.set("%.3f" % val)
-            change_var(transform_data, val)
+            app.preview_transform(selected, transform_data, val)
 
         tkinter.Scale(
             self,
@@ -81,10 +81,8 @@ class SCALE_DIALOG_FANC(tkinter.Toplevel):
     def __init__(
         self,
         master: tkinter.Tk,
+        app: App,
         selected: PMCA_asset.MODEL_TRANS_DATA,
-        on_ok: Callable[[PMCA_asset.MODEL_TRANS_DATA], None],
-        on_cancel: Callable[[], None],
-        change_var: Callable[[PMCA_asset.MODEL_TRANS_DATA, float], None],
     ):
         super().__init__()
         self.title(selected.name)
@@ -99,7 +97,7 @@ class SCALE_DIALOG_FANC(tkinter.Toplevel):
         self.transient(master)
 
         # spinbox & slider
-        self.frame1 = SpinBoxAndSlider(self, change_var, selected, transform_data)
+        self.frame1 = SpinBoxAndSlider(self, app, selected, transform_data)
 
         # buttons
         self.frame2 = tkinter.Frame(self)
@@ -112,14 +110,14 @@ class SCALE_DIALOG_FANC(tkinter.Toplevel):
         ).grid(row=0, padx=10, pady=5)
 
         def OK():
-            on_ok(transform_data)
+            app.apply_transform(transform_data)
             self.winfo_toplevel().destroy()
             self.quit()
 
         tkinter.Button(self.frame2, text="OK", command=OK).pack(side="right", padx=5)
 
         def CANCEL():
-            on_cancel()
+            app.assemble()
             self.winfo_toplevel().destroy()
             self.quit()
 
@@ -144,9 +142,7 @@ class InfoFrame(tkinter.ttk.LabelFrame):
 class TransformTab(tkinter.ttk.Frame):
     def __init__(self, root: tkinter.Tk, app: App) -> None:
         super().__init__(root)
-        self.root = root
         self.text = "Transform"
-        self.app = app
 
         # left
         self.tfgroup_frame = tkinter.ttk.LabelFrame(self, text="Groups")
@@ -154,74 +150,19 @@ class TransformTab(tkinter.ttk.Frame):
         self.tfgroup_frame.pack(
             padx=3, pady=3, side=tkinter.LEFT, fill=tkinter.BOTH, expand=1
         )
-        self.tfgroup.bind("<ButtonRelease-1>", self.tf_click)  # type: ignore
-        self.tfgroup.set_entry([x.name for x in self.app.data.transform_list])
+
+        def tf_click(_: tkinter.Event) -> None:  # type: ignore
+            sel = int(self.tfgroup.curselection()[0])  # type: ignore
+
+            selected = app.data.transform_list[sel]
+
+            SCALE_DIALOG_FANC(root, app, selected)
+
+        self.tfgroup.bind("<ButtonRelease-1>", tf_click)  # type: ignore
+        self.tfgroup.set_entry([x.name for x in app.data.transform_list])
 
         # right
         self.info_frame = InfoFrame(self)
         self.info_frame.pack(
             padx=3, pady=3, side=tkinter.LEFT, fill=tkinter.BOTH, expand=1
         )
-
-    def tf_click(self, _: tkinter.Event) -> None:  # type: ignore
-        sel = int(self.tfgroup.curselection()[0])  # type: ignore
-
-        selected = self.app.data.transform_list[sel]
-
-        def on_ok(transform_data: PMCA_asset.MODEL_TRANS_DATA):
-            # update target
-            target = self.app.cnl.transform_data_list[0]
-            target.scale *= transform_data.scale
-            for x in transform_data.bones:
-                tmp = None
-                for y in target.bones:
-                    if y.name == x.name:
-                        tmp = y
-                        break
-                else:
-                    tmp = PMCA_asset.BONE_TRANS_DATA(name=x.name)
-                    target.bones.append(tmp)
-                tmp.length = tmp.length * x.length
-                tmp.thick = tmp.thick * x.thick
-                for i, y in enumerate(tmp.pos):
-                    y += x.pos[i]
-                for i, y in enumerate(tmp.rot):
-                    y += x.rot[i]
-            self.app.assemble()
-
-        def on_cancel():
-            self.app.assemble()
-
-        def change_var(transform_data: PMCA_asset.MODEL_TRANS_DATA, var: float):
-            weight = selected.scale
-            transform_data.scale = weight * var + 1 - weight
-
-            weight = selected.pos
-            transform_data.pos = (
-                weight[0] * var,
-                weight[1] * var,
-                weight[2] * var,
-            )
-
-            weight = selected.rot
-            transform_data.rot = (
-                weight[0] * var,
-                weight[1] * var,
-                weight[2] * var,
-            )
-
-            def scale(
-                v: tuple[float, float, float], var: float
-            ) -> tuple[float, float, float]:
-                x, y, z = v
-                return (x * var, y * var, z * var)
-
-            for i, bone in enumerate(selected.bones):
-                transform_data.bones[i].length = bone.length * var + 1 - bone.length
-                transform_data.bones[i].thick = bone.thick * var + 1 - bone.thick
-                transform_data.bones[i].pos = scale(bone.pos, var)
-                transform_data.bones[i].rot = scale(bone.rot, var)
-
-            self.app.assemble(transform_data)
-
-        SCALE_DIALOG_FANC(self.root, selected, on_ok, on_cancel, change_var)

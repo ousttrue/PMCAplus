@@ -232,6 +232,64 @@ class App:
     #   return Py_BuildValue("(fff)", wht[0], wht[1], wht[2]);
     # }
 
+    def apply_transform(self, transform_data: PMCA_asset.MODEL_TRANS_DATA) -> None:
+        # update target
+        target = self.cnl.transform_data_list[0]
+        target.scale *= transform_data.scale
+        for x in transform_data.bones:
+            tmp = None
+            for y in target.bones:
+                if y.name == x.name:
+                    tmp = y
+                    break
+            else:
+                tmp = PMCA_asset.BONE_TRANS_DATA(name=x.name)
+                target.bones.append(tmp)
+            tmp.length = tmp.length * x.length
+            tmp.thick = tmp.thick * x.thick
+            for i, y in enumerate(tmp.pos):
+                y += x.pos[i]
+            for i, y in enumerate(tmp.rot):
+                y += x.rot[i]
+        self.assemble()
+
+    def preview_transform(
+        self,
+        selected: PMCA_asset.MODEL_TRANS_DATA,
+        transform_data: PMCA_asset.MODEL_TRANS_DATA,
+        var: float,
+    ):
+        weight = selected.scale
+        transform_data.scale = weight * var + 1 - weight
+
+        weight = selected.pos
+        transform_data.pos = (
+            weight[0] * var,
+            weight[1] * var,
+            weight[2] * var,
+        )
+
+        weight = selected.rot
+        transform_data.rot = (
+            weight[0] * var,
+            weight[1] * var,
+            weight[2] * var,
+        )
+
+        def scale(
+            v: tuple[float, float, float], var: float
+        ) -> tuple[float, float, float]:
+            x, y, z = v
+            return (x * var, y * var, z * var)
+
+        for i, bone in enumerate(selected.bones):
+            transform_data.bones[i].length = bone.length * var + 1 - bone.length
+            transform_data.bones[i].thick = bone.thick * var + 1 - bone.thick
+            transform_data.bones[i].pos = scale(bone.pos, var)
+            transform_data.bones[i].rot = scale(bone.rot, var)
+
+        self.assemble(transform_data)
+
     def batch_assemble(self, cnl_files: list[pathlib.Path]) -> None:
         # backup
         backup = pathlib.Path("./last.cnl")
