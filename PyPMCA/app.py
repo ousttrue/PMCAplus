@@ -100,7 +100,9 @@ class App:
         # self.refresh(level=3)
         self.cnl.save_CNL_File(cnl_file, "name", "name_l", "comment")
 
-    def assemble(self) -> bytes:
+    def assemble(
+        self, tmp_transform_data: PMCA_asset.MODEL_TRANS_DATA | None = None
+    ) -> bytes:
         """
         cnl の変更を MODEL=0 に反映して描画を更新する
         """
@@ -139,21 +141,30 @@ class App:
         assert ref
 
         LOGGER.info("体型調整")
-        for transform_data in self.cnl.transform_data_list:
-            data0 = resize.Resize_Model(data0, transform_data.scale)
+
+        def transform(
+            data: bytes, transform_data: PMCA_asset.MODEL_TRANS_DATA
+        ) -> bytes:
+            data = resize.Resize_Model(data, transform_data.scale)
             for transform_bone in transform_data.bones:
-                data0 = resize.Resize_Bone(
-                    data0,
+                data = resize.Resize_Bone(
+                    data,
                     transform_bone.name,
                     transform_bone.length,
                     transform_bone.thick,
                 )
-                assert data0
+                assert data
                 data0 = resize.Move_Bone(
-                    data0,
+                    data,
                     transform_bone.name,
                     pmd_type.Float3(*transform_bone.pos),
                 )
+            return data
+
+        for transform_data in self.cnl.transform_data_list:
+            data0 = transform(data0, transform_data)
+        if tmp_transform_data:
+            data0 = transform(data0, tmp_transform_data)
         pmd0 = pmd_type.parse(data0)
         assert pmd0
 
