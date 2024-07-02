@@ -32,7 +32,7 @@ class App:
 
     def cnl_reload(self):
         if not self.default_cnl_file.exists():
-            cnl = pkgutil.get_data("PyPMCA.PMCA_cnl", f"default.cnl")
+            cnl = pkgutil.get_data("PyPMCA.PMCA_cnl", "default.cnl")
             assert cnl
             self.default_cnl_file.write_bytes(cnl)
 
@@ -252,43 +252,6 @@ class App:
             for i, y in enumerate(tmp.rot):
                 y += x.rot[i]
         self.assemble()
-
-    def preview_transform(
-        self,
-        selected: PMCA_asset.MODEL_TRANS_DATA,
-        transform_data: PMCA_asset.MODEL_TRANS_DATA,
-        var: float,
-    ):
-        weight = selected.scale
-        transform_data.scale = weight * var + 1 - weight
-
-        weight = selected.pos
-        transform_data.pos = (
-            weight[0] * var,
-            weight[1] * var,
-            weight[2] * var,
-        )
-
-        weight = selected.rot
-        transform_data.rot = (
-            weight[0] * var,
-            weight[1] * var,
-            weight[2] * var,
-        )
-
-        def scale(
-            v: tuple[float, float, float], var: float
-        ) -> tuple[float, float, float]:
-            x, y, z = v
-            return (x * var, y * var, z * var)
-
-        for i, bone in enumerate(selected.bones):
-            transform_data.bones[i].length = bone.length * var + 1 - bone.length
-            transform_data.bones[i].thick = bone.thick * var + 1 - bone.thick
-            transform_data.bones[i].pos = scale(bone.pos, var)
-            transform_data.bones[i].rot = scale(bone.rot, var)
-
-        self.assemble(transform_data)
 
     def batch_assemble(self, cnl_files: list[pathlib.Path]) -> None:
         # backup

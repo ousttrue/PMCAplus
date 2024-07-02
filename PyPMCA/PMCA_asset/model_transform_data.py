@@ -68,17 +68,17 @@ class MODEL_TRANS_DATA:
         trans_list: list[MODEL_TRANS_DATA] = []
 
         mode: Literal["MODEL"] | Literal["BONE"] = "MODEL"
-        for l in lines[1:]:
-            l = l.replace("\t", " ").strip("")  # .split(" ", 1)
-            if l == "":
+        for line in lines[1:]:
+            line = line.replace("\t", " ").strip("")  # .split(" ", 1)
+            if line == "":
                 continue
-            if l.startswith("#"):
+            if line.startswith("#"):
                 continue
-            if l == "NEXT":
+            if line == "NEXT":
                 mode = "MODEL"
                 continue
 
-            k, v = [x.strip() for x in l.split(maxsplit=1)]
+            k, v = [x.strip() for x in line.split(maxsplit=1)]
             if k == "[ENTRY]":
                 trans_list[-1].bones.append(BONE_TRANS_DATA(v))
                 mode = "BONE"
@@ -127,3 +127,34 @@ class MODEL_TRANS_DATA:
                             raise RuntimeError()
 
         return trans_list
+
+    def apply(
+        self,
+        selected: "MODEL_TRANS_DATA",
+        var: float,
+    ):
+        self.scale = selected.scale * var + 1 - selected.scale
+
+        self.pos = (
+            selected.pos[0] * var,
+            selected.pos[1] * var,
+            selected.pos[2] * var,
+        )
+
+        self.rot = (
+            selected.rot[0] * var,
+            selected.rot[1] * var,
+            selected.rot[2] * var,
+        )
+
+        def scale(
+            v: tuple[float, float, float], var: float
+        ) -> tuple[float, float, float]:
+            x, y, z = v
+            return (x * var, y * var, z * var)
+
+        for i, bone in enumerate(selected.bones):
+            self.bones[i].length = bone.length * var + 1 - bone.length
+            self.bones[i].thick = bone.thick * var + 1 - bone.thick
+            self.bones[i].pos = scale(bone.pos, var)
+            self.bones[i].rot = scale(bone.rot, var)

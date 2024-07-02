@@ -3,8 +3,7 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "C90"]
-ignore = ["E203"]
+ignore = ["E203", "I001", "C901"]
 
 [tool.ruff.pylint]
 max-args = 10
-

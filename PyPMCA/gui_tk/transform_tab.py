@@ -1,4 +1,3 @@
-from typing import Callable
 import logging
 import tkinter
 import tkinter.ttk
@@ -29,7 +28,8 @@ class SpinBoxAndSlider(tkinter.Frame):
         def change_spinbox() -> None:
             val = float(self.string_var.get())
             self.var.set(val)
-            app.preview_transform(selected, transform_data, val)
+            transform_data.apply(selected, val)
+            app.assemble(transform_data)
 
         self.spinbox = tkinter.Spinbox(
             self,
@@ -43,7 +43,7 @@ class SpinBoxAndSlider(tkinter.Frame):
         )
         self.spinbox.pack(side="right", padx=5)
 
-        def enter_spinbox(event: tkinter.Event) -> None:  # type: ignore
+        def enter_spinbox(_: tkinter.Event) -> None:  # type: ignore
             try:
                 val = float(self.string_var.get())
             except Exception:
@@ -52,17 +52,19 @@ class SpinBoxAndSlider(tkinter.Frame):
 
             self.string_var.set("%.3f" % val)
             self.var.set(val)
-            app.preview_transform(selected, transform_data, val)
+            transform_data.apply(selected, val)
+            app.assemble(transform_data)
 
         self.spinbox.bind("<Return>", enter_spinbox)  # type: ignore
 
         self.var = tkinter.DoubleVar()
         self.var.set(selected.scale_default)
 
-        def change_scale(event: str) -> None:
+        def change_scale(_: str) -> None:
             val = float(self.var.get())
             self.string_var.set("%.3f" % val)
-            app.preview_transform(selected, transform_data, val)
+            transform_data.apply(selected, val)
+            app.assemble(transform_data)
 
         tkinter.Scale(
             self,
