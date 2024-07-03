@@ -1,4 +1,4 @@
-from typing import NamedTuple, Callable
+from typing import NamedTuple
 import logging
 import pathlib
 
@@ -136,7 +136,6 @@ class LIST(NamedTuple):
 
     @staticmethod
     def load_list(data: str) -> "LIST":
-
         bone: tuple[list[bytes], list[bytes]] = [], []
         skin: tuple[list[bytes], list[bytes]] = [], []
         group: tuple[list[bytes], list[bytes]] = [], []
@@ -155,7 +154,6 @@ class LIST(NamedTuple):
                 case "end":
                     break
                 case _:
-
                     match current:
                         case "bone":
                             tmp = line.split(" ")

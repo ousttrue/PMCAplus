@@ -154,7 +154,7 @@ class App:
                     transform_bone.thick,
                 )
                 assert data
-                data0 = resize.Move_Bone(
+                data = resize.Move_Bone(
                     data,
                     transform_bone.name,
                     pmd_type.Float3(*transform_bone.pos),

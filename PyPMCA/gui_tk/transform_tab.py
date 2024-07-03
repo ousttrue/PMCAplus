@@ -15,7 +15,6 @@ class SpinBoxAndSlider(tkinter.Frame):
         parent: tkinter.Toplevel,
         app: App,
         selected: PMCA_asset.MODEL_TRANS_DATA,
-        transform_data: PMCA_asset.MODEL_TRANS_DATA,
     ):
         super().__init__(parent)
 
@@ -28,8 +27,7 @@ class SpinBoxAndSlider(tkinter.Frame):
         def change_spinbox() -> None:
             val = float(self.string_var.get())
             self.var.set(val)
-            transform_data.apply(selected, val)
-            app.assemble(transform_data)
+            app.assemble(selected.make_scaled(val))
 
         self.spinbox = tkinter.Spinbox(
             self,
@@ -52,8 +50,7 @@ class SpinBoxAndSlider(tkinter.Frame):
 
             self.string_var.set("%.3f" % val)
             self.var.set(val)
-            transform_data.apply(selected, val)
-            app.assemble(transform_data)
+            app.assemble(selected.make_scaled(val))
 
         self.spinbox.bind("<Return>", enter_spinbox)  # type: ignore
 
@@ -63,8 +60,7 @@ class SpinBoxAndSlider(tkinter.Frame):
         def change_scale(_: str) -> None:
             val = float(self.var.get())
             self.string_var.set("%.3f" % val)
-            transform_data.apply(selected, val)
-            app.assemble(transform_data)
+            app.assemble(selected.make_scaled(val))
 
         tkinter.Scale(
             self,
@@ -88,18 +84,11 @@ class SCALE_DIALOG_FANC(tkinter.Toplevel):
     ):
         super().__init__()
         self.title(selected.name)
-        transform_data = PMCA_asset.MODEL_TRANS_DATA(
-            name=selected.name,
-            scale=1.0,
-            bones=[PMCA_asset.BONE_TRANS_DATA(name=x.name) for x in selected.bones],
-            pos=(0.0, 0.0, 0.0),
-            rot=(0.0, 0.0, 0.0),
-        )
 
         self.transient(master)
 
         # spinbox & slider
-        self.frame1 = SpinBoxAndSlider(self, app, selected, transform_data)
+        self.frame1 = SpinBoxAndSlider(self, app, selected)
 
         # buttons
         self.frame2 = tkinter.Frame(self)
@@ -112,7 +101,7 @@ class SCALE_DIALOG_FANC(tkinter.Toplevel):
         ).grid(row=0, padx=10, pady=5)
 
         def OK():
-            app.apply_transform(transform_data)
+            app.apply_transform(selected.make_scaled(self.frame1.var.get()))
             self.winfo_toplevel().destroy()
             self.quit()
 

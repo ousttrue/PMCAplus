@@ -17,14 +17,15 @@ class BONE_TRANS_DATA:
 @dataclasses.dataclass
 class MODEL_TRANS_DATA:
     name: str
-    pos: tuple[float, float, float] = (0.0, 0.0, 0.0)
-    rot: tuple[float, float, float] = (0.0, 0.0, 0.0)
-    bones: list[BONE_TRANS_DATA] = dataclasses.field(default_factory=list)
     scale_min: float = 0.0
     scale_max: float = 2.0
     scale_default: float = 1.0
-    scale: float = 1.0
     props: dict[str, str] = dataclasses.field(default_factory=dict)
+
+    scale: float = 1.0
+    pos: tuple[float, float, float] = (0.0, 0.0, 0.0)
+    rot: tuple[float, float, float] = (0.0, 0.0, 0.0)
+    bones: list[BONE_TRANS_DATA] = dataclasses.field(default_factory=list)
 
     def list_to_text(self) -> list[str]:
         lines: list[str] = []
@@ -128,23 +129,22 @@ class MODEL_TRANS_DATA:
 
         return trans_list
 
-    def apply(
+    def make_scaled(
         self,
-        selected: "MODEL_TRANS_DATA",
         var: float,
-    ):
-        self.scale = selected.scale * var + 1 - selected.scale
+    ) -> "MODEL_TRANS_DATA":
+        new_scale = self.scale * var + 1 - self.scale
 
-        self.pos = (
-            selected.pos[0] * var,
-            selected.pos[1] * var,
-            selected.pos[2] * var,
+        new_pos = (
+            self.pos[0] * var,
+            self.pos[1] * var,
+            self.pos[2] * var,
         )
 
-        self.rot = (
-            selected.rot[0] * var,
-            selected.rot[1] * var,
-            selected.rot[2] * var,
+        new_rot = (
+            self.rot[0] * var,
+            self.rot[1] * var,
+            self.rot[2] * var,
         )
 
         def scale(
@@ -153,8 +153,21 @@ class MODEL_TRANS_DATA:
             x, y, z = v
             return (x * var, y * var, z * var)
 
-        for i, bone in enumerate(selected.bones):
-            self.bones[i].length = bone.length * var + 1 - bone.length
-            self.bones[i].thick = bone.thick * var + 1 - bone.thick
-            self.bones[i].pos = scale(bone.pos, var)
-            self.bones[i].rot = scale(bone.rot, var)
+        new_bones = [
+            BONE_TRANS_DATA(
+                bone.name,
+                bone.length * var + 1 - bone.length,
+                bone.thick * var + 1 - bone.thick,
+                scale(bone.pos, var),
+                scale(bone.rot, var),
+            )
+            for bone in self.bones
+        ]
+
+        return MODEL_TRANS_DATA(
+            self.name,
+            scale=new_scale,
+            pos=new_pos,
+            rot=new_rot,
+            bones=new_bones,
+        )
