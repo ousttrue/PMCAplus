@@ -97,7 +97,9 @@ class ModelTab(QtWidgets.QWidget):
         assert item.parent
 
         parts = [
-            parts for parts in self.app.data.parts_list if item.parent.joint in parts.type
+            parts
+            for parts in self.app.data.parts_list
+            if item.parent.joint in parts.type
         ]
         list_model = GenericListModel(
             parts, [f"[{item.parent.joint}] parts"], lambda item, col: item.name

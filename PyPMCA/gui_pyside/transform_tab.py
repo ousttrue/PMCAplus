@@ -15,11 +15,20 @@ class ListAndSlider(QtWidgets.QWidget):
         self.app = app
         vbox = QtWidgets.QVBoxLayout()
 
+        # top
         self.list = QtWidgets.QTreeView()
         vbox.addWidget(self.list, stretch=1)
 
-        self.slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
+        # mid
+        hbox = QtWidgets.QHBoxLayout()
+        self.label = QtWidgets.QLabel("min ~ max")
+        hbox.addWidget(self.label)
+        # self.spinbox = QtWidgets.QSpinBox()
+        # hbox.addWidget(self.spinbox)
+        vbox.addLayout(hbox)
 
+        # bottom
+        self.slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
         self.slider.setMinimum(-100)
         self.slider.setMaximum(+100)
         self.slider.setTickInterval(2)
@@ -28,10 +37,24 @@ class ListAndSlider(QtWidgets.QWidget):
         vbox.addWidget(self.slider)
 
         self.setLayout(vbox)
-        self.item: PMCA_asset.MODEL_TRANS_DATA | None = None
+
+        self.item = self.app.data.transform_list[0]
 
     def set_data(self, data: PMCA_asset.MODEL_TRANS_DATA):
         self.item = data
+
+        self.label.setText(f"{data.scale_min} ~ {data.scale_max}")
+
+        # def int_from_float(data: PMCA_asset.MODEL_TRANS_DATA) -> int:
+        #     return (
+        #         200
+        #         * int(
+        #             (data.scale_default - data.scale_min)
+        #             / (data.scale_max - data.scale_min)
+        #         )
+        #         - 100
+        #     )
+        # self.spinbox.setValue(int_from_float(data))
 
         def get_col(item: PMCA_asset.BONE_TRANS_DATA, col: int) -> str:
             match col:
@@ -85,6 +108,12 @@ class TransformTab(QtWidgets.QSplitter):
         # right
         self.right = ListAndSlider(app)
         self.addWidget(self.right)
+
+        # select
+        self.tree.selectionModel().setCurrentIndex(
+            left_model.createIndex(0, 0, app.data.transform_list[0]),
+            QtCore.QItemSelectionModel.SelectionFlag.ClearAndSelect,
+        )
 
     def on_selected(
         self, selected: QtCore.QItemSelection, _: QtCore.QItemSelection
