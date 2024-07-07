@@ -191,9 +191,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def closeEvent(self, _) -> None:  # type: ignore
         self.scene.shutdown()
 
-    def update_scene(self, data: bytes):
-        pmd = pmd_type.parse(data)
-        assert pmd
+    def update_scene(self, pmd: pmd_type.PMD):
         self.scene.set_model(pmd, pathlib.Path("parts"))
         self.color_tab.update_list()
         self.glwidget.repaint()

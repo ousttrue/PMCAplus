@@ -27,7 +27,7 @@ class App:
         self.cnl = PMCA_cnl.CnlInfo()
         self.default_cnl_file = cnl_file
 
-        self.on_assemble: list[Callable[[bytes], None]] = []
+        self.on_assemble: list[Callable[[pmd_type.PMD], None]] = []
         self.cnl_reload()
 
     def cnl_reload(self):
@@ -176,8 +176,11 @@ class App:
         data0 = resize.Update_Skin(data0)
         data0 = resize.Adjust_Joints(data0)
 
+        pmd = pmd_type.parse(data0)
+        assert pmd
+
         for callback in self.on_assemble:
-            callback(data0)
+            callback(pmd)
 
         return data0
 
