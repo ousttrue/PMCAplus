@@ -199,22 +199,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.glwidget.repaint()
 
 
-class Gui:
-    def __init__(self, title: str, app: App):
-        self.gui = QtWidgets.QApplication(sys.argv)
-        self.window = MainWindow(title, app)
-        self.window.show()
-
-    def mainloop(self):
-        self.gui.exec()
-
-
-def MainFrame(title: str, app: App) -> Gui:
-    return Gui(title, app)
-
-
-def run(name: str, app: App) -> None:
-    window = MainFrame(name, app)
-    app.on_assemble.append(window.window.update_scene)
+def run(title: str, app: App) -> None:
+    gui = QtWidgets.QApplication(sys.argv)
+    window = MainWindow(title, app)
+    app.on_assemble.append(window.update_scene)
     app.assemble()
-    window.mainloop()
+    window.show()
+    gui.exec()

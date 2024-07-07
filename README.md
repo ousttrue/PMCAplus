@@ -1,69 +1,16 @@
-﻿# PMD Mob Character Assembler v0.0.6 windows版
+﻿# PMCA改
 
-```
-制作者		:mato.sus304(mato.sus304@gmail.com)
-開発環境		:Fedora17 + GCC3.4.5
-動作確認		:WindowsXP + MMDv7.39dot
-ライセンス
-	PMCA				:PD
-	SDLとその補助ライブラリ		:GNU LGPL (http://www.gnu.org/copyleft/lesser.html)
-	Python				:PSF LICENSE VERSION 2
-```
-
-PMD組み立てツールです。
-登録されたパーツを組み立ててモデルデータを作成することができます。
-
-# 改造
+## 改造
 
 - [x] ~~meson でビルドできるように修正 Python-3.12(64bit)~~
 - [x] 動作
 - [x] ~~SDL_image => stb_image~~
 - [x] ~~SDL => glfw~~
 - [x] tkinter => pyside6
-- [ ] c のコードを python に移動 WIP
+- [x] c のコードを python に移動
+- [ ] 遅くなったので最適化
 
-# 内容物
-
-- PMCAプログラム PMD Mob Character Assembler のメイン部分
-- PMCAパーツ 自由に利用可能なパーツ
-- Python3.2 Pythonのランタイムプログラム
-- SDLとその補助ライブラリ SDL.dll, SDL_image.dll, jpeg.dll, libpng12-0.dll, libtiff-3.dll, zlib1.dll
-- converter/converter.py PMCAv0.0.5のパーツ設定ファイルをPMCAv0.0.6用に変換するプログラム
-- 他
-
-# インストールについて
-
-動作にあたって、SDLのインストールが必要です。
-
-# 使い方
-
-Windows版:run.batをダブルクリックし、実行してください。
-
-Linux版:run.shをクリックし、実行してください。
-
-# PMCAv0.0.5用パーツとの互換性
-
-パーツPMDについては互換性があり、そのまま利用することができます。
-設定ファイルの互換性はありませんが、旧来の設定ファイルを自動的に変換するようになっています。
-ただし、現時点ではlist.txtだけは変換されませんのでご注意ください。
-list.txtは文字コードが違うだけ（SJIS→UTF8）なので、テキストエディタなどで変換することもできます。
-
-# 免責
-
-このプログラムの制作者は、このプログラムの使用によって発生したいかなる損害の責任も負いません。
-
-# 謝辞
-
-このプログラムの制作にあたって、以下のサイトを参考にさせていただきました。
-
-```
-	通りすがりの記憶 MMDのモデルデータ(PMD)形式
-	http://blog.goo.ne.jp/torisu_tetosuki/e/209ad341d3ece2b1b4df24abf619d6e4
-```
-
-サイトの制作者に感謝。
-
-# 更新履歴
+## 更新履歴
 
 - 2014 5/11 :v0.0.6r10を公開（パーツ更新、一括組み立て機能追加）
 - 2013 1/26 :v0.0.6r9を公開(メモリ関連バグ取り)
@@ -106,13 +53,3 @@ list.txtは文字コードが違うだけ（SJIS→UTF8）なので、テキス�
 - 2010 10/11 :v0.0.4betaを限定公開
 
 mato.sus304
-
-# おまけ、コンパイルの方法
-
-以下の方法でコンパイル可能かと思います
-
-- MinGWをインストール
-- SDL, SDL_imageの開発環境をインストール
-- sourcesフォルダ内のソースとヘッダとmakefileを...\\PMCAv0.0.6へ移動する
-- cd /d ...\\PMCAv0.0.6 コマンドでディレクトリに入る
-- mingw32-make でコンパイル
