@@ -43,13 +43,6 @@ class App:
         self.cnl.load_CNL_File(cnl_file, self.data)
         self.assemble()
 
-        # pastnode = self.tree_list[0]
-        # self.tree_list[0].node = pmd.NODE(
-        #     parts=pmd.PARTS(name="ROOT", joint=["root"]), depth=-1, child=[None]
-        # )
-        # self.load_CNL_File(name)
-        # self.refresh()
-
     def pmd_save(self, pmd_file: pathlib.Path) -> None:
         LOGGER.info(f"{pmd_file}")
         pmd_file.parent.mkdir(exist_ok=True, parents=True)
@@ -57,8 +50,6 @@ class App:
         data = self.assemble()
         pmd_file.write_bytes(data)
 
-        # dirc = pmd_file.parent
-        # info = PMCA.getInfo(0)
         pmd = pmd_type.parse(data)
         assert pmd
         for mat in pmd.submeshes:
@@ -120,22 +111,8 @@ class App:
             if rep_mat:
                 selected = rep_mat.sel
                 context.apply(x, selected)
-                # PMCA.setMat(
-                #     0,
-                #     i,
-                #     x.diffuse_rgb,
-                #     x.alpha,
-                #     x.specularity,
-                #     x.specular_rgb,
-                #     x.ambient_rgb,
-                #     x.toon_index,
-                #     x.flag,
-                #     x.index_count,
-                #     x.texture_file,
-                # )
 
         data0 = pmd_type.to_bytes(pmd0)
-        # PMCA.Set_PMD(0, data0)
 
         ref = pmd0.find_bone("右足首")
         assert ref
@@ -199,8 +176,6 @@ class App:
         data0 = resize.Update_Skin(data0)
         data0 = resize.Adjust_Joints(data0)
 
-        # w, h, t = PMCA.getWHT(0)
-        # self.cnl.on_refresh()
         for callback in self.on_assemble:
             callback(data0)
 

@@ -1,11 +1,11 @@
 from typing import TypeVar, Type
 import ctypes
-
-T = TypeVar("T")
-
 from .parser import parse
 from .to_bytes import to_bytes
 from .types import Float3, Vertex, Submesh, Bone, MoprhVertex, RigidBody, Joint
+
+
+T = TypeVar("T")
 
 
 def Resize_Model(data: bytes, scale: float) -> bytes:
