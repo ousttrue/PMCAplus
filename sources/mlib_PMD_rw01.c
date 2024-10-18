@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <memory.h>
+#include <string.h>
 
 #include "mPMD.h"
 
@@ -44,7 +45,7 @@ void* dbg_malloc(size_t s){
 
 void dbg_free(void* p){
 	//printf("free:%p\n", p);
-	if(p==NULL)return 0;
+	if(p==NULL)return;
 	free(p);
 	p = NULL;
 	//exit(1);

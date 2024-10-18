@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <memory.h>
+#include <string.h>
 
 //#define DLLExport edit
 #include "mPMD.h"

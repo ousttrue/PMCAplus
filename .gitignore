@@ -3,3 +3,9 @@ __pycache__
 last.cnl
 
 prefix
+
+/Makefile
+zig-out
+zig-cache
+.zig-cache
+.cache

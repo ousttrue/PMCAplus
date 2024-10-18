@@ -5,4 +5,6 @@
         "--clang-tidy",
         "--enable-config",
     ],
+    "C_Cpp.default.compileCommands": "d:\\ghq\\github.com\\ousttrue\\PMCAplus\\builddir/compile_commands.json",
+    "C_Cpp.default.configurationProvider": "mesonbuild.mesonbuild",
 }

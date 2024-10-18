@@ -1,0 +1,13 @@
+.{
+    .name = "PMCA",
+    .version = "0.0.0",
+    .dependencies = .{
+        .sdl = .{
+            .path = "subprojects/SDL-1.2",
+        },
+        .stb = .{
+            .path = "subprojects/stb",
+        },
+    },
+    .paths = .{""},
+}

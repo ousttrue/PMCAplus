@@ -1,5 +1,6 @@
 #include "PMCA_SDLMod.h"
 #include "PMCA.h"
+#include <SDL.h>
 #define PMCA_MODULE
 
 #undef _DEBUG
@@ -684,7 +685,7 @@ static PyObject* setSkin(PyObject *self, PyObject *args)
 	if(model->skin[i].skin_vt_count != skin.skin_vt_count){
 		FREE(model->skin[i].data);
 		
-		model->skin[i].data == NULL;
+		model->skin[i].data = NULL;
 	}
 	if(model->skin[i].data == NULL){
 		skin.data = MALLOC(size);

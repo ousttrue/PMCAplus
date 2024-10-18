@@ -1,10 +1,12 @@
 #include <Windows.h>
 
 #include <GL/GL.h>
+#include <GL/GLU.h>
 
 #include "PMCA.h"
 #include <SDL.h>
-#include "stb_image.h"
+#include <stb_image.h>
+#include <math.h>
 
 #define WM_TITLE "PMCA 3D View"
 
@@ -291,7 +293,7 @@ static void process_events( void )
 			if( SDL_SetVideoMode( vs.width, vs.height, bpp, flags ) == 0 ) {
 				fprintf( stderr, "ビデオモードのセットに失敗しました: %s\n", SDL_GetError( ) );
 				SDL_Quit( );
-				return 1;
+				return;
 			}
 			setup_opengl( vs.width, vs.height );
 			break;
@@ -299,7 +301,7 @@ static void process_events( void )
 			/* 終了要求 (Ctrl-c など) を処理 */
 			myflags.quit = 1;
 			
-			return -1;
+			return;
 		}
 	}
 }

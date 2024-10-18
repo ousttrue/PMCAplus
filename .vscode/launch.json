@@ -17,7 +17,7 @@
             "environment": [
                 {
                     "name": "PYTHONPATH",
-                    "value": "${workspaceFolder}\\prefix\\bin",
+                    "value": "${workspaceFolder}\\zig-out\\bin",
                 }
             ],
             "console": "integratedTerminal"
@@ -28,7 +28,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/PMCA_pymain.py",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}\\prefix\\bin",
+                "PYTHONPATH": "${workspaceFolder}\\zig-out\\bin",
             },
             "console": "integratedTerminal"
         }
