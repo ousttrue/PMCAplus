@@ -4,6 +4,7 @@
 
 #include "PMCA.h"
 #include <SDL.h>
+#include "stb_image.h"
 
 #define WM_TITLE "PMCA 3D View"
 
@@ -392,6 +393,7 @@ int render_model(int num){
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
 			
+			DSP_MAT *mat = &mats[i];
 			glTexImage2D(
 				GL_TEXTURE_2D , 0 , GL_RGBA, mats[i].texsize[0], mats[i].texsize[1],
 				0 , GL_RGBA , GL_UNSIGNED_BYTE , mats[i].texbits
@@ -424,14 +426,9 @@ int render_model(int num){
 
 //テクスチャ読み込み
 int load_tex(MODEL *model, DSP_MODEL *dsp_model)
-{
-	
-	DSP_MAT *mats;
-	
-	char tex_name[128];
-	int i, j, tmp;
-	SDL_Surface *image = NULL;
-	GLubyte *texbits = NULL;
+{	
+	DSP_MAT *mats;	
+	int i, j;
 	/*
 	printf("LockstateA %d\n", myflags.model_lock);
 	while(myflags.model_lock != 0){
@@ -465,68 +462,12 @@ int load_tex(MODEL *model, DSP_MODEL *dsp_model)
 			mats[i].texbits = NULL;
 		}
 		
-		image = IMG_Load(model->mat[i].tex_path);
-		//image = NULL;
-		
-		if(image == NULL){
-			memset(mats[i].texsize, 0, 2*sizeof(int));
-			texbits = NULL;
-			printf("画像が読み込めません %s\n", model->mat[i].tex_path);
-		}else{
-			mats[i].texsize[0] = image->w;
-			mats[i].texsize[1] = image->h;
-			texbits = MALLOC(mats[i].texsize[0] * mats[i].texsize[1] * sizeof(GLubyte) * 4);
-			//printf("\nsize(byte):%d\n", mats[i].texsize[0] * mats[i].texsize[1] * sizeof(GLubyte) * 4);
-			
-			if(texbits == NULL)printf("メモリ確保失敗 %d\n", i);
-		}
+		int w, h, ch;
+		mats[i].texbits = stbi_load(model->mat[i].tex_path, &w, &h, &ch, 4);
 	
-		if(texbits != NULL){
-			char *p;
-			SDL_PixelFormat *fm;
-			p = image->pixels;
-			fm= image->format;
-			int li, lj;
-			int lk=0;
-			SDL_LockSurface(image);
-			Uint8 r,g,b,a;
-			
-			for (li = 0 ; li < mats[i].texsize[1] ; li++) {
-				for (lj = 0 ; lj < mats[i].texsize[0] ; lj++) {
-					
-					r = p[fm->Rshift/8]<<fm->Rloss;
-					g = p[fm->Gshift/8]<<fm->Gloss;
-					b = p[fm->Bshift/8]<<fm->Bloss;
-					a = p[fm->Ashift/8]<<fm->Aloss;
-					//printf("%x%x%x%x ", r, g, b, a);
-				
-					texbits[lk++] = (GLubyte)r;
-					texbits[lk++] = (GLubyte)g;
-					texbits[lk++] = (GLubyte)b;
-					texbits[lk++] = (GLubyte)a;
-					//lk += 4;
-					p  += fm->BytesPerPixel;
-				}
-			}
-		
-			if(fm->Amask == 0){
-				lk = 0;
-				for (li = 0 ; li < (mats[i].texsize[0]*mats[i].texsize[1]) ; li++) {
-					texbits[lk+3] = (GLubyte)255;
-					lk += 4;
-				}
-			}
-			SDL_UnlockSurface(image);
-			//#ifdef DEBUG
-				printf("texture %d\n", i);
-				printf("%s\n", model->mat[i].tex);
-				printf("%d x %d  %d\n", image->w, image->h, image->pitch);
-				printf("BitsPerPixel:%d\n",image->format->BitsPerPixel);
-				printf("BytesPerPixel:%d\n",image->format->BytesPerPixel);
-				printf("Mask:%x %x %x %x\n",image->format->Rmask, image->format->Gmask, image->format->Bmask, image->format->Amask);
-				printf("Shift:%d %d %d %d\n",image->format->Rshift, image->format->Gshift, image->format->Bshift, image->format->Ashift);
-				printf("Loss:%d %d %d %d\n\n",image->format->Rloss, image->format->Gloss, image->format->Bloss, image->format->Aloss);
-			//#endif
+		if(mats[i].texbits != NULL){
+			mats[i].texsize[0] = w;
+			mats[i].texsize[1] = h;
 			{
 				double log_w = log(mats[i].texsize[0])/log(2);
 				double log_h = log(mats[i].texsize[1])/log(2);
@@ -544,21 +485,23 @@ int load_tex(MODEL *model, DSP_MODEL *dsp_model)
 					tmp_bits = MALLOC(h * w * sizeof(GLubyte) * 6);
 					if(tmp_bits == NULL)puts("メモリ確保失敗");
 				
-					tmp = gluScaleImage(GL_RGBA, mats[i].texsize[0], mats[i].texsize[1], GL_UNSIGNED_BYTE, texbits, w, h, GL_UNSIGNED_BYTE, tmp_bits);
+					int tmp = gluScaleImage(GL_RGBA, mats[i].texsize[0], mats[i].texsize[1], GL_UNSIGNED_BYTE, mats[i].texbits, w, h, GL_UNSIGNED_BYTE, tmp_bits);
 					mats[i].texsize[0] = w;
 					mats[i].texsize[1] = h;
 					#ifdef DEBUG
 						printf("log %f x %f\n", log_w, log_h);
 						printf("リサイズ %d x %d  %x %s\n", w, h, tmp,gluErrorString(tmp));
 					#endif
-					FREE(texbits);
-					texbits = tmp_bits;
+					stbi_image_free(mats[i].texbits);
+					mats[i].texbits = tmp_bits;
 				}
 			}
-			
 		}
-		if(image != NULL)SDL_FreeSurface(image);
-		mats[i].texbits = texbits;
+		else{
+			mats[i].texsize[0] = 0;
+			mats[i].texsize[1] = 0;
+			printf("画像が読み込めません %s\n", model->mat[i].tex_path);
+		}
 	}
 	glGenTextures(model->mat_count , dsp_model->texid);
 	
