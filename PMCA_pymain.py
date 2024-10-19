@@ -9,8 +9,7 @@ import PMCA
 import PyPMCA
 import PMCA_dialogs
 import tkinter
-from tkinter.ttk import *
-from tkinter.messagebox import *
+import tkinter.ttk
 
 sys.argv = [""]
 
@@ -36,9 +35,9 @@ class QUIT:
         self.root.quit()
 
 
-class MainFrame(Frame):
+class MainFrame(tkinter.ttk.Frame):
     def __init__(self, master: tkinter.Tk | None = None):
-        Frame.__init__(self, master)
+        super().__init__(master)
         self.root = master
         if self.root:
             self.root.title(softwarename)
@@ -71,24 +70,24 @@ class MainFrame(Frame):
         """
 
         # タブを作成
-        notebook = Notebook(self.root)
+        notebook = tkinter.ttk.Notebook(self.root)
         notebook.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
 
-        self.tab: list[Frame] = []
+        self.tab: list[tkinter.ttk.Frame] = []
         ########################################################################################################
         # Tab0
-        self.tab.append(Frame(self.root))
+        self.tab.append(tkinter.ttk.Frame(self.root))
 
-        self.tab[0].frame = Frame(self.tab[0])
+        self.tab[0].frame = tkinter.ttk.Frame(self.tab[0])
         self.tab[0].text = "Model"
-        self.tab[0].parts_frame = LabelFrame(self.tab[0].frame, text="Model")
+        self.tab[0].parts_frame = tkinter.ttk.LabelFrame(self.tab[0].frame, text="Model")
         self.tab[0].l_tree = LISTBOX(self.tab[0].parts_frame)
         self.tab[0].parts_frame.pack(
             padx=3, pady=3, side=tkinter.LEFT, fill=tkinter.BOTH, expand=1
         )
         self.tab[0].l_tree.listbox.bind("<ButtonRelease-1>", self.tree_click)
 
-        self.tab[0].parts_frame = LabelFrame(self.tab[0].frame, text="Parts")
+        self.tab[0].parts_frame = tkinter.ttk.LabelFrame(self.tab[0].frame, text="Parts")
         self.tab[0].l_sel = LISTBOX(self.tab[0].parts_frame)
         self.tab[0].parts_frame.pack(
             padx=3, pady=3, side=tkinter.LEFT, fill=tkinter.BOTH, expand=1
@@ -101,23 +100,23 @@ class MainFrame(Frame):
 
         self.tab[0].comment = tkinter.StringVar()
         self.tab[0].comment.set("comment:")
-        self.tab[0].text_label = Label(self.tab[0], textvariable=self.tab[0].comment)
+        self.tab[0].text_label = tkinter.ttk.Label(self.tab[0], textvariable=self.tab[0].comment)
         self.tab[0].text_label.pack(padx=3, pady=3, side=tkinter.BOTTOM, fill=tkinter.X)
 
         ########################################################################################################
         # Tab1
 
-        self.tab.append(Frame(self.root))
-        self.tab[1].frame = Frame(self.tab[1])
+        self.tab.append(tkinter.ttk.Frame(self.root))
+        self.tab[1].frame = tkinter.ttk.Frame(self.tab[1])
         self.tab[1].text = "Color"
-        self.tab[1].parts_frame = LabelFrame(self.tab[1].frame, text="Material")
+        self.tab[1].parts_frame = tkinter.ttk.LabelFrame(self.tab[1].frame, text="Material")
         self.tab[1].l_tree = LISTBOX(self.tab[1].parts_frame)
         self.tab[1].parts_frame.pack(
             padx=3, pady=3, side=tkinter.LEFT, fill=tkinter.BOTH, expand=1
         )
         self.tab[1].l_tree.listbox.bind("<ButtonRelease-1>", self.mats_click)
 
-        self.tab[1].parts_frame = LabelFrame(self.tab[1].frame, text="Select")
+        self.tab[1].parts_frame = tkinter.ttk.LabelFrame(self.tab[1].frame, text="Select")
         self.tab[1].l_sel = LISTBOX(self.tab[1].parts_frame)
         self.tab[1].parts_frame.pack(
             padx=3, pady=3, side=tkinter.LEFT, fill=tkinter.BOTH, expand=1
@@ -130,14 +129,14 @@ class MainFrame(Frame):
 
         self.tab[1].comment = tkinter.StringVar()
         self.tab[1].comment.set("comment:")
-        self.tab[1].text_label = Label(self.tab[1], textvariable=self.tab[1].comment)
+        self.tab[1].text_label = tkinter.ttk.Label(self.tab[1], textvariable=self.tab[1].comment)
         self.tab[1].text_label.pack(padx=3, pady=3, side=tkinter.BOTTOM, fill=tkinter.X)
 
         ########################################################################################################
         # Tab2
-        self.tab.append(Frame(self.root))
+        self.tab.append(tkinter.ttk.Frame(self.root))
         self.tab[2].text = "Transform"
-        self.tab[2].tfgroup_frame = LabelFrame(self.tab[2], text="Groups")
+        self.tab[2].tfgroup_frame = tkinter.ttk.LabelFrame(self.tab[2], text="Groups")
         self.tab[2].tfgroup = LISTBOX(self.tab[2].tfgroup_frame)
         # self.tab[2].tfgroup.set_entry(tmp)
         self.tab[2].tfgroup_frame.pack(
@@ -145,10 +144,10 @@ class MainFrame(Frame):
         )
         self.tab[2].tfgroup.listbox.bind("<ButtonRelease-1>", self.tf_click)
 
-        self.tab[2].info_frame = LabelFrame(self.tab[2], text="Info")
+        self.tab[2].info_frame = tkinter.ttk.LabelFrame(self.tab[2], text="Info")
         self.tab[2].info_frame.strvar = tkinter.StringVar()
         self.tab[2].info_frame.strvar.set("x=\ny=\nz=\n")
-        self.tab[2].info_frame.label = Label(
+        self.tab[2].info_frame.label = tkinter.ttk.Label(
             self.tab[2].info_frame, textvariable=self.tab[2].info_frame.strvar
         ).pack(side=tkinter.LEFT, anchor=tkinter.N)
         self.tab[2].info_frame.pack(
@@ -157,12 +156,12 @@ class MainFrame(Frame):
 
         ########################################################################################################
         # Tab3
-        self.tab.append(Frame(self.root))
+        self.tab.append(tkinter.ttk.Frame(self.root))
         self.tab[3].text = "Info"
-        self.tab[3].frame = Frame(self.tab[3])
+        self.tab[3].frame = tkinter.ttk.Frame(self.tab[3])
         self.tab[3].frame.comment = tkinter.Text(self.tab[3].frame, height=10)
         self.tab[3].frame.comment["state"] = "normal"
-        self.tab[3].frame.yscroll = Scrollbar(
+        self.tab[3].frame.yscroll = tkinter.ttk.Scrollbar(
             self.tab[3].frame,
             orient=tkinter.VERTICAL,
             command=self.tab[3].frame.comment.yview,
@@ -175,14 +174,14 @@ class MainFrame(Frame):
 
         self.tab[3].frame.name = tkinter.StringVar()
         self.tab[3].frame.name.set(self.modelinfo.name)
-        self.tab[3].frame.name_entry = Entry(
+        self.tab[3].frame.name_entry = tkinter.ttk.Entry(
             self.tab[3], textvariable=self.tab[3].frame.name
         )
         self.tab[3].frame.name_entry.pack(fill=tkinter.X)
 
         self.tab[3].frame.name_l = tkinter.StringVar()
         self.tab[3].frame.name_l.set(self.modelinfo.name)
-        self.tab[3].frame.name_l_entry = Entry(
+        self.tab[3].frame.name_l_entry = tkinter.ttk.Entry(
             self.tab[3], textvariable=self.tab[3].frame.name_l
         )
         self.tab[3].frame.name_l_entry.pack(fill=tkinter.X)
@@ -196,7 +195,7 @@ class MainFrame(Frame):
 
         self.tab[3].frame.text = tkinter.StringVar()
         self.tab[3].frame.text.set("Author : %s\nLicense : %s" % (str1, str2))
-        self.tab[3].frame.text_label = Label(
+        self.tab[3].frame.text_label = tkinter.ttk.Label(
             self.tab[3], textvariable=self.tab[3].frame.text
         )
         self.tab[3].frame.text_label.pack(fill=tkinter.X)
@@ -207,8 +206,8 @@ class MainFrame(Frame):
         ########################################################################################################
         # Buttons
 
-        self.frame_button = Frame(self.root)
-        self.QUIT = Button(self.frame_button)
+        self.frame_button = tkinter.ttk.Frame(self.root)
+        self.QUIT = tkinter.ttk.Button(self.frame_button)
         self.QUIT["text"] = "QUIT"
         self.QUIT["command"] = QUIT(self.root)
         self.QUIT.pack(side=tkinter.RIGHT)
@@ -1010,6 +1009,7 @@ class MainFrame(Frame):
         if self.tree_list[0].node.child[0] == None:
             return False
 
+        print(f'write {name}')
         lines = []
         lines.append(self.modelinfo.name)
         lines.append(self.modelinfo.name_l)
@@ -1087,7 +1087,7 @@ class LISTBOX:
         self.listbox = tkinter.Listbox(
             master, height=6, exportselection=0, selectmode=tkinter.SINGLE
         )
-        self.listbox.yscroll = Scrollbar(
+        self.listbox.yscroll = tkinter.ttk.Scrollbar(
             master, orient=tkinter.VERTICAL, command=self.listbox.yview
         )
         self.listbox.yscroll.pack(side=tkinter.RIGHT, fill=tkinter.Y, expand=0)
@@ -1232,9 +1232,9 @@ def main():
     app.tab[2].tfgroup.set_entry(tmp)
     try:
         app.load_CNL_File("./last.cnl")
-
     except:
         print("前回のデータの読み込みに失敗しました")
+        app.load_CNL_File("./default.cnl")
 
     PMCA.CretateViewerThread()
 
