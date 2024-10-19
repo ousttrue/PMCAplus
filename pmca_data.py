@@ -14,22 +14,18 @@ class PmcaData:
     def __init__(self):
         PMCA.Init_PMD()
         print("list.txt読み込み")
-        fp = open("list.txt", "r", encoding="utf-8-sig")
-        LIST = PyPMCA.load_list(fp)
+        LIST = PyPMCA.TranslationList.load()
         PMCA.Set_List(
-            len(LIST["b"][0]),
-            LIST["b"][0],
-            LIST["b"][1],
-            len(LIST["s"][0]),
-            LIST["s"][0],
-            LIST["s"][1],
-            len(LIST["g"][0]),
-            LIST["g"][0],
-            LIST["g"][1],
+            len(LIST.b[0]),
+            LIST.b[0],
+            LIST.b[1],
+            len(LIST.s[0]),
+            LIST.s[0],
+            LIST.s[1],
+            len(LIST.g[0]),
+            LIST.g[0],
+            LIST.g[1],
         )
-        fp.close()
-
-        self.update_callbacks: list[Callable[[], None]] = []
 
         self.parts_list = []
         self.mats_list = []  # list of class MATS
@@ -157,8 +153,10 @@ class PmcaData:
         for callback in self.update_callbacks:
             callback()
 
-    ######################################################################################
-    def refresh(self, name: str, name_l: str, comment: str, level: int = 0):
+    def refresh(self, level: int):
+        """
+        level: 0 full buildF
+        """
         # sel_t = int(self.tab[0].l_tree.listbox.curselection()[0])
         self.tree_list = self.tree_list[0].node.create_list()
         self.tree_entry = []
@@ -294,9 +292,9 @@ class PmcaData:
                 str1 += "%s " % (x)
             for x in self.licenses:
                 str2 += "%s " % (x)
-            self.modelinfo.name = name
-            self.modelinfo.name_l = name_l
-            self.modelinfo.comment = comment
+            # self.modelinfo.name = name
+            # self.modelinfo.name_l = name_l
+            # self.modelinfo.comment = comment
             PyPMCA.Set_Name_Comment(
                 name=self.modelinfo.name,
                 comment="%s\nAuthor:%s\nLicense:%s\n%s"
@@ -312,6 +310,12 @@ class PmcaData:
             PMCA.PMD_view_set(0, "replace")
 
         PMCA.MODEL_LOCK(0)
+
+        wht = PMCA.getWHT(0)
+        # app.tab[2].info_str.set(
+        #     "height     = %f\nwidth      = %f\nthickness = %f\n" % (wht[1], wht[0], wht[2])
+        # )
+        # app.tab[3].frame.text.set("Author : %s\nLicense : %s" % (str1, str2))
 
         print("Done")
 
