@@ -86,8 +86,8 @@ class SCALE_DIALOG_FANC:
                 y += x.rot[i]
         self.app.transform_data.remove(self.data)
         self.app.refresh(level=2)
-        for x in self.app.transform_data[0].bones:
-            print(x.name)
+        # for x in self.app.transform_data[0].bones:
+        #     print(x.name)
 
         self.root.winfo_toplevel().destroy()
         self.root.quit()

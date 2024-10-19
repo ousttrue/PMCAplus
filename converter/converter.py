@@ -16,7 +16,7 @@ def main():
 
     tmp = argvs[0].rsplit("/", 1)
     tmp = tmp.rsplit("/", 1)
-    print(tmp)
+    # print(tmp)
 
     curd = tmp[0]
 
@@ -26,11 +26,11 @@ def main():
 
 
 def v1_v2(path, argvs):
-    print(argvs)
+    # print(argvs)
 
     for x in argvs:
         cmd = "%s %s" % (path, x)
-        print(cmd)
+        # print(cmd)
 
         retcode = subprocess.call(cmd, shell=True)
 
@@ -41,7 +41,7 @@ def v1_v2(path, argvs):
         fp = open("%s" % (x), "w", encoding="utf-8")
         fp.write(lines)
         fp.close()
-        print("文字コードをUTF8に変換しました")
+        # print("文字コードをUTF8に変換しました")
 
 
 if __name__ == "__main__":

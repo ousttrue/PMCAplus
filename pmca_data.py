@@ -3,6 +3,10 @@ import os
 import PyPMCA
 import PMCA
 import converter
+import logging
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class SETTINGS:
@@ -13,7 +17,6 @@ class SETTINGS:
 class PmcaData:
     def __init__(self):
         PMCA.Init_PMD()
-        print("list.txt読み込み")
         LIST = PyPMCA.TranslationList.load()
         PMCA.Set_List(
             len(LIST.b[0]),

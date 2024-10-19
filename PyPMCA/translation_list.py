@@ -1,4 +1,8 @@
 import dataclasses
+import logging
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
@@ -12,6 +16,7 @@ class TranslationList:
 
     @staticmethod
     def load(path: str = "list.txt") -> "TranslationList":
+        LOGGER.info(f"Translation.load: {path}")
         with open(path, "r", encoding="utf-8-sig") as fp:
 
             bone: tuple[list[str], list[str]] = ([], [])
@@ -27,7 +32,6 @@ class TranslationList:
                 tmp = line.split(" ")
                 bone[0].append(tmp[0].encode("cp932", "replace"))
                 bone[1].append(tmp[1].encode("cp932", "replace"))
-                print(tmp)
 
             while line:
                 line = fp.readline()[:-1]
@@ -36,7 +40,6 @@ class TranslationList:
                 tmp = line.split(" ")
                 skin[0].append(tmp[0].encode("cp932", "replace"))
                 skin[1].append(tmp[1].encode("cp932", "replace"))
-                print(tmp)
 
             while line:
                 line = fp.readline()[:-1]
@@ -45,6 +48,5 @@ class TranslationList:
                 tmp = line.split(" ")
                 group[0].append(tmp[0].encode("cp932", "replace"))
                 group[1].append(tmp[1].encode("cp932", "replace"))
-                print(tmp)
 
             return TranslationList(bone, skin, group)

@@ -131,7 +131,7 @@ class MainFrame(tkinter.ttk.Frame):
             while count < bone_count:
                 if i >= bone_count:
                     break
-                print(i)
+                # print(i)
                 i = model.bone[i].parent
                 count += 1
             else:
@@ -446,7 +446,7 @@ class MainFrame(tkinter.ttk.Frame):
             toon = PMCA.getToon(0)
             for i, x in enumerate(PMCA.getToonPath(0)):
                 toon[i] = toon[i].decode("cp932", "replace")
-                print(toon[i], x)
+                # print(toon[i], x)
                 if toon[i] != "":
                     try:
                         shutil.copy("toon/" + toon[i], dirc)
@@ -475,7 +475,7 @@ class MainFrame(tkinter.ttk.Frame):
         )
 
         self.save_CNL_File("./last.cnl")
-        print(type(names))
+        # print(type(names))
         if type(names) is str:
             names = names.split(" ")
         for name in names:
