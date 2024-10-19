@@ -12,14 +12,34 @@ class SETTINGS:
 
 class PmcaData:
     def __init__(self):
+        PMCA.Init_PMD()
+        print("list.txt読み込み")
+        fp = open("list.txt", "r", encoding="utf-8-sig")
+        LIST = PyPMCA.load_list(fp)
+        PMCA.Set_List(
+            len(LIST["b"][0]),
+            LIST["b"][0],
+            LIST["b"][1],
+            len(LIST["s"][0]),
+            LIST["s"][0],
+            LIST["s"][1],
+            len(LIST["g"][0]),
+            LIST["g"][0],
+            LIST["g"][1],
+        )
+        fp.close()
+
         self.update_callbacks: list[Callable[[], None]] = []
+
         self.parts_list = []
         self.mats_list = []  # list of class MATS
         self.tree_entry = []
         self.parts_entry_k = []
         self.parts_entry_p = []
         self.mat_rep = None
-        self.transform_data = []
+        self.transform_data: list[PyPMCA.MODEL_TRANS_DATA] = [
+            PyPMCA.MODEL_TRANS_DATA(scale=1.0, bones=[], props={})
+        ]
         self.transform_list = []
         self.licenses: list[str] = []
         self.authors: list[str] = []
@@ -116,6 +136,22 @@ class PmcaData:
 
         print("材質置換設定初期化")
         self.mat_rep = PyPMCA.MAT_REP(app=self)
+
+        try:
+            self.load_CNL_File("./last.cnl")
+        except:
+            print("前回のデータの読み込みに失敗しました")
+            self.load_CNL_File("./default.cnl")
+
+        PMCA.CretateViewerThread()
+
+    def shutdown(self):
+        try:
+            self.save_CNL_File("./last.cnl")
+        except:
+            pass
+
+        PMCA.QuitViewerThread()
 
     def raise_update(self):
         for callback in self.update_callbacks:
@@ -258,9 +294,9 @@ class PmcaData:
                 str1 += "%s " % (x)
             for x in self.licenses:
                 str2 += "%s " % (x)
-            self.modelinfo.name = name 
-            self.modelinfo.name_l = name_l 
-            self.modelinfo.comment = comment 
+            self.modelinfo.name = name
+            self.modelinfo.name_l = name_l
+            self.modelinfo.comment = comment
             PyPMCA.Set_Name_Comment(
                 name=self.modelinfo.name,
                 comment="%s\nAuthor:%s\nLicense:%s\n%s"

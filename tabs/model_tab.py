@@ -16,7 +16,6 @@ class ModelTab(tkinter.ttk.Frame):
     def __init__(self, master: tkinter.Misc, data: pmca_data.PmcaData):
         super().__init__(master=master)
         self.text = "Model"
-        self.tree_list = []
 
         #
         # top

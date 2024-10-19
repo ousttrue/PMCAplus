@@ -5,7 +5,6 @@ import sys
 import os
 import shutil
 import random
-import PMCA
 import PyPMCA
 import PMCA_dialogs
 import tkinter
@@ -20,9 +19,45 @@ TITLE = "PMCA v0.0.6r10"
 commands = {}
 
 
+class MENUBAR:
+    def __init__(self, master: tkinter.Tk, app: "MainFrame"):
+        self.menubar = tkinter.Menu(master)
+        master.configure(menu=self.menubar)
+        files = tkinter.Menu(self.menubar, tearoff=False)
+        editing = tkinter.Menu(self.menubar, tearoff=False)
+        self.menubar.add_cascade(label="ファイル", underline=0, menu=files)
+        self.menubar.add_cascade(label="編集", underline=0, menu=editing)
+        files.add_command(label="新規", under=0, command=app.clear)
+        files.add_command(label="読み込み", under=0, command=app.load_node)
+        files.add_separator
+        files.add_command(label="保存", under=0, command=app.save_node)
+        files.add_command(label="モデル保存", under=0, command=app.dialog_save_PMD)
+        files.add_separator
+        files.add_command(label="一括組立て", under=0, command=app.batch_assemble)
+        files.add_separator
+        files.add_command(
+            label="PMDフォーマットチェック", under=0, command=app.savecheck_PMD
+        )
+        files.add_command(label="PMD概要確認", under=0, command=app.check_PMD)
+        files.add_command(label="PMD詳細確認", under=0, command=app.propcheck_PMD)
+        files.add_separator
+
+        def quit():
+            master.winfo_toplevel().destroy()
+            master.quit()
+
+        files.add_command(label="exit", under=0, command=quit)
+
+        editing.add_command(label="体型調整を初期化", under=0, command=app.init_tf)
+        editing.add_command(label="材質をランダム選択", under=0, command=app.rand_mat)
+        editing.add_command(label="PMCA設定", under=0, command=app.setting_dialog)
+
+
 class MainFrame(tkinter.ttk.Frame):
     def __init__(self, master: tkinter.Tk, data: pmca_data.PmcaData):
         super().__init__(master)
+
+        MENUBAR(master=master, app=self)
         self.data = data
 
         def on_update():
@@ -52,7 +87,7 @@ class MainFrame(tkinter.ttk.Frame):
 
         self.tab.append(tabs.ModelTab(master, data))
         self.tab.append(tabs.MaterialTab(master))
-        self.tab.append(tabs.TransformTab(master))
+        self.tab.append(tabs.TransformTab(master, data))
         self.tab.append(tabs.InfoTab(master, data))
 
         for x in self.tab:
@@ -520,87 +555,19 @@ class MainFrame(tkinter.ttk.Frame):
         root.mainloop()
 
 
-class MENUBAR:
-    def __init__(self, master: tkinter.Tk, app=None):
-        self.menubar = tkinter.Menu(master)
-        master.configure(menu=self.menubar)
-        files = tkinter.Menu(self.menubar, tearoff=False)
-        editing = tkinter.Menu(self.menubar, tearoff=False)
-        self.menubar.add_cascade(label="ファイル", underline=0, menu=files)
-        self.menubar.add_cascade(label="編集", underline=0, menu=editing)
-        files.add_command(label="新規", under=0, command=app.clear)
-        files.add_command(label="読み込み", under=0, command=app.load_node)
-        files.add_separator
-        files.add_command(label="保存", under=0, command=app.save_node)
-        files.add_command(label="モデル保存", under=0, command=app.dialog_save_PMD)
-        files.add_separator
-        files.add_command(label="一括組立て", under=0, command=app.batch_assemble)
-        files.add_separator
-        files.add_command(
-            label="PMDフォーマットチェック", under=0, command=app.savecheck_PMD
-        )
-        files.add_command(label="PMD概要確認", under=0, command=app.check_PMD)
-        files.add_command(label="PMD詳細確認", under=0, command=app.propcheck_PMD)
-        files.add_separator
-
-        def quit():
-            master.winfo_toplevel().destroy()
-            master.quit()
-
-        files.add_command(label="exit", under=0, command=quit)
-
-        editing.add_command(label="体型調整を初期化", under=0, command=app.init_tf)
-        editing.add_command(label="材質をランダム選択", under=0, command=app.rand_mat)
-        editing.add_command(label="PMCA設定", under=0, command=app.setting_dialog)
-
-
 def main():
     data = pmca_data.PmcaData()
-
-    root = tkinter.Tk()
-    app = MainFrame(root, data)
-    menubar = MENUBAR(master=root, app=app)
-
-    PMCA.Init_PMD()
-    print("list.txt読み込み")
-    fp = open("list.txt", "r", encoding="utf-8-sig")
-    LIST = PyPMCA.load_list(fp)
-    PMCA.Set_List(
-        len(LIST["b"][0]),
-        LIST["b"][0],
-        LIST["b"][1],
-        len(LIST["s"][0]),
-        LIST["s"][0],
-        LIST["s"][1],
-        len(LIST["g"][0]),
-        LIST["g"][0],
-        LIST["g"][1],
-    )
-    fp.close()
-
-    data.transform_data = [PyPMCA.MODEL_TRANS_DATA(scale=1.0, bones=[], props={})]
-    tmp = []
-    for x in data.transform_list:
-        tmp.append(x.name)
-
-    app.tab[2].tfgroup.set_entry(tmp)
-    try:
-        data.load_CNL_File("./last.cnl")
-    except:
-        print("前回のデータの読み込みに失敗しました")
-        data.load_CNL_File("./default.cnl")
-
-    PMCA.CretateViewerThread()
+    app = MainFrame(tkinter.Tk(), data)
 
     data.refresh(
         app.tab[3].name.get(),
         app.tab[3].name_l.get(),
         app.tab[3].comment.get("1.0", tkinter.END),
     )
-    wht = PMCA.getWHT(0)
-    app.tab[2].info_str.set(
-        "height     = %f\nwidth      = %f\nthickness = %f\n" % (wht[1], wht[0], wht[2])
-    )
+    # wht = PMCA.getWHT(0)
+    # app.tab[2].info_str.set(
+    #     "height     = %f\nwidth      = %f\nthickness = %f\n" % (wht[1], wht[0], wht[2])
+    # )
     # app.tab[3].frame.text.set("Author : %s\nLicense : %s" % (str1, str2))
 
     app.mainloop()
@@ -610,12 +577,7 @@ def main():
     # PyPMCA.Set_PMD(0, model)
     # PMCA.Write_PMD(0, "./model/output.pmd")
 
-    try:
-        app.save_CNL_File("./last.cnl")
-    except:
-        pass
-
-    PMCA.QuitViewerThread()
+    data.shutdown()
 
 
 if __name__ == "__main__":
