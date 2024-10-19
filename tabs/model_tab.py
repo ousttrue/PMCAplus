@@ -9,7 +9,7 @@ class ModelTab(tkinter.ttk.Frame):
     |model|parts|
     +-----+-----+
     |comment    |
-    +-----+-----+
+    +-----------+
     """
 
     def __init__(self, master: tkinter.Misc):
@@ -37,7 +37,7 @@ class ModelTab(tkinter.ttk.Frame):
         self.text_label = tkinter.ttk.Label(self, textvariable=self.comment)
         self.text_label.pack(padx=3, pady=3, side=tkinter.BOTTOM, fill=tkinter.X)
 
-    def tree_click(self, event: Any):
+    def tree_click(self, _: Any):
         self.comment.set("comment:")
         sel_t = int(self.l_tree.listbox.curselection()[0]) + 1
         print(sel_t)
@@ -60,7 +60,7 @@ class ModelTab(tkinter.ttk.Frame):
             self.parts_entry_k, sel=self.tree_list[sel_t].node.list_num
         )
 
-    def parts_sel_click(self, event):
+    def parts_sel_click(self, _: Any):
         sel = int(self.l_sel.listbox.curselection()[0])
         sel_t = int(self.l_tree.listbox.curselection()[0]) + 1
 

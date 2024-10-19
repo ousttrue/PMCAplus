@@ -48,31 +48,7 @@ class MainFrame(tkinter.ttk.Frame):
         self.tab: list[tkinter.ttk.Frame] = []
         # Tab0
         self.tab.append(tabs.ModelTab(self.root))
-
-
-        ########################################################################################################
-        # Tab1
-
-        self.tab.append(tkinter.ttk.Frame(self.root))
-        self.tab[1].frame = tkinter.ttk.Frame(self.tab[1])
-        self.tab[1].text = "Color"
-
-        self.tab[1].l_tree = tabs.LISTBOX(self.tab[1].frame, "Material")
-        self.tab[1].l_tree.listbox.bind("<ButtonRelease-1>", self.mats_click)
-
-        self.tab[1].l_sel = tabs.LISTBOX(self.tab[1].frame, "Select")
-        self.tab[1].l_sel.listbox.bind("<ButtonRelease-1>", self.mats_sel_click)
-
-        self.tab[1].frame.pack(
-            padx=3, pady=3, side=tkinter.TOP, fill=tkinter.BOTH, expand=1
-        )
-
-        self.tab[1].comment = tkinter.StringVar()
-        self.tab[1].comment.set("comment:")
-        self.tab[1].text_label = tkinter.ttk.Label(
-            self.tab[1], textvariable=self.tab[1].comment
-        )
-        self.tab[1].text_label.pack(padx=3, pady=3, side=tkinter.BOTTOM, fill=tkinter.X)
+        self.tab.append(tabs.MaterialTab(self.root))
 
         ########################################################################################################
         # Tab2
@@ -155,36 +131,6 @@ class MainFrame(tkinter.ttk.Frame):
         self.QUIT["command"] = quit
         self.QUIT.pack(side=tkinter.RIGHT)
         self.frame_button.pack(padx=5, pady=5, side=tkinter.TOP, fill="x")
-
-
-    ########################################################################################
-    # functions tab1
-    def mats_click(self, event):
-        sel_t = int(self.tab[1].l_tree.listbox.curselection()[0])
-        print(sel_t)
-        print(self.mat_rep.mat[self.mat_entry[1][sel_t]])
-
-        tmp_list = []
-        for x in self.mat_rep.mat[self.mat_entry[1][sel_t]].mat.entries:
-            tmp_list.append(x.name)
-
-        self.tab[1].l_sel.set_entry(tmp_list)
-        self.tab[0].l_sel.set_entry(
-            self.parts_entry_k, sel=self.tree_list[sel_t].node.list_num
-        )
-        self.cur_mat = sel_t
-
-        self.tab[1].comment.set(
-            "comment:%s" % (self.mat_rep.mat[self.mat_entry[1][sel_t]].mat.comment)
-        )
-
-    def mats_sel_click(self, event):
-        print(self.mat_rep.mat[self.mat_entry[1][self.cur_mat]].sel)
-        sel_t = int(self.tab[1].l_sel.listbox.curselection()[0])
-        self.mat_rep.mat[self.mat_entry[1][self.cur_mat]].sel = self.mat_rep.mat[
-            self.mat_entry[1][self.cur_mat]
-        ].mat.entries[sel_t]
-        self.refresh(level=1)
 
     ########################################################################################
     # functions tab2
