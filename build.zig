@@ -23,6 +23,9 @@ pub fn build(b: *std.Build) void {
             "mlib_PMD_rw01.c",
             "mlib_PMD_edit01.c",
         },
+        .flags = &.{
+            // "-std=gnu23",
+        },
     });
     dll.addIncludePath(.{ .cwd_relative = "C:/Python311/include" });
     dll.addLibraryPath(.{ .cwd_relative = "C:/Python311/libs" });
