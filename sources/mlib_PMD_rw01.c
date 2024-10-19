@@ -167,25 +167,13 @@ int delete_list(LIST *list) {
 }
 
 int load_PMD(MODEL *model, const char file_name[]) {
-  int i, j, tmp;
-  char *char_p, str[PATH_LEN];
-  FILE *pmd;
-
   static MODEL cache_model[64];
   static unsigned char count[64];
   static unsigned char cur_count = 255;
 
-  // int *check;
-
-  // check = MALLOC((size_t)1000*sizeof(int));
-
-  // memset(check, 0, (size_t)1000*sizeof(int));
-
-  // dbg_0check(check,1000);
-
   // キャッシュまわり初期化
   if (cur_count == 255) {
-    for (i = 0; i < 64; i++) {
+    for (int i = 0; i < 64; i++) {
       count[i] = 255;
       create_PMD(&cache_model[i]);
     }
@@ -203,7 +191,8 @@ int load_PMD(MODEL *model, const char file_name[]) {
     cur_count++;
   }
 
-  for (i = 0; i < 64; i++) {
+  int i = 0;
+  for (; i < 64; i++) {
     if (count[i] != 255) {
       // printf("%s, %s\n", cache_model[i].header.path, file_name);
       if (strncmp(cache_model[i].header.path, file_name, PATH_LEN) == 0) {
@@ -214,13 +203,13 @@ int load_PMD(MODEL *model, const char file_name[]) {
     }
   }
 
-  tmp = cur_count + 1;
+  auto tmp = cur_count + 1;
   if (tmp >= 64)
     tmp = 0;
-  for (j = 0; j < 64; j++) {
-    if (count[i] == tmp) {
-      count[i] = 255;
-      delete_PMD(&cache_model[i]);
+  for (int j = 0; j < 64; j++) {
+    if (count[j] == tmp) {
+      count[j] = 255;
+      delete_PMD(&cache_model[j]);
     }
   }
   if (i != 64) {
@@ -228,7 +217,7 @@ int load_PMD(MODEL *model, const char file_name[]) {
     return 0;
   }
 
-  pmd = fopen(file_name, "rb");
+  auto pmd = fopen(file_name, "rb");
   if (pmd == NULL) {
     printf("Can't open file:%s\n", file_name);
     return 1;
@@ -313,8 +302,9 @@ int load_PMD(MODEL *model, const char file_name[]) {
     FREAD(&model->mat[i].tex, 1, 20, pmd);
     model->mat[i].tex[21] = '\0';
 
+    char str[PATH_LEN];
     strcpy(str, file_name);
-    char_p = strrchr(str, '/');
+    auto char_p = strrchr(str, '/');
     if (char_p != NULL) {
       char_p++;
       *char_p = '\0';
@@ -326,11 +316,11 @@ int load_PMD(MODEL *model, const char file_name[]) {
       *char_p = '\0';
       ++char_p;
       strcpy(model->mat[i].sph, char_p);
-      sprintf(model->mat[i].sph_path, "%s%s\0", str, model->mat[i].sph);
+      sprintf(model->mat[i].sph_path, "%s%s", str, model->mat[i].sph);
     } else {
       *model->mat[i].sph = '\0';
     }
-    sprintf(model->mat[i].tex_path, "%s%s\0", str, model->mat[i].tex);
+    sprintf(model->mat[i].tex_path, "%s%s", str, model->mat[i].tex);
   }
 
   FREAD(&model->bone_count, 2, 1, pmd);
@@ -388,6 +378,7 @@ int load_PMD(MODEL *model, const char file_name[]) {
     printf("配列を確保できません\n");
     return 1;
   }
+
   for (i = 0; i < model->skin_count; i++) {
     FREAD(model->skin[i].name, 1, 20, pmd);
     FREAD(&model->skin[i].skin_vt_count, 4, 1, pmd);
@@ -396,7 +387,7 @@ int load_PMD(MODEL *model, const char file_name[]) {
         (size_t)model->skin[i].skin_vt_count * sizeof(SKIN_DATA));
     if (model->skin[i].data == NULL)
       return -1;
-    for (j = 0; j < model->skin[i].skin_vt_count; j++) {
+    for (int j = 0; j < model->skin[i].skin_vt_count; j++) {
       FREAD(&model->skin[i].data[j].index, 4, 1, pmd);
       if (model->skin[i].data[j].index > model->vt_count) {
         exit(1);
@@ -450,10 +441,10 @@ int load_PMD(MODEL *model, const char file_name[]) {
     printf("拡張部分なし\n");
 #endif
     model->eng_support = 0;
-    for (i = 0; i < 10; i++) {
-      j = i + 1;
-      sprintf(model->toon[i], "toon%02d.bmp\0", j);
-      sprintf(model->toon_path[i], "toon%02d.bmp\0", j);
+    for (int i = 0; i < 10; i++) {
+      auto j = i + 1;
+      sprintf(model->toon[i], "toon%02d.bmp", j);
+      sprintf(model->toon_path[i], "toon%02d.bmp", j);
     }
     model->rbody_count = 0;
     model->rbody = NULL;
@@ -513,15 +504,16 @@ int load_PMD(MODEL *model, const char file_name[]) {
 
   for (i = 0; i < 10; i++) {
     FREAD(model->toon[i], 1, 100, pmd);
+    char str[PATH_LEN];
     strncpy(str, file_name, PATH_LEN);
-    char_p = strrchr(str, '/');
+    auto char_p = strrchr(str, '/');
     if (char_p != NULL) {
       char_p++;
       *char_p = '\0';
     } else {
       *str = '\0';
     }
-    sprintf(model->toon_path[i], "%s%s\0", str, model->toon[i]);
+    sprintf(model->toon_path[i], "%s%s", str, model->toon[i]);
 #ifdef DEBUG
     printf("%s%s\n", str, model->toon[i]);
 #endif

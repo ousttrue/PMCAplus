@@ -26,7 +26,8 @@ int bpp = 0;
 /* SDL_SetVideoMode に渡すフラグ */
 int flags = 0;
 
-int viewer_thread() {
+// int (SDLCALL *fn)(void *)
+int viewer_thread(void*) {
   SDL_Event event;
 
   myflags.model_lock = 0;

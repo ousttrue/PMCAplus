@@ -1,5 +1,5 @@
-/*PMD関係のライブラリ、PMD編集など */
-
+// PMD関係のライブラリ、PMD編集など
+#define _USE_MATH_DEFINES
 #include <math.h>
 #include <memory.h>
 #include <stdio.h>
@@ -604,44 +604,25 @@ int rename_tail(MODEL *model) {
 }
 
 int scale_bone(MODEL *model, int index, double sx, double sy, double sz) {
-  int i, j, k, l;
-
-  double vec[3];
-  double vec_size;
-  double nor_vec[3];
-  double mtr[3][3];
-  double mtrz[3][3];
-  double mtrx[3][3];
-  double loc[3] = {0.0, 0.0, 0.0};
-  double rot[3]; // ZXY
-  double theta;
-
-  double tmp[3];
-
-  double(*tmp_vt)[3];
-  unsigned int len_vt;
-  unsigned int *index_vt;
-
-  double(*tmp_bone)[3];
-  unsigned int len_bone;
-  unsigned int *index_bone;
-  double(*diff_bone)[3];
-
   // ベクトルがY軸に沿う向きになるようにする
+  double loc[3] = {0.0, 0.0, 0.0};
+  double vec[3];
   if (bone_vec(model, index, loc, vec) < 0)
     return -1;
 
   // ベクトルのノーマライズ
-  vec_size = 0.0;
-  for (i = 0; i < 3; i++) {
+  double vec_size = 0.0;
+  for (int i = 0; i < 3; i++) {
     vec_size = vec_size + vec[i] * vec[i];
   }
   vec_size = sqrt(vec_size);
-  for (i = 0; i < 3; i++) {
+  double nor_vec[3];
+  for (int i = 0; i < 3; i++) {
     nor_vec[i] = vec[i] / vec_size;
   }
 
   // ベクトルのZXY角を求める
+  double rot[3]; // ZXY
   rot[0] = angle_from_vec(vec[0], vec[1]);
   rot[1] = angle_from_vec(vec[2], sqrt(vec[0] * vec[0] + vec[1] * vec[1]));
   rot[2] = 0;
@@ -649,13 +630,16 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz) {
   // printf("%f %f %f\n", rot[0], rot[1], rot[2]);
 
   // 行列初期化
+  double mtr[3][3];
   memset(mtr, 0, 9 * sizeof(double));
+  double mtrz[3][3];
   memset(mtrz, 0, 9 * sizeof(double));
+  double mtrx[3][3];
   memset(mtrx, 0, 9 * sizeof(double));
 
   // 回転行列を求める
   // Z軸
-  theta = rot[0];
+  auto theta = rot[0];
   mtrz[0][0] = cos(theta);
   mtrz[1][0] = sin(theta);
   mtrz[0][1] = -sin(theta);
@@ -671,9 +655,9 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz) {
   mtrx[2][2] = cos(theta);
 
   // 合成
-  for (i = 0; i < 3; i++) {
-    for (j = 0; j < 3; j++) {
-      for (k = 0; k < 3; k++) {
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 3; j++) {
+      for (int k = 0; k < 3; k++) {
         mtr[i][j] = mtr[i][j] + mtrx[i][k] * mtrz[k][j];
       }
     }
@@ -690,58 +674,61 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz) {
   */
   // 座標変換
   // 変換する頂点をtmp_vtに格納
-  len_vt = 0;
-  for (i = 0; i < (model->vt_count); i++) {
+  int len_vt = 0;
+  for (int i = 0; i < (model->vt_count); i++) {
     if (model->vt[i].bone_num[0] == index ||
         model->vt[i].bone_num[1] == index) {
       len_vt++;
     }
   }
-  tmp_vt = (double *)MALLOC(sizeof(double) * len_vt * 3);
-  index_vt = (unsigned int *)MALLOC(sizeof(unsigned int) * len_vt);
-  j = 0;
-  for (i = 0; i < model->vt_count; i++) {
+  auto tmp_vt = (double(*)[3])MALLOC(sizeof(double) * len_vt * 3);
+  auto index_vt = (unsigned int *)MALLOC(sizeof(unsigned int) * len_vt);
+  int j = 0;
+  for (int i = 0; i < model->vt_count; i++) {
     if (model->vt[i].bone_num[0] == index ||
         model->vt[i].bone_num[1] == index) {
       index_vt[j] = i;
-      for (k = 0; k < 3; k++) {
+      for (int k = 0; k < 3; k++) {
         tmp_vt[j][k] = model->vt[i].loc[k];
       }
       j++;
     }
   }
+
   // 変換するボーンの子をtmp_boneに格納
-  len_bone = 0;
-  for (i = 0; i < (model->bone_count); i++) {
+  int len_bone = 0;
+  for (int i = 0; i < (model->bone_count); i++) {
     if (model->bone[i].PBone_index == index) {
       len_bone++;
     }
   }
-  tmp_bone = (double *)MALLOC(sizeof(double) * len_bone * 3);
-  diff_bone = (double *)MALLOC(sizeof(double) * len_bone * 3);
-  index_bone = (unsigned int *)MALLOC(sizeof(unsigned int) * len_bone);
+
+  auto tmp_bone = (double(*)[3])MALLOC(sizeof(double) * len_bone * 3);
+  auto diff_bone = (double (*)[3])MALLOC(sizeof(double) * len_bone * 3);
+  auto index_bone = (unsigned int *)MALLOC(sizeof(unsigned int) * len_bone);
   j = 0;
-  for (i = 0; i < model->bone_count; i++) {
+  for (int i = 0; i < model->bone_count; i++) {
     if (model->bone[i].PBone_index == index) {
       index_bone[j] = i;
-      for (k = 0; k < 3; k++) {
+      for (int k = 0; k < 3; k++) {
         tmp_bone[j][k] = model->bone[i].loc[k];
         diff_bone[j][k] = tmp_bone[j][k];
       }
       j++;
     }
   }
+
   // 変換
   coordtrans(tmp_vt, len_vt, loc, mtr);
   coordtrans(tmp_bone, len_bone, loc, mtr);
 
   // 変形
-  for (i = 0; i < len_vt; i++) {
+  for (int i = 0; i < len_vt; i++) {
     tmp_vt[i][0] = sx * tmp_vt[i][0];
     tmp_vt[i][1] = sy * tmp_vt[i][1];
     tmp_vt[i][2] = sz * tmp_vt[i][2];
   }
-  for (i = 0; i < len_bone; i++) {
+  for (int i = 0; i < len_bone; i++) {
     tmp_bone[i][0] = sx * tmp_bone[i][0];
     tmp_bone[i][1] = sy * tmp_bone[i][1];
     tmp_bone[i][2] = sz * tmp_bone[i][2];
@@ -752,8 +739,9 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz) {
 
   // 変換結果を元のデータに書き込む
   // 頂点
-  for (i = 0; i < len_vt; i++) {
-    k = index_vt[i];
+  double tmp[3];
+  for (int i = 0; i < len_vt; i++) {
+    auto k = index_vt[i];
     tmp[0] = 0.0;
     if (model->vt[k].bone_num[0] == index) {
       tmp[0] += (double)model->vt[k].bone_weight / 100;
@@ -771,15 +759,15 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz) {
   }
 
   // ボーン
-  for (i = 0; i < len_bone; i++) {
+  for (int i = 0; i < len_bone; i++) {
     for (j = 0; j < 3; j++) {
       diff_bone[i][j] = tmp_bone[i][j] - diff_bone[i][j];
     }
   }
 
-  for (i = 0; i < model->bone_count; i++) {
-    l = i;
-    for (j = 0; j < model->bone_count; j++) {
+  for (int i = 0; i < model->bone_count; i++) {
+    auto l = i;
+    for (int j = 0; j < model->bone_count; j++) {
       if (model->bone[l].PBone_index == 65535) {
         break;
       } else if (model->bone[l].PBone_index == index) {

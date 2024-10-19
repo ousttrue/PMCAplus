@@ -55,7 +55,7 @@ typedef struct {
 
 /*****************************************************************/
 /*PMDr[AA*/
-int viewer_thread();
+int viewer_thread(void*);
 void quit(int code);
 void qmul(double r[], const double p[], const double q[]);
 void qrot(double r[], double q[]);
