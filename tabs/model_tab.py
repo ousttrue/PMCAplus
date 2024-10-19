@@ -1,6 +1,7 @@
 from typing import Any
 import tkinter.ttk
 from .listbox import LISTBOX
+import pmca_data
 
 
 class ModelTab(tkinter.ttk.Frame):
@@ -12,7 +13,7 @@ class ModelTab(tkinter.ttk.Frame):
     +-----------+
     """
 
-    def __init__(self, master: tkinter.Misc):
+    def __init__(self, master: tkinter.Misc, data: pmca_data.PmcaData):
         super().__init__(master=master)
         self.text = "Model"
         self.tree_list = []
@@ -24,9 +25,11 @@ class ModelTab(tkinter.ttk.Frame):
         # top-left
         self.l_tree = LISTBOX(self.hbox, "Model")
         self.l_tree.listbox.bind("<ButtonRelease-1>", self.tree_click)
+        self.l_tree.set_entry(data.tree_entry, sel=0)
         # top-right
         self.l_sel = LISTBOX(self.hbox, "Parts")
         self.l_sel.listbox.bind("<ButtonRelease-1>", self.parts_sel_click)
+        self.l_sel.set_entry(data.parts_entry_k)
         self.hbox.pack(padx=3, pady=3, side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
 
         #

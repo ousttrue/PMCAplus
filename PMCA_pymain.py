@@ -49,70 +49,16 @@ class MainFrame(tkinter.ttk.Frame):
         notebook.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
 
         self.tab: list[tkinter.ttk.Frame] = []
-        # Tab0
-        self.tab.append(tabs.ModelTab(master))
+
+        self.tab.append(tabs.ModelTab(master, data))
         self.tab.append(tabs.MaterialTab(master))
         self.tab.append(tabs.TransformTab(master))
+        self.tab.append(tabs.InfoTab(master, data))
 
-        ########################################################################################################
-        # Tab3
-        self.tab.append(tkinter.ttk.Frame(master))
-        self.tab[3].text = "Info"
-        self.tab[3].frame = tkinter.ttk.Frame(self.tab[3])
-        self.tab[3].frame.comment = tkinter.Text(self.tab[3].frame, height=10)
-        self.tab[3].frame.comment["state"] = "normal"
-        self.tab[3].frame.yscroll = tkinter.ttk.Scrollbar(
-            self.tab[3].frame,
-            orient=tkinter.VERTICAL,
-            command=self.tab[3].frame.comment.yview,
-        )
-        self.tab[3].frame.yscroll.pack(
-            side=tkinter.RIGHT, fill=tkinter.Y, expand=0, anchor=tkinter.E
-        )
-        self.tab[3].frame.comment["yscrollcommand"] = self.tab[3].frame.yscroll.set
-        self.tab[3].frame.comment.pack(side=tkinter.RIGHT, fill=tkinter.BOTH, expand=1)
-
-        self.tab[3].frame.name = tkinter.StringVar()
-        self.tab[3].frame.name.set(data.modelinfo.name)
-        self.tab[3].frame.name_entry = tkinter.ttk.Entry(
-            self.tab[3], textvariable=self.tab[3].frame.name
-        )
-        self.tab[3].frame.name_entry.pack(fill=tkinter.X)
-
-        self.tab[3].frame.name_l = tkinter.StringVar()
-        self.tab[3].frame.name_l.set(data.modelinfo.name)
-        self.tab[3].frame.name_l_entry = tkinter.ttk.Entry(
-            self.tab[3], textvariable=self.tab[3].frame.name_l
-        )
-        self.tab[3].frame.name_l_entry.pack(fill=tkinter.X)
-
-        str1 = ""
-        str2 = ""
-        for x in data.authors:
-            str1 += "%s " % (x)
-        for x in data.licenses:
-            str2 += "%s " % (x)
-
-        self.tab[3].frame.text = tkinter.StringVar()
-        self.tab[3].frame.text.set("Author : %s\nLicense : %s" % (str1, str2))
-        self.tab[3].frame.text_label = tkinter.ttk.Label(
-            self.tab[3], textvariable=self.tab[3].frame.text
-        )
-        self.tab[3].frame.text_label.pack(fill=tkinter.X)
-
-        self.tab[3].frame.pack(fill=tkinter.BOTH, expand=1)
         for x in self.tab:
             notebook.insert(tkinter.END, x, text=x.text)
 
-        self.tab[0].l_tree.set_entry(data.tree_entry, sel=0)
-        self.tab[0].l_sel.set_entry(data.parts_entry_k)
-        self.tab[3].frame.name.set("PMCAモデル")
-        self.tab[3].frame.name_l.set("PMCAモデル")
-        self.tab[3].frame.comment.delete("1.0", tkinter.END)
-
-        ########################################################################################################
         # Buttons
-
         self.frame_button = tkinter.ttk.Frame(master)
         self.QUIT = tkinter.ttk.Button(self.frame_button)
         self.QUIT["text"] = "QUIT"
@@ -647,14 +593,13 @@ def main():
     PMCA.CretateViewerThread()
 
     data.refresh(
-        app.tab[3].frame.name.get(),
-        app.tab[3].frame.name_l.get(),
-        app.tab[3].frame.comment.get("1.0", tkinter.END),
+        app.tab[3].name.get(),
+        app.tab[3].name_l.get(),
+        app.tab[3].comment.get("1.0", tkinter.END),
     )
     wht = PMCA.getWHT(0)
     app.tab[2].info_str.set(
-        "height     = %f\nwidth      = %f\nthickness = %f\n"
-        % (wht[1], wht[0], wht[2])
+        "height     = %f\nwidth      = %f\nthickness = %f\n" % (wht[1], wht[0], wht[2])
     )
     # app.tab[3].frame.text.set("Author : %s\nLicense : %s" % (str1, str2))
 
