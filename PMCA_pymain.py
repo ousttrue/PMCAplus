@@ -10,37 +10,19 @@ import PyPMCA
 import PMCA_dialogs
 import tkinter
 import tkinter.ttk
-
-sys.argv = [""]
-
-# インポートパスにカレントディレクトリを加える
-sys.path.append(os.getcwd())
-sys.path.append("%s/converter" % (os.getcwd()))
-sysenc = sys.getfilesystemencoding()
-
 import converter
 
 
-softwarename = "PMCA v0.0.6r10"
+TITLE = "PMCA v0.0.6r10"
+
 
 commands = {}
 
 
-class QUIT:
-    def __init__(self, root):
-        self.root = root
-
-    def __call__(self):
-        self.root.winfo_toplevel().destroy()
-        self.root.quit()
-
-
 class MainFrame(tkinter.ttk.Frame):
-    def __init__(self, master: tkinter.Tk | None = None):
+    def __init__(self, master: tkinter.Tk):
         super().__init__(master)
         self.root = master
-        if self.root:
-            self.root.title(softwarename)
         self.parts_list = []
         self.mats_list = []  # list of class MATS
         self.tree_list = []
@@ -80,14 +62,18 @@ class MainFrame(tkinter.ttk.Frame):
 
         self.tab[0].frame = tkinter.ttk.Frame(self.tab[0])
         self.tab[0].text = "Model"
-        self.tab[0].parts_frame = tkinter.ttk.LabelFrame(self.tab[0].frame, text="Model")
+        self.tab[0].parts_frame = tkinter.ttk.LabelFrame(
+            self.tab[0].frame, text="Model"
+        )
         self.tab[0].l_tree = LISTBOX(self.tab[0].parts_frame)
         self.tab[0].parts_frame.pack(
             padx=3, pady=3, side=tkinter.LEFT, fill=tkinter.BOTH, expand=1
         )
         self.tab[0].l_tree.listbox.bind("<ButtonRelease-1>", self.tree_click)
 
-        self.tab[0].parts_frame = tkinter.ttk.LabelFrame(self.tab[0].frame, text="Parts")
+        self.tab[0].parts_frame = tkinter.ttk.LabelFrame(
+            self.tab[0].frame, text="Parts"
+        )
         self.tab[0].l_sel = LISTBOX(self.tab[0].parts_frame)
         self.tab[0].parts_frame.pack(
             padx=3, pady=3, side=tkinter.LEFT, fill=tkinter.BOTH, expand=1
@@ -100,7 +86,9 @@ class MainFrame(tkinter.ttk.Frame):
 
         self.tab[0].comment = tkinter.StringVar()
         self.tab[0].comment.set("comment:")
-        self.tab[0].text_label = tkinter.ttk.Label(self.tab[0], textvariable=self.tab[0].comment)
+        self.tab[0].text_label = tkinter.ttk.Label(
+            self.tab[0], textvariable=self.tab[0].comment
+        )
         self.tab[0].text_label.pack(padx=3, pady=3, side=tkinter.BOTTOM, fill=tkinter.X)
 
         ########################################################################################################
@@ -109,14 +97,18 @@ class MainFrame(tkinter.ttk.Frame):
         self.tab.append(tkinter.ttk.Frame(self.root))
         self.tab[1].frame = tkinter.ttk.Frame(self.tab[1])
         self.tab[1].text = "Color"
-        self.tab[1].parts_frame = tkinter.ttk.LabelFrame(self.tab[1].frame, text="Material")
+        self.tab[1].parts_frame = tkinter.ttk.LabelFrame(
+            self.tab[1].frame, text="Material"
+        )
         self.tab[1].l_tree = LISTBOX(self.tab[1].parts_frame)
         self.tab[1].parts_frame.pack(
             padx=3, pady=3, side=tkinter.LEFT, fill=tkinter.BOTH, expand=1
         )
         self.tab[1].l_tree.listbox.bind("<ButtonRelease-1>", self.mats_click)
 
-        self.tab[1].parts_frame = tkinter.ttk.LabelFrame(self.tab[1].frame, text="Select")
+        self.tab[1].parts_frame = tkinter.ttk.LabelFrame(
+            self.tab[1].frame, text="Select"
+        )
         self.tab[1].l_sel = LISTBOX(self.tab[1].parts_frame)
         self.tab[1].parts_frame.pack(
             padx=3, pady=3, side=tkinter.LEFT, fill=tkinter.BOTH, expand=1
@@ -129,7 +121,9 @@ class MainFrame(tkinter.ttk.Frame):
 
         self.tab[1].comment = tkinter.StringVar()
         self.tab[1].comment.set("comment:")
-        self.tab[1].text_label = tkinter.ttk.Label(self.tab[1], textvariable=self.tab[1].comment)
+        self.tab[1].text_label = tkinter.ttk.Label(
+            self.tab[1], textvariable=self.tab[1].comment
+        )
         self.tab[1].text_label.pack(padx=3, pady=3, side=tkinter.BOTTOM, fill=tkinter.X)
 
         ########################################################################################################
@@ -209,7 +203,12 @@ class MainFrame(tkinter.ttk.Frame):
         self.frame_button = tkinter.ttk.Frame(self.root)
         self.QUIT = tkinter.ttk.Button(self.frame_button)
         self.QUIT["text"] = "QUIT"
-        self.QUIT["command"] = QUIT(self.root)
+
+        def quit():
+            self.root.winfo_toplevel().destroy()
+            self.root.quit()
+
+        self.QUIT["command"] = quit
         self.QUIT.pack(side=tkinter.RIGHT)
         self.frame_button.pack(padx=5, pady=5, side=tkinter.TOP, fill="x")
 
@@ -912,6 +911,7 @@ class MainFrame(tkinter.ttk.Frame):
             tmp = name.rsplit("/", 1)
             name = "%s/%s/%s" % (tmp[0], dirc.rsplit("/", 1)[1], tmp[1])
 
+        sysenc = sys.getfilesystemencoding()
         if PMCA.Write_PMD(0, name.encode(sysenc, "replace")) == 0:
             # テクスチャコピー
             dirc = name.rsplit("/", 1)[0]
@@ -1009,7 +1009,7 @@ class MainFrame(tkinter.ttk.Frame):
         if self.tree_list[0].node.child[0] == None:
             return False
 
-        print(f'write {name}')
+        print(f"write {name}")
         lines = []
         lines.append(self.modelinfo.name)
         lines.append(self.modelinfo.name_l)
@@ -1054,7 +1054,7 @@ class SETTINGS:
 
 
 class MENUBAR:
-    def __init__(self, master: tkinter.Tk | None = None, app=None):
+    def __init__(self, master: tkinter.Tk, app=None):
         self.menubar = tkinter.Menu(master)
         master.configure(menu=self.menubar)
         files = tkinter.Menu(self.menubar, tearoff=False)
@@ -1075,7 +1075,12 @@ class MENUBAR:
         files.add_command(label="PMD概要確認", under=0, command=app.check_PMD)
         files.add_command(label="PMD詳細確認", under=0, command=app.propcheck_PMD)
         files.add_separator
-        files.add_command(label="exit", under=0, command=QUIT(master))
+
+        def quit():
+            master.winfo_toplevel().destroy()
+            master.quit()
+
+        files.add_command(label="exit", under=0, command=quit)
 
         editing.add_command(label="体型調整を初期化", under=0, command=app.init_tf)
         editing.add_command(label="材質をランダム選択", under=0, command=app.rand_mat)
