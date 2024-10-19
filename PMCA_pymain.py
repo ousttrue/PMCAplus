@@ -10,8 +10,8 @@ import PyPMCA
 import PMCA_dialogs
 import tkinter
 import tkinter.ttk
-import converter
 import tabs
+import pmca_data
 
 
 TITLE = "PMCA v0.0.6r10"
@@ -21,39 +21,42 @@ commands = {}
 
 
 class MainFrame(tkinter.ttk.Frame):
-    def __init__(self, master: tkinter.Tk):
+    def __init__(self, master: tkinter.Tk, data: pmca_data.PmcaData):
         super().__init__(master)
-        self.root = master
-        self.parts_list = []
-        self.mats_list = []  # list of class MATS
-        self.tree_entry = []
-        self.parts_entry_k = []
-        self.parts_entry_p = []
-        self.mat_rep = None
-        self.transform_data = []
-        self.transform_list = []
-        self.licenses = []
-        self.authors = []
-        self.modelinfo = PyPMCA.MODELINFO()
-        self.target_dir = "./model/"
-        self.cur_parts = 0
-        self.cur_mat = 0
+        self.data = data
+
+        def on_update():
+            self.tab[3].frame.name.set(lines[0])
+            self.tab[3].frame.name_l.set(lines[1])
+            for line in lines[2:]:
+                if line == "PARTS":
+                    break
+                elif line == "":
+                    pass
+                else:
+                    self.tab[3].frame.comment.insert(END, line)
+                    self.tab[3].frame.comment.insert(END, "\n")
+
+            else:
+                self.tab[3].frame.comment.delete("1.0", END)
+
+        self.data.update_callbacks.append(on_update)
+
         self.pack()
-        self.settings = SETTINGS()
 
         # タブを作成
-        notebook = tkinter.ttk.Notebook(self.root)
+        notebook = tkinter.ttk.Notebook(master)
         notebook.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
 
         self.tab: list[tkinter.ttk.Frame] = []
         # Tab0
-        self.tab.append(tabs.ModelTab(self.root))
-        self.tab.append(tabs.MaterialTab(self.root))
-        self.tab.append(tabs.TransformTab(self.root))
+        self.tab.append(tabs.ModelTab(master))
+        self.tab.append(tabs.MaterialTab(master))
+        self.tab.append(tabs.TransformTab(master))
 
         ########################################################################################################
         # Tab3
-        self.tab.append(tkinter.ttk.Frame(self.root))
+        self.tab.append(tkinter.ttk.Frame(master))
         self.tab[3].text = "Info"
         self.tab[3].frame = tkinter.ttk.Frame(self.tab[3])
         self.tab[3].frame.comment = tkinter.Text(self.tab[3].frame, height=10)
@@ -70,14 +73,14 @@ class MainFrame(tkinter.ttk.Frame):
         self.tab[3].frame.comment.pack(side=tkinter.RIGHT, fill=tkinter.BOTH, expand=1)
 
         self.tab[3].frame.name = tkinter.StringVar()
-        self.tab[3].frame.name.set(self.modelinfo.name)
+        self.tab[3].frame.name.set(data.modelinfo.name)
         self.tab[3].frame.name_entry = tkinter.ttk.Entry(
             self.tab[3], textvariable=self.tab[3].frame.name
         )
         self.tab[3].frame.name_entry.pack(fill=tkinter.X)
 
         self.tab[3].frame.name_l = tkinter.StringVar()
-        self.tab[3].frame.name_l.set(self.modelinfo.name)
+        self.tab[3].frame.name_l.set(data.modelinfo.name)
         self.tab[3].frame.name_l_entry = tkinter.ttk.Entry(
             self.tab[3], textvariable=self.tab[3].frame.name_l
         )
@@ -85,9 +88,9 @@ class MainFrame(tkinter.ttk.Frame):
 
         str1 = ""
         str2 = ""
-        for x in self.authors:
+        for x in data.authors:
             str1 += "%s " % (x)
-        for x in self.licenses:
+        for x in data.licenses:
             str2 += "%s " % (x)
 
         self.tab[3].frame.text = tkinter.StringVar()
@@ -100,186 +103,27 @@ class MainFrame(tkinter.ttk.Frame):
         self.tab[3].frame.pack(fill=tkinter.BOTH, expand=1)
         for x in self.tab:
             notebook.insert(tkinter.END, x, text=x.text)
+
+        self.tab[0].l_tree.set_entry(data.tree_entry, sel=0)
+        self.tab[0].l_sel.set_entry(data.parts_entry_k)
+        self.tab[3].frame.name.set("PMCAモデル")
+        self.tab[3].frame.name_l.set("PMCAモデル")
+        self.tab[3].frame.comment.delete("1.0", tkinter.END)
+
         ########################################################################################################
         # Buttons
 
-        self.frame_button = tkinter.ttk.Frame(self.root)
+        self.frame_button = tkinter.ttk.Frame(master)
         self.QUIT = tkinter.ttk.Button(self.frame_button)
         self.QUIT["text"] = "QUIT"
 
         def quit():
-            self.root.winfo_toplevel().destroy()
-            self.root.quit()
+            master.winfo_toplevel().destroy()
+            master.quit()
 
         self.QUIT["command"] = quit
         self.QUIT.pack(side=tkinter.RIGHT)
         self.frame_button.pack(padx=5, pady=5, side=tkinter.TOP, fill="x")
-
-
-    ######################################################################################
-    def refresh(self, level=0):
-        sel_t = int(self.tab[0].l_tree.listbox.curselection()[0])
-        self.tree_list = self.tree_list[0].node.create_list()
-        self.tree_entry = []
-
-        for x in self.tree_list:
-            self.tree_entry.append(x.text)
-        self.tree_entry = self.tree_entry[1:]
-        self.tab[0].l_tree.set_entry(self.tree_entry, sel=sel_t)
-
-        # モデル組み立て
-        PMCA.MODEL_LOCK(1)
-
-        if level < 1:
-            print("モデル組立て")
-
-            PMCA.Create_PMD(0)
-
-            # PMCA.Load_PMD(0, "./testmodels/001.pmd")
-
-            x = self.tree_list[0].node
-            if x != None:
-                x.assemble(0, self)
-
-            PMCA.Copy_PMD(0, 1)
-        else:
-            PMCA.Copy_PMD(1, 0)
-
-        if level < 2:
-            # 材質関連
-            print("材質置換")
-            self.mat_rep.Get(self.mats_list)
-            # print("1")
-            self.mat_entry = [[], []]
-            for v in self.mat_rep.mat.values():
-                if v.num >= 0:
-                    self.mat_entry[0].append(v.mat.name + "  " + v.sel.name)
-                    self.mat_entry[1].append(v.mat.name)
-            # print("2")
-            self.tab[1].l_tree.set_entry(self.mat_entry[0], sel=self.cur_mat)
-            # print("3")
-            self.mat_rep.Set()
-            # print("4")
-            PMCA.Copy_PMD(0, 2)
-        else:
-            PMCA.Copy_PMD(2, 0)
-
-        if level < 3:
-            print("体型調整")
-            info_data = PMCA.getInfo(0)
-            info = PyPMCA.INFO(info_data)
-
-            tmpbone = []
-            for i in range(info_data["bone_count"]):
-                tmp = PMCA.getBone(0, i)
-                tmpbone.append(
-                    PyPMCA.BONE(
-                        tmp["name"],
-                        tmp["name_eng"],
-                        tmp["parent"],
-                        tmp["tail"],
-                        tmp["type"],
-                        tmp["IK"],
-                        tmp["loc"],
-                    )
-                )
-            refbone = None
-            refbone_index = None
-            for i, x in enumerate(tmpbone):
-                if x.name == "右足首":
-                    refbone = x
-                    refbone_index = i
-                    break
-
-            for y in self.transform_data:
-                PMCA.Resize_Model(0, y.scale)
-                for x in y.bones:
-                    PMCA.Resize_Bone(
-                        0, x.name.encode("cp932", "replace"), x.length, x.thick
-                    )
-                    PMCA.Move_Bone(
-                        0,
-                        x.name.encode("cp932", "replace"),
-                        x.pos[0],
-                        x.pos[1],
-                        x.pos[2],
-                    )
-                    # print("resize_bone %f %f"%(x.length, x.thick))
-
-            if refbone != None:
-                newbone = None
-                tmp = PMCA.getBone(0, refbone_index)
-                newbone = PyPMCA.BONE(
-                    tmp["name"],
-                    tmp["name_eng"],
-                    tmp["parent"],
-                    tmp["tail"],
-                    tmp["type"],
-                    tmp["IK"],
-                    tmp["loc"],
-                )
-
-                dy = refbone.loc[1] - newbone.loc[1]
-                for x in tmpbone:
-                    i = x.parent
-                    count = 0
-                    while (
-                        i < info_data["bone_count"] and count < info_data["bone_count"]
-                    ):
-                        if tmpbone[i].name == "センター":
-                            PMCA.Move_Bone(
-                                0, x.name.encode("cp932", "replace"), 0, dy, 0
-                            )
-                            break
-                        i = tmpbone[i].parent
-                        count += 1
-
-                PMCA.Move_Bone(0, "センター".encode("cp932", "replace"), 0, dy, 0)
-                PMCA.Move_Bone(0, "+センター".encode("cp932", "replace"), 0, -dy, 0)
-
-            for y in self.transform_data:
-                PMCA.Move_Model(0, y.pos[0], y.pos[1], y.pos[2])
-
-            PMCA.Update_Skin(0)
-            PMCA.Adjust_Joints(0)
-            PMCA.Copy_PMD(0, 3)
-        else:
-            PMCA.Copy_PMD(3, 0)
-
-        if level < 4:
-            str1 = ""
-            str2 = ""
-            for x in self.authors:
-                str1 += "%s " % (x)
-            for x in self.licenses:
-                str2 += "%s " % (x)
-            self.modelinfo.name = self.tab[3].frame.name.get()
-            self.modelinfo.name_l = self.tab[3].frame.name_l.get()
-            self.modelinfo.comment = self.tab[3].frame.comment.get("1.0", tkinter.END)
-            PyPMCA.Set_Name_Comment(
-                name=self.modelinfo.name,
-                comment="%s\nAuthor:%s\nLicense:%s\n%s"
-                % (self.modelinfo.name_l, str1, str2, self.modelinfo.comment),
-                name_eng=self.modelinfo.name_eng,
-                comment_eng="%s\nAuthor:%s\nLicense:%s\n%s"
-                % (self.modelinfo.name_l_eng, str1, str2, self.modelinfo.comment_eng),
-            )
-
-        if level < 3:
-            PMCA.PMD_view_set(0, "replace")  # テクスチャを変更しない
-        else:
-            PMCA.PMD_view_set(0, "replace")
-
-        PMCA.MODEL_LOCK(0)
-
-        wht = PMCA.getWHT(0)
-        self.tab[2].info_str.set(
-            "height     = %f\nwidth      = %f\nthickness = %f\n"
-            % (wht[1], wht[0], wht[2])
-        )
-        self.tab[3].frame.text.set("Author : %s\nLicense : %s" % (str1, str2))
-
-        print("Done")
 
     ########################################################################################
     # functions menu
@@ -711,55 +555,6 @@ class MainFrame(tkinter.ttk.Frame):
         self.refresh()
         self.target_dir = name.rsplit("/", 1)[0]
 
-    def load_CNL_File(self, name):
-        f = open(name, "r", encoding="utf-8-sig")
-        lines = f.read()
-        f.close
-        lines = lines.split("\n")
-
-        self.tab[3].frame.name.set(lines[0])
-        self.tab[3].frame.name_l.set(lines[1])
-        for line in lines[2:]:
-            if line == "PARTS":
-                break
-            elif line == "":
-                pass
-            else:
-                self.tab[3].frame.comment.insert(END, line)
-                self.tab[3].frame.comment.insert(END, "\n")
-
-        else:
-            self.tab[3].frame.comment.delete("1.0", END)
-
-        self.tree_list[0].node.text_to_node(self.parts_list, lines)
-        self.mat_rep.text_to_list(lines, self.mats_list)
-        self.transform_data[0].text_to_list(lines)
-        return True
-
-    def save_CNL_File(self, name):
-        if self.tree_list[0].node.child[0] == None:
-            return False
-
-        print(f"write {name}")
-        lines = []
-        lines.append(self.modelinfo.name)
-        lines.append(self.modelinfo.name_l)
-        lines.append(self.modelinfo.comment)
-
-        lines.append("PARTS")
-        lines.extend(self.tree_list[0].node.child[0].node_to_text())
-        lines.append("MATERIAL")
-        lines.extend(self.mat_rep.list_to_text())
-        lines.append("TRANSFORM")
-        lines.extend(self.transform_data[0].list_to_text())
-
-        fp = open(name, "w", encoding="utf-8")
-        for x in lines:
-            fp.write(x + "\n")
-        fp.close
-
-        return True
-
     def setting_dialog(self):
         root = Toplevel()
         root.transient(self)
@@ -777,11 +572,6 @@ class MainFrame(tkinter.ttk.Frame):
         frame.export2folder.pack()
         Button(root, text="OK", command=close).pack(padx=5, pady=5, side=RIGHT)
         root.mainloop()
-
-
-class SETTINGS:
-    def __init__(self):
-        self.export2folder = False
 
 
 class MENUBAR:
@@ -818,67 +608,14 @@ class MENUBAR:
         editing.add_command(label="PMCA設定", under=0, command=app.setting_dialog)
 
 
-def init(app):
+def main():
+    data = pmca_data.PmcaData()
 
-    app.parts_list = []
-    app.mats_list = []
-    print("登録データ読み込み")
-    for x in os.listdir("./"):
-        if os.path.isfile(x):
-            print(x)
+    root = tkinter.Tk()
+    app = MainFrame(root, data)
+    menubar = MENUBAR(master=root, app=app)
 
-            fp = open(x, "r", encoding="cp932")
-            try:
-                lines = fp.read()
-                line = lines.split("\n")
-                line = line[0].replace("\n", "")
-                print('"%s"' % (line))
-                if (
-                    line == "PMCA Parts list v1.0"
-                    or line == "PMCA Materials list v1.1"
-                    or line == "PMCA Materials list v1.0"
-                    or line == "PMCA Textures list v1.0"
-                    or line == "PMCA Bone_Group list v1.0"
-                ):
-                    fp.close()
-
-                    if os.name == "posix":
-                        fp = open(x, "w", encoding="cp932")
-                        fp.write(lines)
-                        fp.close()
-                        converter.v1_v2("./converter/PMCA_1.0-2.0converter", [x])
-                    elif os.name == "nt":
-                        converter.v1_v2(".\\converter\\PMCA_1.0-2.0converter.exe", [x])
-                if line == "bone":
-                    fp = open(x, "r", encoding="cp932")
-                    lines = fp.read()
-                    fp.close()
-
-                    fp = open(x, "w", encoding="utf-8")
-                    fp.write("PMCA list data v2.0\n")
-                    fp.write(lines)
-                    fp.close()
-
-            except UnicodeDecodeError:
-                fp.close()
-            fp = open(x, "r", encoding="utf-8-sig")
-            try:
-                line = fp.readline()
-                print(line)
-
-                if line == "PMCA Parts list v2.0\n":
-                    app.parts_list = PyPMCA.load_partslist(fp, app.parts_list)
-                elif line == "PMCA Materials list v2.0\n":
-                    app.mats_list = PyPMCA.load_matslist(fp, app.mats_list)
-                elif line == "PMCA Transform list v2.0\n":
-                    app.transform_list = PyPMCA.load_translist(fp, app.transform_list)
-
-                fp.close()
-            except UnicodeDecodeError:
-                fp.close()
-            except UnicodeEncodeError:
-                fp.close()
-
+    PMCA.Init_PMD()
     print("list.txt読み込み")
     fp = open("list.txt", "r", encoding="utf-8-sig")
     LIST = PyPMCA.load_list(fp)
@@ -893,68 +630,34 @@ def init(app):
         LIST["g"][0],
         LIST["g"][1],
     )
-
     fp.close()
 
-    print("ツリー初期化")
-    node = PyPMCA.NODE(
-        parts=PyPMCA.PARTS(name="ROOT", joint=["root"]), depth=-1, child=[None]
-    )
-
-    app.tree_list = node.create_list()
-    app.tree_entry = []
-    for x in app.tree_list:
-        app.tree_entry.append(x.text)
-    app.tree_entry = app.tree_entry[1:]
-    app.tab[0].l_tree.set_entry(app.tree_entry, sel=0)
-
-    app.parts_entry_k = []
-    app.parts_entry_p = []
-    for x in app.parts_list:
-        for y in x.type:
-            if y == "root":
-                app.parts_entry_k.append(x.name)
-                app.parts_entry_p.append(x)
-                break
-
-    app.parts_entry_k.append("#外部モデル読み込み")
-    app.parts_entry_p.append("load")
-    # app.parts_entry_k.append('#None')
-    # app.parts_entry_p.append(None)
-
-    app.tab[0].l_sel.set_entry(app.parts_entry_k)
-
-    print("材質置換設定初期化")
-    app.mat_rep = PyPMCA.MAT_REP(app=app)
-
-    app.tab[3].frame.name.set("PMCAモデル")
-    app.tab[3].frame.name_l.set("PMCAモデル")
-    app.tab[3].frame.comment.delete("1.0", tkinter.END)
-
-
-def main():
-    root = tkinter.Tk()
-    app = MainFrame(master=root)
-    menubar = MENUBAR(master=root, app=app)
-
-    PMCA.Init_PMD()
-    init(app)
-
-    app.transform_data = [PyPMCA.MODEL_TRANS_DATA(scale=1.0, bones=[], props={})]
+    data.transform_data = [PyPMCA.MODEL_TRANS_DATA(scale=1.0, bones=[], props={})]
     tmp = []
-    for x in app.transform_list:
+    for x in data.transform_list:
         tmp.append(x.name)
 
     app.tab[2].tfgroup.set_entry(tmp)
     try:
-        app.load_CNL_File("./last.cnl")
+        data.load_CNL_File("./last.cnl")
     except:
         print("前回のデータの読み込みに失敗しました")
-        app.load_CNL_File("./default.cnl")
+        data.load_CNL_File("./default.cnl")
 
     PMCA.CretateViewerThread()
 
-    app.refresh()
+    data.refresh(
+        app.tab[3].frame.name.get(),
+        app.tab[3].frame.name_l.get(),
+        app.tab[3].frame.comment.get("1.0", tkinter.END),
+    )
+    wht = PMCA.getWHT(0)
+    app.tab[2].info_str.set(
+        "height     = %f\nwidth      = %f\nthickness = %f\n"
+        % (wht[1], wht[0], wht[2])
+    )
+    # app.tab[3].frame.text.set("Author : %s\nLicense : %s" % (str1, str2))
+
     app.mainloop()
     # model = PyPMCA.Get_PMD(0)
 
