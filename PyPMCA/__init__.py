@@ -8,7 +8,7 @@ import PMCA
 from .translation_list import TranslationList
 from .parts import PARTS
 from .material import MATS
-from .transform import MODEL_TRANS_DATA
+from .transform import MODEL_TRANS_DATA, BONE_TRANS_DATA, Vec3
 from .node import NODE
 from . import types
 
@@ -18,6 +18,8 @@ __all__ = [
     "PARTS",
     "MATS",
     "MODEL_TRANS_DATA",
+    "BONE_TRANS_DATA",
+    "Vec3",
     "NODE",
 ]
 

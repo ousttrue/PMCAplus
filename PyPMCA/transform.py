@@ -11,6 +11,15 @@ class Vec3:
     def from_str(x: str, y: str, z: str) -> "Vec3":
         return Vec3(float(x), float(y), float(z))
 
+    def __mul__(self, rhs: float) -> "Vec3":
+        return Vec3(self.x * rhs, self.y * rhs, self.z * rhs)
+
+    def __iadd__(self, rhs: "Vec3") -> "Vec3":
+        self.x += rhs.x
+        self.y += rhs.y
+        self.z += rhs.z
+        return self
+
 
 @dataclasses.dataclass
 class BONE_TRANS_DATA:
