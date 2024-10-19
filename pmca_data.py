@@ -109,13 +109,14 @@ class PmcaData:
                 # LOGGER.exception(ex)
                 raise ex
 
-        print("ツリー初期化")
         node = PyPMCA.NODE(
-            parts=PyPMCA.PARTS(name="ROOT", joint=["root"]), depth=-1, child=[None]
+            parts=PyPMCA.PARTS(name="ROOT", joint=["root"]),
+            depth=-1,
+            child=[None],
         )
 
         self.tree_list = node.create_list()
-        self.tree_entry = []
+        self.tree_entry: list[str] = []
         for x in self.tree_list:
             self.tree_entry.append(x.text)
         self.tree_entry = self.tree_entry[1:]
@@ -134,9 +135,7 @@ class PmcaData:
         # app.parts_entry_k.append('#None')
         # app.parts_entry_p.append(None)
 
-        print("材質置換設定初期化")
         self.mat_rep = PyPMCA.MAT_REP(app=self)
-
         try:
             self.load_CNL_File("./last.cnl")
         except:
@@ -210,13 +209,13 @@ class PmcaData:
         if level < 3:
             print("体型調整")
             info_data = PMCA.getInfo(0)
-            info = PyPMCA.INFO(info_data)
+            info = PyPMCA.types.INFO(info_data)
 
             tmpbone = []
             for i in range(info_data["bone_count"]):
                 tmp = PMCA.getBone(0, i)
                 tmpbone.append(
-                    PyPMCA.BONE(
+                    PyPMCA.types.BONE(
                         tmp["name"],
                         tmp["name_eng"],
                         tmp["parent"],
@@ -252,7 +251,7 @@ class PmcaData:
             if refbone != None:
                 newbone = None
                 tmp = PMCA.getBone(0, refbone_index)
-                newbone = PyPMCA.BONE(
+                newbone = PyPMCA.types.BONE(
                     tmp["name"],
                     tmp["name_eng"],
                     tmp["parent"],
@@ -323,7 +322,7 @@ class PmcaData:
 
         print("Done")
 
-    def load_CNL_File(self, name):
+    def load_CNL_File(self, name: str):
         f = open(name, "r", encoding="utf-8-sig")
         lines = f.read()
         f.close
@@ -334,7 +333,6 @@ class PmcaData:
         self.tree_list[0].node.text_to_node(self.parts_list, lines)
         self.mat_rep.text_to_list(lines, self.mats_list)
         self.transform_data[0].text_to_list(lines)
-        return True
 
     def save_CNL_File(self, name):
         if self.tree_list[0].node.child[0] == None:
