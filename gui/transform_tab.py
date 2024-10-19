@@ -13,15 +13,8 @@ class TransformTab(tkinter.ttk.Frame):
 
     def __init__(self, master: tkinter.Misc, data: pmca_data.PmcaData):
         super().__init__(master=master)
-        self.text = "Transform"
-
-        self.tfgroup = LISTBOX(self, "Groups")
-        self.tfgroup.listbox.bind("<ButtonRelease-1>", self.tf_click)
-        tmp = []
-        for x in data.transform_list:
-            tmp.append(x.name)
-        self.tfgroup.set_entry(tmp)
-
+        self.tfgroup = LISTBOX(self, "Groups", self.tf_click)
+        self.tfgroup.set_entry([x.name for x in data.transform_list])
         self.info_frame = tkinter.ttk.LabelFrame(self, text="Info")
         self.info_str = tkinter.StringVar()
         self.info_str.set("x=\ny=\nz=\n")

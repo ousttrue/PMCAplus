@@ -1,13 +1,10 @@
 ﻿#! /usr/bin/env python
 # -*- coding: utf-8 -*-
-
+from typing import Callable
 import sys, os.path
 import os
-import tkinter
-import tkinter.filedialog
-
+import dataclasses
 import PMCA
-
 from .translation_list import TranslationList
 from .parts import PARTS
 from .material import MATS
@@ -16,30 +13,57 @@ from .node import NODE
 from . import types
 
 
-__all__ = ["TranslationList"]
+__all__ = [
+    "TranslationList",
+    "PARTS",
+    "MATS",
+    "MODEL_TRANS_DATA",
+    "NODE",
+]
+
+
+@dataclasses.dataclass
+class MODELINFO:
+    name: str = "PMCAモデル"
+    name_l: str = "PMCAモデル"
+    comment: str = ""
+    name_eng: str = "PMCA model"
+    name_l_eng: str = "PMCA generated model"
+    comment_eng: str = ""
 
 
 # インポートパスにカレントディレクトリを加える
 sys.path.append(os.getcwd())
 
 
-###PMCA操作関連
-def tree_click(event):
-    pass
+# ###PMCA操作関連
+# def tree_click(event):
+#     pass
 
 
 class MAT_REP:  # 材質置換
-    def __init__(self, app=None):
-        self.mat = {}
+    def __init__(
+        self,
+        append_author: Callable[[str], None],
+        append_license: Callable[[str], None],
+    ):
+        self.mat: dict[str, str] = {}
         self.toon = types.TOON()
-        self.app = app
+        self.append_author = append_author
+        self.append_license = append_license
 
-    def Get(self, mats_list, model=None, info=None, num=0):
+    def Get(
+        self,
+        mats_list: list[MATS],
+        model: types.PMD | None = None,
+        info: types.INFO | None = None,
+        num: int = 0,
+    ):
+        mat: list[types.MATERIAL] = []
         if model == None:
             if info == None:
                 info_data = PMCA.getInfo(num)
                 info = types.INFO(info_data)
-            mat = []
             for i in range(info.data["mat_count"]):
                 tmp = PMCA.getMat(num, i)
                 mat.append(types.MATERIAL(**tmp))
@@ -63,12 +87,12 @@ class MAT_REP:  # 材質置換
                         for y in self.mat[mat[i].tex].mat.entries:
                             print(y.props)
 
-    def Set(self, model=None, info=None, num=0):
+    def Set(self, model: types.PMD | None = None, info=None, num=0):
+        mat: list[types.MATERIAL] = []
         if model == None:
             if info == None:
                 info_data = PMCA.getInfo(num)
                 info = types.INFO(info_data)
-            mat = []
             for i in range(info.data["mat_count"]):
                 tmp = PMCA.getMat(num, i)
                 mat.append(types.MATERIAL(**tmp))
@@ -128,18 +152,10 @@ class MAT_REP:  # 材質置換
                         # print(tmp)
                     elif k == "author":
                         for y in v[-1].split(" "):
-                            for z in self.app.authors:
-                                if z == y:
-                                    break
-                            else:
-                                self.app.authors.append(y)
+                            self.append_author(y)
                     elif k == "license":
                         for y in v[-1].split(" "):
-                            for z in self.app.licenses:
-                                if z == y:
-                                    break
-                            else:
-                                self.app.licenses.append(y)
+                            self.append_license(y)
 
                 # print(x.diff_col)
                 # print(x.spec_col)
@@ -210,24 +226,6 @@ class MAT_REP_DATA:  # 材質置換データ
         self.num = num
         self.mat = mat
         self.sel = sel
-
-
-class MODELINFO:
-    def __init__(
-        self,
-        name="PMCAモデル",
-        name_l="PMCAモデル",
-        comment="",
-        name_eng="PMCA model",
-        name_l_eng="PMCA generated model",
-        comment_eng="",
-    ):
-        self.name = name
-        self.name_l = name_l
-        self.comment = comment
-        self.name_eng = name_eng
-        self.name_l_eng = name_l_eng
-        self.comment_eng = comment_eng
 
 
 def Set_Name_Comment(num=0, name="", comment="", name_eng="", comment_eng=""):

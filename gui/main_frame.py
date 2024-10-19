@@ -14,33 +14,18 @@ class MainFrame(tkinter.ttk.Frame):
         MENUBAR(master=master, app=self)
         self.data = data
 
-        def on_update():
-            self.info_tab.name.set(lines[0])
-            self.info_tab.name_l.set(lines[1])
-            for line in lines[2:]:
-                if line == "PARTS":
-                    break
-                elif line == "":
-                    pass
-                else:
-                    self.info_tab.comment.insert(tkinter.END, line)
-                    self.info_tab.comment.insert(tkinter.END, "\n")
-
-            else:
-                self.info_tab.comment.delete("1.0", tkinter.END)
-
-        # self.data.update_callbacks.append(on_update)
+        self.data.on_refresh.append(self.on_data_updated)
 
         self.pack()
 
-        # タブを作成
+        # tabs
         notebook = tkinter.ttk.Notebook(master)
         notebook.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
 
         self.model_tab = ModelTab(master, data)
         notebook.insert(tkinter.END, self.model_tab, text="Model")  # type: ignore
 
-        self.material_tab = MaterialTab(master)
+        self.material_tab = MaterialTab(master, data)
         notebook.insert(tkinter.END, self.material_tab, text="Material")  # type: ignore
 
         self.transform_tab = TransformTab(master, data)
@@ -49,7 +34,7 @@ class MainFrame(tkinter.ttk.Frame):
         self.info_tab = InfoTab(master, data)
         notebook.insert(tkinter.END, self.info_tab, text="Info")  # type: ignore
 
-        # Buttons
+        # buttons
         self.frame_button = tkinter.ttk.Frame(master)
         self.QUIT = tkinter.ttk.Button(self.frame_button)
         self.QUIT["text"] = "QUIT"
@@ -61,6 +46,37 @@ class MainFrame(tkinter.ttk.Frame):
         self.QUIT["command"] = quit
         self.QUIT.pack(side=tkinter.RIGHT)
         self.frame_button.pack(padx=5, pady=5, side=tkinter.TOP, fill="x")
+
+    def on_data_updated(self, w: float, h: float, t: float):
+        sel_t = int(self.model_tab.l_tree.listbox.curselection()[0])
+        self.model_tab.l_tree.set_entry(self.data.tree_entry, sel=sel_t)
+
+        self.material_tab.l_tree.set_entry(
+            self.data.mat_entry[0], sel=self.data.cur_mat
+        )
+
+        self.transform_tab.info_str.set(
+            "height     = %f\nwidth      = %f\nthickness = %f\n" % (w, h, t)
+        )
+
+        str1 = " ".join(self.data.authors)
+        str2 = " ".join(self.data.licenses)
+        self.info_tab.text.set("Author : %s\nLicense : %s" % (str1, str2))
+
+        lines = self.data.cnl_lines
+        self.info_tab.name.set(lines[0])
+        self.info_tab.name_l.set(lines[1])
+        for line in lines[2:]:
+            if line == "PARTS":
+                break
+            elif line == "":
+                pass
+            else:
+                self.info_tab.comment.insert(tkinter.END, line)
+                self.info_tab.comment.insert(tkinter.END, "\n")
+
+        else:
+            self.info_tab.comment.delete("1.0", tkinter.END)
 
     ########################################################################################
     # functions menu

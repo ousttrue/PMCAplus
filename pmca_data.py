@@ -1,3 +1,4 @@
+from typing import Callable
 import os
 import PyPMCA
 import PMCA
@@ -68,18 +69,37 @@ class PmcaData:
             LIST.g[1],
         )
 
+        self.cnl_lines: list[str] = []
+        self.on_refresh: list[Callable[[float, float, float], None]] = []
         self.parts_list: list[PyPMCA.PARTS] = []
         self.mats_list: list[PyPMCA.MATS] = []
         self.tree_entry = []
         self.parts_entry_k = []
         self.parts_entry_p = []
-        self.mat_rep = None
+
         self.transform_data: list[PyPMCA.MODEL_TRANS_DATA] = [
             PyPMCA.MODEL_TRANS_DATA(scale=1.0, bones=[], props={})
         ]
         self.transform_list: list[PyPMCA.MODEL_TRANS_DATA] = []
-        self.licenses: list[str] = []
+
         self.authors: list[str] = []
+
+        def append_author(author: str):
+            for z in self.authors:
+                if z == y:
+                    return
+            else:
+                self.authors.append(y)
+
+        self.licenses: list[str] = []
+
+        def append_license(license: str):
+            for z in self.licenses:
+                if z == y:
+                    return
+
+            self.licenses.append(y)
+
         self.modelinfo = PyPMCA.MODELINFO()
         self.target_dir = "./model/"
         self.cur_parts = 0
@@ -121,8 +141,8 @@ class PmcaData:
             self.tree_entry.append(x.text)
         self.tree_entry = self.tree_entry[1:]
 
-        self.parts_entry_k = []
-        self.parts_entry_p = []
+        self.parts_entry_k: list[str] = []
+        self.parts_entry_p: list[PyPMCA.PARTS | str | None] = []
         for x in self.parts_list:
             for y in x.type:
                 if y == "root":
@@ -135,7 +155,8 @@ class PmcaData:
         # app.parts_entry_k.append('#None')
         # app.parts_entry_p.append(None)
 
-        self.mat_rep = PyPMCA.MAT_REP(app=self)
+        self.mat_rep = PyPMCA.MAT_REP(append_author, append_license)
+        self.mat_entry: tuple[list[str], list[str]] = ([], [])
         try:
             self.load_CNL_File("./last.cnl")
         except:
@@ -143,6 +164,91 @@ class PmcaData:
             self.load_CNL_File("./default.cnl")
 
         PMCA.CretateViewerThread()
+
+    def select_tree(self, sel_t: int):
+        # sel_t = index + 1
+        joint = self.tree_list[sel_t].node.parts.joint[self.tree_list[sel_t].c_num]
+
+        self.parts_entry_k: list[str] = []
+        self.parts_entry_p: list[PyPMCA.PARTS | str | None] = []
+        for x in self.parts_list:
+            for y in x.type:
+                if y == joint:
+                    self.parts_entry_k.append(x.name)
+                    self.parts_entry_p.append(x)
+                    break
+        self.parts_entry_k.append("#外部モデル読み込み")
+        self.parts_entry_p.append("load")
+        self.parts_entry_k.append("#None")
+        self.parts_entry_p.append(None)
+
+    def select_parts(self, sel_t: int, sel: int) -> str:
+        if self.parts_entry_p[sel] == None:  # Noneを選択した場合
+            node = None
+
+        elif self.parts_entry_p[sel] == "load":  # 外部モデル読み込み
+            path = filedialog.askopenfilename(
+                filetypes=[("Plygon Model Deta(for MMD)", ".pmd"), ("all", ".*")],
+                defaultextension=".pmd",
+            )
+            if path != "":
+                name = path.split("/")[-1]
+                parts = PyPMCA.PARTS(name=name, path=path, props={})
+                node = PyPMCA.NODE(
+                    parts=parts, depth=self.tree_list[sel_t].node.depth + 1, child=[]
+                )
+                for x in node.parts.joint:
+                    node.child.append(None)
+            else:
+                node = None
+
+        else:
+            # print(self.parts_entry_p[sel].path)
+            # print(self.tree_list[sel_t].node.parts.name)
+
+            node = PyPMCA.NODE(
+                parts=self.parts_entry_p[sel],
+                depth=self.tree_list[sel_t].node.depth + 1,
+                child=[],
+            )
+            p_node = self.tree_list[sel_t].node.child[self.tree_list[sel_t].c_num]
+
+            child_appended = []
+            if p_node != None:
+                for x in node.parts.joint:
+                    node.child.append(None)
+                    for j, y in enumerate(p_node.parts.joint):
+                        if x == y:
+                            for z in child_appended:
+                                if z == y:
+                                    break
+                            else:
+                                node.child[-1] = p_node.child[j]
+                                child_appended.append(y)
+                                break
+            else:
+                for x in node.parts.joint:
+                    node.child.append(None)
+
+            # print(">>", node.parts.name, "\n")
+        self.tree_list[sel_t].node.child[self.tree_list[sel_t].c_num] = node
+        # self.tree_list[sel_t].node.list_num = sel
+        self.refresh(0)
+
+        if node == None:
+            return ""
+        else:
+            return node.parts.comment
+
+    def select_mats(self, sel_t: int) -> str:
+        self.cur_mat = sel_t
+        return self.mat_rep.mat[self.mat_entry[1][sel_t]].mat.comment
+
+    def select_mats_sel(self, sel: int):
+        self.mat_rep.mat[self.mat_entry[1][self.cur_mat]].sel = self.mat_rep.mat[
+            self.mat_entry[1][self.cur_mat]
+        ].mat.entries[sel]
+        self.refresh(level=1)
 
     def shutdown(self):
         try:
@@ -152,32 +258,25 @@ class PmcaData:
 
         PMCA.QuitViewerThread()
 
-    def raise_update(self):
-        for callback in self.update_callbacks:
-            callback()
-
     def refresh(self, level: int):
         """
         level: 0 full buildF
         """
-        # sel_t = int(self.tab[0].l_tree.listbox.curselection()[0])
+        assert self.tree_list[0].node
         self.tree_list = self.tree_list[0].node.create_list()
         self.tree_entry = []
 
         for x in self.tree_list:
             self.tree_entry.append(x.text)
         self.tree_entry = self.tree_entry[1:]
-        # self.tab[0].l_tree.set_entry(self.tree_entry, sel=sel_t)
 
         # モデル組み立て
         PMCA.MODEL_LOCK(1)
 
         if level < 1:
-            print("モデル組立て")
+            LOGGER.info("モデル組立て")
 
             PMCA.Create_PMD(0)
-
-            # PMCA.Load_PMD(0, "./testmodels/001.pmd")
 
             x = self.tree_list[0].node
             if x != None:
@@ -191,17 +290,12 @@ class PmcaData:
             # 材質関連
             print("材質置換")
             self.mat_rep.Get(self.mats_list)
-            # print("1")
             self.mat_entry = [[], []]
             for v in self.mat_rep.mat.values():
                 if v.num >= 0:
                     self.mat_entry[0].append(v.mat.name + "  " + v.sel.name)
                     self.mat_entry[1].append(v.mat.name)
-            # print("2")
-            # self.tab[1].l_tree.set_entry(self.mat_entry[0], sel=self.cur_mat)
-            # print("3")
             self.mat_rep.Set()
-            # print("4")
             PMCA.Copy_PMD(0, 2)
         else:
             PMCA.Copy_PMD(2, 0)
@@ -314,25 +408,20 @@ class PmcaData:
 
         PMCA.MODEL_LOCK(0)
 
-        wht = PMCA.getWHT(0)
-        # app.tab[2].info_str.set(
-        #     "height     = %f\nwidth      = %f\nthickness = %f\n" % (wht[1], wht[0], wht[2])
-        # )
-        # app.tab[3].frame.text.set("Author : %s\nLicense : %s" % (str1, str2))
-
-        print("Done")
+        w, h, t = PMCA.getWHT(0)
+        LOGGER.info("refreshed")
+        for callback in self.on_refresh:
+            callback(w, h, t)
 
     def load_CNL_File(self, name: str):
         f = open(name, "r", encoding="utf-8-sig")
         lines = f.read()
         f.close
-        lines = lines.split("\n")
+        self.cnl_lines = lines.split("\n")
 
-        # self.raise_update()
-
-        self.tree_list[0].node.text_to_node(self.parts_list, lines)
-        self.mat_rep.text_to_list(lines, self.mats_list)
-        self.transform_data[0].text_to_list(lines)
+        self.tree_list[0].node.text_to_node(self.parts_list, self.cnl_lines)
+        self.mat_rep.text_to_list(self.cnl_lines, self.mats_list)
+        self.transform_data[0].text_to_list(self.cnl_lines)
 
     def save_CNL_File(self, name):
         if self.tree_list[0].node.child[0] == None:

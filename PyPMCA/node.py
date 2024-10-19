@@ -333,7 +333,7 @@ class NODE:
 @dataclasses.dataclass
 class TREE_LIST:
     # def __init__(self, node=None, depth=0, text="", c_num=-1, list_num=0):
-    node: NODE | None = None
+    node: NODE
     depth: int = 0
     text: str = ""
     c_num: int = -1
