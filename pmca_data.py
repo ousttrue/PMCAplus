@@ -1,9 +1,9 @@
-from typing import Callable
 import os
 import PyPMCA
 import PMCA
 import converter
 import logging
+import pathlib
 
 
 LOGGER = logging.getLogger(__name__)
@@ -12,6 +12,44 @@ LOGGER = logging.getLogger(__name__)
 class SETTINGS:
     def __init__(self):
         self.export2folder = False
+
+
+def convert_oldversion(x: pathlib.Path):
+    fp = open(x, "r", encoding="cp932")
+    try:
+        lines = fp.read()
+        line = lines.split("\n")
+        line = line[0].replace("\n", "")
+        if (
+            line == "PMCA Parts list v1.0"
+            or line == "PMCA Materials list v1.1"
+            or line == "PMCA Materials list v1.0"
+            or line == "PMCA Textures list v1.0"
+            or line == "PMCA Bone_Group list v1.0"
+        ):
+            fp.close()
+
+            logging.info(f"convert old version: {x}")
+            if os.name == "posix":
+                fp = open(x, "w", encoding="cp932")
+                fp.write(lines)
+                fp.close()
+                converter.v1_v2("./converter/PMCA_1.0-2.0converter", [x])
+            elif os.name == "nt":
+                converter.v1_v2(".\\converter\\PMCA_1.0-2.0converter.exe", [x])
+        if line == "bone":
+            logging.info(f"convert old version: {x}")
+            fp = open(x, "r", encoding="cp932")
+            lines = fp.read()
+            fp.close()
+
+            fp = open(x, "w", encoding="utf-8")
+            fp.write("PMCA list data v2.0\n")
+            fp.write(lines)
+            fp.close()
+
+    except UnicodeDecodeError:
+        fp.close()
 
 
 class PmcaData:
@@ -30,8 +68,8 @@ class PmcaData:
             LIST.g[1],
         )
 
-        self.parts_list = []
-        self.mats_list = []  # list of class MATS
+        self.parts_list: list[PyPMCA.PARTS] = []
+        self.mats_list: list[PyPMCA.MATS] = []
         self.tree_entry = []
         self.parts_entry_k = []
         self.parts_entry_p = []
@@ -39,7 +77,7 @@ class PmcaData:
         self.transform_data: list[PyPMCA.MODEL_TRANS_DATA] = [
             PyPMCA.MODEL_TRANS_DATA(scale=1.0, bones=[], props={})
         ]
-        self.transform_list = []
+        self.transform_list: list[PyPMCA.MODEL_TRANS_DATA] = []
         self.licenses: list[str] = []
         self.authors: list[str] = []
         self.modelinfo = PyPMCA.MODELINFO()
@@ -47,66 +85,29 @@ class PmcaData:
         self.cur_parts = 0
         self.cur_mat = 0
         self.settings = SETTINGS()
-        print("登録データ読み込み")
-        for x in os.listdir("./"):
-            if os.path.isfile(x):
-                print(x)
+        for x in pathlib.Path(".").iterdir():
+            if not os.path.isfile(x):
+                continue
 
-                fp = open(x, "r", encoding="cp932")
-                try:
-                    lines = fp.read()
-                    line = lines.split("\n")
-                    line = line[0].replace("\n", "")
-                    print('"%s"' % (line))
-                    if (
-                        line == "PMCA Parts list v1.0"
-                        or line == "PMCA Materials list v1.1"
-                        or line == "PMCA Materials list v1.0"
-                        or line == "PMCA Textures list v1.0"
-                        or line == "PMCA Bone_Group list v1.0"
-                    ):
-                        fp.close()
+            convert_oldversion(x)
 
-                        if os.name == "posix":
-                            fp = open(x, "w", encoding="cp932")
-                            fp.write(lines)
-                            fp.close()
-                            converter.v1_v2("./converter/PMCA_1.0-2.0converter", [x])
-                        elif os.name == "nt":
-                            converter.v1_v2(
-                                ".\\converter\\PMCA_1.0-2.0converter.exe", [x]
-                            )
-                    if line == "bone":
-                        fp = open(x, "r", encoding="cp932")
-                        lines = fp.read()
-                        fp.close()
-
-                        fp = open(x, "w", encoding="utf-8")
-                        fp.write("PMCA list data v2.0\n")
-                        fp.write(lines)
-                        fp.close()
-
-                except UnicodeDecodeError:
-                    fp.close()
-                fp = open(x, "r", encoding="utf-8-sig")
-                try:
-                    line = fp.readline()
-                    print(line)
-
-                    if line == "PMCA Parts list v2.0\n":
-                        self.parts_list = PyPMCA.load_partslist(fp, self.parts_list)
-                    elif line == "PMCA Materials list v2.0\n":
-                        self.mats_list = PyPMCA.load_matslist(fp, self.mats_list)
-                    elif line == "PMCA Transform list v2.0\n":
-                        self.transform_list = PyPMCA.load_translist(
-                            fp, self.transform_list
-                        )
-
-                    fp.close()
-                except UnicodeDecodeError:
-                    fp.close()
-                except UnicodeEncodeError:
-                    fp.close()
+            try:
+                lines = x.read_text(encoding="utf-8-sig").splitlines()
+                match lines[0]:
+                    case "PMCA Parts list v2.0":
+                        LOGGER.info(f"{x} => {lines[0]}")
+                        self.parts_list += PyPMCA.PARTS.load(lines[1:])
+                    case "PMCA Materials list v2.0":
+                        LOGGER.info(f"{x} => {lines[0]}")
+                        self.mats_list += PyPMCA.MATS.load(lines)
+                    case "PMCA Transform list v2.0":
+                        LOGGER.info(f"{x} => {lines[0]}")
+                        self.transform_list += PyPMCA.MODEL_TRANS_DATA.load(lines)
+                    case _:
+                        pass
+            except Exception as ex:
+                # LOGGER.exception(ex)
+                raise ex
 
         print("ツリー初期化")
         node = PyPMCA.NODE(
@@ -242,9 +243,9 @@ class PmcaData:
                     PMCA.Move_Bone(
                         0,
                         x.name.encode("cp932", "replace"),
-                        x.pos[0],
-                        x.pos[1],
-                        x.pos[2],
+                        x.pos.x,
+                        x.pos.y,
+                        x.pos.z,
                     )
                     # print("resize_bone %f %f"%(x.length, x.thick))
 
@@ -280,7 +281,7 @@ class PmcaData:
                 PMCA.Move_Bone(0, "+センター".encode("cp932", "replace"), 0, -dy, 0)
 
             for y in self.transform_data:
-                PMCA.Move_Model(0, y.pos[0], y.pos[1], y.pos[2])
+                PMCA.Move_Model(0, y.pos.x, y.pos.y, y.pos.z)
 
             PMCA.Update_Skin(0)
             PMCA.Adjust_Joints(0)
