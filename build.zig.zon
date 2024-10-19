@@ -8,6 +8,10 @@
         .stb = .{
             .path = "subprojects/stb",
         },
+        .compile_commands = .{
+            .url = "git+https://github.com/the-argus/zig-compile-commands.git#34ffa4290ca4fc060168e8eca9574ff11002fb0b",
+            .hash = "12209264387a67972ccebb9ff53a08b2ee8519f5f9b93b9d400a144d849528136ead",
+        },
     },
     .paths = .{""},
 }

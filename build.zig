@@ -1,6 +1,9 @@
 const std = @import("std");
+const zcc = @import("compile_commands");
 
 pub fn build(b: *std.Build) void {
+    var targets = std.ArrayList(*std.Build.Step.Compile).init(b.allocator);
+
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
     const dll = b.addSharedLibrary(.{
@@ -13,6 +16,7 @@ pub fn build(b: *std.Build) void {
         .dest_sub_path = "PMCA.pyd",
     });
     b.getInstallStep().dependOn(&install.step);
+    targets.append(dll) catch @panic("OOM");
 
     dll.addCSourceFiles(.{
         .root = b.path("sources"),
@@ -49,4 +53,6 @@ pub fn build(b: *std.Build) void {
     dll.linkSystemLibrary("WINMM");
     dll.linkSystemLibrary("OPENGL32");
     dll.linkSystemLibrary("GLU32");
+
+    zcc.createStep(b, "cdb", targets.toOwnedSlice() catch @panic("OOM"));
 }
