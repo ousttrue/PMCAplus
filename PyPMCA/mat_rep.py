@@ -6,12 +6,19 @@ from . import author_license
 
 
 @dataclasses.dataclass
+class MAT_REP_DATA:
+    mat: material.MATS
+    num: int = -1
+    sel: material.MATS_ENTRY | None = None
+
+
+@dataclasses.dataclass
 class MAT_REP:
     """
     材質置換
     """
 
-    mat: dict[str, str] = dataclasses.field(default_factory=dict)
+    mat: dict[str, MAT_REP_DATA] = dataclasses.field(default_factory=dict)
     toon: types.TOON = dataclasses.field(default_factory=types.TOON)
 
     def Get(
@@ -21,33 +28,35 @@ class MAT_REP:
         info: types.INFO | None = None,
         num: int = 0,
     ):
-        mat: list[types.MATERIAL] = []
+        materials: list[types.MATERIAL] = []
         if model == None:
             if info == None:
                 info_data = PMCA.getInfo(num)
                 info = types.INFO.create(info_data)
             for i in range(info.mat_count):
                 tmp = PMCA.getMat(num, i)
-                mat.append(types.MATERIAL(**tmp))
+                materials.append(types.MATERIAL(**tmp))
         else:
             info = model.info
-            mat = model.mat
+            materials = model.mat
 
         for x in self.mat.values():
             x.num = -1
 
         assert info
-        for i in range(info.mat_count):
+        for i, material in enumerate(materials):
             for x in mats_list:
-                if mat[i].tex == x.name and x.name != "":
-                    if self.mat.get(mat[i].tex) == None:
-                        self.mat[mat[i].tex] = MAT_REP_DATA(mat=x, num=i)
+                if material.tex == x.name and x.name != "":
+                    if self.mat.get(material.tex) == None:
+                        self.mat[material.tex] = MAT_REP_DATA(mat=x, num=i)
                     else:
-                        self.mat[mat[i].tex].num = i
+                        self.mat[material.tex].num = i
 
-                    if self.mat[mat[i].tex].sel == None:
-                        self.mat[mat[i].tex].sel = self.mat[mat[i].tex].mat.entries[0]
-                        for y in self.mat[mat[i].tex].mat.entries:
+                    if self.mat[material.tex].sel == None:
+                        self.mat[material.tex].sel = self.mat[material.tex].mat.entries[
+                            0
+                        ]
+                        for y in self.mat[material.tex].mat.entries:
                             print(y.props)
 
     def Set(
@@ -188,10 +197,3 @@ class MAT_REP:
                         print(tmp[0])
                         self.mat[tmp[0]] = MAT_REP_DATA(num=-1, mat=tmp[2], sel=y)
                         break
-
-
-class MAT_REP_DATA:  # 材質置換データ
-    def __init__(self, num=-1, mat=None, sel=None):
-        self.num = num
-        self.mat = mat
-        self.sel = sel
