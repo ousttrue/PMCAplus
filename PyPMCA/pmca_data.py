@@ -1,11 +1,13 @@
 from typing import Callable
 import os
-import PyPMCA
-import PMCA
 import converter
 import logging
 import pathlib
 
+import PyPMCA
+import PMCA
+
+from . import translation
 
 LOGGER = logging.getLogger(__name__)
 
@@ -56,7 +58,7 @@ def convert_oldversion(x: pathlib.Path):
 class PmcaData:
     def __init__(self):
         PMCA.Init_PMD()
-        LIST = PyPMCA.TranslationList.load()
+        LIST = translation.TranslationList.load()
         PMCA.Set_List(
             len(LIST.b[0]),
             LIST.b[0],
