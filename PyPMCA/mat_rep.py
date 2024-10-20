@@ -84,8 +84,6 @@ class MAT_REP:
 
                     if self.mat[mat.tex].sel == None:
                         self.mat[mat.tex].sel = self.mat[mat.tex].mat.entries[0]
-                        for y in self.mat[mat.tex].mat.entries:
-                            print(y.props)
 
     def Set(
         self,
@@ -111,7 +109,6 @@ class MAT_REP:
                 rep = self.mat[x.tex].sel
                 for k, v in rep.props.items():
                     if k == "tex":
-                        print("replace texture", x.tex, "to", v, "num =", i)
                         x.tex = v
                     elif k == "tex_path":
                         x.tex_path = v

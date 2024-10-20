@@ -205,10 +205,10 @@ class PmcaData:
         """
         level: 0 full buildF
         """
+        LOGGER.info("モデル組立て")
         PMCA.MODEL_LOCK(1)
 
         if level < 1:
-            LOGGER.info("モデル組立て")
             PMCA.Create_PMD(0)
             self.author_license = self.tree_root.assemble(0)
             PMCA.Copy_PMD(0, 1)
@@ -217,7 +217,6 @@ class PmcaData:
 
         if level < 2:
             # 材質関連
-            print("材質置換")
             self.mat_rep.Get(self.assets.mats_list)
             self.mat_rep.Set(self.author_license)
             PMCA.Copy_PMD(0, 2)
@@ -225,7 +224,6 @@ class PmcaData:
             PMCA.Copy_PMD(2, 0)
 
         if level < 3:
-            print("体型調整")
             info_data = PMCA.getInfo(0)
             # info = PyPMCA.types.INFO.create(info_data)
 

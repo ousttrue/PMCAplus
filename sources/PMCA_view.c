@@ -429,15 +429,11 @@ int load_tex(MODEL *model, DSP_MODEL *dsp_model) {
   DSP_MAT *mats;
   int i, j;
   /*
-  printf("LockstateA %d\n", myflags.model_lock);
   while(myflags.model_lock != 0){
           SDL_Delay(30);
-          //printf("A");
   }
   myflags.model_lock=1;
   */
-
-  // printf("tex読み込み\n");
 
   mats = dsp_model->mats;
 
@@ -449,14 +445,10 @@ int load_tex(MODEL *model, DSP_MODEL *dsp_model) {
 
   for (i = 0; i < dsp_model->mats_c; i++) {
     for (j = 0; j < 3; j++) {
-      printf("%f %f %f\n", model->mat[i].diffuse[j],
-             model->mat[i].mirror_col[j], model->mat[i].spec_col[j]);
       mats[i].col[j] =
           (model->mat[i].diffuse[j] * 2 + model->mat[i].mirror_col[j]) / 2.5 +
           model->mat[i].spec_col[j] / 4;
     }
-    printf("col %f %f %f %f\n", mats[i].col[0], mats[i].col[1], mats[i].col[2],
-           mats[i].col[3]);
     mats[i].col[3] = model->mat[i].alpha;
     mats[i].texname[0] = '\0';
     memset(mats[i].texsize, 0, 2 * sizeof(int));
@@ -494,10 +486,6 @@ int load_tex(MODEL *model, DSP_MODEL *dsp_model) {
               mats[i].texbits, w, h, GL_UNSIGNED_BYTE, tmp_bits);
           mats[i].texsize[0] = w;
           mats[i].texsize[1] = h;
-#ifdef DEBUG
-          printf("log %f x %f\n", log_w, log_h);
-          printf("リサイズ %d x %d  %x %s\n", w, h, tmp, gluErrorString(tmp));
-#endif
           stbi_image_free(mats[i].texbits);
           mats[i].texbits = tmp_bits;
         }
@@ -516,10 +504,6 @@ int load_tex(MODEL *model, DSP_MODEL *dsp_model) {
     }
   }
 
-#ifdef DEBUG
-  printf("テクスチャ読み込み完了\n");
-#endif
-
   // myflags.model_lock=0;
 
   return 0;
@@ -537,7 +521,6 @@ int make_dsp_model(MODEL *model, DSP_MODEL *dsp_model) {
   /*
   while(myflags.model_lock != 0){
           SDL_Delay(30);
-          printf("B");
   }
   myflags.model_lock=1;
   */

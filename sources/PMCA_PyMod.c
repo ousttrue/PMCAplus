@@ -70,9 +70,7 @@ int PyList_to_Array_UShort(unsigned short *output, PyObject *List, int size) {
     if (tmp == NULL)
       return -1;
     output[i] = (unsigned short)PyLong_AsLong(tmp);
-    // printf("%d, ", (int)output[i]);
   }
-  // printf("\n");
   return 0;
 }
 
@@ -87,11 +85,9 @@ int PyList_to_Array_Str(char **output, PyObject *List, int size, int val) {
     tmp = PyList_GetItem(List, i);
     // op = output + val*i;
     // p = PyBytes_AsString(tmp);
-    // printf("b %p\n", &output[i]);
     // strncpy(output[i], PyBytes_AsString(tmp), maxlen);
     PyBytes_AsStringAndSize(tmp, &p, &maxlen);
     strncpy(output[i], p, maxlen);
-    // printf("a %p %s\n", output[i], output[i]);
   }
   return 0;
 }
@@ -215,7 +211,6 @@ static PyObject *getIK(PyObject *self, PyObject *args) {
   model = &g_model[num];
   if (model->IK_count <= i)
     Py_RETURN_NONE;
-  printf("IKchainlen :%d\n", model->IK_list[i].IK_chain_len);
   return Py_BuildValue(
       "{s:i,s:i,s:i,s:i,s:f,s:O}", "index", (int)model->IK_list[i].IKBone_index,
       "tail", (int)model->IK_list[i].IKTBone_index, "len",
@@ -293,7 +288,6 @@ static PyObject *getToonPath(PyObject *self, PyObject *args) {
   if (!PyArg_ParseTuple(args, "i", &num))
     return NULL;
   model = &g_model[num];
-  // printf("%s\n", model->toon_path[0]);
   return Py_BuildValue("[y,y,y,y,y,"
                        "y,y,y,y,y]",
                        model->toon_path[0], model->toon_path[1],
@@ -564,8 +558,6 @@ static PyObject *setIK(PyObject *self, PyObject *args) {
   if (model->IK_count <= i)
     Py_RETURN_NONE;
 
-  printf("%d %d\n", IK_list.IK_chain_len, model->IK_list[i].IK_chain_len);
-
   if (IK_list.IK_chain_len != model->IK_list[i].IK_chain_len) {
     FREE(model->IK_list[i].IKCBone_index);
     model->IK_list[i].IKCBone_index = NULL;
@@ -698,7 +690,6 @@ static PyObject *setToon(PyObject *self, PyObject *args) {
   /*
   for(i=0; i<10; i++){
           strncpy(model->toon[i], p[i], 100);
-          //printf("%s %s\n",model->toon[i], p[i]);
   }*/
 
   return Py_BuildValue("i", 0);
@@ -720,7 +711,6 @@ static PyObject *setToonPath(PyObject *self, PyObject *args) {
   /*
   for(i=0; i<10; i++){
           strncpy(model->toon_path[i], p[i], PATH_LEN);
-          //printf("%s %s\n",model->toon[i], p[i]);
   }
   */
   return Py_BuildValue("i", 0);
@@ -813,7 +803,6 @@ static PyObject *Set_List(PyObject *self, PyObject *args) {
     tmp = PyList_GetItem(bne, i);
     PyBytes_AsStringAndSize(tmp, &p, &len);
     strncpy(list.bone_eng[i], p, NAME_LEN);
-    // printf("%d %s\n", i, list.bone[i]);
   }
 
   /*表情*/
@@ -938,15 +927,10 @@ static PyObject *Marge_PMD(PyObject *self, PyObject *args) {
   int ret;
   if (!PyArg_ParseTuple(args, "i", &num))
     return NULL;
-  puts("ボーンマージ");
   ret = marge_bone(&g_model[num]);
-  puts("材質マージ");
   ret += marge_mat(&g_model[num]);
-  puts("IKマージ");
   ret += marge_IK(&g_model[num]);
-  puts("ボーングループマージ");
   ret += marge_bone_disp(&g_model[num]);
-  puts("剛体マージ");
   ret += marge_rb(&g_model[num]);
   return Py_BuildValue("i", ret);
 }
@@ -958,21 +942,16 @@ static PyObject *Sort_PMD(PyObject *self, PyObject *args) {
     return NULL;
 
   rename_tail(&g_model[num]);
-  puts("ボーンマージ");
   ret = marge_bone(&g_model[num]);
 
-  puts("ボーンソート");
   ret = sort_bone(&g_model[num], &list);
-  puts("表情ソート");
   ret += sort_skin(&g_model[num], &list);
-  puts("ボーングループソート");
   ret += sort_disp(&g_model[num], &list);
 
   //-0ボーン削除
   if (strcmp(g_model[num].bone[g_model[num].bone_count - 1].name, "-0") == 0) {
     g_model[num].bone_count--;
   }
-  puts("英語対応化");
   translate(&g_model[num], &list, 1);
   return Py_BuildValue("i", ret);
 }
@@ -1064,7 +1043,6 @@ static PyObject *PMD_view_set(PyObject *self, PyObject *args) {
   if (strcmp(str, "replace") == 0) {
     model_mgr(0, 0, &g_model[num]);
   } else {
-    printf("unexpected string '%s'\n", str);
     ret = 1;
   }
 
@@ -1079,10 +1057,8 @@ static PyObject *MODEL_LOCK(PyObject *self, PyObject *args) {
     return NULL;
 
   if (num == 1) {
-    printf("Lockstate %d\n", myflags.model_lock);
     while (myflags.model_lock != 0) {
       SDL_Delay(30);
-      // printf("C");
     }
     myflags.model_lock = 1;
 

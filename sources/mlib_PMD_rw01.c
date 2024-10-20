@@ -39,12 +39,10 @@ void *dbg_malloc(size_t s) {
     puts("メモリの確保に失敗しました");
     exit(-1);
   }
-  // printf("malloc:%p\n", p);
   return p;
 }
 
 void dbg_free(void *p) {
-  // printf("free:%p\n", p);
   if (p == NULL)
     return;
   free(p);
@@ -98,10 +96,6 @@ int load_list(LIST *list, const char file_name[]) {
     printf("ファイル %s を開けません\n", file_name);
     return 1;
   }
-
-  printf("リストボーン数:%d\n", list->bone_count);
-  printf("リスト表情数:%d\n", list->skin_count);
-  printf("リスト表示枠数:%d\n", list->disp_count);
 
   list->bone = MALLOC((size_t)list->bone_count * sizeof(char) * NAME_LEN);
   list->bone_eng = MALLOC((size_t)list->bone_count * sizeof(char) * NAME_LEN);
@@ -194,7 +188,6 @@ int load_PMD(MODEL *model, const char file_name[]) {
   int i = 0;
   for (; i < 64; i++) {
     if (count[i] != 255) {
-      // printf("%s, %s\n", cache_model[i].header.path, file_name);
       if (strncmp(cache_model[i].header.path, file_name, PATH_LEN) == 0) {
         copy_PMD(model, &cache_model[i]);
         count[i] = cur_count;
@@ -213,7 +206,6 @@ int load_PMD(MODEL *model, const char file_name[]) {
     }
   }
   if (i != 64) {
-    printf("Use Cache\n");
     return 0;
   }
 
@@ -223,7 +215,6 @@ int load_PMD(MODEL *model, const char file_name[]) {
     return 1;
   }
 
-  // printf("%s\n", file_name);
   strncpy(model->header.path, file_name, PATH_LEN);
 
   FREAD(model->header.magic, 1, 3, pmd);
@@ -238,14 +229,7 @@ int load_PMD(MODEL *model, const char file_name[]) {
   FREAD(model->header.name, 1, 20, pmd);
   FREAD(model->header.comment, 1, 256, pmd);
 
-#ifdef DEBUG
-  printf("%s \n %f \n %s \n %s \n", model->header.magic, model->header.version,
-         model->header.name, model->header.comment);
-#endif
   FREAD(&model->vt_count, 4, 1, pmd);
-#ifdef DEBUG
-  printf("頂点数:%d\n", model->vt_count);
-#endif
   model->vt = (VERTEX *)MALLOC((size_t)model->vt_count * sizeof(VERTEX));
   if (model->vt == NULL) {
     printf("配列を確保できません\n");
@@ -263,9 +247,6 @@ int load_PMD(MODEL *model, const char file_name[]) {
   }
 
   FREAD(&model->vt_index_count, 4, 1, pmd);
-#ifdef DEBUG
-  printf("面頂点数:%d\n", model->vt_index_count);
-#endif
   model->vt_index = (unsigned short *)MALLOC((size_t)model->vt_index_count *
                                              sizeof(unsigned short));
   if (model->vt_index == NULL) {
@@ -282,9 +263,6 @@ int load_PMD(MODEL *model, const char file_name[]) {
   }
 
   FREAD(&model->mat_count, 4, 1, pmd);
-#ifdef DEBUG
-  printf("材質数:%d\n", model->mat_count);
-#endif
   model->mat = (MATERIAL *)MALLOC((size_t)model->mat_count * sizeof(MATERIAL));
   if (model->mat == NULL) {
     printf("配列を確保できません\n");
@@ -324,9 +302,6 @@ int load_PMD(MODEL *model, const char file_name[]) {
   }
 
   FREAD(&model->bone_count, 2, 1, pmd);
-#ifdef DEBUG
-  printf("ボーン数:%d\n", model->bone_count);
-#endif
   model->bone = (BONE *)MALLOC((size_t)model->bone_count * sizeof(BONE));
   if (model->bone == NULL) {
     printf("配列を確保できません\n");
@@ -345,9 +320,6 @@ int load_PMD(MODEL *model, const char file_name[]) {
   }
 
   FREAD(&model->IK_count, 2, 1, pmd);
-#ifdef DEBUG
-  printf("IKデータ数:%d\n", model->IK_count);
-#endif
   model->IK_list = (IK_LIST *)MALLOC(model->IK_count * sizeof(IK_LIST));
   if (model->IK_list == NULL) {
     printf("配列を確保できません\n");
@@ -370,9 +342,6 @@ int load_PMD(MODEL *model, const char file_name[]) {
   }
 
   FREAD(&model->skin_count, 2, 1, pmd);
-#ifdef DEBUG
-  printf("表情数:%d\n", model->skin_count);
-#endif
   model->skin = (SKIN *)MALLOC((size_t)model->skin_count * sizeof(SKIN));
   if (model->skin == NULL) {
     printf("配列を確保できません\n");
@@ -399,9 +368,6 @@ int load_PMD(MODEL *model, const char file_name[]) {
   }
 
   FREAD(&model->skin_disp_count, 1, 1, pmd);
-#ifdef DEBUG
-  printf("表情枠:%d\n", model->skin_disp_count);
-#endif
   model->skin_index = (unsigned short *)MALLOC((size_t)model->skin_disp_count *
                                                sizeof(unsigned short));
   if (model->skin_index == NULL)
@@ -409,9 +375,6 @@ int load_PMD(MODEL *model, const char file_name[]) {
   FREAD(model->skin_index, 2, model->skin_disp_count, pmd);
 
   FREAD(&model->bone_group_count, 1, 1, pmd);
-#ifdef DEBUG
-  printf("ボーン枠:%d\n", model->bone_group_count);
-#endif
   model->bone_group = (BONE_GROUP *)MALLOC(sizeof(BONE_GROUP) *
                                            (size_t)model->bone_group_count);
   if (model->bone_group == NULL)
@@ -422,9 +385,6 @@ int load_PMD(MODEL *model, const char file_name[]) {
   }
 
   FREAD(&model->bone_disp_count, 4, 1, pmd);
-#ifdef DEBUG
-  printf("表示ボーン数:%d\n", model->bone_disp_count);
-#endif
   model->bone_disp =
       (BONE_DISP *)MALLOC((size_t)model->bone_disp_count * sizeof(BONE_DISP));
   if (model->bone_disp == NULL)
@@ -437,9 +397,6 @@ int load_PMD(MODEL *model, const char file_name[]) {
   FREAD(&model->eng_support, 1, 1, pmd);
 
   if (feof(pmd) != 0) {
-#ifdef DEBUG
-    printf("拡張部分なし\n");
-#endif
     model->eng_support = 0;
     for (int i = 0; i < 10; i++) {
       auto j = i + 1;
@@ -453,12 +410,7 @@ int load_PMD(MODEL *model, const char file_name[]) {
     return 0;
   }
 
-#ifdef DEBUG
-  printf("英名対応:%d\n", model->eng_support);
-#endif
-
   if (model->eng_support == 1) {
-    printf("英名対応PMD\n");
     FREAD(model->header.name_eng, 1, 20, pmd);
     model->header.name_eng[21] = '\0';
 
@@ -482,8 +434,6 @@ int load_PMD(MODEL *model, const char file_name[]) {
       model->bone_group[i].name_eng[50] = '\0';
     }
   } else {
-    printf("英名非対応PMD\n");
-
     *model->header.name_eng = '\0';
     *model->header.comment_eng = '\0';
 
@@ -514,15 +464,9 @@ int load_PMD(MODEL *model, const char file_name[]) {
       *str = '\0';
     }
     sprintf(model->toon_path[i], "%s%s", str, model->toon[i]);
-#ifdef DEBUG
-    printf("%s%s\n", str, model->toon[i]);
-#endif
   }
 
   FREAD(&model->rbody_count, 4, 1, pmd);
-#ifdef DEBUG
-  printf("剛体数:%d\n", model->rbody_count);
-#endif
   model->rbody =
       (RIGID_BODY *)MALLOC((size_t)model->rbody_count * sizeof(RIGID_BODY));
 
@@ -545,9 +489,6 @@ int load_PMD(MODEL *model, const char file_name[]) {
   }
 
   FREAD(&model->joint_count, 4, 1, pmd);
-#ifdef DEBUG
-  printf("ジョイント数:%d\n", model->joint_count);
-#endif
   model->joint = (JOINT *)MALLOC((size_t)model->joint_count * sizeof(JOINT));
   if (model->joint == NULL) {
     printf("配列を確保できません\n");
@@ -620,10 +561,6 @@ int write_PMD(MODEL *model, const char file_name[]) {
   fwrite(model->header.name, 20, 1, pmd);
   fwrite(model->header.comment, 256, 1, pmd);
 
-#ifdef DEBUG
-  printf("ヘッダ\n");
-#endif
-
   fwrite(&model->vt_count, 4, 1, pmd);
 
   for (i = 0; i < (model->vt_count); i++) {
@@ -636,10 +573,6 @@ int write_PMD(MODEL *model, const char file_name[]) {
     fwrite(&model->vt[i].edge_flag, 1, 1, pmd);
   }
 
-#ifdef DEBUG
-  printf("頂点\n");
-#endif
-
   fwrite(&model->vt_index_count, 4, 1, pmd);
 
   for (i = 0; i < model->vt_index_count; i++) {
@@ -649,9 +582,6 @@ int write_PMD(MODEL *model, const char file_name[]) {
     }
     fwrite(&model->vt_index[i], 2, 1, pmd);
   }
-#ifdef DEBUG
-  printf("面頂点\n");
-#endif
 
   fwrite(&model->mat_count, 4, 1, pmd);
 
@@ -676,9 +606,6 @@ int write_PMD(MODEL *model, const char file_name[]) {
       fwrite(model->mat[i].tex, 1, 20, pmd);
     }
   }
-#ifdef DEBUG
-  printf("材質\n");
-#endif
 
   fwrite(&model->bone_count, 2, 1, pmd);
 
@@ -690,9 +617,6 @@ int write_PMD(MODEL *model, const char file_name[]) {
     fwrite(&model->bone[i].IKBone_index, 2, 1, pmd);
     fwrite(model->bone[i].loc, 4, 3, pmd);
   }
-#ifdef DEBUG
-  printf("ボーン\n");
-#endif
 
   fwrite(&model->IK_count, 2, 1, pmd);
 
@@ -705,9 +629,6 @@ int write_PMD(MODEL *model, const char file_name[]) {
     fwrite(model->IK_list[i].IKCBone_index, 2, model->IK_list[i].IK_chain_len,
            pmd);
   }
-#ifdef DEBUG
-  printf("IKリスト\n");
-#endif
 
   fwrite(&model->skin_count, 2, 1, pmd);
 
@@ -720,15 +641,9 @@ int write_PMD(MODEL *model, const char file_name[]) {
       fwrite(model->skin[i].data[j].loc, 4, 3, pmd);
     }
   }
-#ifdef DEBUG
-  printf("表情\n");
-#endif
 
   fwrite(&model->skin_disp_count, 1, 1, pmd);
   fwrite(model->skin_index, 2, model->skin_disp_count, pmd);
-#ifdef DEBUG
-  printf("表情表示\n");
-#endif
 
   fwrite(&model->bone_group_count, 1, 1, pmd);
   for (i = 0; i < model->bone_group_count; i++) {
@@ -740,9 +655,6 @@ int write_PMD(MODEL *model, const char file_name[]) {
     fwrite(&model->bone_disp[i].index, 2, 1, pmd);
     fwrite(&model->bone_disp[i].bone_group, 1, 1, pmd);
   }
-#ifdef DEBUG
-  printf("ボーン表示\n");
-#endif
 
   // extension
   fwrite(&model->eng_support, 1, 1, pmd);
@@ -760,9 +672,6 @@ int write_PMD(MODEL *model, const char file_name[]) {
       fwrite(model->bone_group[i].name_eng, 1, 50, pmd);
     }
   }
-#ifdef DEBUG
-  printf("英名\n");
-#endif
 
   for (i = 0; i < 10; i++) {
     fwrite(model->toon[i], 1, 100, pmd);
@@ -782,9 +691,6 @@ int write_PMD(MODEL *model, const char file_name[]) {
     fwrite(model->rbody[i].property, 4, 5, pmd);
     fwrite(&model->rbody[i].type, 1, 1, pmd);
   }
-#ifdef DEBUG
-  printf("剛体\n");
-#endif
 
   fwrite(&model->joint_count, 4, 1, pmd);
 
@@ -796,9 +702,6 @@ int write_PMD(MODEL *model, const char file_name[]) {
     fwrite(model->joint[i].limit, 4, 12, pmd);
     fwrite(model->joint[i].spring, 4, 6, pmd);
   }
-#ifdef DEBUG
-  printf("ジョイント\n");
-#endif
 
   fclose(pmd);
   printf("%sへ出力しました。\n", file_name);
@@ -1089,9 +992,6 @@ int delete_PMD(MODEL *model) {
   model->bone_count = 0;
   model->bone = NULL;
 
-#ifdef DEBUGC
-  printf("ボーン\n");
-#endif
   for (i = 0; i < model->IK_count; i++) {
     FREE(model->IK_list[i].IKCBone_index);
     model->IK_list[i].IKCBone_index = NULL;
@@ -1101,18 +1001,10 @@ int delete_PMD(MODEL *model) {
   FREE(model->IK_list);
   model->IK_list = NULL;
 
-#ifdef DEBUGC
-  printf("IKリスト\n");
-#endif
   for (i = 0; i < model->skin_count; i++) {
-#ifdef DEBUG
-    printf("%d \n", i);
-#endif
     FREE(model->skin[i].data);
     model->skin[i].data = NULL;
   }
-
-  printf("%p %p\n", model->skin_index, model->skin);
 
   FREE(model->skin);
   model->skin_count = 0;
@@ -1166,9 +1058,6 @@ int copy_PMD(MODEL *out, MODEL *model) {
   for (i = 0; i < model->vt_count; i++) {
     out->vt[i] = model->vt[i];
   }
-#ifdef DEBUG
-  printf("頂点\n");
-#endif
   // 面頂点
   out->vt_index_count = model->vt_index_count;
   out->vt_index = (unsigned short *)MALLOC((size_t)model->vt_index_count *
@@ -1179,9 +1068,6 @@ int copy_PMD(MODEL *out, MODEL *model) {
     out->vt_index[i] = model->vt_index[i];
   }
 
-#ifdef DEBUG
-  printf("面頂点\n");
-#endif
   // 材質
   out->mat_count = model->mat_count;
   out->mat = (MATERIAL *)MALLOC((size_t)model->mat_count * sizeof(MATERIAL));
@@ -1191,9 +1077,6 @@ int copy_PMD(MODEL *out, MODEL *model) {
     out->mat[i] = model->mat[i];
   }
 
-#ifdef DEBUG
-  printf("材質\n");
-#endif
   // ボーン
   out->bone_count = model->bone_count;
   out->bone = (BONE *)MALLOC((size_t)model->bone_count * sizeof(BONE));
@@ -1202,9 +1085,6 @@ int copy_PMD(MODEL *out, MODEL *model) {
   for (i = 0; i < model->bone_count; i++) {
     out->bone[i] = model->bone[i];
   }
-#ifdef DEBUG
-  printf("ボーン\n");
-#endif
   // IKリスト
   out->IK_count = model->IK_count;
   out->IK_list = (IK_LIST *)MALLOC((size_t)model->IK_count * sizeof(IK_LIST));
@@ -1219,9 +1099,6 @@ int copy_PMD(MODEL *out, MODEL *model) {
     memcpy(out->IK_list[i].IKCBone_index, model->IK_list[i].IKCBone_index,
            size);
   }
-#ifdef DEBUG
-  printf("IKリスト\n");
-#endif
 
   // 表情
   out->skin_count = model->skin_count;
@@ -1236,9 +1113,6 @@ int copy_PMD(MODEL *out, MODEL *model) {
       return -1;
     memcpy(out->skin[i].data, model->skin[i].data, size);
   }
-#ifdef DEBUG
-  printf("表情\n");
-#endif
 
   // 表情表示
   out->skin_disp_count = model->skin_disp_count;
@@ -1250,9 +1124,6 @@ int copy_PMD(MODEL *out, MODEL *model) {
     out->skin_index[i] = model->skin_index[i];
   }
 
-#ifdef DEBUG
-  printf("表情表示\n");
-#endif
   // ボーン表示グループ
   out->bone_group_count = model->bone_group_count;
   out->bone_group = (BONE_GROUP *)MALLOC((size_t)model->bone_group_count *
@@ -1262,9 +1133,6 @@ int copy_PMD(MODEL *out, MODEL *model) {
   for (i = 0; i < model->bone_group_count; i++) {
     out->bone_group[i] = model->bone_group[i];
   }
-#ifdef DEBUG
-  printf("ボーン表示グループ\n");
-#endif
 
   // 表示ボーン
   size = (size_t)model->bone_disp_count * sizeof(BONE_DISP);
@@ -1273,23 +1141,17 @@ int copy_PMD(MODEL *out, MODEL *model) {
   if (out->bone_disp == NULL)
     return -1;
   memcpy(out->bone_disp, model->bone_disp, size);
-/*
-for(i=0; i<model->bone_disp_count; i++){
-        out->bone_disp[i] = model->bone_disp[i];
-}
-*/
-#ifdef DEBUG
-  printf("表示ボーン\n");
-#endif
+  /*
+  for(i=0; i<model->bone_disp_count; i++){
+          out->bone_disp[i] = model->bone_disp[i];
+  }
+  */
 
   memcpy(out->toon, model->toon, sizeof(char) * 10 * 100);
   memcpy(out->toon_path, model->toon_path, sizeof(char) * 10 * NAME_LEN);
 
   // 英名
   out->eng_support = model->eng_support;
-#ifdef DEBUG
-  printf("英名\n");
-#endif
 
   // 剛体
   out->rbody_count = model->rbody_count;
@@ -1300,9 +1162,6 @@ for(i=0; i<model->bone_disp_count; i++){
   for (i = 0; i < model->rbody_count; i++) {
     out->rbody[i] = model->rbody[i];
   }
-#ifdef DEBUG
-  printf("剛体\n");
-#endif
   // ジョイント
   out->joint_count = model->joint_count;
   out->joint = (JOINT *)MALLOC((size_t)model->joint_count * sizeof(JOINT));
@@ -1311,9 +1170,6 @@ for(i=0; i<model->bone_disp_count; i++){
   for (i = 0; i < model->joint_count; i++) {
     out->joint[i] = model->joint[i];
   }
-#ifdef DEBUG
-  printf("ジョイント\n");
-#endif
 
   return 0;
 }
@@ -1368,10 +1224,6 @@ int add_PMD(MODEL *model, MODEL *add) {
     j++;
   }
 
-#ifdef DEBUG
-  printf("頂点\n");
-#endif
-
   // 面頂点
   vt_index_count = model->vt_index_count + add->vt_index_count;
   vt_index =
@@ -1386,10 +1238,6 @@ int add_PMD(MODEL *model, MODEL *add) {
     vt_index[i] = add->vt_index[j] + model->vt_count;
     j++;
   }
-
-#ifdef DEBUG
-  printf("面頂点\n");
-#endif
 
   // 材質
   mat_count = model->mat_count + add->mat_count;
@@ -1406,10 +1254,6 @@ int add_PMD(MODEL *model, MODEL *add) {
     mat[i] = add->mat[j];
     j++;
   }
-
-#ifdef DEBUG
-  printf("材質\n");
-#endif
 
   // ボーン
   bone_count = model->bone_count + add->bone_count;
@@ -1430,9 +1274,6 @@ int add_PMD(MODEL *model, MODEL *add) {
       bone[i].IKBone_index = bone[i].IKBone_index + model->bone_count;
     j++;
   }
-#ifdef DEBUG
-  printf("ボーン\n");
-#endif
   // IKリスト
   IK_count = model->IK_count + add->IK_count;
   IK_list = (IK_LIST *)MALLOC((size_t)IK_count * sizeof(IK_LIST));
@@ -1462,10 +1303,6 @@ int add_PMD(MODEL *model, MODEL *add) {
     }
     j++;
   }
-
-#ifdef DEBUG
-  printf("IKリスト\n");
-#endif
 
   // 表情
   skin_count = model->skin_count + add->skin_count;
@@ -1514,11 +1351,9 @@ int add_PMD(MODEL *model, MODEL *add) {
     for (i = 0; i < model->skin[0].skin_vt_count; i++) {
       skin[0].data[i].index = model->skin[0].data[i].index;
     }
-    // printf("%d %d %d\n", skin[0].skin_vt_count, model->skin[0].skin_vt_count,
     // add->skin[0].skin_vt_count);
     j = 0;
     for (i = model->skin[0].skin_vt_count; i < skin[0].skin_vt_count; i++) {
-      // printf("%d \n", i);
       skin[0].data[i].index = add->skin[0].data[j].index + model->vt_count;
       j++;
     }
@@ -1530,11 +1365,9 @@ int add_PMD(MODEL *model, MODEL *add) {
       if (skin[i].data == NULL)
         return -1;
       memcpy(skin[i].data, model->skin[i].data, size);
-      // printf("%d %d \n", i, size);
     }
     j = 1;
     for (i = model->skin_count; i < skin_count; i++) {
-      // printf("%d\n", j);
       skin[i] = add->skin[j];
       size = (size_t)skin[i].skin_vt_count * sizeof(SKIN_DATA);
       skin[i].data = (SKIN_DATA *)MALLOC(size);
@@ -1548,9 +1381,6 @@ int add_PMD(MODEL *model, MODEL *add) {
       j++;
     }
   }
-#ifdef DEBUG
-  printf("表情\n");
-#endif
 
   // 表情表示
   skin_disp_count = model->skin_disp_count + add->skin_disp_count;
@@ -1569,9 +1399,6 @@ int add_PMD(MODEL *model, MODEL *add) {
     j++;
   }
 
-#ifdef DEBUG
-  printf("表情表示\n");
-#endif
   // ボーン表示
   bone_group_count = model->bone_group_count + add->bone_group_count;
   bone_group =
@@ -1598,21 +1425,12 @@ int add_PMD(MODEL *model, MODEL *add) {
     bone_disp[i].bone_group =
         add->bone_disp[j].bone_group + model->bone_group_count;
     j++;
-    // printf("%d %d %d %d\n", add->bone_disp[j].index,
     // add->bone_disp[j].bone_group, bone_disp[i].index,
     // bone_disp[i].bone_group);
   }
 
-#ifdef DEBUG
-  printf("ボーン表示\n");
-#endif
-
   // 英名
   model->eng_support = add->eng_support;
-
-#ifdef DEBUG
-  printf("英名\n");
-#endif
 
   // 剛体
   rbody_count = model->rbody_count + add->rbody_count;
@@ -1627,9 +1445,6 @@ int add_PMD(MODEL *model, MODEL *add) {
     rbody[i].bone = rbody[i].bone + model->bone_count;
     j++;
   }
-#ifdef DEBUG
-  printf("剛体\n");
-#endif
   // ジョイント
   joint_count = model->joint_count + add->joint_count;
   joint = (JOINT *)MALLOC((size_t)joint_count * sizeof(JOINT));
@@ -1646,97 +1461,54 @@ int add_PMD(MODEL *model, MODEL *add) {
     j++;
   }
 
-#ifdef DEBUG
-  printf("ジョイント\n");
-#endif
-
-#ifdef MEM_DBG
-  printf("free %p\n", model->vt);
-#endif
   FREE(model->vt);
   model->vt = vt;
   model->vt_count = vt_count;
 
-#ifdef MEM_DBG
-  printf("free %p\n", model->vt_index);
-#endif
   FREE(model->vt_index);
   model->vt_index = vt_index;
   model->vt_index_count = vt_index_count;
 
-#ifdef MEM_DBG
-  printf("free %p\n", model->mat);
-#endif
   FREE(model->mat);
   model->mat = mat;
   model->mat_count = mat_count;
 
-#ifdef MEM_DBG
-  printf("free %p\n", model->bone);
-#endif
   FREE(model->bone);
   model->bone = bone;
   model->bone_count = bone_count;
 
   for (i = 0; i < model->IK_count; i++) {
-#ifdef MEM_DBG
-    printf("free %p\n", model->IK_list[i].IKCBone_index);
-#endif
     FREE(model->IK_list[i].IKCBone_index);
     model->IK_list[i].IKCBone_index = NULL;
   }
-#ifdef MEM_DBG
-  printf("free %p\n", model->IK_list);
-#endif
   FREE(model->IK_list);
   model->IK_list = IK_list;
   model->IK_count = IK_count;
 
   for (i = 0; i < model->skin_count; i++) {
-#ifdef MEM_DBG
-    printf("free %p\n", model->skin[i].data);
-#endif
     FREE(model->skin[i].data);
     model->skin[i].data = NULL;
   }
-#ifdef MEM_DBG
-  printf("free %p\n", model->skin);
-#endif
   FREE(model->skin);
   model->skin = skin;
   model->skin_count = skin_count;
 
-#ifdef MEM_DBG
-  printf("free %p\n", model->skin_index);
-#endif
   FREE(model->skin_index);
   model->skin_index = skin_index;
   model->skin_disp_count = skin_disp_count;
 
-#ifdef MEM_DBG
-  printf("free %p\n", model->bone_group);
-#endif
   FREE(model->bone_group);
   model->bone_group = bone_group;
   model->bone_group_count = bone_group_count;
 
-#ifdef MEM_DBG
-  printf("free %p\n", model->bone_disp);
-#endif
   FREE(model->bone_disp);
   model->bone_disp = bone_disp;
   model->bone_disp_count = bone_disp_count;
 
-#ifdef MEM_DBG
-  printf("free %p\n", model->rbody);
-#endif
   FREE(model->rbody);
   model->rbody = rbody;
   model->rbody_count = rbody_count;
 
-#ifdef MEM_DBG
-  printf("free %p\n", model->joint);
-#endif
   FREE(model->joint);
   model->joint = joint;
   model->joint_count = joint_count;
@@ -1795,7 +1567,6 @@ int listup_bone(MODEL *model, const char file_name[]) {
 int get_file_name(char file_name[]) {
   int i;
   char input[256];
-  printf("ファイル名:");
   gets(input);
   if (input[0] == '\"') {
     for (i = 1; i < 256; i++) {

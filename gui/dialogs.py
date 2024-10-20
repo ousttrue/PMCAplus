@@ -126,16 +126,16 @@ class SCALE_DIALOG_FANC(tkinter.Toplevel):
         self.change_var(var)
 
     def change_var(self, var: float):
-        weight = self.data.transform_list[self.sel].scale
+        weight = self.data.assets.transform_list[self.sel].scale
         self.transform_data.scale = weight * var + 1 - weight
 
-        weight = self.data.transform_list[self.sel].pos
-        self.transform_data.pos = self.data.transform_list[self.sel].pos * var
+        weight = self.data.assets.transform_list[self.sel].pos
+        self.transform_data.pos = self.data.assets.transform_list[self.sel].pos * var
 
-        weight = self.data.transform_list[self.sel].rot
+        weight = self.data.assets.transform_list[self.sel].rot
         self.transform_data.rot = weight * var
 
-        for i, x in enumerate(self.data.transform_list[self.sel].bones):
+        for i, x in enumerate(self.data.assets.transform_list[self.sel].bones):
             self.transform_data.bones[i].length = x.length * var + 1 - x.length
             self.transform_data.bones[i].thick = x.thick * var + 1 - x.thick
             self.transform_data.bones[i].pos = x.pos * var
