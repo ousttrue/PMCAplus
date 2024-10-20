@@ -1,5 +1,5 @@
 import tkinter.ttk
-import pmca_data
+import PyPMCA.pmca_data as pmca_data
 
 
 class InfoTab(tkinter.ttk.Frame):

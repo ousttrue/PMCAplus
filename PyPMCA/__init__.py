@@ -11,6 +11,7 @@ from .material import MATS
 from .transform import MODEL_TRANS_DATA, BONE_TRANS_DATA, Vec3
 from .node import NODE
 from . import types
+from .pmca_data import PmcaData
 
 
 __all__ = [
@@ -21,6 +22,7 @@ __all__ = [
     "BONE_TRANS_DATA",
     "Vec3",
     "NODE",
+    "PmcaData",
 ]
 
 

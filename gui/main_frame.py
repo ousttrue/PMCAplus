@@ -4,7 +4,7 @@ from .model_tab import ModelTab
 from .material_tab import MaterialTab
 from .transform_tab import TransformTab
 from .info_tab import InfoTab
-import pmca_data
+import PyPMCA.pmca_data as pmca_data
 
 
 class MainFrame(tkinter.ttk.Frame):

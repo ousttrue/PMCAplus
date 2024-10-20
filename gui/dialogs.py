@@ -3,7 +3,7 @@
 from typing import Any
 import PyPMCA
 import tkinter
-import pmca_data
+import PyPMCA.pmca_data as pmca_data
 
 
 class SCALE_DIALOG_FANC(tkinter.Toplevel):

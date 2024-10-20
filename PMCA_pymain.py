@@ -3,7 +3,7 @@
 
 import tkinter
 import gui
-import pmca_data
+import PyPMCA
 import logging
 
 
@@ -23,10 +23,11 @@ mapping = {
 }
 
 
-class ColorfulHandler(logging.StreamHandler):
-    '''
+class ColorfulHandler(logging.StreamHandler):  # type: ignore
+    """
     https://pod.hatenablog.com/entry/2020/03/01/221715
-    '''
+    """
+
     def emit(self, record: logging.LogRecord) -> None:
         record.levelname = mapping[record.levelname]
         super().emit(record)
@@ -36,7 +37,7 @@ def main():
     logging.basicConfig(handlers=[ColorfulHandler()], level=logging.DEBUG)
     LOGGER.debug("start")
 
-    data = pmca_data.PmcaData()
+    data = PyPMCA.PmcaData()
     app = gui.MainFrame(tkinter.Tk(), data)
     data.refresh(0)
     app.mainloop()

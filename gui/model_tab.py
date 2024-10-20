@@ -1,6 +1,6 @@
 import tkinter.ttk
 from .listbox import LISTBOX
-import pmca_data
+import PyPMCA.pmca_data as pmca_data
 
 
 class ModelTab(tkinter.ttk.Frame):
