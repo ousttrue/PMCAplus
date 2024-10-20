@@ -35,7 +35,7 @@ class MAT_REP:
                 info = types.INFO.create(info_data)
             for i in range(info.mat_count):
                 tmp = PMCA.getMat(num, i)
-                materials.append(types.MATERIAL(**tmp))
+                materials.append(types.MATERIAL.create(**tmp))
         else:
             info = model.info
             materials = model.mat
@@ -44,19 +44,19 @@ class MAT_REP:
             x.num = -1
 
         assert info
-        for i, material in enumerate(materials):
+        for i, mat in enumerate(materials):
             for x in mats_list:
-                if material.tex == x.name and x.name != "":
-                    if self.mat.get(material.tex) == None:
-                        self.mat[material.tex] = MAT_REP_DATA(mat=x, num=i)
+                if mat.tex == x.name and x.name != "":
+                    if self.mat.get(mat.tex) == None:
+                        self.mat[mat.tex] = MAT_REP_DATA(mat=x, num=i)
                     else:
-                        self.mat[material.tex].num = i
+                        self.mat[mat.tex].num = i
 
-                    if self.mat[material.tex].sel == None:
-                        self.mat[material.tex].sel = self.mat[material.tex].mat.entries[
+                    if self.mat[mat.tex].sel == None:
+                        self.mat[mat.tex].sel = self.mat[mat.tex].mat.entries[
                             0
                         ]
-                        for y in self.mat[material.tex].mat.entries:
+                        for y in self.mat[mat.tex].mat.entries:
                             print(y.props)
 
     def Set(
@@ -73,7 +73,7 @@ class MAT_REP:
                 info = types.INFO.create(info_data)
             for i in range(info.mat_count):
                 tmp = PMCA.getMat(num, i)
-                mat.append(types.MATERIAL(**tmp))
+                mat.append(types.MATERIAL.create(**tmp))
         else:
             info = model.info
             mat = model.mat

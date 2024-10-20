@@ -45,34 +45,50 @@ class VT:
         self.edge = edge
 
 
+@dataclasses.dataclass
 class MATERIAL:
-    def __init__(
-        self,
-        diff_col,
-        alpha,
-        spec,
-        spec_col,
-        mirr_col,
-        toon,
-        edge,
-        face_count,
-        tex,
-        sph,
-        tex_path,
-        sph_path,
-    ):
-        self.diff_col = diff_col
-        self.alpha = alpha
-        self.spec = spec
-        self.spec_col = spec_col
-        self.mirr_col = mirr_col
-        self.toon = toon
-        self.edge = edge
-        self.face_count = face_count
-        self.tex = tex.decode("cp932", "replace")
-        self.sph = sph.decode("cp932", "replace")
-        self.tex_path = tex_path.decode("cp932", "replace")
-        self.sph_path = sph_path.decode("cp932", "replace")
+    diff_col: tuple[float, float, float]
+    alpha: float
+    spec: float
+    spec_col: tuple[float, float, float]
+    mirr_col: tuple[float, float, float]
+    toon: int
+    edge: int
+    face_count: int
+    tex: str
+    sph: str
+    tex_path: str
+    sph_path: str
+
+    @staticmethod
+    def create(
+        diff_col: tuple[float, float, float],
+        alpha: float,
+        spec: float,
+        spec_col: tuple[float, float, float],
+        mirr_col: tuple[float, float, float],
+        toon: int,
+        edge: int,
+        face_count: int,
+        tex: bytes,
+        sph: bytes,
+        tex_path: bytes,
+        sph_path: bytes,
+    ) -> "MATERIAL":
+        return MATERIAL(
+            diff_col=diff_col,
+            alpha=alpha,
+            spec=spec,
+            spec_col=spec_col,
+            mirr_col=mirr_col,
+            toon=toon,
+            edge=edge,
+            face_count=face_count,
+            tex=tex.decode("cp932", "replace"),
+            sph=sph.decode("cp932", "replace"),
+            tex_path=tex_path.decode("cp932", "replace"),
+            sph_path=sph_path.decode("cp932", "replace"),
+        )
 
 
 class BONE:
@@ -218,7 +234,7 @@ def Get_PMD(num, only=None):
     mat = []
     for i in range(info_data["mat_count"]):
         tmp = PMCA.getMat(num, i)
-        mat.append(MATERIAL(**tmp))
+        mat.append(MATERIAL.create(**tmp))
 
     bone = []
     for i in range(info_data["bone_count"]):

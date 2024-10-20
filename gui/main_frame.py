@@ -445,7 +445,7 @@ class MainFrame(tkinter.ttk.Frame):
             info_data = PMCA.getInfo(0)
             info = PyPMCA.INFO(info_data)
             for i in range(info.data["mat_count"]):
-                mat = PyPMCA.MATERIAL(**PMCA.getMat(0, i))
+                mat = PyPMCA.MATERIAL.create(**PMCA.getMat(0, i))
                 if mat.tex != "":
                     try:
                         shutil.copy(mat.tex_path, dirc)
