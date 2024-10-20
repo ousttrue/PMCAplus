@@ -4,13 +4,7 @@ import dataclasses
 import PMCA
 from . import types
 from .parts import PARTS
-
-
-def space(i: int) -> str:
-    string = ""
-    for _ in range(i):
-        string = string + "  "
-    return string
+from .author_license import AuthorLicense
 
 
 @dataclasses.dataclass
@@ -25,23 +19,23 @@ class NODE:
     child: list[Any] = dataclasses.field(default_factory=list)
     list_num: int = -1
 
-    def assemble(self, num, app):
-        app.script_fin = []
+    @staticmethod
+    def make_root() -> "NODE":
+        return NODE(
+            parts=PARTS(name="ROOT", joint=["root"]),
+            depth=-1,
+            child=[None],
+        )
+
+    def assemble(self, num: int) -> AuthorLicense:
         PMCA.Create_PMD(num)
         sysenc = sys.getfilesystemencoding()
         PMCA.Load_PMD(num, self.parts.path.encode(sysenc, "replace"))
         info_data = PMCA.getInfo(0)
-        info = types.INFO(info_data)
+        info = types.INFO.create(info_data)
         line = info.comment.split("\n")
+        author_license = AuthorLicense.create(info.name)
 
-        app.authors = []
-        app.licenses = []
-        if info.name != "":
-            app.authors = ["Unknown"]
-            app.licenses = ["Nonfree"]
-
-        pmpy = app
-        pmpy.functions = PMCA
         if "script_pre" in self.parts.props:
             for x in self.parts.props["script_pre"]:
                 argv = x.split()
@@ -59,7 +53,7 @@ class NODE:
                 fp.close
 
         if "script_fin" in self.parts.props:
-            app.script_fin.extend(self.parts.props["script_fin"])
+            author_license.script_fin.extend(self.parts.props["script_fin"])
 
         for x in line:
             tmp = x.split(":", 1)
@@ -82,19 +76,15 @@ class NODE:
         print("パーツのパス:%s" % (self.parts.path))
         for x in self.child:
             if x != None:
-                x.assemble_child(num, app)
+                x.assemble_child(num, author_license)
 
         PMCA.Sort_PMD(num)
 
-        for x in app.script_fin:
-            argv = x.split()
-            fp = open(argv[0], "r", encoding="utf-8-sig")
-            script = fp.read()
-            exec(script)
-            fp.close
+        author_license.execute_scripts()
 
-    def assemble_child(self, num, app):
-        pmpy = app
+        return author_license
+
+    def assemble_child(self, num: int, author_license: AuthorLicense) -> None:
         print("パーツのパス:%s" % (self.parts.path))
         sysenc = sys.getfilesystemencoding()
 
@@ -102,7 +92,7 @@ class NODE:
         PMCA.Load_PMD(4, self.parts.path.encode(sysenc, "replace"))
 
         info_data = PMCA.getInfo(4)
-        info = types.INFO(info_data)
+        info = types.INFO.create(info_data)
         line = info.comment.split("\n")
         flag_author = False
         flag_license = False
@@ -121,35 +111,20 @@ class NODE:
                     flag_author = True
                     tmp[1] = tmp[1].replace("　", " ")
                     for x in tmp[1].split(" "):
-                        for y in app.authors:
-                            if x == y:
-                                break
-                        else:
-                            app.authors.append(x)
+                        author_license.append_author(x)
 
             elif tmp[0] == "License" or tmp[0] == "license" or tmp[0] == "ライセンス":
                 if len(tmp) > 1:
                     flag_license = True
                     tmp[1] = tmp[1].replace("　", " ")
                     for x in tmp[1].split(" "):
-                        for y in app.licenses:
-                            if x == y:
-                                break
-                        else:
-                            app.licenses.append(x)
+                        author_license.append_license(x)
+
         if info.name != "":
             if flag_author == False:
-                for x in app.authors:
-                    if x == "Unknown":
-                        break
-                else:
-                    app.authors.append("Unknown")
+                author_license.append_author("Unknown")
             if flag_license == False:
-                for x in app.licenses:
-                    if x == "Nonfree":
-                        break
-                else:
-                    app.licenses.append("Nonfree")
+                author_license.append_license("Nonfree")
 
         if "script_pre" in self.parts.props:
             for x in self.parts.props["script_pre"]:
@@ -171,16 +146,16 @@ class NODE:
                 exec(script)
                 fp.close
         if "script_fin" in self.parts.props:
-            app.script_fin.extend(self.parts.props["script_fin"])
+            author_license.script_fin.extend(self.parts.props["script_fin"])
 
         for x in self.child:
             if x != None:
-                x.assemble_child(num, app)
+                x.assemble_child(num, author_license)
 
     def create_list(self) -> list["TREE_LIST"]:
         List: list[TREE_LIST] = [
             TREE_LIST(
-                node=self, depth=self.depth, text=space(self.depth) + self.parts.name
+                node=self, depth=self.depth, text="  " * self.depth + self.parts.name
             )
         ]
         for i, x in enumerate(self.child):
@@ -189,7 +164,7 @@ class NODE:
                     TREE_LIST(
                         node=self,
                         depth=self.depth + 1,
-                        text=space(self.depth + 1) + self.child[i].parts.name,
+                        text="  " * (self.depth + 1) + self.child[i].parts.name,
                         c_num=i,
                     )
                 )
@@ -199,7 +174,7 @@ class NODE:
                     TREE_LIST(
                         node=self,
                         depth=self.depth + 1,
-                        text=space(self.depth + 1) + "#" + self.parts.joint[i],
+                        text="  " * (self.depth + 1) + "#" + self.parts.joint[i],
                         c_num=i,
                     )
                 )
@@ -212,7 +187,7 @@ class NODE:
                     TREE_LIST(
                         node=self,
                         depth=self.depth + 1,
-                        text=space(self.depth + 1) + self.child[i].parts.name,
+                        text="  " * (self.depth + 1) + self.child[i].parts.name,
                         c_num=i,
                     )
                 )
@@ -222,7 +197,7 @@ class NODE:
                     TREE_LIST(
                         node=self,
                         depth=self.depth + 1,
-                        text=space(self.depth + 1) + "#" + self.parts.joint[i],
+                        text="  " * (self.depth + 1) + "#" + self.parts.joint[i],
                         c_num=i,
                     )
                 )
@@ -248,7 +223,7 @@ class NODE:
         lines.append("[Parent]")
         return lines
 
-    def text_to_node(self, parts_list, lines):
+    def text_to_node(self, parts_list: list[PARTS], lines: list[str]) -> None:
         tmp = [None, None]
         curnode = self
         parents = [self]

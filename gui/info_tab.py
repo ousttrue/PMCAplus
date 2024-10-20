@@ -38,15 +38,8 @@ class InfoTab(tkinter.ttk.Frame):
         self.name_l_entry = tkinter.ttk.Entry(self, textvariable=self.name_l)
         self.name_l_entry.pack(fill=tkinter.X)
 
-        str1 = ""
-        str2 = ""
-        for x in data.authors:
-            str1 += "%s " % (x)
-        for x in data.licenses:
-            str2 += "%s " % (x)
-
         self.text = tkinter.StringVar()
-        self.text.set("Author : %s\nLicense : %s" % (str1, str2))
+        self.text.set(data.get_authors_and_licenses())
         self.text_label = tkinter.ttk.Label(self, textvariable=self.text)
         self.text_label.pack(fill=tkinter.X)
 

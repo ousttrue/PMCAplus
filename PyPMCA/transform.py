@@ -126,7 +126,7 @@ class MODEL_TRANS_DATA:
 
         return lines
 
-    def text_to_list(self, lines):
+    def text_to_list(self, lines: list[str]) -> None:
         tmp = ["", "", None]
         i = 0
         try:

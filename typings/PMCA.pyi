@@ -1,7 +1,28 @@
-# {"getInfo", getInfo, METH_VARARGS, "Get Info of PMD"},
+from typing import TypedDict, Any
+
+class InfoDict(TypedDict):
+    name: bytes
+    name_eng: bytes
+    comment: bytes
+    comment_eng: bytes
+    eng_support: int
+    skin_index: int
+    mat_count: int
+
+def getInfo(slot: int) -> dict[str, Any]:
+    """
+    Get Info of PMD
+    """
+    ...
+
 # {"getVt", getVt, METH_VARARGS, "Get Vertex of PMD"},
 # {"getFace", getFace, METH_VARARGS, "Get Face of PMD"},
-# {"getMat", getMat, METH_VARARGS, "Get Material of PMD"},
+def getMat(slot: int, material: int) -> dict[str, Any]:
+    """
+    Get Material of PMD
+    """
+    ...
+
 # {"getBone", getBone, METH_VARARGS, "Get Bone of PMD"},
 # {"getIK", getIK, METH_VARARGS, "Get IK_List of PMD"},
 # {"getSkin", getSkin, METH_VARARGS, "Get Skin of PMD"},
@@ -43,7 +64,7 @@ def Set_List(
     """
     Set List of bone or things
     """
-    pass
+    ...
 
 # /***********************************************************************/
 # {"Set_Name_Comment", Set_Name_Comment, METH_VARARGS,
@@ -54,36 +75,59 @@ def Init_PMD() -> None:
     """
     Initialize
     """
-    pass
+    ...
 
-# {"Load_PMD", Load_PMD, METH_VARARGS, "Load PMD from file"},
+def Load_PMD(slot: int, path: bytes) -> None:
+    """
+    Load PMD from file
+    """
+    ...
+
 # {"Write_PMD", Write_PMD, METH_VARARGS, "Write PMD from file"},
-# {"Add_PMD", Add_PMD, METH_VARARGS, "Add PMD from file"},
-# {"Copy_PMD", Copy_PMD, METH_VARARGS, "Copy PMD"},
-# {"Create_PMD", Create_PMD, METH_VARARGS, "Create enpty PMD"},
-# {"Marge_PMD", Marge_PMD, METH_VARARGS, "Marge PMD"},
-# {"Sort_PMD", Sort_PMD, METH_VARARGS, "Sort PMD"},
-# {"PMD_view_set", PMD_view_set, METH_VARARGS, "Set selected PMD to dispray"},
-# /***********************************************************************/
-# {"Resize_Model", Resize_Model, METH_VARARGS, "Resize_Model"},
-# {"Move_Model", Move_Model, METH_VARARGS, "Move_Model"},
-# {"Resize_Bone", Resize_Bone, METH_VARARGS, "Resize_Bone"},
-# {"Move_Bone", Move_Bone, METH_VARARGS, "Move_Bone"},
-# {"Update_Skin", Update_Skin, METH_VARARGS, "Update_Skin"},
-# {"Adjust_Joints", Adjust_Joints, METH_VARARGS, "Adjust_Joints"},
-#
-# /***********************************************************************/
-# {"MODEL_LOCK", MODEL_LOCK, METH_VARARGS, "Lock/Unlock model"},
-# {"getWHT", getWHT, METH_VARARGS, "get height, width, thickness from model"},
-# /***********************************************************************/
 
-def CretateViewerThread() -> None:
-    pass
+def Add_PMD(src: int, dst: int) -> None: ...
+def Copy_PMD(src: int, dst: int) -> None: ...
+def Create_PMD(slot: int) -> None:
+    """
+    Create empty PMD
+    """
+    ...
+
+def Marge_PMD(slot: int) -> None: ...
+
+# {"Sort_PMD", Sort_PMD, METH_VARARGS, "Sort PMD"},
+
+def PMD_view_set(slot: int, mode: str) -> None:
+    """
+    Set selected PMD to dispray
+    """
+    ...
+
+# {"Resize_Model", Resize_Model, METH_VARARGS, "Resize_Model"},
+def Move_Model(slot: int, x: float, y: float, z: float) -> None: ...
+
+# {"Resize_Bone", Resize_Bone, METH_VARARGS, "Resize_Bone"},
+def Move_Bone(slot: int, bone: bytes, x: float, y: float, z: float) -> None: ...
+def Update_Skin(slot: int) -> None: ...
+def Adjust_Joints(slot: int) -> None: ...
+def MODEL_LOCK(lock: int) -> None:
+    """
+    Lock/Unlock model
+    """
+    ...
+
+def getWHT(slot: int) -> tuple[float, float, float]:
+    """
+    get height, width, thickness from model
+    """
+    ...
+
+def CretateViewerThread() -> None: ...
 
 # {"WaitViewerThread", WaitViewerThread, METH_VARARGS, "WaitViewerThread"},
-# {"QuitViewerThread", QuitViewerThread, METH_VARARGS, "QuitViewerThread"},
+def QuitViewerThread() -> None: ...
+
 # {"KillViewerThread", KillViewerThread, METH_VARARGS, "KillViewerThread"},
 # {"GetViewerThreadState", GetViewerThreadState, METH_VARARGS,
 #  "GetViewerThreadState"},
 # {"show3Dview", show3Dview, METH_VARARGS, "show3Dview"},
-#

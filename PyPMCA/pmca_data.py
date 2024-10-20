@@ -7,6 +7,9 @@ import PMCA
 
 from . import translation
 from . import pmca_assets
+from .node import NODE
+from .author_license import AuthorLicense
+from . import mat_rep
 
 LOGGER = logging.getLogger(__name__)
 
@@ -37,36 +40,15 @@ class PmcaData:
         self.assets.load(pathlib.Path("."))
 
         # cnl
-        node = PyPMCA.NODE(
-            parts=PyPMCA.PARTS(name="ROOT", joint=["root"]),
-            depth=-1,
-            child=[None],
-        )
+        root = NODE.make_root()
 
         self.transform_data: list[PyPMCA.MODEL_TRANS_DATA] = [
             PyPMCA.MODEL_TRANS_DATA(scale=1.0, bones=[], props={})
         ]
-        self.tree_list = node.create_list()
+        self.tree_list = root.create_list()
 
-        self.authors: list[str] = []
-
-        def append_author(author: str):
-            for z in self.authors:
-                if z == y:
-                    return
-            else:
-                self.authors.append(y)
-
-        self.licenses: list[str] = []
-
-        def append_license(license: str):
-            for z in self.licenses:
-                if z == y:
-                    return
-
-            self.licenses.append(y)
-
-        self.mat_rep = PyPMCA.MAT_REP(append_author, append_license)
+        self.author_license = AuthorLicense()
+        self.mat_rep = mat_rep.MAT_REP()
 
         self.cnl_lines: list[str] = []
         last_cnl = pathlib.Path("./last.cnl")
@@ -114,13 +96,16 @@ class PmcaData:
 
         PMCA.CretateViewerThread()
 
+    def get_authors_and_licenses(self) -> str:
+        return f"Author : {self.author_license.get_authors()}\nLicense : {self.author_license.get_licenses()}"
+
     def select_tree(self, sel_t: int):
         # sel_t = index + 1
         joint = self.tree_list[sel_t].node.parts.joint[self.tree_list[sel_t].c_num]
 
         self.parts_entry_k: list[str] = []
         self.parts_entry_p: list[PyPMCA.PARTS | str | None] = []
-        for x in self.parts_list:
+        for x in self.assets.parts_list:
             for y in x.type:
                 if y == joint:
                     self.parts_entry_k.append(x.name)
@@ -143,7 +128,7 @@ class PmcaData:
             if path != "":
                 name = path.split("/")[-1]
                 parts = PyPMCA.PARTS(name=name, path=path, props={})
-                node = PyPMCA.NODE(
+                node = NODE(
                     parts=parts, depth=self.tree_list[sel_t].node.depth + 1, child=[]
                 )
                 for x in node.parts.joint:
@@ -155,7 +140,7 @@ class PmcaData:
             # print(self.parts_entry_p[sel].path)
             # print(self.tree_list[sel_t].node.parts.name)
 
-            node = PyPMCA.NODE(
+            node = NODE(
                 parts=self.parts_entry_p[sel],
                 depth=self.tree_list[sel_t].node.depth + 1,
                 child=[],
@@ -227,9 +212,7 @@ class PmcaData:
 
             PMCA.Create_PMD(0)
 
-            x = self.tree_list[0].node
-            if x != None:
-                x.assemble(0, self)
+            self.author_license = self.tree_list[0].node.assemble(0)
 
             PMCA.Copy_PMD(0, 1)
         else:
@@ -244,7 +227,7 @@ class PmcaData:
                 if v.num >= 0:
                     self.mat_entry[0].append(v.mat.name + "  " + v.sel.name)
                     self.mat_entry[1].append(v.mat.name)
-            self.mat_rep.Set()
+            self.mat_rep.Set(self.author_license)
             PMCA.Copy_PMD(0, 2)
         else:
             PMCA.Copy_PMD(2, 0)
@@ -252,7 +235,7 @@ class PmcaData:
         if level < 3:
             print("体型調整")
             info_data = PMCA.getInfo(0)
-            info = PyPMCA.types.INFO(info_data)
+            # info = PyPMCA.types.INFO.create(info_data)
 
             tmpbone = []
             for i in range(info_data["bone_count"]):
@@ -332,22 +315,23 @@ class PmcaData:
             PMCA.Copy_PMD(3, 0)
 
         if level < 4:
-            str1 = ""
-            str2 = ""
-            for x in self.authors:
-                str1 += "%s " % (x)
-            for x in self.licenses:
-                str2 += "%s " % (x)
-            # self.modelinfo.name = name
-            # self.modelinfo.name_l = name_l
-            # self.modelinfo.comment = comment
             PyPMCA.Set_Name_Comment(
                 name=self.modelinfo.name,
                 comment="%s\nAuthor:%s\nLicense:%s\n%s"
-                % (self.modelinfo.name_l, str1, str2, self.modelinfo.comment),
+                % (
+                    self.modelinfo.name_l,
+                    self.author_license.get_authors(),
+                    self.author_license.get_licenses(),
+                    self.modelinfo.comment,
+                ),
                 name_eng=self.modelinfo.name_eng,
                 comment_eng="%s\nAuthor:%s\nLicense:%s\n%s"
-                % (self.modelinfo.name_l_eng, str1, str2, self.modelinfo.comment_eng),
+                % (
+                    self.modelinfo.name_l_eng,
+                    self.author_license.get_authors(),
+                    self.author_license.get_licenses(),
+                    self.modelinfo.comment_eng,
+                ),
             )
 
         if level < 3:
@@ -363,16 +347,14 @@ class PmcaData:
             callback(w, h, t)
 
     def load_CNL_File(self, cnl_file: pathlib.Path):
-
         self.cnl_lines = cnl_file.read_text(encoding="utf-8-sig").splitlines()
-
         self.tree_list[0].node.text_to_node(self.assets.parts_list, self.cnl_lines)
         self.mat_rep.text_to_list(self.cnl_lines, self.assets.mats_list)
         self.transform_data[0].text_to_list(self.cnl_lines)
 
-    def save_CNL_File(self, name):
+    def save_CNL_File(self, name: str) -> None:
         if self.tree_list[0].node.child[0] == None:
-            return False
+            return
 
         print(f"write {name}")
         lines = []

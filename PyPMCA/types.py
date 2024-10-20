@@ -1,15 +1,29 @@
 # C-Pythonデータ変換関連
+from typing import Any
+import dataclasses
 
 
+@dataclasses.dataclass
 class INFO:
-    def __init__(self, dic: dict[str, bytes]):
-        self.name = dic["name"].decode("cp932", "replace")
-        self.name_eng = dic["name_eng"].decode("cp932", "replace")
-        self.comment = dic["comment"].decode("cp932", "replace")
-        self.comment_eng = dic["comment_eng"].decode("cp932", "replace")
-        self.eng_support = dic["eng_support"]
-        self.skin_index = dic["skin_index"]
-        self.data = dic
+    name: str
+    name_eng: str
+    comment: str
+    comment_eng: str
+    eng_support: bool
+    skin_index: int
+    mat_count: int
+
+    @staticmethod
+    def create(dic: dict[str, Any]) -> "INFO":
+        return INFO(
+            dic["name"].decode("cp932", "replace"),
+            dic["name_eng"].decode("cp932", "replace"),
+            dic["comment"].decode("cp932", "replace"),
+            dic["comment_eng"].decode("cp932", "replace"),
+            dic["eng_support"] != 0,
+            dic["skin_index"],
+            dic["mat_count"],
+        )
 
 
 class VT:

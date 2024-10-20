@@ -11,18 +11,18 @@ class SCALE_DIALOG_FANC(tkinter.Toplevel):
         super().__init__()
         self.data = data
         self.sel = sel
-        self.title(self.data.transform_list[self.sel].name)
+        self.title(self.data.assets.transform_list[self.sel].name)
 
         self.data.transform_data.append(
             PyPMCA.MODEL_TRANS_DATA(
-                name=self.data.transform_list[self.sel].name,
+                name=self.data.assets.transform_list[self.sel].name,
             )
         )
         self.transform_data = self.data.transform_data[-1]
-        for x in self.data.transform_list[self.sel].bones:
+        for x in self.data.assets.transform_list[self.sel].bones:
             self.transform_data.bones.append(PyPMCA.BONE_TRANS_DATA(name=x.name))
 
-        t = data.transform_list[sel]
+        t = data.assets.transform_list[sel]
         buff = ""
         for x in t.bones:
             buff += "%s %f %f\n" % (x.name, x.length, x.thick)

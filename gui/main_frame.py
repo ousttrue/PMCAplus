@@ -59,9 +59,7 @@ class MainFrame(tkinter.ttk.Frame):
             "height     = %f\nwidth      = %f\nthickness = %f\n" % (w, h, t)
         )
 
-        str1 = " ".join(self.data.authors)
-        str2 = " ".join(self.data.licenses)
-        self.info_tab.text.set("Author : %s\nLicense : %s" % (str1, str2))
+        self.info_tab.text.set(self.data.get_authors_and_licenses()) # type: ignore
 
         lines = self.data.cnl_lines
         self.info_tab.name.set(lines[0])
