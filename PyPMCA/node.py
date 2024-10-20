@@ -27,6 +27,96 @@ class NODE:
             child=[None],
         )
 
+    @staticmethod
+    def load(lines: list[str], parts_list: list[PARTS]) -> "NODE":
+        root = NODE.make_root()
+        curnode = root
+        parents: list[NODE] = [root]
+        child_nums = [0]
+        count = 0
+        while lines[count] != "PARTS":
+            count += 1
+        count += 1
+
+        name = ""
+        path = ""
+        while count < len(lines):
+            line = lines[count].split(" ")
+            if len(parents) == 0:
+                # empty statck
+                break
+
+            match line[0]:
+                case "None":
+                    name = ""
+                    path = ""
+                    child_nums[-1] += 1
+
+                case "[Name]":
+                    name = line[1]
+
+                case "[Path]":
+                    if len(line) == 1:
+                        path = ""
+                    else:
+                        path = line[1]
+
+                case "[Child]":
+
+                    tp: PARTS | None = None
+                    if name:
+                        for y in parts_list:
+                            if y.name == name:
+                                tp = y
+                                break
+                    if not tp and path:
+                        for y in parts_list:
+                            if y.path == path:
+                                tp = y
+                                break
+
+                    if tp != None:
+                        print(curnode.parts.name, len(curnode.child), child_nums[-1])
+                        curnode.child[child_nums[-1]] = NODE(
+                            parts=y, depth=curnode.depth + 1, child=[]
+                        )
+                        parents.append(curnode)
+                        curnode = curnode.child[child_nums[-1]]
+                        child_nums.append(0)
+                        for x in curnode.parts.joint:
+                            curnode.child.append(None)
+
+                    else:
+                        depc = 1
+                        while depc == 0:
+                            count += 1
+                            if lines[count] == "[Child]":
+                                depc += 1
+                            if lines[count] == "[Parent]":
+                                depc -= 1
+                        parents.pop()
+                        child_nums.pop()
+                        child_nums[-1] += 1
+
+                case "[Parent]":
+                    curnode = parents.pop()
+                    child_nums.pop()
+                    print("up", len(parents))
+                    if len(child_nums) > 0:
+                        child_nums[-1] += 1
+
+                case "MATERIAL":
+                    break
+
+                case _:
+                    pass
+
+            count += 1
+
+        # root.recalc_depth()
+
+        return root
+
     def assemble(self, num: int) -> AuthorLicense:
         PMCA.Create_PMD(num)
         sysenc = sys.getfilesystemencoding()
@@ -154,9 +244,9 @@ class NODE:
 
     def create_list(self) -> list["TREE_LIST"]:
         List: list[TREE_LIST] = [
-            TREE_LIST(
-                node=self, depth=self.depth, text="  " * self.depth + self.parts.name
-            )
+            # TREE_LIST(
+            #     node=self, depth=self.depth, text="  " * self.depth + self.parts.name
+            # )
         ]
         for i, x in enumerate(self.child):
             if x != None:
@@ -221,87 +311,6 @@ class NODE:
             else:
                 lines.append("None")
         lines.append("[Parent]")
-        return lines
-
-    def text_to_node(self, parts_list: list[PARTS], lines: list[str]) -> None:
-        tmp = [None, None]
-        curnode = self
-        parents = [self]
-        child_nums = [0]
-        count = 0
-        while lines[count] != "PARTS":
-            # print(lines[i])
-            count += 1
-        count += 1
-
-        while count < len(lines):
-            print("count = %d" % (count))
-            line = lines[count].split(" ")
-            if len(parents) == 0:
-                break
-            if line[0] == "None":
-                tmp = [None, None]
-                child_nums[-1] += 1
-
-            elif line[0] == "[Name]":
-                tmp[0] = line[1]
-
-            elif line[0] == "[Path]":
-                if len(line) == 1:
-                    tmp[1] = ""
-                else:
-                    tmp[1] = line[1]
-
-            elif line[0] == "[Child]":
-
-                tp = None
-                print(tmp[0], len(parents))
-                if tmp[0] != None:
-                    for y in parts_list:
-                        if y.name == tmp[0]:
-                            tp = y
-                            break
-                    else:
-                        for y in parts_list:
-                            if y.path == tmp[1]:
-                                tp = y
-                                break
-
-                if tp != None:
-                    print(curnode.parts.name, len(curnode.child), child_nums[-1])
-                    curnode.child[child_nums[-1]] = NODE(
-                        parts=y, depth=curnode.depth + 1, child=[]
-                    )
-                    parents.append(curnode)
-                    curnode = curnode.child[child_nums[-1]]
-                    child_nums.append(0)
-                    for x in curnode.parts.joint:
-                        curnode.child.append(None)
-
-                else:
-                    depc = 1
-                    while depc == 0:
-                        count += 1
-                        if lines[count] == "[Child]":
-                            depc += 1
-                        if lines[count] == "[Parent]":
-                            depc -= 1
-                    parents.pop()
-                    child_nums.pop()
-                    child_nums[-1] += 1
-
-            elif line[0] == "[Parent]":
-                curnode = parents.pop()
-                child_nums.pop()
-                print("up", len(parents))
-                if len(child_nums) > 0:
-                    child_nums[-1] += 1
-            elif line[0] == "MATERIAL":
-                break
-            count += 1
-
-        self.recalc_depth
-
         return lines
 
 

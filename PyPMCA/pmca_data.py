@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Literal
 import logging
 import pathlib
 import dataclasses
@@ -51,13 +51,11 @@ class PmcaData:
         self.assets.load(pathlib.Path("."))
 
         # cnl
-        root = NODE.make_root()
+        self.tree_root = NODE.make_root()
 
         self.transform_data: list[PyPMCA.MODEL_TRANS_DATA] = [
             PyPMCA.MODEL_TRANS_DATA(scale=1.0, bones=[], props={})
         ]
-        self.tree_list = root.create_list()
-
         self.author_license = AuthorLicense()
         self.mat_rep = mat_rep.MAT_REP()
 
@@ -75,8 +73,6 @@ class PmcaData:
 
         # gui
         self.on_refresh: list[Callable[[float, float, float], None]] = []
-        self.parts_entry_k = []
-        self.parts_entry_p = []
 
         self.modelinfo = MODELINFO()
         self.target_dir = "./model/"
@@ -84,100 +80,95 @@ class PmcaData:
         self.cur_mat = 0
         self.settings = SETTINGS()
 
-        self.tree_entry: list[str] = []
-        for x in self.tree_list:
-            self.tree_entry.append(x.text)
-        self.tree_entry = self.tree_entry[1:]
+        self.mat_entry: tuple[list[str], list[str]] = ([], [])
+        PMCA.CretateViewerThread()
 
-        self.parts_entry_k: list[str] = []
-        self.parts_entry_p: list[PyPMCA.PARTS | str | None] = []
+    def get_tree_entry(self) -> list[str]:
+        tree_list = self.tree_root.create_list()
+        tree_entry: list[str] = []
+        for x in tree_list:
+            tree_entry.append(x.text)
+        return tree_entry
+
+    def get_parts_entry(self, joint: str = "root") -> list[str]:
+        parts_entry_k: list[str] = []
         for x in self.assets.parts_list:
             for y in x.type:
-                if y == "root":
-                    self.parts_entry_k.append(x.name)
-                    self.parts_entry_p.append(x)
+                if y == joint:
+                    parts_entry_k.append(x.name)
+                    # self.parts_entry_p.append(x)
                     break
-
-        self.parts_entry_k.append("#外部モデル読み込み")
-        self.parts_entry_p.append("load")
-        # app.parts_entry_k.append('#None')
-        # app.parts_entry_p.append(None)
-
-        self.mat_entry: tuple[list[str], list[str]] = ([], [])
-
-        PMCA.CretateViewerThread()
+        parts_entry_k.append("#外部モデル読み込み")
+        return parts_entry_k
 
     def get_authors_and_licenses(self) -> str:
         return f"Author : {self.author_license.get_authors()}\nLicense : {self.author_license.get_licenses()}"
 
-    def select_tree(self, sel_t: int):
-        # sel_t = index + 1
-        joint = self.tree_list[sel_t].node.parts.joint[self.tree_list[sel_t].c_num]
+    def select_tree(self, sel_t: int) -> tuple[list[str], int]:
+        tree_list = self.tree_root.create_list()
+        joint = tree_list[sel_t].node.parts.joint[tree_list[sel_t].c_num]
+        parts_entry_k: list[str] = self.get_parts_entry(joint)
+        sel = tree_list[sel_t].node.list_num
+        return parts_entry_k, sel
 
-        self.parts_entry_k: list[str] = []
-        self.parts_entry_p: list[PyPMCA.PARTS | str | None] = []
+    def select_parts(self, sel_t: int, sel: int) -> str:
+        tree_list = self.tree_root.create_list()
+        joint = tree_list[sel_t].node.parts.joint[tree_list[sel_t].c_num]
+        parts_entry_p: list[PyPMCA.PARTS | Literal["load"] | None] = []
         for x in self.assets.parts_list:
             for y in x.type:
                 if y == joint:
-                    self.parts_entry_k.append(x.name)
-                    self.parts_entry_p.append(x)
+                    parts_entry_p.append(x)
                     break
-        self.parts_entry_k.append("#外部モデル読み込み")
-        self.parts_entry_p.append("load")
-        self.parts_entry_k.append("#None")
-        self.parts_entry_p.append(None)
+        parts_entry_p.append("load")
+        parts_entry_p.append(None)
 
-    def select_parts(self, sel_t: int, sel: int) -> str:
-        if self.parts_entry_p[sel] == None:  # Noneを選択した場合
-            node = None
-
-        elif self.parts_entry_p[sel] == "load":  # 外部モデル読み込み
-            path = filedialog.askopenfilename(
-                filetypes=[("Plygon Model Deta(for MMD)", ".pmd"), ("all", ".*")],
-                defaultextension=".pmd",
-            )
-            if path != "":
-                name = path.split("/")[-1]
-                parts = PyPMCA.PARTS(name=name, path=path, props={})
-                node = NODE(
-                    parts=parts, depth=self.tree_list[sel_t].node.depth + 1, child=[]
-                )
-                for x in node.parts.joint:
-                    node.child.append(None)
-            else:
+        match parts_entry_p[sel]:
+            case None:  # Noneを選択した場合
                 node = None
 
-        else:
-            # print(self.parts_entry_p[sel].path)
-            # print(self.tree_list[sel_t].node.parts.name)
+            case "load":  # 外部モデル読み込み
+                path = filedialog.askopenfilename(
+                    filetypes=[("Plygon Model Deta(for MMD)", ".pmd"), ("all", ".*")],
+                    defaultextension=".pmd",
+                )
+                if path != "":
+                    name = path.split("/")[-1]
+                    parts = PyPMCA.PARTS(name=name, path=path, props={})
+                    node = NODE(
+                        parts=parts,
+                        depth=self.tree_list[sel_t].node.depth + 1,
+                        child=[],
+                    )
+                    for x in node.parts.joint:
+                        node.child.append(None)
+                else:
+                    node = None
 
-            node = NODE(
-                parts=self.parts_entry_p[sel],
-                depth=self.tree_list[sel_t].node.depth + 1,
-                child=[],
-            )
-            p_node = self.tree_list[sel_t].node.child[self.tree_list[sel_t].c_num]
+            case PyPMCA.PARTS() as parts:
+                node = NODE(
+                    parts=parts,
+                    depth=tree_list[sel_t].node.depth + 1,
+                    child=[],
+                )
+                p_node = tree_list[sel_t].node.child[tree_list[sel_t].c_num]
 
-            child_appended = []
-            if p_node != None:
-                for x in node.parts.joint:
-                    node.child.append(None)
-                    for j, y in enumerate(p_node.parts.joint):
-                        if x == y:
-                            for z in child_appended:
-                                if z == y:
+                child_appended: set[PyPMCA.PARTS] = set()
+                if p_node != None:
+                    for x in node.parts.joint:
+                        node.child.append(None)
+                        for j, y in enumerate(p_node.parts.joint):
+                            if x == y:
+                                if y not in child_appended:
+                                    node.child[-1] = p_node.child[j]
+                                    child_appended.add(y)
                                     break
-                            else:
-                                node.child[-1] = p_node.child[j]
-                                child_appended.append(y)
-                                break
-            else:
-                for x in node.parts.joint:
-                    node.child.append(None)
+                else:
+                    for x in node.parts.joint:
+                        node.child.append(None)
 
-            # print(">>", node.parts.name, "\n")
-        self.tree_list[sel_t].node.child[self.tree_list[sel_t].c_num] = node
-        # self.tree_list[sel_t].node.list_num = sel
+        tree_list[sel_t].node.child[tree_list[sel_t].c_num] = node
+        tree_list[sel_t].node.list_num = sel
         self.refresh(0)
 
         if node == None:
@@ -207,24 +198,12 @@ class PmcaData:
         """
         level: 0 full buildF
         """
-        assert self.tree_list[0].node
-        self.tree_list = self.tree_list[0].node.create_list()
-        self.tree_entry = []
-
-        for x in self.tree_list:
-            self.tree_entry.append(x.text)
-        self.tree_entry = self.tree_entry[1:]
-
-        # モデル組み立て
         PMCA.MODEL_LOCK(1)
 
         if level < 1:
             LOGGER.info("モデル組立て")
-
             PMCA.Create_PMD(0)
-
-            self.author_license = self.tree_list[0].node.assemble(0)
-
+            self.author_license = self.tree_root.assemble(0)
             PMCA.Copy_PMD(0, 1)
         else:
             PMCA.Copy_PMD(1, 0)
@@ -364,12 +343,12 @@ class PmcaData:
 
     def load_CNL_File(self, cnl_file: pathlib.Path):
         self.cnl_lines = cnl_file.read_text(encoding="utf-8-sig").splitlines()
-        self.tree_list[0].node.text_to_node(self.assets.parts_list, self.cnl_lines)
+        self.tree_root = NODE.load(self.cnl_lines, self.assets.parts_list)
         self.mat_rep.text_to_list(self.cnl_lines, self.assets.mats_list)
         self.transform_data[0].text_to_list(self.cnl_lines)
 
     def save_CNL_File(self, name: str) -> None:
-        if self.tree_list[0].node.child[0] == None:
+        if self.tree_root.child[0] == None:
             return
 
         print(f"write {name}")
