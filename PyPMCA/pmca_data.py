@@ -17,58 +17,20 @@ class SETTINGS:
         self.export2folder = False
 
 
-def convert_oldversion(x: pathlib.Path):
-    fp = open(x, "r", encoding="cp932")
-    try:
-        lines = fp.read()
-        line = lines.split("\n")
-        line = line[0].replace("\n", "")
-        if (
-            line == "PMCA Parts list v1.0"
-            or line == "PMCA Materials list v1.1"
-            or line == "PMCA Materials list v1.0"
-            or line == "PMCA Textures list v1.0"
-            or line == "PMCA Bone_Group list v1.0"
-        ):
-            fp.close()
-
-            logging.info(f"convert old version: {x}")
-            if os.name == "posix":
-                fp = open(x, "w", encoding="cp932")
-                fp.write(lines)
-                fp.close()
-                converter.v1_v2("./converter/PMCA_1.0-2.0converter", [x])
-            elif os.name == "nt":
-                converter.v1_v2(".\\converter\\PMCA_1.0-2.0converter.exe", [x])
-        if line == "bone":
-            logging.info(f"convert old version: {x}")
-            fp = open(x, "r", encoding="cp932")
-            lines = fp.read()
-            fp.close()
-
-            fp = open(x, "w", encoding="utf-8")
-            fp.write("PMCA list data v2.0\n")
-            fp.write(lines)
-            fp.close()
-
-    except UnicodeDecodeError:
-        fp.close()
-
-
 class PmcaData:
     def __init__(self):
         PMCA.Init_PMD()
         LIST = translation.TranslationList.load()
         PMCA.Set_List(
-            len(LIST.b[0]),
-            LIST.b[0],
-            LIST.b[1],
-            len(LIST.s[0]),
-            LIST.s[0],
-            LIST.s[1],
-            len(LIST.g[0]),
-            LIST.g[0],
-            LIST.g[1],
+            len(LIST.bone_name_list),
+            LIST.bone_name_list,
+            LIST.bone_name_english_list,
+            len(LIST.skin_name_list),
+            LIST.skin_name_list,
+            LIST.skin_name_english_list,
+            len(LIST.bone_grup_name_list),
+            LIST.bone_grup_name_list,
+            LIST.bone_grop_name_english_list,
         )
 
         self.cnl_lines: list[str] = []
@@ -108,10 +70,12 @@ class PmcaData:
         self.cur_mat = 0
         self.settings = SETTINGS()
         for x in pathlib.Path(".").iterdir():
-            if not os.path.isfile(x):
+            if not x.is_file():
+                continue
+            if x.stem.startswith("."):
                 continue
 
-            convert_oldversion(x)
+            converter.convert_oldversion(x)
 
             try:
                 lines = x.read_text(encoding="utf-8-sig").splitlines()
