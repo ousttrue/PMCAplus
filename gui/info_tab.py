@@ -1,5 +1,5 @@
 import tkinter.ttk
-import PyPMCA.pmca_data as pmca_data
+import PyPMCA
 
 
 class InfoTab(tkinter.ttk.Frame):
@@ -11,7 +11,7 @@ class InfoTab(tkinter.ttk.Frame):
     +---------------+
     """
 
-    def __init__(self, master: tkinter.Misc, data: pmca_data.PmcaData):
+    def __init__(self, master: tkinter.Misc, data: PyPMCA.PmcaData):
         super().__init__(master=master)
         self.text = "Info"
 
@@ -20,7 +20,7 @@ class InfoTab(tkinter.ttk.Frame):
         self.yscroll = tkinter.ttk.Scrollbar(
             self,
             orient=tkinter.VERTICAL,
-            command=self.comment.yview,
+            command=self.comment.yview, # type: ignore
         )
         self.yscroll.pack(
             side=tkinter.RIGHT, fill=tkinter.Y, expand=0, anchor=tkinter.E

@@ -66,10 +66,9 @@ def Set_List(
     """
     ...
 
-# /***********************************************************************/
-# {"Set_Name_Comment", Set_Name_Comment, METH_VARARGS,
-#  "Set Name and Comment"},
-# /***********************************************************************/
+def Set_Name_Comment(
+    slot: int, name: bytes, comment: bytes, name_eng: bytes, comment_eng: bytes
+) -> None: ...
 
 def Init_PMD() -> None:
     """

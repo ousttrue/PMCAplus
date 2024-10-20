@@ -1,7 +1,6 @@
-from typing import Any
 import tkinter.ttk
 from .listbox import LISTBOX
-import PyPMCA.pmca_data as pmca_data
+import PyPMCA
 from . import dialogs
 
 
@@ -12,7 +11,7 @@ class TransformTab(tkinter.ttk.Frame):
     +------+----+
     """
 
-    def __init__(self, master: tkinter.Misc, data: pmca_data.PmcaData):
+    def __init__(self, master: tkinter.Misc, data: PyPMCA.PmcaData):
         super().__init__(master=master)
         self.data = data
         self.tfgroup = LISTBOX(self, "Groups", self.tf_click)
@@ -29,5 +28,5 @@ class TransformTab(tkinter.ttk.Frame):
 
     def tf_click(self, sel: int):
         root = dialogs.SCALE_DIALOG_FANC(self.data, sel)
-        root.transient(self) # type: ignore
+        root.transient(self)  # type: ignore
         root.mainloop()

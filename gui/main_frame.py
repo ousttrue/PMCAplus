@@ -4,11 +4,11 @@ from .model_tab import ModelTab
 from .material_tab import MaterialTab
 from .transform_tab import TransformTab
 from .info_tab import InfoTab
-import PyPMCA.pmca_data as pmca_data
+import PyPMCA
 
 
 class MainFrame(tkinter.ttk.Frame):
-    def __init__(self, master: tkinter.Tk, data: pmca_data.PmcaData):
+    def __init__(self, master: tkinter.Tk, data: PyPMCA.PmcaData):
         super().__init__(master)
 
         MENUBAR(master=master, app=self)

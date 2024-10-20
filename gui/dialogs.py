@@ -3,11 +3,10 @@
 from typing import Any
 import PyPMCA
 import tkinter
-import PyPMCA.pmca_data as pmca_data
 
 
 class SCALE_DIALOG_FANC(tkinter.Toplevel):
-    def __init__(self, data: pmca_data.PmcaData, sel: int):
+    def __init__(self, data: PyPMCA.PmcaData, sel: int):
         super().__init__()
         self.data = data
         self.sel = sel

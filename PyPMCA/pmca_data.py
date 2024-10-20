@@ -1,6 +1,7 @@
 from typing import Callable
 import logging
 import pathlib
+import dataclasses
 
 import PyPMCA
 import PMCA
@@ -17,6 +18,16 @@ LOGGER = logging.getLogger(__name__)
 class SETTINGS:
     def __init__(self):
         self.export2folder = False
+
+
+@dataclasses.dataclass
+class MODELINFO:
+    name: str = "PMCAモデル"
+    name_l: str = "PMCAモデル"
+    comment: str = ""
+    name_eng: str = "PMCA model"
+    name_l_eng: str = "PMCA generated model"
+    comment_eng: str = ""
 
 
 class PmcaData:
@@ -67,7 +78,7 @@ class PmcaData:
         self.parts_entry_k = []
         self.parts_entry_p = []
 
-        self.modelinfo = PyPMCA.MODELINFO()
+        self.modelinfo = MODELINFO()
         self.target_dir = "./model/"
         self.cur_parts = 0
         self.cur_mat = 0
@@ -315,23 +326,28 @@ class PmcaData:
             PMCA.Copy_PMD(3, 0)
 
         if level < 4:
-            PyPMCA.Set_Name_Comment(
-                name=self.modelinfo.name,
-                comment="%s\nAuthor:%s\nLicense:%s\n%s"
-                % (
-                    self.modelinfo.name_l,
-                    self.author_license.get_authors(),
-                    self.author_license.get_licenses(),
-                    self.modelinfo.comment,
-                ),
-                name_eng=self.modelinfo.name_eng,
-                comment_eng="%s\nAuthor:%s\nLicense:%s\n%s"
-                % (
-                    self.modelinfo.name_l_eng,
-                    self.author_license.get_authors(),
-                    self.author_license.get_licenses(),
-                    self.modelinfo.comment_eng,
-                ),
+            PMCA.Set_Name_Comment(
+                0,
+                self.modelinfo.name.encode("cp932", "replace"),
+                (
+                    "%s\nAuthor:%s\nLicense:%s\n%s"
+                    % (
+                        self.modelinfo.name_l,
+                        self.author_license.get_authors(),
+                        self.author_license.get_licenses(),
+                        self.modelinfo.comment,
+                    )
+                ).encode("cp932", "replace"),
+                self.modelinfo.name_eng.encode("cp932", "replace"),
+                (
+                    "%s\nAuthor:%s\nLicense:%s\n%s"
+                    % (
+                        self.modelinfo.name_l_eng,
+                        self.author_license.get_authors(),
+                        self.author_license.get_licenses(),
+                        self.modelinfo.comment_eng,
+                    )
+                ).encode("cp932", "replace"),
             )
 
         if level < 3:
@@ -373,5 +389,3 @@ class PmcaData:
         for x in lines:
             fp.write(x + "\n")
         fp.close
-
-        return True

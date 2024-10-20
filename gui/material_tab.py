@@ -1,7 +1,6 @@
-from typing import Any
 import tkinter.ttk
 from .listbox import LISTBOX
-import PyPMCA.pmca_data as pmca_data
+import PyPMCA
 
 
 class MaterialTab(tkinter.ttk.Frame):
@@ -13,7 +12,7 @@ class MaterialTab(tkinter.ttk.Frame):
     +---------------+
     """
 
-    def __init__(self, master: tkinter.Misc, data: pmca_data.PmcaData):
+    def __init__(self, master: tkinter.Misc, data: PyPMCA.PmcaData):
         super().__init__(master=master)
         self.data = data
 
