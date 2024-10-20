@@ -1,6 +1,4 @@
 from typing import Callable
-import os
-import converter
 import logging
 import pathlib
 
@@ -8,6 +6,7 @@ import PyPMCA
 import PMCA
 
 from . import translation
+from . import pmca_assets
 
 LOGGER = logging.getLogger(__name__)
 
@@ -33,18 +32,21 @@ class PmcaData:
             LIST.bone_grop_name_english_list,
         )
 
-        self.cnl_lines: list[str] = []
-        self.on_refresh: list[Callable[[float, float, float], None]] = []
-        self.parts_list: list[PyPMCA.PARTS] = []
-        self.mats_list: list[PyPMCA.MATS] = []
-        self.tree_entry = []
-        self.parts_entry_k = []
-        self.parts_entry_p = []
+        # assets
+        self.assets = pmca_assets.PmcaAssets()
+        self.assets.load(pathlib.Path("."))
+
+        # cnl
+        node = PyPMCA.NODE(
+            parts=PyPMCA.PARTS(name="ROOT", joint=["root"]),
+            depth=-1,
+            child=[None],
+        )
 
         self.transform_data: list[PyPMCA.MODEL_TRANS_DATA] = [
             PyPMCA.MODEL_TRANS_DATA(scale=1.0, bones=[], props={})
         ]
-        self.transform_list: list[PyPMCA.MODEL_TRANS_DATA] = []
+        self.tree_list = node.create_list()
 
         self.authors: list[str] = []
 
@@ -64,44 +66,31 @@ class PmcaData:
 
             self.licenses.append(y)
 
+        self.mat_rep = PyPMCA.MAT_REP(append_author, append_license)
+
+        self.cnl_lines: list[str] = []
+        last_cnl = pathlib.Path("./last.cnl")
+        default_cnl = pathlib.Path("./default.cnl")
+        if last_cnl.exists():
+            try:
+                self.load_CNL_File(last_cnl)
+            except:
+                print("前回のデータの読み込みに失敗しました")
+                self.load_CNL_File(default_cnl)
+        else:
+            self.load_CNL_File(default_cnl)
+
+        # gui
+        self.on_refresh: list[Callable[[float, float, float], None]] = []
+        self.parts_entry_k = []
+        self.parts_entry_p = []
+
         self.modelinfo = PyPMCA.MODELINFO()
         self.target_dir = "./model/"
         self.cur_parts = 0
         self.cur_mat = 0
         self.settings = SETTINGS()
-        for x in pathlib.Path(".").iterdir():
-            if not x.is_file():
-                continue
-            if x.stem.startswith("."):
-                continue
 
-            converter.convert_oldversion(x)
-
-            try:
-                lines = x.read_text(encoding="utf-8-sig").splitlines()
-                match lines[0]:
-                    case "PMCA Parts list v2.0":
-                        LOGGER.info(f"{x} => {lines[0]}")
-                        self.parts_list += PyPMCA.PARTS.load(lines[1:])
-                    case "PMCA Materials list v2.0":
-                        LOGGER.info(f"{x} => {lines[0]}")
-                        self.mats_list += PyPMCA.MATS.load(lines)
-                    case "PMCA Transform list v2.0":
-                        LOGGER.info(f"{x} => {lines[0]}")
-                        self.transform_list += PyPMCA.MODEL_TRANS_DATA.load(lines)
-                    case _:
-                        pass
-            except Exception as ex:
-                # LOGGER.exception(ex)
-                raise ex
-
-        node = PyPMCA.NODE(
-            parts=PyPMCA.PARTS(name="ROOT", joint=["root"]),
-            depth=-1,
-            child=[None],
-        )
-
-        self.tree_list = node.create_list()
         self.tree_entry: list[str] = []
         for x in self.tree_list:
             self.tree_entry.append(x.text)
@@ -109,7 +98,7 @@ class PmcaData:
 
         self.parts_entry_k: list[str] = []
         self.parts_entry_p: list[PyPMCA.PARTS | str | None] = []
-        for x in self.parts_list:
+        for x in self.assets.parts_list:
             for y in x.type:
                 if y == "root":
                     self.parts_entry_k.append(x.name)
@@ -121,13 +110,7 @@ class PmcaData:
         # app.parts_entry_k.append('#None')
         # app.parts_entry_p.append(None)
 
-        self.mat_rep = PyPMCA.MAT_REP(append_author, append_license)
         self.mat_entry: tuple[list[str], list[str]] = ([], [])
-        try:
-            self.load_CNL_File("./last.cnl")
-        except:
-            print("前回のデータの読み込みに失敗しました")
-            self.load_CNL_File("./default.cnl")
 
         PMCA.CretateViewerThread()
 
@@ -255,7 +238,7 @@ class PmcaData:
         if level < 2:
             # 材質関連
             print("材質置換")
-            self.mat_rep.Get(self.mats_list)
+            self.mat_rep.Get(self.assets.mats_list)
             self.mat_entry = [[], []]
             for v in self.mat_rep.mat.values():
                 if v.num >= 0:
@@ -379,14 +362,12 @@ class PmcaData:
         for callback in self.on_refresh:
             callback(w, h, t)
 
-    def load_CNL_File(self, name: str):
-        f = open(name, "r", encoding="utf-8-sig")
-        lines = f.read()
-        f.close
-        self.cnl_lines = lines.split("\n")
+    def load_CNL_File(self, cnl_file: pathlib.Path):
 
-        self.tree_list[0].node.text_to_node(self.parts_list, self.cnl_lines)
-        self.mat_rep.text_to_list(self.cnl_lines, self.mats_list)
+        self.cnl_lines = cnl_file.read_text(encoding="utf-8-sig").splitlines()
+
+        self.tree_list[0].node.text_to_node(self.assets.parts_list, self.cnl_lines)
+        self.mat_rep.text_to_list(self.cnl_lines, self.assets.mats_list)
         self.transform_data[0].text_to_list(self.cnl_lines)
 
     def save_CNL_File(self, name):

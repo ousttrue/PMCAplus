@@ -16,7 +16,7 @@ class TransformTab(tkinter.ttk.Frame):
         super().__init__(master=master)
         self.data = data
         self.tfgroup = LISTBOX(self, "Groups", self.tf_click)
-        self.tfgroup.set_entry([x.name for x in data.transform_list])
+        self.tfgroup.set_entry([x.name for x in data.assets.transform_list])
         self.info_frame = tkinter.ttk.LabelFrame(self, text="Info")
         self.info_str = tkinter.StringVar()
         self.info_str.set("x=\ny=\nz=\n")
