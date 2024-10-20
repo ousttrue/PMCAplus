@@ -76,7 +76,6 @@ class NODE:
                                 break
 
                     if tp != None:
-                        print(curnode.parts.name, len(curnode.child), child_nums[-1])
                         curnode.child[child_nums[-1]] = NODE(
                             parts=y, depth=curnode.depth + 1, child=[]
                         )
@@ -101,7 +100,6 @@ class NODE:
                 case "[Parent]":
                     curnode = parents.pop()
                     child_nums.pop()
-                    print("up", len(parents))
                     if len(child_nums) > 0:
                         child_nums[-1] += 1
 
@@ -156,14 +154,12 @@ class NODE:
                 or tmp[0] == "creator"
                 or tmp[0] == "モデル制作"
             ):
-                print(tmp[1])
                 tmp[1] = tmp[1].replace("　", " ")
                 app.authors = tmp[1].split(" ")
 
             elif tmp[0] == "License" or tmp[0] == "license" or tmp[0] == "ライセンス":
                 tmp[1] = tmp[1].replace("　", " ")
                 app.licenses = tmp[1].split(" ")
-        print("パーツのパス:%s" % (self.parts.path))
         for x in self.child:
             if x != None:
                 x.assemble_child(num, author_license)
@@ -175,7 +171,6 @@ class NODE:
         return author_license
 
     def assemble_child(self, num: int, author_license: AuthorLicense) -> None:
-        print("パーツのパス:%s" % (self.parts.path))
         sysenc = sys.getfilesystemencoding()
 
         PMCA.Create_PMD(4)

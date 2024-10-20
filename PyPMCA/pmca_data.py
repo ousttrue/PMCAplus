@@ -3,14 +3,18 @@ import logging
 import pathlib
 import dataclasses
 
-import PyPMCA
 import PMCA
 
 from . import translation
+from . import PARTS
+from .material import MATS
+from . import transform
 from . import pmca_assets
 from .node import NODE
 from .author_license import AuthorLicense
 from . import mat_rep
+from . import types
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -53,8 +57,8 @@ class PmcaData:
         # cnl
         self.tree_root = NODE.make_root()
 
-        self.transform_data: list[PyPMCA.MODEL_TRANS_DATA] = [
-            PyPMCA.MODEL_TRANS_DATA(scale=1.0, bones=[], props={})
+        self.transform_data: list[transform.MODEL_TRANS_DATA] = [
+            transform.MODEL_TRANS_DATA(scale=1.0, bones=[], props={})
         ]
         self.author_license = AuthorLicense()
         self.mat_rep = mat_rep.MAT_REP()
@@ -75,12 +79,11 @@ class PmcaData:
         self.on_refresh: list[Callable[[float, float, float], None]] = []
 
         self.modelinfo = MODELINFO()
-        self.target_dir = "./model/"
+        # self.target_dir = "./model/"
         self.cur_parts = 0
         self.cur_mat = 0
         self.settings = SETTINGS()
 
-        self.mat_entry: tuple[list[str], list[str]] = ([], [])
         PMCA.CretateViewerThread()
 
     def get_tree_entry(self) -> list[str]:
@@ -96,10 +99,12 @@ class PmcaData:
             for y in x.type:
                 if y == joint:
                     parts_entry_k.append(x.name)
-                    # self.parts_entry_p.append(x)
                     break
         parts_entry_k.append("#外部モデル読み込み")
         return parts_entry_k
+
+    def get_active_materials(self) -> list[MATS]:
+        return [v.mat for v in self.mat_rep.mat.values() if v.num >= 0]
 
     def get_authors_and_licenses(self) -> str:
         return f"Author : {self.author_license.get_authors()}\nLicense : {self.author_license.get_licenses()}"
@@ -114,7 +119,7 @@ class PmcaData:
     def select_parts(self, sel_t: int, sel: int) -> str:
         tree_list = self.tree_root.create_list()
         joint = tree_list[sel_t].node.parts.joint[tree_list[sel_t].c_num]
-        parts_entry_p: list[PyPMCA.PARTS | Literal["load"] | None] = []
+        parts_entry_p: list[PARTS | Literal["load"] | None] = []
         for x in self.assets.parts_list:
             for y in x.type:
                 if y == joint:
@@ -134,7 +139,7 @@ class PmcaData:
                 )
                 if path != "":
                     name = path.split("/")[-1]
-                    parts = PyPMCA.PARTS(name=name, path=path, props={})
+                    parts = PARTS(name=name, path=path, props={})
                     node = NODE(
                         parts=parts,
                         depth=self.tree_list[sel_t].node.depth + 1,
@@ -145,7 +150,7 @@ class PmcaData:
                 else:
                     node = None
 
-            case PyPMCA.PARTS() as parts:
+            case PARTS() as parts:
                 node = NODE(
                     parts=parts,
                     depth=tree_list[sel_t].node.depth + 1,
@@ -153,7 +158,7 @@ class PmcaData:
                 )
                 p_node = tree_list[sel_t].node.child[tree_list[sel_t].c_num]
 
-                child_appended: set[PyPMCA.PARTS] = set()
+                child_appended: set[PARTS] = set()
                 if p_node != None:
                     for x in node.parts.joint:
                         node.child.append(None)
@@ -176,14 +181,16 @@ class PmcaData:
         else:
             return node.parts.comment
 
-    def select_mats(self, sel_t: int) -> str:
+    def get_mats(self, sel_t: int) -> MATS:
+        mat_entry = self.get_active_materials()
+        selected = mat_entry[sel_t]
         self.cur_mat = sel_t
-        return self.mat_rep.mat[self.mat_entry[1][sel_t]].mat.comment
+        return self.mat_rep.mat[selected.name].mat
 
     def select_mats_sel(self, sel: int):
-        self.mat_rep.mat[self.mat_entry[1][self.cur_mat]].sel = self.mat_rep.mat[
-            self.mat_entry[1][self.cur_mat]
-        ].mat.entries[sel]
+        mat_entry = self.get_active_materials()
+        rep = self.mat_rep.mat[mat_entry[self.cur_mat].name]
+        rep.select(sel)
         self.refresh(level=1)
 
     def shutdown(self):
@@ -212,11 +219,6 @@ class PmcaData:
             # 材質関連
             print("材質置換")
             self.mat_rep.Get(self.assets.mats_list)
-            self.mat_entry = [[], []]
-            for v in self.mat_rep.mat.values():
-                if v.num >= 0:
-                    self.mat_entry[0].append(v.mat.name + "  " + v.sel.name)
-                    self.mat_entry[1].append(v.mat.name)
             self.mat_rep.Set(self.author_license)
             PMCA.Copy_PMD(0, 2)
         else:
@@ -231,7 +233,7 @@ class PmcaData:
             for i in range(info_data["bone_count"]):
                 tmp = PMCA.getBone(0, i)
                 tmpbone.append(
-                    PyPMCA.types.BONE(
+                    types.BONE(
                         tmp["name"],
                         tmp["name_eng"],
                         tmp["parent"],
@@ -267,7 +269,7 @@ class PmcaData:
             if refbone != None:
                 newbone = None
                 tmp = PMCA.getBone(0, refbone_index)
-                newbone = PyPMCA.types.BONE(
+                newbone = types.BONE(
                     tmp["name"],
                     tmp["name_eng"],
                     tmp["parent"],
@@ -342,10 +344,11 @@ class PmcaData:
             callback(w, h, t)
 
     def load_CNL_File(self, cnl_file: pathlib.Path):
+        LOGGER.info(f"load: {cnl_file}")
         self.cnl_lines = cnl_file.read_text(encoding="utf-8-sig").splitlines()
         self.tree_root = NODE.load(self.cnl_lines, self.assets.parts_list)
-        self.mat_rep.text_to_list(self.cnl_lines, self.assets.mats_list)
-        self.transform_data[0].text_to_list(self.cnl_lines)
+        self.mat_rep.load(self.cnl_lines, self.assets.mats_list)
+        self.transform_data[0].load_cnl(self.cnl_lines)
 
     def save_CNL_File(self, name: str) -> None:
         if self.tree_root.child[0] == None:

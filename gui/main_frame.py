@@ -48,33 +48,23 @@ class MainFrame(tkinter.ttk.Frame):
         self.frame_button.pack(padx=5, pady=5, side=tkinter.TOP, fill="x")
 
     def on_data_updated(self, w: float, h: float, t: float):
-        sel_t = int(self.model_tab.l_tree.listbox.curselection()[0])
+        # model
+        sel_t = int(self.model_tab.l_tree.listbox.curselection()[0]) # type: ignore
         self.model_tab.l_tree.set_entry(self.data.get_tree_entry(), sel=sel_t)
 
+        # material
         self.material_tab.l_tree.set_entry(
-            self.data.mat_entry[0], sel=self.data.cur_mat
+            [m.name for m in self.data.get_active_materials()],
+            sel=self.data.cur_mat,
         )
 
+        # transform
         self.transform_tab.info_str.set(
             "height     = %f\nwidth      = %f\nthickness = %f\n" % (w, h, t)
         )
 
-        self.info_tab.text.set(self.data.get_authors_and_licenses()) # type: ignore
-
-        lines = self.data.cnl_lines
-        self.info_tab.name.set(lines[0])
-        self.info_tab.name_l.set(lines[1])
-        for line in lines[2:]:
-            if line == "PARTS":
-                break
-            elif line == "":
-                pass
-            else:
-                self.info_tab.comment.insert(tkinter.END, line)
-                self.info_tab.comment.insert(tkinter.END, "\n")
-
-        else:
-            self.info_tab.comment.delete("1.0", tkinter.END)
+        # info
+        self.info_tab.set_data(self.data)
 
     ########################################################################################
     # functions menu

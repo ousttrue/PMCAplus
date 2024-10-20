@@ -27,13 +27,9 @@ class MaterialTab(tkinter.ttk.Frame):
         self.text_label.pack(padx=3, pady=3, side=tkinter.BOTTOM, fill=tkinter.X)
 
     def mats_click(self, sel_t: int):
-        selected = self.data.mat_entry[1][sel_t]
-        self.l_sel.set_entry(
-            x.name for x in self.data.mat_rep.mat[selected].mat.entries
-        )
-
-        comment = self.data.select_mats(sel_t)
-        self.comment.set("comment:%s" % comment)
+        mats = self.data.get_mats(sel_t)
+        self.l_sel.set_entry([e.name for e in mats.entries])
+        self.comment.set(f"comment: {mats.comment}")
 
     def mats_sel_click(self, sel: int):
         self.data.select_mats_sel(sel)

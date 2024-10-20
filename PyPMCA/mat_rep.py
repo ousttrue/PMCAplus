@@ -1,8 +1,11 @@
 import dataclasses
+import logging
 import PMCA
 from . import types
 from . import material
 from . import author_license
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
@@ -11,15 +14,42 @@ class MAT_REP_DATA:
     num: int = -1
     sel: material.MATS_ENTRY | None = None
 
+    def select(self, sel: int) -> None:
+        self.sel = self.mat.entries[sel]
+
 
 @dataclasses.dataclass
 class MAT_REP:
-    """
-    材質置換
-    """
-
     mat: dict[str, MAT_REP_DATA] = dataclasses.field(default_factory=dict)
     toon: types.TOON = dataclasses.field(default_factory=types.TOON)
+
+    def load(self, lines: list[str], mat_list: list[material.MATS]) -> None:
+        self.mat = {}
+        i = 0
+        while lines[i] != "MATERIAL":
+            # print(lines[i])
+            i += 1
+        i += 1
+        tmp = ["", "", None]
+        for x in lines[i:]:
+            x = x.split(" ")
+            if x[0] == "[Name]":
+                tmp[0] = x[1]
+            elif x[0] == "[Sel]":
+                tmp[1] = x[1]
+            elif x[0] == "NEXT":
+                for y in mat_list:
+                    if y.name == tmp[0]:
+                        tmp[2] = y
+                        break
+                else:
+                    tmp[2] = None
+                    continue
+
+                for y in tmp[2].entries:
+                    if y.name == tmp[1]:
+                        self.mat[tmp[0]] = MAT_REP_DATA(num=-1, mat=tmp[2], sel=y)
+                        break
 
     def Get(
         self,
@@ -53,9 +83,7 @@ class MAT_REP:
                         self.mat[mat.tex].num = i
 
                     if self.mat[mat.tex].sel == None:
-                        self.mat[mat.tex].sel = self.mat[mat.tex].mat.entries[
-                            0
-                        ]
+                        self.mat[mat.tex].sel = self.mat[mat.tex].mat.entries[0]
                         for y in self.mat[mat.tex].mat.entries:
                             print(y.props)
 
@@ -163,37 +191,3 @@ class MAT_REP:
             lines.append("NEXT")
 
         return lines
-
-    def text_to_list(self, lines: list[str], mat_list: list[material.MATS]) -> None:
-        self.mat = {}
-        tmp = ["", "", None]
-        i = 0
-        while lines[i] != "MATERIAL":
-            # print(lines[i])
-            i += 1
-        i += 1
-        print("材質読み込み")
-        for x in lines[i:]:
-            x = x.split(" ")
-            print(x)
-            if x[0] == "[Name]":
-                tmp[0] = x[1]
-            elif x[0] == "[Sel]":
-                tmp[1] = x[1]
-            elif x[0] == "NEXT":
-                print(tmp[0])
-                for y in mat_list:
-                    if y.name == tmp[0]:
-                        tmp[2] = y
-                        break
-                else:
-                    tmp[2] = None
-                    print("Not found")
-                    continue
-
-                for y in tmp[2].entries:
-                    print(y.name)
-                    if y.name == tmp[1]:
-                        print(tmp[0])
-                        self.mat[tmp[0]] = MAT_REP_DATA(num=-1, mat=tmp[2], sel=y)
-                        break

@@ -108,6 +108,46 @@ class MODEL_TRANS_DATA:
 
         return trans_list
 
+    def load_cnl(self, lines: list[str]) -> None:
+        tmp = ["", "", None]
+        i = 0
+        try:
+            while lines[i] != "TRANSFORM":
+                i += 1
+        except:
+            return None
+
+        i += 1
+        for j, x in enumerate(lines[i:]):
+            x = x.split(" ")
+            if x[0] == "[Name]":
+                self.name = x[1]
+            elif x[0] == "[Scale]":
+                self.scale = float(x[1])
+            elif x[0] == "[Pos]":
+                self.pos = Vec3.from_str(*x[1:4])
+            elif x[0] == "[Rot]":
+                self.rot = Vec3.from_str(*x[1:4])
+            elif x[0] == "BONES":
+                break
+        self.bones = []
+        self.bones.append(BONE_TRANS_DATA())
+        for x in lines[i + j :]:
+            x = x.split(" ")
+            if x[0] == "[Name]":
+                self.bones[-1].name = x[1]
+            elif x[0] == "[Length]":
+                self.bones[-1].length = float(x[1])
+            elif x[0] == "[Thick]":
+                self.bones[-1].thick = float(x[1])
+            elif x[0] == "[Pos]":
+                self.bones[-1].pos = Vec3.from_str(*x[1:4])
+            elif x[0] == "[Rot]":
+                self.bones[-1].rot = Vec3.from_str(*x[1:4])
+            elif x[0] == "NEXT":
+                if self.bones[-1].name != "":
+                    self.bones.append(BONE_TRANS_DATA())
+
     def list_to_text(self):
         lines = []
         # lines.append('[Name] %s'%(self.name))
@@ -125,45 +165,3 @@ class MODEL_TRANS_DATA:
         lines.pop()
 
         return lines
-
-    def text_to_list(self, lines: list[str]) -> None:
-        tmp = ["", "", None]
-        i = 0
-        try:
-            while lines[i] != "TRANSFORM":
-                i += 1
-        except:
-            return None
-
-        i += 1
-        print("体型調整読み込み")
-        for j, x in enumerate(lines[i:]):
-            x = x.split(" ")
-            if x[0] == "[Name]":
-                self.name = x[1]
-            elif x[0] == "[Scale]":
-                self.scale = float(x[1])
-            elif x[0] == "[Pos]":
-                self.pos = Vec3.from_str(*x[1:4])
-            elif x[0] == "[Rot]":
-                self.rot = Vec3.from_str(*x[1:4])
-            elif x[0] == "BONES":
-                break
-        self.bones = []
-        self.bones.append(BONE_TRANS_DATA())
-        for x in lines[i + j :]:
-            x = x.split(" ")
-            print(x)
-            if x[0] == "[Name]":
-                self.bones[-1].name = x[1]
-            elif x[0] == "[Length]":
-                self.bones[-1].length = float(x[1])
-            elif x[0] == "[Thick]":
-                self.bones[-1].thick = float(x[1])
-            elif x[0] == "[Pos]":
-                self.bones[-1].pos = Vec3.from_str(*x[1:4])
-            elif x[0] == "[Rot]":
-                self.bones[-1].rot = Vec3.from_str(*x[1:4])
-            elif x[0] == "NEXT":
-                if self.bones[-1].name != "":
-                    self.bones.append(BONE_TRANS_DATA())
