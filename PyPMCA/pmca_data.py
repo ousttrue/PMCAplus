@@ -6,11 +6,10 @@ import dataclasses
 import PMCA
 
 from . import translation
-from . import PARTS
+from .parts import PARTS, Joint
 from .material import MATS
 from . import transform
 from . import pmca_assets
-from .node import NODE
 from .author_license import AuthorLicense
 from . import mat_rep
 from . import types
@@ -55,7 +54,7 @@ class PmcaData:
         self.assets.load(pathlib.Path("."))
 
         # cnl
-        self.tree_root = NODE.make_root()
+        self.tree_root = PARTS(name="ROOT", child_joints=[Joint("root")])
 
         self.transform_data: list[transform.MODEL_TRANS_DATA] = [
             transform.MODEL_TRANS_DATA(scale=1.0, bones=[], props={})
@@ -87,11 +86,7 @@ class PmcaData:
         PMCA.CretateViewerThread()
 
     def get_tree_entry(self) -> list[str]:
-        tree_list = self.tree_root.create_list()
-        tree_entry: list[str] = []
-        for x in tree_list:
-            tree_entry.append(x.text)
-        return tree_entry
+        return [f"{'  ' * i}{joint} => {parts.name if parts else '#None'}" for i, joint, parts in self.tree_root.traverse()]
 
     def get_parts_entry(self, joint: str = "root") -> list[str]:
         parts_entry_k: list[str] = []
@@ -344,7 +339,7 @@ class PmcaData:
     def load_CNL_File(self, cnl_file: pathlib.Path):
         LOGGER.info(f"load: {cnl_file}")
         self.cnl_lines = cnl_file.read_text(encoding="utf-8-sig").splitlines()
-        self.tree_root = NODE.load(self.cnl_lines, self.assets.parts_list)
+        self.tree_root.load_cnl(self.cnl_lines, self.assets.parts_list)
         self.mat_rep.load(self.cnl_lines, self.assets.mats_list)
         self.transform_data[0].load_cnl(self.cnl_lines)
 
