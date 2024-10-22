@@ -10,8 +10,8 @@ class PARTS:
     name: str = ""
     comment: str = ""
     path: str = ""
-    type: list[str] = dataclasses.field(default_factory=list)
-    joint: list[str] = dataclasses.field(default_factory=list)
+    joint_type: list[str] = dataclasses.field(default_factory=list)
+    child_joints: list[str] = dataclasses.field(default_factory=list)
     props: dict[str, list[str]] = dataclasses.field(default_factory=dict)
 
     @staticmethod
@@ -41,9 +41,9 @@ class PARTS:
             elif line[0] == "[comment]":
                 active.comment = line[1]
             elif line[0] == "[type]":
-                active.type = active.type + line[1].split(",")
+                active.joint_type = active.joint_type + line[1].split(",")
             elif line[0] == "[joint]":
-                active.joint = active.joint + line[1].split(",")
+                active.child_joints = active.child_joints + line[1].split(",")
             elif line[0][:1] == "[" and line[0][-1:] == "]":
                 if line[0][1:-1] in active.props:
                     active.props[line[0][1:-1]].append(line[1])

@@ -414,7 +414,7 @@ class MainFrame(tkinter.ttk.Frame):
             return None
         pastnode = self.tree_list[0]
         self.tree_list[0].node = PyPMCA.NODE(
-            parts=PyPMCA.PARTS(name="ROOT", joint=["root"]), depth=-1, child=[None]
+            parts=PyPMCA.PARTS(name="ROOT", child_joints=["root"]), depth=-1, child=[None]
         )
         self.load_CNL_File(name)
         self.target_dir = name.rsplit("/", 1)[0]

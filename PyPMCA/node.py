@@ -22,7 +22,7 @@ class NODE:
     @staticmethod
     def make_root() -> "NODE":
         return NODE(
-            parts=PARTS(name="ROOT", joint=["root"]),
+            parts=PARTS(name="ROOT", child_joints=["root"]),
             depth=-1,
             child=[None],
         )
@@ -82,7 +82,7 @@ class NODE:
                         parents.append(curnode)
                         curnode = curnode.child[child_nums[-1]]
                         child_nums.append(0)
-                        for x in curnode.parts.joint:
+                        for x in curnode.parts.child_joints:
                             curnode.child.append(None)
 
                     else:
@@ -254,12 +254,12 @@ class NODE:
                     )
                 )
                 x.list_add(List)
-            elif self.parts.joint[i] != "":
+            elif self.parts.child_joints[i] != "":
                 List.append(
                     TREE_LIST(
                         node=self,
                         depth=self.depth + 1,
-                        text="  " * (self.depth + 1) + "#" + self.parts.joint[i],
+                        text="  " * (self.depth + 1) + "#" + self.parts.child_joints[i],
                         c_num=i,
                     )
                 )
@@ -277,12 +277,12 @@ class NODE:
                     )
                 )
                 x.list_add(List)
-            elif self.parts.joint[i] != "":
+            elif self.parts.child_joints[i] != "":
                 List.append(
                     TREE_LIST(
                         node=self,
                         depth=self.depth + 1,
-                        text="  " * (self.depth + 1) + "#" + self.parts.joint[i],
+                        text="  " * (self.depth + 1) + "#" + self.parts.child_joints[i],
                         c_num=i,
                     )
                 )

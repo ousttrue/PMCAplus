@@ -96,7 +96,7 @@ class PmcaData:
     def get_parts_entry(self, joint: str = "root") -> list[str]:
         parts_entry_k: list[str] = []
         for x in self.assets.parts_list:
-            for y in x.type:
+            for y in x.joint_type:
                 if y == joint:
                     parts_entry_k.append(x.name)
                     break
@@ -111,17 +111,17 @@ class PmcaData:
 
     def select_tree(self, sel_t: int) -> tuple[list[str], int]:
         tree_list = self.tree_root.create_list()
-        joint = tree_list[sel_t].node.parts.joint[tree_list[sel_t].c_num]
+        joint = tree_list[sel_t].node.parts.child_joints[tree_list[sel_t].c_num]
         parts_entry_k: list[str] = self.get_parts_entry(joint)
         sel = tree_list[sel_t].node.list_num
         return parts_entry_k, sel
 
     def select_parts(self, sel_t: int, sel: int) -> str:
         tree_list = self.tree_root.create_list()
-        joint = tree_list[sel_t].node.parts.joint[tree_list[sel_t].c_num]
+        joint = tree_list[sel_t].node.parts.child_joints[tree_list[sel_t].c_num]
         parts_entry_p: list[PARTS | Literal["load"] | None] = []
         for x in self.assets.parts_list:
-            for y in x.type:
+            for y in x.joint_type:
                 if y == joint:
                     parts_entry_p.append(x)
                     break
@@ -145,7 +145,7 @@ class PmcaData:
                         depth=self.tree_list[sel_t].node.depth + 1,
                         child=[],
                     )
-                    for x in node.parts.joint:
+                    for x in node.parts.child_joints:
                         node.child.append(None)
                 else:
                     node = None
@@ -160,16 +160,16 @@ class PmcaData:
 
                 child_appended: set[PARTS] = set()
                 if p_node != None:
-                    for x in node.parts.joint:
+                    for x in node.parts.child_joints:
                         node.child.append(None)
-                        for j, y in enumerate(p_node.parts.joint):
+                        for j, y in enumerate(p_node.parts.child_joints):
                             if x == y:
                                 if y not in child_appended:
                                     node.child[-1] = p_node.child[j]
                                     child_appended.add(y)
                                     break
                 else:
-                    for x in node.parts.joint:
+                    for x in node.parts.child_joints:
                         node.child.append(None)
 
         tree_list[sel_t].node.child[tree_list[sel_t].c_num] = node
