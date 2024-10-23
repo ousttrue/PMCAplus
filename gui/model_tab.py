@@ -18,10 +18,13 @@ class ModelTab(tkinter.ttk.Frame):
         #
         # top
         #
+
         self.hbox = tkinter.ttk.Frame(self)
         # top-left
         self.l_tree = LISTBOX(self.hbox, "Model", self.tree_click)
-        self.l_tree.set_entry(data.get_tree_entry(), sel=0)
+        self.l_tree.set_entry(
+            [node.make_entry() for node in data.get_tree_node_list()], sel=0
+        )
 
         # top-right
         self.l_sel = LISTBOX(self.hbox, "Parts", self.parts_sel_click)

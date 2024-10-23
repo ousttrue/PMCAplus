@@ -49,8 +49,11 @@ class MainFrame(tkinter.ttk.Frame):
 
     def on_data_updated(self, w: float, h: float, t: float):
         # model
-        sel_t = int(self.model_tab.l_tree.listbox.curselection()[0]) # type: ignore
-        self.model_tab.l_tree.set_entry(self.data.get_tree_entry(), sel=sel_t)
+        sel_t = int(self.model_tab.l_tree.listbox.curselection()[0])  # type: ignore
+        self.model_tab.l_tree.set_entry(
+            [node.make_entry() for node in self.data.get_tree_node_list()],
+            sel=sel_t,
+        )
 
         # material
         self.material_tab.l_tree.set_entry(
@@ -414,7 +417,9 @@ class MainFrame(tkinter.ttk.Frame):
             return None
         pastnode = self.tree_list[0]
         self.tree_list[0].node = PyPMCA.NODE(
-            parts=PyPMCA.PARTS(name="ROOT", child_joints=["root"]), depth=-1, child=[None]
+            parts=PyPMCA.PARTS(name="ROOT", child_joints=["root"]),
+            depth=-1,
+            child=[None],
         )
         self.load_CNL_File(name)
         self.target_dir = name.rsplit("/", 1)[0]

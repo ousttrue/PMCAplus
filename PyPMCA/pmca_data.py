@@ -6,7 +6,7 @@ import dataclasses
 import PMCA
 
 from . import translation
-from .parts import PARTS, Joint
+from .parts import PARTS, Joint, TreeNode
 from .material import MATS
 from . import transform
 from . import pmca_assets
@@ -85,8 +85,8 @@ class PmcaData:
 
         PMCA.CretateViewerThread()
 
-    def get_tree_entry(self) -> list[str]:
-        return [joint.make_entry(i) for i, joint in self.tree_root.traverse()]
+    def get_tree_node_list(self) -> list[TreeNode]:
+        return [node for node in self.tree_root.traverse()]
 
     def get_parts_entry(self, joint: str = "root") -> list[str]:
         parts_entry_k: list[str] = []

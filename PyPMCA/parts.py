@@ -1,5 +1,5 @@
 import sys
-from typing import Optional, Iterator
+from typing import Optional, Iterator, NamedTuple
 import dataclasses
 import PMCA
 from .author_license import AuthorLicense
@@ -11,8 +11,13 @@ class Joint:
     joint_type: str
     parts: Optional["PARTS"] = None
 
-    def make_entry(self, depth: int) -> str:
-        return f"{'  ' * depth}{self.joint_type} => {self.parts.name if self.parts else '#None'}"
+
+class TreeNode(NamedTuple):
+    depth: int
+    joint: Joint
+
+    def make_entry(self) -> str:
+        return f"{'  ' * self.depth}{self.joint.joint_type} => {self.joint.parts.name if self.joint.parts else '#None'}"
 
 
 @dataclasses.dataclass
@@ -159,12 +164,12 @@ class PARTS:
 
             count += 1
 
-    def traverse(self, level: int = 0) -> Iterator[tuple[int, Joint]]:
+    def traverse(self, level: int = 0) -> Iterator[TreeNode]:
         for joint in self.child_joints:
-            yield level, joint
+            yield TreeNode(level, joint)
             if joint.parts:
-                for i, x in joint.parts.traverse(level + 1):
-                    yield i, x
+                for node in joint.parts.traverse(level + 1):
+                    yield node
 
     def assemble(self, num: int) -> AuthorLicense:
         PMCA.Create_PMD(num)
