@@ -86,7 +86,7 @@ class PmcaData:
         PMCA.CretateViewerThread()
 
     def get_tree_entry(self) -> list[str]:
-        return [f"{'  ' * i}{joint} => {parts.name if parts else '#None'}" for i, joint, parts in self.tree_root.traverse()]
+        return [joint.make_entry(i) for i, joint in self.tree_root.traverse()]
 
     def get_parts_entry(self, joint: str = "root") -> list[str]:
         parts_entry_k: list[str] = []

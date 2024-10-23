@@ -11,6 +11,9 @@ class Joint:
     joint_type: str
     parts: Optional["PARTS"] = None
 
+    def make_entry(self, depth: int) -> str:
+        return f"{'  ' * depth}{self.joint_type} => {self.parts.name if self.parts else '#None'}"
+
 
 @dataclasses.dataclass
 class PARTS:
@@ -156,12 +159,12 @@ class PARTS:
 
             count += 1
 
-    def traverse(self, level: int = 0) -> Iterator[tuple[int, str, Optional["PARTS"]]]:
-        for child in self.child_joints:
-            yield level, child.joint_type, child.parts
-            if child.parts:
-                for i, x, y in child.parts.traverse(level + 1):
-                    yield i, x, y
+    def traverse(self, level: int = 0) -> Iterator[tuple[int, Joint]]:
+        for joint in self.child_joints:
+            yield level, joint
+            if joint.parts:
+                for i, x in joint.parts.traverse(level + 1):
+                    yield i, x
 
     def assemble(self, num: int) -> AuthorLicense:
         PMCA.Create_PMD(num)
