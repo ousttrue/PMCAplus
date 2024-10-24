@@ -3,7 +3,7 @@ import logging
 import pathlib
 import dataclasses
 
-import PMCA
+import PMCA_ctypes as PMCA
 
 from . import translation
 from .parts import PARTS, Joint, TreeNode
@@ -57,9 +57,9 @@ class PmcaData:
             len(LIST.skin_name_list),
             LIST.skin_name_list,
             LIST.skin_name_english_list,
-            len(LIST.bone_grup_name_list),
-            LIST.bone_grup_name_list,
-            LIST.bone_grop_name_english_list,
+            len(LIST.disp_name_list),
+            LIST.disp_name_list,
+            LIST.disp_name_english_list,
         )
 
         # assets

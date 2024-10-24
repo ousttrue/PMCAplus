@@ -1,7 +1,7 @@
 import sys
 from typing import Optional, Iterator, NamedTuple
 import dataclasses
-import PMCA
+import PMCA_ctypes as PMCA
 from .author_license import AuthorLicense
 from . import types
 

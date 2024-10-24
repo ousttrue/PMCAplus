@@ -1,6 +1,6 @@
 import dataclasses
 import logging
-import PMCA
+import PMCA_ctypes as PMCA
 from . import types
 from . import material
 from . import author_license

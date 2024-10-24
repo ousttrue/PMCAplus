@@ -1,4 +1,4 @@
-/*PMD Mob Character Assembler
+/*PMD Mob Character Assemble.r
 PMDモブキャラクタアセンブラ
 ヘッダファイル
 */

@@ -1,6 +1,11 @@
 const std = @import("std");
 const zcc = @import("compile_commands");
 
+const FLAGS = [_][]const u8{
+    "-std=c23",
+    "-DPMCA_BUILD",
+};
+
 pub fn build(b: *std.Build) void {
     var targets = std.ArrayList(*std.Build.Step.Compile).init(b.allocator);
     const target = b.standardTargetOptions(.{});
@@ -19,9 +24,7 @@ pub fn build(b: *std.Build) void {
             "mlib_PMD_edit01.c",
             "dbg.c",
         },
-        .flags = &.{
-            "-std=c23",
-        },
+        .flags = &FLAGS,
     });
 
     const dll = b.addSharedLibrary(.{
@@ -42,10 +45,9 @@ pub fn build(b: *std.Build) void {
             "PMCA_PyMod.c",
             "PMCA_SDLMod.c",
             "PMCA_view.c",
+            "PMCA.c",
         },
-        .flags = &.{
-            "-std=c23",
-        },
+        .flags = &FLAGS,
     });
     dll.addIncludePath(.{ .cwd_relative = "C:/Python311/include" });
     dll.addLibraryPath(.{ .cwd_relative = "C:/Python311/libs" });
@@ -84,9 +86,7 @@ pub fn build(b: *std.Build) void {
             "PMCA_main.c",
             "PMCA_loadconf.c",
         },
-        .flags = &.{
-            "-std=c23",
-        },
+        .flags = &FLAGS,
     });
     b.installArtifact(converter);
     converter.linkLibrary(sdl_dep.artifact("SDL"));

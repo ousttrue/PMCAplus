@@ -858,9 +858,7 @@ static PyObject *Set_Name_Comment(PyObject *self, PyObject *args) {
 
 /*******************************************************************************/
 static PyObject *Init_PMD(PyObject *self, PyObject *args) {
-  int i;
-
-  for (i = 0; i < MODEL_COUNT; i++) {
+  for (int i = 0; i < MODEL_COUNT; i++) {
     create_PMD(&g_model[i]);
   }
   model_mgr(-1, 0, NULL);
