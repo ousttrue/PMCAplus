@@ -2,8 +2,8 @@
 #include "PMCA.h"
 #include <SDL.h>
 
-MODEL g_model[MODEL_COUNT];
-LIST list;
+struct MODEL g_model[MODEL_COUNT];
+struct LIST list;
 SDL_Thread *viewer_th;
 
 PyObject *CreateViewerThread(PyObject *self, PyObject *args) {

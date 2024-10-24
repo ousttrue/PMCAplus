@@ -50,7 +50,7 @@ void dbg_free(void *p) {
   // exit(1);
 }
 
-int load_list(LIST *list, const char file_name[]) {
+int load_list(struct LIST *list, const char file_name[]) {
   int i;
   char str[256];
   FILE *lst_file;
@@ -137,7 +137,7 @@ int load_list(LIST *list, const char file_name[]) {
 
   return 0;
 }
-int delete_list(LIST *list) {
+int delete_list(struct LIST *list) {
 
   list->bone_count = 0;
   list->skin_count = 0;
@@ -160,8 +160,8 @@ int delete_list(LIST *list) {
   return 0;
 }
 
-int load_PMD(MODEL *model, const char file_name[]) {
-  static MODEL cache_model[64];
+int load_PMD(struct MODEL *model, const char file_name[]) {
+  static struct MODEL cache_model[64];
   static unsigned char count[64];
   static unsigned char cur_count = 255;
 
@@ -230,7 +230,7 @@ int load_PMD(MODEL *model, const char file_name[]) {
   FREAD(model->header.comment, 1, 256, pmd);
 
   FREAD(&model->vt_count, 4, 1, pmd);
-  model->vt = (VERTEX *)MALLOC((size_t)model->vt_count * sizeof(VERTEX));
+  model->vt = (struct VERTEX *)MALLOC((size_t)model->vt_count * sizeof(struct VERTEX));
   if (model->vt == NULL) {
     printf("配列を確保できません\n");
     return 1;
@@ -263,7 +263,7 @@ int load_PMD(MODEL *model, const char file_name[]) {
   }
 
   FREAD(&model->mat_count, 4, 1, pmd);
-  model->mat = (MATERIAL *)MALLOC((size_t)model->mat_count * sizeof(MATERIAL));
+  model->mat = (struct MATERIAL *)MALLOC((size_t)model->mat_count * sizeof(struct MATERIAL));
   if (model->mat == NULL) {
     printf("配列を確保できません\n");
     return 1;
@@ -302,7 +302,7 @@ int load_PMD(MODEL *model, const char file_name[]) {
   }
 
   FREAD(&model->bone_count, 2, 1, pmd);
-  model->bone = (BONE *)MALLOC((size_t)model->bone_count * sizeof(BONE));
+  model->bone = (struct BONE *)MALLOC((size_t)model->bone_count * sizeof(struct BONE));
   if (model->bone == NULL) {
     printf("配列を確保できません\n");
     return 1;
@@ -320,7 +320,7 @@ int load_PMD(MODEL *model, const char file_name[]) {
   }
 
   FREAD(&model->IK_count, 2, 1, pmd);
-  model->IK_list = (IK_LIST *)MALLOC(model->IK_count * sizeof(IK_LIST));
+  model->IK_list = (struct IK_LIST *)MALLOC(model->IK_count * sizeof(struct IK_LIST));
   if (model->IK_list == NULL) {
     printf("配列を確保できません\n");
     return 1;
@@ -342,7 +342,7 @@ int load_PMD(MODEL *model, const char file_name[]) {
   }
 
   FREAD(&model->skin_count, 2, 1, pmd);
-  model->skin = (SKIN *)MALLOC((size_t)model->skin_count * sizeof(SKIN));
+  model->skin = (struct SKIN *)MALLOC((size_t)model->skin_count * sizeof(struct SKIN));
   if (model->skin == NULL) {
     printf("配列を確保できません\n");
     return 1;
@@ -352,8 +352,8 @@ int load_PMD(MODEL *model, const char file_name[]) {
     FREAD(model->skin[i].name, 1, 20, pmd);
     FREAD(&model->skin[i].skin_vt_count, 4, 1, pmd);
     FREAD(&model->skin[i].type, 1, 1, pmd);
-    model->skin[i].data = (SKIN_DATA *)MALLOC(
-        (size_t)model->skin[i].skin_vt_count * sizeof(SKIN_DATA));
+    model->skin[i].data = (struct SKIN_DATA *)MALLOC(
+        (size_t)model->skin[i].skin_vt_count * sizeof(struct SKIN_DATA));
     if (model->skin[i].data == NULL)
       return -1;
     for (int j = 0; j < model->skin[i].skin_vt_count; j++) {
@@ -375,7 +375,7 @@ int load_PMD(MODEL *model, const char file_name[]) {
   FREAD(model->skin_index, 2, model->skin_disp_count, pmd);
 
   FREAD(&model->bone_group_count, 1, 1, pmd);
-  model->bone_group = (BONE_GROUP *)MALLOC(sizeof(BONE_GROUP) *
+  model->bone_group = (struct BONE_GROUP *)MALLOC(sizeof(struct BONE_GROUP) *
                                            (size_t)model->bone_group_count);
   if (model->bone_group == NULL)
     return -1;
@@ -386,7 +386,7 @@ int load_PMD(MODEL *model, const char file_name[]) {
 
   FREAD(&model->bone_disp_count, 4, 1, pmd);
   model->bone_disp =
-      (BONE_DISP *)MALLOC((size_t)model->bone_disp_count * sizeof(BONE_DISP));
+      (struct BONE_DISP *)MALLOC((size_t)model->bone_disp_count * sizeof(struct BONE_DISP));
   if (model->bone_disp == NULL)
     return -1;
   for (i = 0; i < model->bone_disp_count; i++) {
@@ -468,7 +468,7 @@ int load_PMD(MODEL *model, const char file_name[]) {
 
   FREAD(&model->rbody_count, 4, 1, pmd);
   model->rbody =
-      (RIGID_BODY *)MALLOC((size_t)model->rbody_count * sizeof(RIGID_BODY));
+      (struct RIGID_BODY *)MALLOC((size_t)model->rbody_count * sizeof(struct RIGID_BODY));
 
   if (model->rbody == NULL) {
     printf("配列を確保できません\n");
@@ -489,7 +489,7 @@ int load_PMD(MODEL *model, const char file_name[]) {
   }
 
   FREAD(&model->joint_count, 4, 1, pmd);
-  model->joint = (JOINT *)MALLOC((size_t)model->joint_count * sizeof(JOINT));
+  model->joint = (struct JOINT *)MALLOC((size_t)model->joint_count * sizeof(struct JOINT));
   if (model->joint == NULL) {
     printf("配列を確保できません\n");
     return 1;
@@ -522,7 +522,7 @@ int load_PMD(MODEL *model, const char file_name[]) {
   return 0;
 }
 
-int write_PMD(MODEL *model, const char file_name[]) {
+int write_PMD(struct MODEL *model, const char file_name[]) {
   int i, j, ret = 0;
   char str[PATH_LEN];
 
@@ -709,7 +709,7 @@ int write_PMD(MODEL *model, const char file_name[]) {
   return ret;
 }
 
-int print_PMD(MODEL *model, const char file_name[]) {
+int print_PMD(struct MODEL *model, const char file_name[]) {
   int i, j, k;
 
   FILE *txt;
@@ -922,7 +922,7 @@ int print_PMD(MODEL *model, const char file_name[]) {
   return 0;
 }
 
-int create_PMD(MODEL *model) {
+int create_PMD(struct MODEL *model) {
   int i, j;
   strcpy(model->header.name, "");
   strcpy(model->header.comment, "");
@@ -969,7 +969,7 @@ int create_PMD(MODEL *model) {
   return 0;
 }
 
-int delete_PMD(MODEL *model) {
+int delete_PMD(struct MODEL *model) {
   int i, j;
 
   model->header.name[0] = '\0';
@@ -1044,7 +1044,7 @@ int delete_PMD(MODEL *model) {
   return 0;
 }
 
-int copy_PMD(MODEL *out, MODEL *model) {
+int copy_PMD(struct MODEL *out, struct MODEL *model) {
   int i;
   size_t size;
   int tmp[3];
@@ -1052,7 +1052,7 @@ int copy_PMD(MODEL *out, MODEL *model) {
   out->header = model->header;
 
   out->vt_count = model->vt_count;
-  out->vt = (VERTEX *)MALLOC((size_t)model->vt_count * sizeof(VERTEX));
+  out->vt = (struct VERTEX *)MALLOC((size_t)model->vt_count * sizeof(struct VERTEX));
   if (out->vt == NULL)
     return -1;
   for (i = 0; i < model->vt_count; i++) {
@@ -1070,7 +1070,7 @@ int copy_PMD(MODEL *out, MODEL *model) {
 
   // 材質
   out->mat_count = model->mat_count;
-  out->mat = (MATERIAL *)MALLOC((size_t)model->mat_count * sizeof(MATERIAL));
+  out->mat = (struct MATERIAL *)MALLOC((size_t)model->mat_count * sizeof(struct MATERIAL));
   if (out->mat == NULL)
     return -1;
   for (i = 0; i < model->mat_count; i++) {
@@ -1079,7 +1079,7 @@ int copy_PMD(MODEL *out, MODEL *model) {
 
   // ボーン
   out->bone_count = model->bone_count;
-  out->bone = (BONE *)MALLOC((size_t)model->bone_count * sizeof(BONE));
+  out->bone = (struct BONE *)MALLOC((size_t)model->bone_count * sizeof(struct BONE));
   if (out->bone == NULL)
     return -1;
   for (i = 0; i < model->bone_count; i++) {
@@ -1087,7 +1087,7 @@ int copy_PMD(MODEL *out, MODEL *model) {
   }
   // IKリスト
   out->IK_count = model->IK_count;
-  out->IK_list = (IK_LIST *)MALLOC((size_t)model->IK_count * sizeof(IK_LIST));
+  out->IK_list = (struct IK_LIST *)MALLOC((size_t)model->IK_count * sizeof(struct IK_LIST));
   if (out->IK_list == NULL)
     return -1;
   for (i = 0; i < model->IK_count; i++) {
@@ -1102,13 +1102,13 @@ int copy_PMD(MODEL *out, MODEL *model) {
 
   // 表情
   out->skin_count = model->skin_count;
-  out->skin = (SKIN *)MALLOC((size_t)model->skin_count * sizeof(SKIN));
+  out->skin = (struct SKIN *)MALLOC((size_t)model->skin_count * sizeof(struct SKIN));
   if (out->skin == NULL)
     return -1;
   for (i = 0; i < model->skin_count; i++) {
     out->skin[i] = model->skin[i];
-    size = (size_t)out->skin[i].skin_vt_count * sizeof(SKIN_DATA);
-    out->skin[i].data = (SKIN_DATA *)MALLOC(size);
+    size = (size_t)out->skin[i].skin_vt_count * sizeof(struct SKIN_DATA);
+    out->skin[i].data = (struct SKIN_DATA *)MALLOC(size);
     if (out->skin[i].data == NULL)
       return -1;
     memcpy(out->skin[i].data, model->skin[i].data, size);
@@ -1126,8 +1126,8 @@ int copy_PMD(MODEL *out, MODEL *model) {
 
   // ボーン表示グループ
   out->bone_group_count = model->bone_group_count;
-  out->bone_group = (BONE_GROUP *)MALLOC((size_t)model->bone_group_count *
-                                         sizeof(BONE_GROUP));
+  out->bone_group = (struct BONE_GROUP *)MALLOC((size_t)model->bone_group_count *
+                                         sizeof(struct BONE_GROUP));
   if (out->bone_group == NULL)
     return -1;
   for (i = 0; i < model->bone_group_count; i++) {
@@ -1135,9 +1135,9 @@ int copy_PMD(MODEL *out, MODEL *model) {
   }
 
   // 表示ボーン
-  size = (size_t)model->bone_disp_count * sizeof(BONE_DISP);
+  size = (size_t)model->bone_disp_count * sizeof(struct BONE_DISP);
   out->bone_disp_count = model->bone_disp_count;
-  out->bone_disp = (BONE_DISP *)MALLOC(size);
+  out->bone_disp = (struct BONE_DISP *)MALLOC(size);
   if (out->bone_disp == NULL)
     return -1;
   memcpy(out->bone_disp, model->bone_disp, size);
@@ -1156,7 +1156,7 @@ int copy_PMD(MODEL *out, MODEL *model) {
   // 剛体
   out->rbody_count = model->rbody_count;
   out->rbody =
-      (RIGID_BODY *)MALLOC((size_t)model->rbody_count * sizeof(RIGID_BODY));
+      (struct RIGID_BODY *)MALLOC((size_t)model->rbody_count * sizeof(struct RIGID_BODY));
   if (out->rbody == NULL)
     return -1;
   for (i = 0; i < model->rbody_count; i++) {
@@ -1164,7 +1164,7 @@ int copy_PMD(MODEL *out, MODEL *model) {
   }
   // ジョイント
   out->joint_count = model->joint_count;
-  out->joint = (JOINT *)MALLOC((size_t)model->joint_count * sizeof(JOINT));
+  out->joint = (struct JOINT *)MALLOC((size_t)model->joint_count * sizeof(struct JOINT));
   if (out->joint == NULL)
     return -1;
   for (i = 0; i < model->joint_count; i++) {
@@ -1174,40 +1174,40 @@ int copy_PMD(MODEL *out, MODEL *model) {
   return 0;
 }
 
-int add_PMD(MODEL *model, MODEL *add) {
+int add_PMD(struct MODEL *model, struct MODEL *add) {
 
   int i, j, k;
   int size;
   int tmp[3];
   unsigned int bone_count;
-  BONE *bone;
+  struct BONE *bone;
 
   unsigned int vt_count;
-  VERTEX *vt;
+  struct VERTEX *vt;
   unsigned int vt_index_count;
   unsigned short *vt_index;
   unsigned int mat_count;
-  MATERIAL *mat;
+  struct MATERIAL *mat;
   unsigned short IK_count;
-  IK_LIST *IK_list;
+  struct IK_LIST *IK_list;
   unsigned short skin_count;
-  SKIN *skin;
+  struct SKIN *skin;
   unsigned char skin_disp_count;
   unsigned short *skin_index;
   unsigned char bone_group_count;
-  BONE_GROUP *bone_group;
+  struct BONE_GROUP *bone_group;
   unsigned int bone_disp_count;
-  BONE_DISP *bone_disp;
+  struct BONE_DISP *bone_disp;
   // ENGLISH eg;
   unsigned int rbody_count;
-  RIGID_BODY *rbody;
+  struct RIGID_BODY *rbody;
   unsigned int joint_count;
-  JOINT *joint;
+  struct JOINT *joint;
 
   // 頂点
   vt_count = model->vt_count + add->vt_count;
 
-  vt = (VERTEX *)MALLOC((size_t)vt_count * sizeof(VERTEX));
+  vt = (struct VERTEX *)MALLOC((size_t)vt_count * sizeof(struct VERTEX));
   if (vt == NULL)
     return -1;
 
@@ -1241,7 +1241,7 @@ int add_PMD(MODEL *model, MODEL *add) {
 
   // 材質
   mat_count = model->mat_count + add->mat_count;
-  mat = (MATERIAL *)MALLOC((size_t)mat_count * sizeof(MATERIAL));
+  mat = (struct MATERIAL *)MALLOC((size_t)mat_count * sizeof(struct MATERIAL));
   if (mat == NULL)
     return -1;
 
@@ -1257,7 +1257,7 @@ int add_PMD(MODEL *model, MODEL *add) {
 
   // ボーン
   bone_count = model->bone_count + add->bone_count;
-  bone = (BONE *)MALLOC((size_t)bone_count * sizeof(BONE));
+  bone = (struct BONE *)MALLOC((size_t)bone_count * sizeof(struct BONE));
   if (bone == NULL)
     return -1;
   for (i = 0; i < model->bone_count; i++) {
@@ -1276,7 +1276,7 @@ int add_PMD(MODEL *model, MODEL *add) {
   }
   // IKリスト
   IK_count = model->IK_count + add->IK_count;
-  IK_list = (IK_LIST *)MALLOC((size_t)IK_count * sizeof(IK_LIST));
+  IK_list = (struct IK_LIST *)MALLOC((size_t)IK_count * sizeof(struct IK_LIST));
   if (IK_list == NULL)
     return -1;
   for (i = 0; i < model->IK_count; i++) {
@@ -1306,15 +1306,15 @@ int add_PMD(MODEL *model, MODEL *add) {
 
   // 表情
   skin_count = model->skin_count + add->skin_count;
-  skin = (SKIN *)MALLOC((size_t)skin_count * sizeof(SKIN));
+  skin = (struct SKIN *)MALLOC((size_t)skin_count * sizeof(struct SKIN));
   if (skin == NULL)
     return -1;
 
   if (add->skin_count == 0) {
     for (i = 0; i < skin_count; i++) {
       skin[i] = model->skin[i];
-      size = (size_t)skin[i].skin_vt_count * sizeof(SKIN_DATA);
-      skin[i].data = (SKIN_DATA *)MALLOC(size);
+      size = (size_t)skin[i].skin_vt_count * sizeof(struct SKIN_DATA);
+      skin[i].data = (struct SKIN_DATA *)MALLOC(size);
       if (skin[i].data == NULL)
         return -1;
       memcpy(skin[i].data, model->skin[i].data, size);
@@ -1323,8 +1323,8 @@ int add_PMD(MODEL *model, MODEL *add) {
   } else if (model->skin_count == 0) {
     for (i = 0; i < skin_count; i++) {
       skin[i] = add->skin[i];
-      size = (size_t)skin[i].skin_vt_count * sizeof(SKIN_DATA);
-      skin[i].data = (SKIN_DATA *)MALLOC(size);
+      size = (size_t)skin[i].skin_vt_count * sizeof(struct SKIN_DATA);
+      skin[i].data = (struct SKIN_DATA *)MALLOC(size);
       if (skin[i].data == NULL)
         return -1;
       memcpy(skin[i].data, add->skin[i].data, size);
@@ -1338,14 +1338,14 @@ int add_PMD(MODEL *model, MODEL *add) {
     skin[0] = model->skin[0];
     skin[0].skin_vt_count =
         model->skin[0].skin_vt_count + add->skin[0].skin_vt_count;
-    size = (size_t)skin[0].skin_vt_count * sizeof(SKIN_DATA);
-    skin[0].data = (SKIN_DATA *)MALLOC(size);
+    size = (size_t)skin[0].skin_vt_count * sizeof(struct SKIN_DATA);
+    skin[0].data = (struct SKIN_DATA *)MALLOC(size);
     if (skin[0].data == NULL)
       return -1;
     tmp[0] = model->skin[0].skin_vt_count;
-    memcpy(skin[0].data, model->skin[0].data, tmp[0] * sizeof(SKIN_DATA));
+    memcpy(skin[0].data, model->skin[0].data, tmp[0] * sizeof(struct SKIN_DATA));
     memcpy(&skin[0].data[tmp[0]], add->skin[0].data,
-           add->skin[0].skin_vt_count * sizeof(SKIN_DATA));
+           add->skin[0].skin_vt_count * sizeof(struct SKIN_DATA));
     // baseの合成
 
     for (i = 0; i < model->skin[0].skin_vt_count; i++) {
@@ -1360,8 +1360,8 @@ int add_PMD(MODEL *model, MODEL *add) {
     // 表情追加
     for (i = 1; i < model->skin_count; i++) {
       skin[i] = model->skin[i];
-      size = (size_t)skin[i].skin_vt_count * sizeof(SKIN_DATA);
-      skin[i].data = (SKIN_DATA *)MALLOC(size);
+      size = (size_t)skin[i].skin_vt_count * sizeof(struct SKIN_DATA);
+      skin[i].data = (struct SKIN_DATA *)MALLOC(size);
       if (skin[i].data == NULL)
         return -1;
       memcpy(skin[i].data, model->skin[i].data, size);
@@ -1369,8 +1369,8 @@ int add_PMD(MODEL *model, MODEL *add) {
     j = 1;
     for (i = model->skin_count; i < skin_count; i++) {
       skin[i] = add->skin[j];
-      size = (size_t)skin[i].skin_vt_count * sizeof(SKIN_DATA);
-      skin[i].data = (SKIN_DATA *)MALLOC(size);
+      size = (size_t)skin[i].skin_vt_count * sizeof(struct SKIN_DATA);
+      skin[i].data = (struct SKIN_DATA *)MALLOC(size);
       if (skin[i].data == NULL)
         return -1;
       memcpy(skin[i].data, add->skin[j].data, size);
@@ -1402,7 +1402,7 @@ int add_PMD(MODEL *model, MODEL *add) {
   // ボーン表示
   bone_group_count = model->bone_group_count + add->bone_group_count;
   bone_group =
-      (BONE_GROUP *)MALLOC((size_t)bone_group_count * sizeof(BONE_GROUP));
+      (struct BONE_GROUP *)MALLOC((size_t)bone_group_count * sizeof(struct BONE_GROUP));
   if (bone_group == NULL)
     return -1;
   for (i = 0; i < model->bone_group_count; i++) {
@@ -1415,7 +1415,7 @@ int add_PMD(MODEL *model, MODEL *add) {
   }
 
   bone_disp_count = model->bone_disp_count + add->bone_disp_count;
-  bone_disp = (BONE_DISP *)MALLOC((size_t)bone_disp_count * sizeof(BONE_DISP));
+  bone_disp = (struct BONE_DISP *)MALLOC((size_t)bone_disp_count * sizeof(struct BONE_DISP));
   for (i = 0; i < model->bone_disp_count; i++) {
     bone_disp[i] = model->bone_disp[i];
   }
@@ -1434,7 +1434,7 @@ int add_PMD(MODEL *model, MODEL *add) {
 
   // 剛体
   rbody_count = model->rbody_count + add->rbody_count;
-  rbody = (RIGID_BODY *)MALLOC((size_t)rbody_count * sizeof(RIGID_BODY));
+  rbody = (struct RIGID_BODY *)MALLOC((size_t)rbody_count * sizeof(struct RIGID_BODY));
 
   for (i = 0; i < model->rbody_count; i++) {
     rbody[i] = model->rbody[i];
@@ -1447,7 +1447,7 @@ int add_PMD(MODEL *model, MODEL *add) {
   }
   // ジョイント
   joint_count = model->joint_count + add->joint_count;
-  joint = (JOINT *)MALLOC((size_t)joint_count * sizeof(JOINT));
+  joint = (struct JOINT *)MALLOC((size_t)joint_count * sizeof(struct JOINT));
 
   for (i = 0; i < model->joint_count; i++) {
     joint[i] = model->joint[i];
@@ -1516,7 +1516,7 @@ int add_PMD(MODEL *model, MODEL *add) {
   return 0;
 }
 
-int listup_bone(MODEL *model, const char file_name[]) {
+int listup_bone(struct MODEL *model, const char file_name[]) {
   int i;
   char str[64], *p;
 

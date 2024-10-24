@@ -73,7 +73,7 @@ static int createwindow() {
   setup_opengl(vs.width, vs.height);
   SDL_WM_SetCaption(WM_TITLE, NULL);
 
-  /*MODEL* model;
+  /*struct MODEL* model;
   model = model_mgr(1,0,NULL);
   load_texture(model, "");
   */
@@ -302,7 +302,7 @@ static void process_events(void) {
 
 /*描画用のモデルを管理する関数*/
 void *model_mgr(int flag, int num, void *p) {
-  static MODEL model[16];
+  static struct MODEL model[16];
   static DSP_MODEL dsp_model[16];
   static int init = 1;
 
@@ -326,7 +326,7 @@ void *model_mgr(int flag, int num, void *p) {
   } else if (flag == 0) {
     init = -1;
     delete_PMD(&model[num]);
-    copy_PMD(&model[num], (MODEL *)p);
+    copy_PMD(&model[num], (struct MODEL *)p);
     make_dsp_model(&model[num], &dsp_model[num]);
     init = 1;
   } else if (flag == 1) {
@@ -345,7 +345,7 @@ void *model_mgr(int flag, int num, void *p) {
   } else if (flag == 3) {
     init = -1;
     delete_PMD(&model[num]);
-    copy_PMD(&model[num], (MODEL *)p);
+    copy_PMD(&model[num], (struct MODEL *)p);
     make_dsp_model(&model[num], &dsp_model[num]);
     init = 0;
   }
@@ -356,7 +356,7 @@ void *model_mgr(int flag, int num, void *p) {
 int render_model(int num) {
   int i, j;
   int index, c;
-  MODEL *model;
+  struct MODEL *model;
   DSP_MODEL *dsp_model;
 
   static float *loc;
@@ -425,7 +425,7 @@ int render_model(int num) {
 }
 
 // テクスチャ読み込み
-int load_tex(MODEL *model, DSP_MODEL *dsp_model) {
+int load_tex(struct MODEL *model, DSP_MODEL *dsp_model) {
   DSP_MAT *mats;
   int i, j;
   /*
@@ -509,7 +509,7 @@ int load_tex(MODEL *model, DSP_MODEL *dsp_model) {
   return 0;
 }
 
-int make_dsp_model(MODEL *model, DSP_MODEL *dsp_model) {
+int make_dsp_model(struct MODEL *model, DSP_MODEL *dsp_model) {
   int i, j;
   float *loc;
   float *nor;

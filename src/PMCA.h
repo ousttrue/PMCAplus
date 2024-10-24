@@ -55,18 +55,18 @@ typedef struct {
 
 /*****************************************************************/
 /*PMDr[AA*/
-int viewer_thread(void*);
+int viewer_thread(void *);
 void quit(int code);
 void qmul(double r[], const double p[], const double q[]);
 void qrot(double r[], double q[]);
 void *model_mgr(int flag, int num, void *p);
 int render_model(int num);
-int load_texture(MODEL *model);
-int load_tex(MODEL *model, DSP_MODEL *dsp_model);
-int make_dsp_model(MODEL *model, DSP_MODEL *dsp_model);
+int load_texture(struct MODEL *model);
+int load_tex(struct MODEL *model, DSP_MODEL *dsp_model);
+int make_dsp_model(struct MODEL *model, DSP_MODEL *dsp_model);
 
 extern FLAGS myflags;
 
 /*****************************************************************/
-extern MODEL g_model[16];
-extern LIST list;
+extern struct MODEL g_model[16];
+extern struct LIST list;

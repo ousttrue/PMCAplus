@@ -9,7 +9,7 @@
 // #define DLLExport edit
 #include "mPMD.h"
 
-int translate(MODEL *model, LIST *list, short mode) {
+int translate(struct MODEL *model, struct LIST *list, short mode) {
   int i, j;
   char str[NAME_LEN], *p;
   /*
@@ -140,14 +140,14 @@ int translate(MODEL *model, LIST *list, short mode) {
   return 0;
 }
 
-int sort_bone(MODEL *model, LIST *list) {
+int sort_bone(struct MODEL *model, struct LIST *list) {
   int i, j;
   int tmp;
   int *index;
-  BONE *bone;
+  struct BONE *bone;
 
   index = malloc(model->bone_count * sizeof(int));
-  bone = malloc(model->bone_count * sizeof(BONE));
+  bone = malloc(model->bone_count * sizeof(struct BONE));
 
 #ifdef MEM_DBG
   printf("malloc %p %p\n", index, bone);
@@ -263,10 +263,10 @@ int sort_bone(MODEL *model, LIST *list) {
   return 0;
 }
 
-int update_bone_index(MODEL *model, int index[]) {
+int update_bone_index(struct MODEL *model, int index[]) {
   int i, j;
   unsigned short(*tmp_vt)[2];
-  IK_LIST *tmp_ik;
+  struct IK_LIST *tmp_ik;
   unsigned short *tmp_disp;
   char(*tmp_eng)[20];
   unsigned short *tmp_rb;
@@ -293,11 +293,11 @@ int update_bone_index(MODEL *model, int index[]) {
   FREE(tmp_vt);
 
   // IKリストのボーン番号を書き換え
-  tmp_ik = (IK_LIST *)malloc(sizeof(IK_LIST) * model->IK_count);
+  tmp_ik = (struct IK_LIST *)malloc(sizeof(struct IK_LIST) * model->IK_count);
 #ifdef MEM_DBG
   printf("malloc %p\n", tmp_ik);
 #endif
-  memcpy(tmp_ik, model->IK_list, sizeof(IK_LIST) * model->IK_count);
+  memcpy(tmp_ik, model->IK_list, sizeof(struct IK_LIST) * model->IK_count);
   for (i = 0; i < model->IK_count; i++) {
     tmp_ik[i].IKCBone_index = (unsigned short *)malloc(sizeof(unsigned short) *
                                                        tmp_ik[i].IK_chain_len);
@@ -383,14 +383,14 @@ int update_bone_index(MODEL *model, int index[]) {
   return 0;
 }
 
-int sort_skin(MODEL *model, LIST *list) {
+int sort_skin(struct MODEL *model, struct LIST *list) {
   int i, j;
   int tmp;
   int *index;
-  SKIN *skin;
+  struct SKIN *skin;
 
   index = (int *)MALLOC(model->skin_count * sizeof(int));
-  skin = (SKIN *)MALLOC(model->skin_count * sizeof(SKIN));
+  skin = (struct SKIN *)MALLOC(model->skin_count * sizeof(struct SKIN));
 
 #ifdef MEM_DBG
   printf("malloc %p %p\n", index, skin);
@@ -459,19 +459,19 @@ int sort_skin(MODEL *model, LIST *list) {
   return 0;
 }
 
-int sort_disp(MODEL *model, LIST *list) {
+int sort_disp(struct MODEL *model, struct LIST *list) {
   int i, j;
   int tmp;
   int *index;
-  BONE_GROUP *bone_group, tmpg;
+  struct BONE_GROUP *bone_group, tmpg;
   char *p;
 
-  BONE_DISP *bone_disp;
+  struct BONE_DISP *bone_disp;
 
   index = (int *)MALLOC(model->bone_group_count * sizeof(int));
   bone_group =
-      (BONE_GROUP *)MALLOC(model->bone_group_count * sizeof(BONE_GROUP));
-  bone_disp = (BONE_DISP *)MALLOC(model->bone_disp_count * sizeof(BONE_DISP));
+      (struct BONE_GROUP *)MALLOC(model->bone_group_count * sizeof(struct BONE_GROUP));
+  bone_disp = (struct BONE_DISP *)MALLOC(model->bone_disp_count * sizeof(struct BONE_DISP));
 #ifdef MEM_DBG
   printf("malloc %p %p %p\n", index, bone_group, bone_disp);
 #endif
@@ -565,7 +565,7 @@ int sort_disp(MODEL *model, LIST *list) {
   return 0;
 }
 
-int rename_tail(MODEL *model) {
+int rename_tail(struct MODEL *model) {
   int i, j, tmp;
   int flag = 0;
 
@@ -603,7 +603,7 @@ int rename_tail(MODEL *model) {
   return 0;
 }
 
-int scale_bone(MODEL *model, int index, double sx, double sy, double sz) {
+int scale_bone(struct MODEL *model, int index, double sx, double sy, double sz) {
   // ベクトルがY軸に沿う向きになるようにする
   double loc[3] = {0.0, 0.0, 0.0};
   double vec[3];
@@ -790,7 +790,7 @@ int scale_bone(MODEL *model, int index, double sx, double sy, double sz) {
   return 0;
 }
 
-int bone_vec(MODEL *model, int index, double loc[], double vec[]) {
+int bone_vec(struct MODEL *model, int index, double loc[], double vec[]) {
   int i;
   int tail;
 
@@ -840,7 +840,7 @@ int coordtrans(double array[][3], unsigned int len, double loc[],
 
   // 座標変換
   for (i = 0; i < len; i++) {
-    if (&loc != 0) {
+    if (loc != 0) {
       for (j = 0; j < 3; j++) {
         tmp[j] = array[i][j] - loc[j];
       }
@@ -879,7 +879,7 @@ int coordtrans_inv(double array[][3], unsigned int len, double loc[],
       }
     }
 
-    if (&loc != 0) {
+    if (loc != 0) {
       for (j = 0; j < 3; j++) {
         array[i][j] = tmp[j] + loc[j];
       }
@@ -889,7 +889,7 @@ int coordtrans_inv(double array[][3], unsigned int len, double loc[],
   return 0;
 }
 
-int move_bone(MODEL *model, unsigned int index, double diff[]) {
+int move_bone(struct MODEL *model, unsigned int index, double diff[]) {
   int i, j, k;
   double tmp;
 
@@ -921,7 +921,7 @@ int move_bone(MODEL *model, unsigned int index, double diff[]) {
   return 0;
 }
 
-int index_bone(MODEL *model, const char bone[]) {
+int index_bone(struct MODEL *model, const char bone[]) {
   int i;
   int index = -1;
 
@@ -935,7 +935,7 @@ int index_bone(MODEL *model, const char bone[]) {
   return index;
 }
 
-int move_model(MODEL *model, double diff[]) {
+int move_model(struct MODEL *model, double diff[]) {
   int i, j;
 
   for (i = 0; i < model->bone_count; i++) {
@@ -952,7 +952,7 @@ int move_model(MODEL *model, double diff[]) {
   return 0;
 }
 
-int resize_model(MODEL *model, double size) {
+int resize_model(struct MODEL *model, double size) {
   int i, j, k;
 
   for (i = 0; i < model->bone_count; i++) {
@@ -977,16 +977,16 @@ int resize_model(MODEL *model, double size) {
   return 0;
 }
 
-int marge_bone(MODEL *model) {
+int marge_bone(struct MODEL *model) {
   int i, j, tmp;
   int *index;
   char *marge;
-  BONE *bone;
+  struct BONE *bone;
 
   index = (int *)MALLOC(model->bone_count * sizeof(int));
   marge = (char *)MALLOC(model->bone_count * sizeof(char));
   memset(marge, 0, model->bone_count * sizeof(char));
-  bone = (BONE *)MALLOC(model->bone_count * sizeof(BONE));
+  bone = (struct BONE *)MALLOC(model->bone_count * sizeof(struct BONE));
 
 #ifdef MEM_DBG
   printf("malloc %p %p %p\n", index, marge, bone);
@@ -1064,7 +1064,7 @@ int marge_bone(MODEL *model) {
   return 0;
 }
 
-int marge_mat(MODEL *model) {
+int marge_mat(struct MODEL *model) {
   int i, j, k;
   int tmp, size, sum;
   int *tmp_count;
@@ -1074,7 +1074,7 @@ int marge_mat(MODEL *model) {
   char *p;
 
   unsigned short *vt_index;
-  MATERIAL *tmp_mat;
+  struct MATERIAL *tmp_mat;
 
   index = (int *)MALLOC(model->mat_count * sizeof(int));
   marge = (char *)MALLOC(model->mat_count * sizeof(char));
@@ -1087,8 +1087,8 @@ int marge_mat(MODEL *model) {
   if (tmp_count == NULL)
     return -1;
   memset(tmp_count, 0, model->mat_count * sizeof(int));
-  tmp_mat = (MATERIAL *)MALLOC(model->mat_count * sizeof(MATERIAL));
-  memcpy(tmp_mat, model->mat, model->mat_count * sizeof(MATERIAL));
+  tmp_mat = (struct MATERIAL *)MALLOC(model->mat_count * sizeof(struct MATERIAL));
+  memcpy(tmp_mat, model->mat, model->mat_count * sizeof(struct MATERIAL));
 #ifdef MEM_DBG
   printf("malloc %p %p %p %p\n", index, marge, vt_index, tmp_count);
 #endif
@@ -1217,7 +1217,7 @@ int marge_mat(MODEL *model) {
   return 0;
 }
 
-int marge_IK(MODEL *model) {
+int marge_IK(struct MODEL *model) {
   int i, j, tmp;
   int *index;
   char *marge;
@@ -1266,11 +1266,11 @@ int marge_IK(MODEL *model) {
   return 0;
 }
 
-int marge_bone_disp(MODEL *model) {
+int marge_bone_disp(struct MODEL *model) {
   int i, j, k, tmp;
   int *index;
   char *marge;
-  BONE_DISP *bone_disp;
+  struct BONE_DISP *bone_disp;
 
 // 同名枠をマージ
 #ifdef DEBUG
@@ -1280,7 +1280,7 @@ int marge_bone_disp(MODEL *model) {
   index = (int *)MALLOC(model->bone_group_count * sizeof(int));
   marge = (char *)MALLOC(model->bone_group_count * sizeof(char));
   memset(marge, 0, model->bone_group_count * sizeof(char));
-  bone_disp = (BONE_DISP *)MALLOC(model->bone_disp_count * sizeof(BONE_DISP));
+  bone_disp = (struct BONE_DISP *)MALLOC(model->bone_disp_count * sizeof(struct BONE_DISP));
 #ifdef MEM_DBG
   printf("malloc %p %p\n", index, marge);
 #endif
@@ -1395,7 +1395,7 @@ int marge_bone_disp(MODEL *model) {
   return 0;
 }
 
-int marge_rb(MODEL *model) {
+int marge_rb(struct MODEL *model) {
   int i, j, tmp;
   int *index;
   char *marge;
@@ -1453,7 +1453,7 @@ int marge_rb(MODEL *model) {
   return 0;
 }
 
-int update_skin(MODEL *model) {
+int update_skin(struct MODEL *model) {
   int i, j, k;
   // 表情baseの頂点位置を更新する
   if (model->skin_count == 0)
@@ -1467,7 +1467,7 @@ int update_skin(MODEL *model) {
   return 0;
 }
 
-int adjust_joint(MODEL *model) {
+int adjust_joint(struct MODEL *model) {
   int i, j;
   // 同じ名前のボーンにジョイントの位置を合わせる
 
@@ -1482,7 +1482,7 @@ int adjust_joint(MODEL *model) {
   return 0;
 }
 
-int show_detail(MODEL *model) {
+int show_detail(struct MODEL *model) {
   printf("%s \n %f \n %s \n %s \n", model->header.magic, model->header.version,
          model->header.name, model->header.comment);
   printf("頂点数:%d\n", model->vt_count);

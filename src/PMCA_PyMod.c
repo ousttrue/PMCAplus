@@ -96,7 +96,7 @@ int PyList_to_Array_Str(char **output, PyObject *List, int size, int val) {
 /*C-Pythonデータ変換関連*/
 static PyObject *getInfo(PyObject *self, PyObject *args) {
   int num;
-  MODEL *model;
+  struct MODEL *model;
   char *name, *name_eng, *comment, *comment_eng;
   if (!PyArg_ParseTuple(args, "i", &num))
     return NULL;
@@ -127,7 +127,7 @@ static PyObject *getInfo(PyObject *self, PyObject *args) {
 
 static PyObject *getVt(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
+  struct MODEL *model;
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
     return NULL;
   model = &g_model[num];
@@ -147,7 +147,7 @@ static PyObject *getVt(PyObject *self, PyObject *args) {
 
 static PyObject *getFace(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
+  struct MODEL *model;
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
     return NULL;
   model = &g_model[num];
@@ -159,7 +159,7 @@ static PyObject *getFace(PyObject *self, PyObject *args) {
 
 static PyObject *getMat(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
+  struct MODEL *model;
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
     return NULL;
   model = &g_model[num];
@@ -184,7 +184,7 @@ static PyObject *getMat(PyObject *self, PyObject *args) {
 
 static PyObject *getBone(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
+  struct MODEL *model;
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
     return NULL;
   model = &g_model[num];
@@ -204,7 +204,7 @@ static PyObject *getBone(PyObject *self, PyObject *args) {
 
 static PyObject *getIK(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
+  struct MODEL *model;
 
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
     return NULL;
@@ -223,7 +223,7 @@ static PyObject *getIK(PyObject *self, PyObject *args) {
 
 static PyObject *getSkin(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
+  struct MODEL *model;
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
     return NULL;
   model = &g_model[num];
@@ -238,7 +238,7 @@ static PyObject *getSkin(PyObject *self, PyObject *args) {
 
 static PyObject *getSkindata(PyObject *self, PyObject *args) {
   int num, i, j;
-  MODEL *model;
+  struct MODEL *model;
   if (!PyArg_ParseTuple(args, "iii", &num, &i, &j))
     return NULL;
   model = &g_model[num];
@@ -250,7 +250,7 @@ static PyObject *getSkindata(PyObject *self, PyObject *args) {
 
 static PyObject *getBone_group(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
+  struct MODEL *model;
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
     return NULL;
   model = &g_model[num];
@@ -260,7 +260,7 @@ static PyObject *getBone_group(PyObject *self, PyObject *args) {
 
 static PyObject *getBone_disp(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
+  struct MODEL *model;
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
     return NULL;
   model = &g_model[num];
@@ -270,7 +270,7 @@ static PyObject *getBone_disp(PyObject *self, PyObject *args) {
 
 static PyObject *getToon(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
+  struct MODEL *model;
   if (!PyArg_ParseTuple(args, "i", &num))
     return NULL;
   model = &g_model[num];
@@ -284,7 +284,7 @@ static PyObject *getToon(PyObject *self, PyObject *args) {
 
 static PyObject *getToonPath(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
+  struct MODEL *model;
   if (!PyArg_ParseTuple(args, "i", &num))
     return NULL;
   model = &g_model[num];
@@ -299,7 +299,7 @@ static PyObject *getToonPath(PyObject *self, PyObject *args) {
 
 static PyObject *getRb(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
+  struct MODEL *model;
 
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
     return NULL;
@@ -323,7 +323,7 @@ static PyObject *getRb(PyObject *self, PyObject *args) {
 
 static PyObject *getJoint(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
+  struct MODEL *model;
 
   if (!PyArg_ParseTuple(args, "ii", &num, &i))
     return NULL;
@@ -350,7 +350,7 @@ static PyObject *getJoint(PyObject *self, PyObject *args) {
 
 static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
   int num, i, size;
-  MODEL model, *p;
+  struct MODEL model, *p;
   PyObject *PyTmp;
   char *str[4];
 
@@ -395,7 +395,7 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
 
   /*メモリ確保************************************************************************/
   // 頂点
-  size = p->vt_count * sizeof(VERTEX);
+  size = p->vt_count * sizeof(struct VERTEX);
   p->vt = MALLOC(size);
   memset(p->vt, 0, size);
   // 面頂点
@@ -404,22 +404,22 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
   memset(p->vt_index, 0, size);
 
   // 材質
-  size = p->mat_count * sizeof(MATERIAL);
+  size = p->mat_count * sizeof(struct MATERIAL);
   p->mat = MALLOC(size);
   memset(p->mat, 0, size);
 
   // ボーン
-  size = p->bone_count * sizeof(BONE);
+  size = p->bone_count * sizeof(struct BONE);
   p->bone = MALLOC(size);
   memset(p->bone, 0, size);
 
   // IKリスト
-  size = p->IK_count * sizeof(IK_LIST);
+  size = p->IK_count * sizeof(struct IK_LIST);
   p->IK_list = MALLOC(size);
   memset(p->IK_list, 0, size);
 
   // 表情
-  size = p->skin_count * sizeof(SKIN);
+  size = p->skin_count * sizeof(struct SKIN);
   p->skin = MALLOC(size);
   memset(p->skin, 0, size);
 
@@ -429,22 +429,22 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
   PyList_to_Array_UShort(p->skin_index, PyTmp, p->skin_disp_count);
 
   // ボーン表示グループ
-  size = p->bone_group_count * sizeof(BONE_GROUP);
+  size = p->bone_group_count * sizeof(struct BONE_GROUP);
   p->bone_group = MALLOC(size);
   memset(p->bone_group, 0, size);
 
   // 表示ボーン
-  size = p->bone_disp_count * sizeof(BONE_DISP);
+  size = p->bone_disp_count * sizeof(struct BONE_DISP);
   p->bone_disp = MALLOC(size);
   memset(p->bone_disp, 0, size);
 
   // 剛体
-  size = p->rbody_count * sizeof(RIGID_BODY);
+  size = p->rbody_count * sizeof(struct RIGID_BODY);
   p->rbody = MALLOC(size);
   memset(p->rbody, 0, size);
 
   // ジョイント
-  size = p->joint_count * sizeof(JOINT);
+  size = p->joint_count * sizeof(struct JOINT);
   p->joint = MALLOC(size);
   memset(p->joint, 0, size);
 
@@ -453,9 +453,9 @@ static PyObject *Create_FromInfo(PyObject *self, PyObject *args) {
 
 static PyObject *setVt(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
+  struct MODEL *model;
   PyObject *PyTmp[3];
-  VERTEX vt;
+  struct VERTEX vt;
   if (!PyArg_ParseTuple(args,
                         "iiOOO"
                         "hh"
@@ -477,7 +477,7 @@ static PyObject *setVt(PyObject *self, PyObject *args) {
 
 static PyObject *setFace(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
+  struct MODEL *model;
   PyObject *PyTmp;
   if (!PyArg_ParseTuple(args, "iiO", &num, &i, &PyTmp))
     return NULL;
@@ -492,9 +492,9 @@ static PyObject *setFace(PyObject *self, PyObject *args) {
 
 static PyObject *setMat(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
+  struct MODEL *model;
   PyObject *PyTmp[3];
-  MATERIAL mat;
+  struct MATERIAL mat;
   char *str[4];
   if (!PyArg_ParseTuple(args, "iiOffOOiiiyyyy", &num, &i, &PyTmp[0], &mat.alpha,
                         &mat.spec, &PyTmp[1], &PyTmp[2],
@@ -522,9 +522,9 @@ static PyObject *setMat(PyObject *self, PyObject *args) {
 
 static PyObject *setBone(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
+  struct MODEL *model;
   PyObject *PyTmp;
-  BONE bone;
+  struct BONE bone;
   char *str[2];
   if (!PyArg_ParseTuple(args, "iiyyiiiiO", &num, &i, &str[0], &str[1],
 
@@ -547,9 +547,9 @@ static PyObject *setBone(PyObject *self, PyObject *args) {
 
 static PyObject *setIK(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
+  struct MODEL *model;
   PyObject *PyTmp;
-  IK_LIST IK_list;
+  struct IK_LIST IK_list;
   if (!PyArg_ParseTuple(args, "iiiiiifO", &num, &i, &IK_list.IKBone_index,
                         &IK_list.IKTBone_index, &IK_list.IK_chain_len,
                         &IK_list.iterations, &IK_list.weight, &PyTmp))
@@ -580,8 +580,8 @@ static PyObject *setIK(PyObject *self, PyObject *args) {
 
 static PyObject *setSkin(PyObject *self, PyObject *args) {
   int num, i, size;
-  MODEL *model;
-  SKIN skin;
+  struct MODEL *model;
+  struct SKIN skin;
   char *str[2];
 
   if (!PyArg_ParseTuple(args, "iiyyib", &num, &i, &str[0], &str[1],
@@ -595,7 +595,7 @@ static PyObject *setSkin(PyObject *self, PyObject *args) {
   strncpy(skin.name_eng, str[1], NAME_LEN);
 
   // メモリ確保
-  size = skin.skin_vt_count * sizeof(SKIN_DATA);
+  size = skin.skin_vt_count * sizeof(struct SKIN_DATA);
   if (model->skin[i].skin_vt_count != skin.skin_vt_count) {
     FREE(model->skin[i].data);
 
@@ -614,9 +614,9 @@ static PyObject *setSkin(PyObject *self, PyObject *args) {
 
 static PyObject *setSkindata(PyObject *self, PyObject *args) {
   int num, i, j;
-  MODEL *model;
+  struct MODEL *model;
   PyObject *PyTmp;
-  SKIN_DATA data;
+  struct SKIN_DATA data;
   if (!PyArg_ParseTuple(args, "iiii(fff)", &num, &i, &j, &data.index,
                         &data.loc[0], &data.loc[1], &data.loc[2]))
     return NULL;
@@ -634,8 +634,8 @@ static PyObject *setSkindata(PyObject *self, PyObject *args) {
 
 static PyObject *setBone_group(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
-  BONE_GROUP bone_group;
+  struct MODEL *model;
+  struct BONE_GROUP bone_group;
   char *str[2];
   if (!PyArg_ParseTuple(args, "iiyy", &num, &i, &str[0], &str[1]))
     return NULL;
@@ -651,8 +651,8 @@ static PyObject *setBone_group(PyObject *self, PyObject *args) {
 
 static PyObject *setBone_disp(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
-  BONE_DISP bone_disp;
+  struct MODEL *model;
+  struct BONE_DISP bone_disp;
   if (!PyArg_ParseTuple(args, "iiii", &num, &i, &bone_disp.index,
                         &bone_disp.bone_group))
     return NULL;
@@ -664,7 +664,7 @@ static PyObject *setBone_disp(PyObject *self, PyObject *args) {
 
 static PyObject *setToon(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
+  struct MODEL *model;
   PyObject *tmp;
   char *p[10];
 
@@ -697,7 +697,7 @@ static PyObject *setToon(PyObject *self, PyObject *args) {
 
 static PyObject *setToonPath(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
+  struct MODEL *model;
   PyObject *tmp;
   char *p[10];
   if (!PyArg_ParseTuple(args, "iO", &num, &tmp))
@@ -718,8 +718,8 @@ static PyObject *setToonPath(PyObject *self, PyObject *args) {
 
 static PyObject *setRb(PyObject *self, PyObject *args) {
   int num = 0, i = 0;
-  MODEL *model;
-  RIGID_BODY rbody;
+  struct MODEL *model;
+  struct RIGID_BODY rbody;
   char *str;
 
   if (!PyArg_ParseTuple(
@@ -747,8 +747,8 @@ static PyObject *setRb(PyObject *self, PyObject *args) {
 
 static PyObject *setJoint(PyObject *self, PyObject *args) {
   int num, i;
-  MODEL *model;
-  JOINT joint;
+  struct MODEL *model;
+  struct JOINT joint;
   char *str;
   if (!PyArg_ParseTuple(args,
                         "ii"
@@ -890,7 +890,7 @@ static PyObject *Write_PMD(PyObject *self, PyObject *args) {
 static PyObject *Add_PMD(PyObject *self, PyObject *args) {
   int num, add;
   int ret = 1;
-  MODEL model;
+  struct MODEL model;
   create_PMD(&model);
   if (!PyArg_ParseTuple(args, "ii", &num, &add))
     return NULL;
