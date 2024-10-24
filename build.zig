@@ -17,6 +17,7 @@ pub fn build(b: *std.Build) void {
         .files = &.{
             "mlib_PMD_rw01.c",
             "mlib_PMD_edit01.c",
+            "dbg.c",
         },
         .flags = &.{
             "-std=c23",
@@ -70,6 +71,27 @@ pub fn build(b: *std.Build) void {
     dll.linkSystemLibrary("WINMM");
     dll.linkSystemLibrary("OPENGL32");
     dll.linkSystemLibrary("GLU32");
+
+    const converter = b.addExecutable(.{
+        .target = target,
+        .optimize = optimize,
+        .name = "converter",
+        .link_libc = true,
+    });
+    converter.addCSourceFiles(.{
+        .root = b.path("converter"),
+        .files = &.{
+            "PMCA_main.c",
+            "PMCA_loadconf.c",
+        },
+        .flags = &.{
+            "-std=c23",
+        },
+    });
+    b.installArtifact(converter);
+    converter.linkLibrary(sdl_dep.artifact("SDL"));
+    converter.addIncludePath(sdl_dep.path("include"));
+    converter.addIncludePath(b.path("mPMD"));
 
     const exe = b.addExecutable(.{
         .target = target,

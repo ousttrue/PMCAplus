@@ -1,16 +1,9 @@
-#include <stdio.h>
-#define DLL
-
+#pragma once
 #define USHORT_MAX 65535
 
 #define PATH_LEN 256
 #define NAME_LEN 128
 #define COMMENT_LEN 256
-
-#define FREAD dbg_fread
-#define FGETS dbg_fgets
-#define MALLOC dbg_malloc
-#define FREE dbg_free
 
 struct HEADER { /*283byte*/
   char magic[4];
@@ -155,56 +148,3 @@ struct LIST {
   char (*disp)[NAME_LEN];
   char (*disp_eng)[NAME_LEN];
 };
-
-DLL int translate(struct MODEL *model, struct LIST *list, short mode);
-
-DLL int sort_bone(struct MODEL *model, struct LIST *list);
-DLL int update_bone_index(struct MODEL *model, int index[]);
-DLL int sort_skin(struct MODEL *model, struct LIST *list);
-DLL int sort_disp(struct MODEL *model, struct LIST *list);
-DLL int rename_tail(struct MODEL *model);
-
-DLL int scale_bone(struct MODEL *model, int index, double sx, double sy,
-                   double sz);
-DLL int bone_vec(struct MODEL *model, int index, double loc[], double vec[]);
-DLL double angle_from_vec(double u, double v);
-DLL int coordtrans(double array[][3], unsigned int len, double loc[],
-                   double mtr[3][3]);
-DLL int coordtrans_inv(double array[][3], unsigned int len, double loc[],
-                       double mtr[3][3]);
-DLL int move_bone(struct MODEL *model, unsigned int index, double diff[]);
-DLL int resize_model(struct MODEL *model, double size);
-DLL int index_bone(struct MODEL *model, const char bone[]);
-
-DLL int move_model(struct MODEL *model, double diff[]);
-
-DLL int marge_bone(struct MODEL *model);
-DLL int marge_mat(struct MODEL *model);
-DLL int marge_IK(struct MODEL *model);
-DLL int marge_bone_disp(struct MODEL *model);
-DLL int marge_rb(struct MODEL *model);
-
-DLL int update_skin(struct MODEL *model);
-DLL int adjust_joint(struct MODEL *model);
-
-DLL int load_list(struct LIST *list, const char dir[]);
-DLL int delete_list(struct LIST *list);
-DLL int show_detail(struct MODEL *model);
-
-DLL int load_PMD(struct MODEL *model, const char file_name[]);
-DLL int write_PMD(struct MODEL *model, const char file_name[]);
-DLL int print_PMD(struct MODEL *model, const char file_name[]);
-DLL int create_PMD(struct MODEL *model);
-DLL int delete_PMD(struct MODEL *model);
-DLL int copy_PMD(struct MODEL *out, struct MODEL *model);
-
-DLL int add_PMD(struct MODEL *model, struct MODEL *add);
-
-// dev_tool
-DLL int listup_bone(struct MODEL *model, const char file_name[]);
-
-DLL int get_file_name(char file_name[]);
-
-void *dbg_fgets(char *, size_t, FILE *);
-void *dbg_malloc(size_t);
-void dbg_free(void *);

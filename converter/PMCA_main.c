@@ -10,7 +10,7 @@ PMDモブキャラクタアセンブラ
 #include "PMCA.h"
 #include "mPMD.h"
 
-LIST list;
+struct LIST list;
 PARTS parts[PARTS_MAX];
 TEXTURES textures[TEXTURES_MAX];
 MATERIALS materials[MATERIALS_MAX];

@@ -1,13 +1,12 @@
 // PMD関係のライブラリ、PMD編集など
+#include "mlib_PMD_edit01.h"
+#include "dbg.h"
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-// #define DLLExport edit
-#include "mPMD.h"
 
 int translate(struct MODEL *model, struct LIST *list, short mode) {
   int i, j;
@@ -469,9 +468,10 @@ int sort_disp(struct MODEL *model, struct LIST *list) {
   struct BONE_DISP *bone_disp;
 
   index = (int *)MALLOC(model->bone_group_count * sizeof(int));
-  bone_group =
-      (struct BONE_GROUP *)MALLOC(model->bone_group_count * sizeof(struct BONE_GROUP));
-  bone_disp = (struct BONE_DISP *)MALLOC(model->bone_disp_count * sizeof(struct BONE_DISP));
+  bone_group = (struct BONE_GROUP *)MALLOC(model->bone_group_count *
+                                           sizeof(struct BONE_GROUP));
+  bone_disp = (struct BONE_DISP *)MALLOC(model->bone_disp_count *
+                                         sizeof(struct BONE_DISP));
 #ifdef MEM_DBG
   printf("malloc %p %p %p\n", index, bone_group, bone_disp);
 #endif
@@ -603,7 +603,8 @@ int rename_tail(struct MODEL *model) {
   return 0;
 }
 
-int scale_bone(struct MODEL *model, int index, double sx, double sy, double sz) {
+int scale_bone(struct MODEL *model, int index, double sx, double sy,
+               double sz) {
   // ベクトルがY軸に沿う向きになるようにする
   double loc[3] = {0.0, 0.0, 0.0};
   double vec[3];
@@ -704,7 +705,7 @@ int scale_bone(struct MODEL *model, int index, double sx, double sy, double sz) 
   }
 
   auto tmp_bone = (double(*)[3])MALLOC(sizeof(double) * len_bone * 3);
-  auto diff_bone = (double (*)[3])MALLOC(sizeof(double) * len_bone * 3);
+  auto diff_bone = (double(*)[3])MALLOC(sizeof(double) * len_bone * 3);
   auto index_bone = (unsigned int *)MALLOC(sizeof(unsigned int) * len_bone);
   j = 0;
   for (int i = 0; i < model->bone_count; i++) {
@@ -1087,7 +1088,8 @@ int marge_mat(struct MODEL *model) {
   if (tmp_count == NULL)
     return -1;
   memset(tmp_count, 0, model->mat_count * sizeof(int));
-  tmp_mat = (struct MATERIAL *)MALLOC(model->mat_count * sizeof(struct MATERIAL));
+  tmp_mat =
+      (struct MATERIAL *)MALLOC(model->mat_count * sizeof(struct MATERIAL));
   memcpy(tmp_mat, model->mat, model->mat_count * sizeof(struct MATERIAL));
 #ifdef MEM_DBG
   printf("malloc %p %p %p %p\n", index, marge, vt_index, tmp_count);
@@ -1280,7 +1282,8 @@ int marge_bone_disp(struct MODEL *model) {
   index = (int *)MALLOC(model->bone_group_count * sizeof(int));
   marge = (char *)MALLOC(model->bone_group_count * sizeof(char));
   memset(marge, 0, model->bone_group_count * sizeof(char));
-  bone_disp = (struct BONE_DISP *)MALLOC(model->bone_disp_count * sizeof(struct BONE_DISP));
+  bone_disp = (struct BONE_DISP *)MALLOC(model->bone_disp_count *
+                                         sizeof(struct BONE_DISP));
 #ifdef MEM_DBG
   printf("malloc %p %p\n", index, marge);
 #endif

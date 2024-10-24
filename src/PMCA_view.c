@@ -1,3 +1,5 @@
+#include "mlib_PMD_rw01.h"
+#include "dbg.h"
 #include <Windows.h>
 
 #include <GL/GL.h>

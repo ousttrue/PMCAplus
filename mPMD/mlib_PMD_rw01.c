@@ -1,54 +1,13 @@
 /*PMD関係のライブラリ、読み込み書き込み系*/
+#include "mlib_PMD_rw01.h"
+#include "dbg.h"
+#include "mPMD.h"
 
 #include <math.h>
 #include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "mPMD.h"
-
-size_t dbg_fread(void *p, size_t s, size_t n, FILE *fp) {
-  size_t r;
-  if (s * n == 0)
-    return 0;
-  r = fread(p, s, n, fp);
-  if (r < n) {
-    printf("ファイル読み込みに失敗\nFILE:%p\nn:%d < %d\n", fp, (int)r, (int)n);
-    exit(1);
-  }
-
-  return r;
-}
-
-void *dbg_fgets(char *p, size_t s, FILE *fp) {
-  void *r;
-  r = fgets(p, s, fp);
-  if (r == NULL) {
-    printf("ファイル読み込みに失敗\nFILE:%p %p\n", fp, r);
-    exit(1);
-  }
-
-  return r;
-}
-
-void *dbg_malloc(size_t s) {
-  void *p;
-  p = malloc(s);
-  if (p == NULL) {
-    puts("メモリの確保に失敗しました");
-    exit(-1);
-  }
-  return p;
-}
-
-void dbg_free(void *p) {
-  if (p == NULL)
-    return;
-  free(p);
-  p = NULL;
-  // exit(1);
-}
 
 int load_list(struct LIST *list, const char file_name[]) {
   int i;
@@ -230,7 +189,8 @@ int load_PMD(struct MODEL *model, const char file_name[]) {
   FREAD(model->header.comment, 1, 256, pmd);
 
   FREAD(&model->vt_count, 4, 1, pmd);
-  model->vt = (struct VERTEX *)MALLOC((size_t)model->vt_count * sizeof(struct VERTEX));
+  model->vt =
+      (struct VERTEX *)MALLOC((size_t)model->vt_count * sizeof(struct VERTEX));
   if (model->vt == NULL) {
     printf("配列を確保できません\n");
     return 1;
@@ -263,7 +223,8 @@ int load_PMD(struct MODEL *model, const char file_name[]) {
   }
 
   FREAD(&model->mat_count, 4, 1, pmd);
-  model->mat = (struct MATERIAL *)MALLOC((size_t)model->mat_count * sizeof(struct MATERIAL));
+  model->mat = (struct MATERIAL *)MALLOC((size_t)model->mat_count *
+                                         sizeof(struct MATERIAL));
   if (model->mat == NULL) {
     printf("配列を確保できません\n");
     return 1;
@@ -302,7 +263,8 @@ int load_PMD(struct MODEL *model, const char file_name[]) {
   }
 
   FREAD(&model->bone_count, 2, 1, pmd);
-  model->bone = (struct BONE *)MALLOC((size_t)model->bone_count * sizeof(struct BONE));
+  model->bone =
+      (struct BONE *)MALLOC((size_t)model->bone_count * sizeof(struct BONE));
   if (model->bone == NULL) {
     printf("配列を確保できません\n");
     return 1;
@@ -320,7 +282,8 @@ int load_PMD(struct MODEL *model, const char file_name[]) {
   }
 
   FREAD(&model->IK_count, 2, 1, pmd);
-  model->IK_list = (struct IK_LIST *)MALLOC(model->IK_count * sizeof(struct IK_LIST));
+  model->IK_list =
+      (struct IK_LIST *)MALLOC(model->IK_count * sizeof(struct IK_LIST));
   if (model->IK_list == NULL) {
     printf("配列を確保できません\n");
     return 1;
@@ -342,7 +305,8 @@ int load_PMD(struct MODEL *model, const char file_name[]) {
   }
 
   FREAD(&model->skin_count, 2, 1, pmd);
-  model->skin = (struct SKIN *)MALLOC((size_t)model->skin_count * sizeof(struct SKIN));
+  model->skin =
+      (struct SKIN *)MALLOC((size_t)model->skin_count * sizeof(struct SKIN));
   if (model->skin == NULL) {
     printf("配列を確保できません\n");
     return 1;
@@ -375,8 +339,8 @@ int load_PMD(struct MODEL *model, const char file_name[]) {
   FREAD(model->skin_index, 2, model->skin_disp_count, pmd);
 
   FREAD(&model->bone_group_count, 1, 1, pmd);
-  model->bone_group = (struct BONE_GROUP *)MALLOC(sizeof(struct BONE_GROUP) *
-                                           (size_t)model->bone_group_count);
+  model->bone_group = (struct BONE_GROUP *)MALLOC(
+      sizeof(struct BONE_GROUP) * (size_t)model->bone_group_count);
   if (model->bone_group == NULL)
     return -1;
   for (i = 0; i < model->bone_group_count; i++) {
@@ -385,8 +349,8 @@ int load_PMD(struct MODEL *model, const char file_name[]) {
   }
 
   FREAD(&model->bone_disp_count, 4, 1, pmd);
-  model->bone_disp =
-      (struct BONE_DISP *)MALLOC((size_t)model->bone_disp_count * sizeof(struct BONE_DISP));
+  model->bone_disp = (struct BONE_DISP *)MALLOC((size_t)model->bone_disp_count *
+                                                sizeof(struct BONE_DISP));
   if (model->bone_disp == NULL)
     return -1;
   for (i = 0; i < model->bone_disp_count; i++) {
@@ -467,8 +431,8 @@ int load_PMD(struct MODEL *model, const char file_name[]) {
   }
 
   FREAD(&model->rbody_count, 4, 1, pmd);
-  model->rbody =
-      (struct RIGID_BODY *)MALLOC((size_t)model->rbody_count * sizeof(struct RIGID_BODY));
+  model->rbody = (struct RIGID_BODY *)MALLOC((size_t)model->rbody_count *
+                                             sizeof(struct RIGID_BODY));
 
   if (model->rbody == NULL) {
     printf("配列を確保できません\n");
@@ -489,7 +453,8 @@ int load_PMD(struct MODEL *model, const char file_name[]) {
   }
 
   FREAD(&model->joint_count, 4, 1, pmd);
-  model->joint = (struct JOINT *)MALLOC((size_t)model->joint_count * sizeof(struct JOINT));
+  model->joint =
+      (struct JOINT *)MALLOC((size_t)model->joint_count * sizeof(struct JOINT));
   if (model->joint == NULL) {
     printf("配列を確保できません\n");
     return 1;
@@ -1052,7 +1017,8 @@ int copy_PMD(struct MODEL *out, struct MODEL *model) {
   out->header = model->header;
 
   out->vt_count = model->vt_count;
-  out->vt = (struct VERTEX *)MALLOC((size_t)model->vt_count * sizeof(struct VERTEX));
+  out->vt =
+      (struct VERTEX *)MALLOC((size_t)model->vt_count * sizeof(struct VERTEX));
   if (out->vt == NULL)
     return -1;
   for (i = 0; i < model->vt_count; i++) {
@@ -1070,7 +1036,8 @@ int copy_PMD(struct MODEL *out, struct MODEL *model) {
 
   // 材質
   out->mat_count = model->mat_count;
-  out->mat = (struct MATERIAL *)MALLOC((size_t)model->mat_count * sizeof(struct MATERIAL));
+  out->mat = (struct MATERIAL *)MALLOC((size_t)model->mat_count *
+                                       sizeof(struct MATERIAL));
   if (out->mat == NULL)
     return -1;
   for (i = 0; i < model->mat_count; i++) {
@@ -1079,7 +1046,8 @@ int copy_PMD(struct MODEL *out, struct MODEL *model) {
 
   // ボーン
   out->bone_count = model->bone_count;
-  out->bone = (struct BONE *)MALLOC((size_t)model->bone_count * sizeof(struct BONE));
+  out->bone =
+      (struct BONE *)MALLOC((size_t)model->bone_count * sizeof(struct BONE));
   if (out->bone == NULL)
     return -1;
   for (i = 0; i < model->bone_count; i++) {
@@ -1087,7 +1055,8 @@ int copy_PMD(struct MODEL *out, struct MODEL *model) {
   }
   // IKリスト
   out->IK_count = model->IK_count;
-  out->IK_list = (struct IK_LIST *)MALLOC((size_t)model->IK_count * sizeof(struct IK_LIST));
+  out->IK_list = (struct IK_LIST *)MALLOC((size_t)model->IK_count *
+                                          sizeof(struct IK_LIST));
   if (out->IK_list == NULL)
     return -1;
   for (i = 0; i < model->IK_count; i++) {
@@ -1102,7 +1071,8 @@ int copy_PMD(struct MODEL *out, struct MODEL *model) {
 
   // 表情
   out->skin_count = model->skin_count;
-  out->skin = (struct SKIN *)MALLOC((size_t)model->skin_count * sizeof(struct SKIN));
+  out->skin =
+      (struct SKIN *)MALLOC((size_t)model->skin_count * sizeof(struct SKIN));
   if (out->skin == NULL)
     return -1;
   for (i = 0; i < model->skin_count; i++) {
@@ -1126,8 +1096,8 @@ int copy_PMD(struct MODEL *out, struct MODEL *model) {
 
   // ボーン表示グループ
   out->bone_group_count = model->bone_group_count;
-  out->bone_group = (struct BONE_GROUP *)MALLOC((size_t)model->bone_group_count *
-                                         sizeof(struct BONE_GROUP));
+  out->bone_group = (struct BONE_GROUP *)MALLOC(
+      (size_t)model->bone_group_count * sizeof(struct BONE_GROUP));
   if (out->bone_group == NULL)
     return -1;
   for (i = 0; i < model->bone_group_count; i++) {
@@ -1155,8 +1125,8 @@ int copy_PMD(struct MODEL *out, struct MODEL *model) {
 
   // 剛体
   out->rbody_count = model->rbody_count;
-  out->rbody =
-      (struct RIGID_BODY *)MALLOC((size_t)model->rbody_count * sizeof(struct RIGID_BODY));
+  out->rbody = (struct RIGID_BODY *)MALLOC((size_t)model->rbody_count *
+                                           sizeof(struct RIGID_BODY));
   if (out->rbody == NULL)
     return -1;
   for (i = 0; i < model->rbody_count; i++) {
@@ -1164,7 +1134,8 @@ int copy_PMD(struct MODEL *out, struct MODEL *model) {
   }
   // ジョイント
   out->joint_count = model->joint_count;
-  out->joint = (struct JOINT *)MALLOC((size_t)model->joint_count * sizeof(struct JOINT));
+  out->joint =
+      (struct JOINT *)MALLOC((size_t)model->joint_count * sizeof(struct JOINT));
   if (out->joint == NULL)
     return -1;
   for (i = 0; i < model->joint_count; i++) {
@@ -1343,7 +1314,8 @@ int add_PMD(struct MODEL *model, struct MODEL *add) {
     if (skin[0].data == NULL)
       return -1;
     tmp[0] = model->skin[0].skin_vt_count;
-    memcpy(skin[0].data, model->skin[0].data, tmp[0] * sizeof(struct SKIN_DATA));
+    memcpy(skin[0].data, model->skin[0].data,
+           tmp[0] * sizeof(struct SKIN_DATA));
     memcpy(&skin[0].data[tmp[0]], add->skin[0].data,
            add->skin[0].skin_vt_count * sizeof(struct SKIN_DATA));
     // baseの合成
@@ -1401,8 +1373,8 @@ int add_PMD(struct MODEL *model, struct MODEL *add) {
 
   // ボーン表示
   bone_group_count = model->bone_group_count + add->bone_group_count;
-  bone_group =
-      (struct BONE_GROUP *)MALLOC((size_t)bone_group_count * sizeof(struct BONE_GROUP));
+  bone_group = (struct BONE_GROUP *)MALLOC((size_t)bone_group_count *
+                                           sizeof(struct BONE_GROUP));
   if (bone_group == NULL)
     return -1;
   for (i = 0; i < model->bone_group_count; i++) {
@@ -1415,7 +1387,8 @@ int add_PMD(struct MODEL *model, struct MODEL *add) {
   }
 
   bone_disp_count = model->bone_disp_count + add->bone_disp_count;
-  bone_disp = (struct BONE_DISP *)MALLOC((size_t)bone_disp_count * sizeof(struct BONE_DISP));
+  bone_disp = (struct BONE_DISP *)MALLOC((size_t)bone_disp_count *
+                                         sizeof(struct BONE_DISP));
   for (i = 0; i < model->bone_disp_count; i++) {
     bone_disp[i] = model->bone_disp[i];
   }
@@ -1434,7 +1407,8 @@ int add_PMD(struct MODEL *model, struct MODEL *add) {
 
   // 剛体
   rbody_count = model->rbody_count + add->rbody_count;
-  rbody = (struct RIGID_BODY *)MALLOC((size_t)rbody_count * sizeof(struct RIGID_BODY));
+  rbody = (struct RIGID_BODY *)MALLOC((size_t)rbody_count *
+                                      sizeof(struct RIGID_BODY));
 
   for (i = 0; i < model->rbody_count; i++) {
     rbody[i] = model->rbody[i];

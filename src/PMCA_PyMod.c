@@ -1,5 +1,8 @@
 #include "PMCA.h"
 #include "PMCA_SDLMod.h"
+#include "dbg.h"
+#include "mlib_PMD_rw01.h"
+#include "mlib_PMD_edit01.h"
 #include <SDL.h>
 #define PMCA_MODULE
 
