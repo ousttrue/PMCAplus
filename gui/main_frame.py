@@ -49,11 +49,7 @@ class MainFrame(tkinter.ttk.Frame):
 
     def on_data_updated(self, w: float, h: float, t: float):
         # model
-        sel_t = int(self.model_tab.l_tree.listbox.curselection()[0])  # type: ignore
-        self.model_tab.l_tree.set_entry(
-            [node.make_entry() for node in self.data.get_tree_node_list()],
-            sel=sel_t,
-        )
+        self.model_tab.set_node_list(self.data.get_tree_node_list())
 
         # material
         self.material_tab.l_tree.set_entry(

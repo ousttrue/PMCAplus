@@ -11,6 +11,19 @@ class Joint:
     joint_type: str
     parts: Optional["PARTS"] = None
 
+    def connect(self, child_parts: Optional["PARTS"]):
+        if child_parts:
+            if self.parts:
+                # copy child
+                # TODO: recursive
+                for src in self.parts.child_joints:
+                    for dst in child_parts.child_joints:
+                        if src.joint_type == dst.joint_type:
+                            dst.parts = src.parts
+                            break
+
+        self.parts = child_parts
+
 
 class TreeNode(NamedTuple):
     depth: int
@@ -30,6 +43,8 @@ class PARTS:
     comment: str = ""
     path: str = ""
     joint_type: list[str] = dataclasses.field(default_factory=list)
+    # note: 同じパーツが複数回使われるとうまくいかない
+    # 体内に同じ joint が複数回あらわれうるのか
     child_joints: list[Joint] = dataclasses.field(default_factory=list)
     props: dict[str, list[str]] = dataclasses.field(default_factory=dict)
 

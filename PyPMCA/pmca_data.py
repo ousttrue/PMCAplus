@@ -1,4 +1,4 @@
-from typing import Callable, Literal
+from typing import Callable, Literal, NamedTuple
 import logging
 import pathlib
 import dataclasses
@@ -16,6 +16,19 @@ from . import types
 
 
 LOGGER = logging.getLogger(__name__)
+
+
+class PartsEntry(NamedTuple):
+    data: PARTS | Literal["load"] | None
+
+    def make_entry(self) -> str:
+        match self.data:
+            case PARTS() as parts:
+                return parts.name
+            case "load":
+                return "#外部モデル読み込み"
+            case None:
+                return "#None"
 
 
 class SETTINGS:
@@ -88,15 +101,20 @@ class PmcaData:
     def get_tree_node_list(self) -> list[TreeNode]:
         return [node for node in self.tree_root.traverse()]
 
-    def get_parts_entry(self, joint: str = "root") -> list[str]:
-        parts_entry_k: list[str] = []
-        for x in self.assets.parts_list:
-            for y in x.joint_type:
-                if y == joint:
-                    parts_entry_k.append(x.name)
-                    break
-        parts_entry_k.append("#外部モデル読み込み")
-        return parts_entry_k
+    def get_joint_parts_list(self, joint: Joint | None) -> tuple[list[PartsEntry], int]:
+        parts_entry_k: list[PartsEntry] = []
+        sel = -1
+        if joint:
+            for parts in self.assets.parts_list:
+                for joint_type in parts.joint_type:
+                    if joint_type == joint.joint_type:
+                        if joint.parts == parts:
+                            sel = len(parts_entry_k)
+                        parts_entry_k.append(PartsEntry(parts))
+                        break
+        parts_entry_k.append(PartsEntry("load"))
+        parts_entry_k.append(PartsEntry(None))
+        return parts_entry_k, sel
 
     def get_active_materials(self) -> list[MATS]:
         return [v.mat for v in self.mat_rep.mat.values() if v.num >= 0]
@@ -104,77 +122,58 @@ class PmcaData:
     def get_authors_and_licenses(self) -> str:
         return f"Author : {self.author_license.get_authors()}\nLicense : {self.author_license.get_licenses()}"
 
-    def select_tree(self, sel_t: int) -> tuple[list[str], int]:
-        tree_list = self.tree_root.create_list()
-        joint = tree_list[sel_t].node.parts.child_joints[tree_list[sel_t].c_num]
-        parts_entry_k: list[str] = self.get_parts_entry(joint)
-        sel = tree_list[sel_t].node.list_num
+    def select_tree(self, sel_t: int) -> tuple[list[PartsEntry], int]:
+        tree_list = self.get_tree_node_list()
+        node = tree_list[sel_t]  # .node.parts.child_joints[tree_list[sel_t].c_num]
+        parts_entry_k, sel = self.get_joint_parts_list(node.joint)
         return parts_entry_k, sel
 
     def select_parts(self, sel_t: int, sel: int) -> str:
-        tree_list = self.tree_root.create_list()
-        joint = tree_list[sel_t].node.parts.child_joints[tree_list[sel_t].c_num]
-        parts_entry_p: list[PARTS | Literal["load"] | None] = []
-        for x in self.assets.parts_list:
-            for y in x.joint_type:
-                if y == joint:
-                    parts_entry_p.append(x)
-                    break
-        parts_entry_p.append("load")
-        parts_entry_p.append(None)
+        tree_list = self.get_tree_node_list()
+        node = tree_list[sel_t]
+        parts_entry_p, _ = self.get_joint_parts_list(node.joint)
+        # parts_entry_p: list[PARTS | Literal["load"] | None] = []
+        # for x in self.assets.parts_list:
+        #     for y in x.joint_type:
+        #         if y == joint:
+        #             parts_entry_p.append(x)
+        #             break
+        # parts_entry_p.append("load")
+        # parts_entry_p.append(None)
 
-        match parts_entry_p[sel]:
+        match parts_entry_p[sel].data:
             case None:  # Noneを選択した場合
-                node = None
+                assert False
+                # node = None
 
             case "load":  # 外部モデル読み込み
-                path = filedialog.askopenfilename(
-                    filetypes=[("Plygon Model Deta(for MMD)", ".pmd"), ("all", ".*")],
-                    defaultextension=".pmd",
-                )
-                if path != "":
-                    name = path.split("/")[-1]
-                    parts = PARTS(name=name, path=path, props={})
-                    node = NODE(
-                        parts=parts,
-                        depth=self.tree_list[sel_t].node.depth + 1,
-                        child=[],
-                    )
-                    for x in node.parts.child_joints:
-                        node.child.append(None)
-                else:
-                    node = None
+                assert False
+                # path = filedialog.askopenfilename(
+                #     filetypes=[("Plygon Model Deta(for MMD)", ".pmd"), ("all", ".*")],
+                #     defaultextension=".pmd",
+                # )
+                # if path != "":
+                #     name = path.split("/")[-1]
+                #     parts = PARTS(name=name, path=path, props={})
+                #     node = NODE(
+                #         parts=parts,
+                #         depth=self.tree_list[sel_t].node.depth + 1,
+                #         child=[],
+                #     )
+                #     for x in node.parts.child_joints:
+                #         node.child.append(None)
+                # else:
+                #     node = None
 
             case PARTS() as parts:
-                node = NODE(
-                    parts=parts,
-                    depth=tree_list[sel_t].node.depth + 1,
-                    child=[],
-                )
-                p_node = tree_list[sel_t].node.child[tree_list[sel_t].c_num]
+                node.joint.connect(parts)
 
-                child_appended: set[PARTS] = set()
-                if p_node != None:
-                    for x in node.parts.child_joints:
-                        node.child.append(None)
-                        for j, y in enumerate(p_node.parts.child_joints):
-                            if x == y:
-                                if y not in child_appended:
-                                    node.child[-1] = p_node.child[j]
-                                    child_appended.add(y)
-                                    break
-                else:
-                    for x in node.parts.child_joints:
-                        node.child.append(None)
-
-        tree_list[sel_t].node.child[tree_list[sel_t].c_num] = node
-        tree_list[sel_t].node.list_num = sel
         self.refresh(0)
 
-        if node == None:
-            return ""
+        if node.joint.parts:
+            return node.joint.parts.comment
         else:
-            return node.parts.comment
+            return ""
 
     def get_mats(self, sel_t: int) -> MATS:
         mat_entry = self.get_active_materials()
