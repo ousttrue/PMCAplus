@@ -1,10 +1,9 @@
 /*PMD Mob Character Assembler
-PMDƒ‚ƒuƒLƒƒƒ‰ƒNƒ^ƒAƒZƒ“ƒuƒ‰
-ƒwƒbƒ_ƒtƒ@ƒCƒ‹
+PMDãƒ¢ãƒ–ã‚­ãƒ£ãƒ©ã‚¯ã‚¿ã‚¢ã‚»ãƒ³ãƒ–ãƒ©
+ãƒ˜ãƒƒãƒ€ãƒ•ã‚¡ã‚¤ãƒ«
 */
 
-
-#define MODEL_MAX 3	//0:ƒ‚ƒfƒ‹ 1:‘g‚Ý—§‚Ä—pˆêŽžƒ‚ƒfƒ‹ 2:•\Ž¦—pƒ‚ƒfƒ‹
+#define MODEL_MAX 3 // 0:ãƒ¢ãƒ‡ãƒ« 1:çµ„ã¿ç«‹ã¦ç”¨ä¸€æ™‚ãƒ¢ãƒ‡ãƒ« 2:è¡¨ç¤ºç”¨ãƒ¢ãƒ‡ãƒ«
 #define PARTS_MAX 256
 #define TEXTURES_MAX 64
 #define MATERIALS_MAX 32
@@ -18,70 +17,62 @@ PMDƒ‚ƒuƒLƒƒƒ‰ƒNƒ^ƒAƒZƒ“ƒuƒ‰
 
 #define UNSIGSHORT_MAX 65535
 
-//#define DEBUG
-
+// #define DEBUG
 
 #define BTN_MAX 16
 #define SLD_MAX 4
 
 #define MENU_BTN_MAX 3
 
-typedef struct{	/*1616byte*/
-	char name[64];
-	char comment[256];
-	char type[32];
-	char file[256];
-	char join[CHILD_MAX][8][16];
-	char pic[96];
-	void *ext;
+typedef struct { /*1616byte*/
+  char name[64];
+  char comment[256];
+  char type[32];
+  char file[256];
+  char join[CHILD_MAX][8][16];
+  char pic[96];
+  void *ext;
 } PARTS;
 
-typedef struct{	/*1125byte*/
-	char name[21];
-	char comment[256];
-	char tex[16][21];
-	char tex_comment[16][64];
-	char pic[16][96];
-	void *ext;
+typedef struct { /*1125byte*/
+  char name[21];
+  char comment[256];
+  char tex[16][21];
+  char tex_comment[16][64];
+  char pic[16][96];
+  void *ext;
 } TEXTURES;
 
-typedef struct{
-	char tex[21];
-	char comment[64];
-	float dif[3];
-	float spec[3];
-	float mir[3];
-	int toon_num;
-	char toon_name[100];
-	char pic[96];
+typedef struct {
+  char tex[21];
+  char comment[64];
+  float dif[3];
+  float spec[3];
+  float mir[3];
+  int toon_num;
+  char toon_name[100];
+  char pic[96];
 } MAT_CONF;
 
-typedef struct{
-	char name[21];
-	char comment[256];
-	MAT_CONF mat[16];
-	void *ext;
+typedef struct {
+  char name[21];
+  char comment[256];
+  MAT_CONF mat[16];
+  void *ext;
 } MATERIALS;
 
-typedef struct{	/*384byte*/
-	char name[64];
-	char bone_name[16][20];
+typedef struct { /*384byte*/
+  char name[64];
+  char bone_name[16][20];
 } BONE_GROUP;
-
 
 #ifndef PMCA_PLUGIN
 
-//loadconf
-int load_config(char str[],
-	PARTS parts[],
-	unsigned short *parts_max,
-	TEXTURES textures[],
-	unsigned short *textures_max,
-	MATERIALS materials[],
-	unsigned short *materials_max,
-	BONE_GROUP bone_group[],
-	unsigned short *bone_group_max
-	);
-char* read_line(char *in, char *out);
+// loadconf
+int load_config(char str[], PARTS parts[], unsigned short *parts_max,
+                TEXTURES textures[], unsigned short *textures_max,
+                MATERIALS materials[], unsigned short *materials_max,
+                BONE_GROUP bone_group[], unsigned short *bone_group_max);
+char *read_line(char *in, char *out);
 
 #endif

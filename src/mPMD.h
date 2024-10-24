@@ -1,20 +1,3 @@
-/*PMCApwb_[t@C*/
-
-// #define DEBUG
-// #define MEM_DBG
-
-// #include <windows.h>
-
-/*
-#if defined DLLImport
-        #define DLL __declspec(dllimport)
-#elif defined DLLExport
-        #define DLL __declspec(dllexport)
-#else
-        #define DLL
-#endif
-*/
-
 #include <stdio.h>
 #define DLL
 // #define DEBUG

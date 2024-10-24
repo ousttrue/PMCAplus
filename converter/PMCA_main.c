@@ -1,14 +1,14 @@
 /*PMD Mob Character Assembler
-PMDƒ‚ƒuƒLƒƒƒ‰ƒNƒ^ƒAƒZƒ“ƒuƒ‰
+PMDãƒ¢ãƒ–ã‚­ãƒ£ãƒ©ã‚¯ã‚¿ã‚¢ã‚»ãƒ³ãƒ–ãƒ©
 */
 
+#include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <memory.h>
 
-//#define DLLImport
-#include "mPMD.h"
+// #define DLLImport
 #include "PMCA.h"
+#include "mPMD.h"
 
 LIST list;
 PARTS parts[PARTS_MAX];
@@ -17,113 +17,121 @@ MATERIALS materials[MATERIALS_MAX];
 BONE_GROUP bone_group[BONE_GROUP_MAX];
 unsigned short parts_max, textures_max, materials_max, bone_group_max;
 
-int main(int argc, char *argv[])
-{
-	int i, j, k;
-	char out[256];
-	FILE *fp;
-	printf("PMD Character Assembler Ý’èƒtƒ@ƒCƒ‹ƒRƒ“ƒo[ƒ^[\n");
-	printf("v1.0 -> v2.0\n");
-	
-	//load_list(&list, "list.txt");
-	
-	if(argc < 2){
-		printf("“ü—Íƒtƒ@ƒCƒ‹‚ª‚ ‚è‚Ü‚¹‚ñ\n‚±‚ÌŽÀsƒtƒ@ƒCƒ‹‚É•ÏŠ·‚µ‚½‚¢ƒtƒ@ƒCƒ‹‚ðƒhƒ‰ƒbƒO•ƒhƒƒbƒv‚µ‚Ä‚­‚¾‚³‚¢\n");
-	}
-	
-	for(i=1; i<argc; ++i)  /* ƒRƒ}ƒ“ƒhƒ‰ƒCƒ“ˆø”‚ðo—Í‚·‚éƒ‹[ƒv */
-	{
-		puts( argv[i] );
-		parts_max = 0;
-		textures_max = 0;
-		materials_max = 0;
-		bone_group_max = 0;
-		load_config(argv[i], parts, &parts_max, textures, &textures_max, materials, &materials_max, bone_group, &bone_group_max);
-		
-		printf("ƒp[ƒc”:%d\n", parts_max);
-		printf("Ý’èƒ}ƒeƒŠƒAƒ‹”:%d\n", materials_max);
-		printf("Ý’èƒeƒNƒXƒ`ƒƒ”:%d\n", textures_max);
-		printf("ƒ{[ƒ“ƒZƒbƒg”:%d\n\n", bone_group_max);
-		
-		sprintf(out, "%s", argv[i]);
-		fp = fopen(out, "w");
-		if(parts_max != 0){
-			fprintf(fp, "PMCA Parts list v2.0\n\n");
-			//fprintf(fp, "SETDIR ./parts/\n\n");
-			fprintf(fp, "SETDIR ./parts/\n\n");
-			for(j=0; j<parts_max; j++){
-				if(j!=0)fprintf(fp, "\nNEXT\n\n");
-				fprintf(fp, "[name] %s\n", parts[j].name);
-				fprintf(fp, "[comment] %s\n", parts[j].comment);
-				fprintf(fp, "[type] %s\n", parts[j].type);
-				fprintf(fp, "[path] %s\n", parts[j].file);
-				fprintf(fp, "[joint] ");
-				for(k=0; k<8; k++){
-					if(parts[j].join[k][0][0]=='\0')break;
-					if(k!=0)fprintf(fp, ",");
-					fprintf(fp, "%s", parts[j].join[k][0]);
-				}
-				fprintf(fp, "\n");
-				if(*parts[j].pic != '\0'){
-					fprintf(fp, "[pic] %s\n", parts[j].pic);
-				}
-			}
-			printf("ƒp[ƒcƒŠƒXƒg '%s' ‚ð•ÏŠ·‚µ‚Ü‚µ‚½\n", argv[i]);
-		}else if(textures_max != 0){
-			fprintf(fp, "PMCA Materials list v2.0\n\n");
-			fprintf(fp, "SETDIR ./parts/\n\n");
-			for(j=0; j<textures_max; j++){
-				if(j!=0)fprintf(fp, "\nNEXT\n\n");
-				fprintf(fp, "[name] %s\n", textures[j].name);
-				fprintf(fp, "[comment] %s\n", textures[j].comment);
-				for(k=0; k<16; k++){
-					if(*textures[j].tex[k] == '\0')break;
-					fprintf(fp, "\n[ENTRY] %s\n", textures[j].tex_comment[k]);
-					fprintf(fp, "[tex] %s\n", textures[j].tex[k]);
-					if(*textures[j].pic[k] != '\0'){
-						fprintf(fp, "[pic] %s\n", textures[j].pic[k]);
-					}
-				}
-			}
-			printf("ƒeƒNƒXƒ`ƒƒƒŠƒXƒg '%s' ‚ð•ÏŠ·‚µ‚Ü‚µ‚½\n", argv[i]);
-		}else if(materials_max != 0){
-			fprintf(fp, "PMCA Materials list v2.0\n\n");
-			fprintf(fp, "SETDIR ./parts/\n\n");
-			for(j=0; j<materials_max; j++){
-				if(j!=0)fprintf(fp, "\nNEXT\n\n");
-				fprintf(fp, "[name] %s\n", materials[j].name);
-				fprintf(fp, "[comment] %s\n", materials[j].comment);
-				for(k=0; k<16; k++){
-					if(*materials[j].mat[k].comment == '\0')break;
-					fprintf(fp, "\n[ENTRY] %s\n", materials[j].mat[k].comment);
-					fprintf(fp, "[tex] %s\n", materials[j].mat[k].tex);
-					fprintf(fp, "[diff_rgb] %f %f %f\n", materials[j].mat[k].dif[0], materials[j].mat[k].dif[1], materials[j].mat[k].dif[2]);
-					fprintf(fp, "[spec_rgb] %f %f %f\n", materials[j].mat[k].spec[0], materials[j].mat[k].spec[1], materials[j].mat[k].spec[2]);
-					fprintf(fp, "[mirr_rgb] %f %f %f\n", materials[j].mat[k].mir[0], materials[j].mat[k].mir[1], materials[j].mat[k].mir[2]);
-					if(*materials[j].mat[k].toon_name != '\0'){
-						fprintf(fp, "[toon] %d %s\n", materials[j].mat[k].toon_num, materials[j].mat[k].toon_name);
-					}
-					if(*materials[j].mat[k].pic != '\0'){
-						fprintf(fp, "[pic] %s\n", materials[j].mat[k].pic);
-					}
-				}
-			}
-			printf("ƒ}ƒeƒŠƒAƒ‹ƒŠƒXƒg '%s' ‚ð•ÏŠ·‚µ‚Ü‚µ‚½\n", argv[i]);
-		}
-		fclose(fp);
-	}
-	
-	
-	
-	/*
-	puts("\nÝ’è“Ç‚Ýž‚ÝŠ®—¹");
-	printf("ƒp[ƒc”:%d\n", parts_max);
-	printf("Ý’èƒ}ƒeƒŠƒAƒ‹”:%d\n", materials_max);
-	printf("Ý’èƒeƒNƒXƒ`ƒƒ”:%d\n", textures_max);
-	printf("ƒ{[ƒ“ƒZƒbƒg”:%d\n\n", bone_group_max);
-	*/
-	
-	return 0;
-	
-}
+int main(int argc, char *argv[]) {
+  int i, j, k;
+  char out[256];
+  FILE *fp;
+  printf("PMD Character Assembler è¨­å®šãƒ•ã‚¡ã‚¤ãƒ«ã‚³ãƒ³ãƒãƒ¼ã‚¿ãƒ¼\n");
+  printf("v1.0 -> v2.0\n");
 
+  // load_list(&list, "list.txt");
+
+  if (argc < 2) {
+    printf("å…¥åŠ›ãƒ•ã‚¡ã‚¤ãƒ«ãŒã‚ã‚Šã¾ã›ã‚“\nã“ã®å®Ÿè¡Œãƒ•ã‚¡ã‚¤ãƒ«ã«å¤‰æ›ã—ãŸã„ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ãƒ‰"
+           "ãƒ©ãƒƒã‚°ï¼†ãƒ‰ãƒ­ãƒƒãƒ—ã—ã¦ãã ã•ã„\n");
+  }
+
+  for (i = 1; i < argc; ++i) /* ã‚³ãƒžãƒ³ãƒ‰ãƒ©ã‚¤ãƒ³å¼•æ•°ã‚’å‡ºåŠ›ã™ã‚‹ãƒ«ãƒ¼ãƒ— */
+  {
+    puts(argv[i]);
+    parts_max = 0;
+    textures_max = 0;
+    materials_max = 0;
+    bone_group_max = 0;
+    load_config(argv[i], parts, &parts_max, textures, &textures_max, materials,
+                &materials_max, bone_group, &bone_group_max);
+
+    printf("ãƒ‘ãƒ¼ãƒ„æ•°:%d\n", parts_max);
+    printf("è¨­å®šãƒžãƒ†ãƒªã‚¢ãƒ«æ•°:%d\n", materials_max);
+    printf("è¨­å®šãƒ†ã‚¯ã‚¹ãƒãƒ£æ•°:%d\n", textures_max);
+    printf("ãƒœãƒ¼ãƒ³ã‚»ãƒƒãƒˆæ•°:%d\n\n", bone_group_max);
+
+    sprintf(out, "%s", argv[i]);
+    fp = fopen(out, "w");
+    if (parts_max != 0) {
+      fprintf(fp, "PMCA Parts list v2.0\n\n");
+      // fprintf(fp, "SETDIR ./parts/\n\n");
+      fprintf(fp, "SETDIR ./parts/\n\n");
+      for (j = 0; j < parts_max; j++) {
+        if (j != 0)
+          fprintf(fp, "\nNEXT\n\n");
+        fprintf(fp, "[name] %s\n", parts[j].name);
+        fprintf(fp, "[comment] %s\n", parts[j].comment);
+        fprintf(fp, "[type] %s\n", parts[j].type);
+        fprintf(fp, "[path] %s\n", parts[j].file);
+        fprintf(fp, "[joint] ");
+        for (k = 0; k < 8; k++) {
+          if (parts[j].join[k][0][0] == '\0')
+            break;
+          if (k != 0)
+            fprintf(fp, ",");
+          fprintf(fp, "%s", parts[j].join[k][0]);
+        }
+        fprintf(fp, "\n");
+        if (*parts[j].pic != '\0') {
+          fprintf(fp, "[pic] %s\n", parts[j].pic);
+        }
+      }
+      printf("ãƒ‘ãƒ¼ãƒ„ãƒªã‚¹ãƒˆ '%s' ã‚’å¤‰æ›ã—ã¾ã—ãŸ\n", argv[i]);
+    } else if (textures_max != 0) {
+      fprintf(fp, "PMCA Materials list v2.0\n\n");
+      fprintf(fp, "SETDIR ./parts/\n\n");
+      for (j = 0; j < textures_max; j++) {
+        if (j != 0)
+          fprintf(fp, "\nNEXT\n\n");
+        fprintf(fp, "[name] %s\n", textures[j].name);
+        fprintf(fp, "[comment] %s\n", textures[j].comment);
+        for (k = 0; k < 16; k++) {
+          if (*textures[j].tex[k] == '\0')
+            break;
+          fprintf(fp, "\n[ENTRY] %s\n", textures[j].tex_comment[k]);
+          fprintf(fp, "[tex] %s\n", textures[j].tex[k]);
+          if (*textures[j].pic[k] != '\0') {
+            fprintf(fp, "[pic] %s\n", textures[j].pic[k]);
+          }
+        }
+      }
+      printf("ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒªã‚¹ãƒˆ '%s' ã‚’å¤‰æ›ã—ã¾ã—ãŸ\n", argv[i]);
+    } else if (materials_max != 0) {
+      fprintf(fp, "PMCA Materials list v2.0\n\n");
+      fprintf(fp, "SETDIR ./parts/\n\n");
+      for (j = 0; j < materials_max; j++) {
+        if (j != 0)
+          fprintf(fp, "\nNEXT\n\n");
+        fprintf(fp, "[name] %s\n", materials[j].name);
+        fprintf(fp, "[comment] %s\n", materials[j].comment);
+        for (k = 0; k < 16; k++) {
+          if (*materials[j].mat[k].comment == '\0')
+            break;
+          fprintf(fp, "\n[ENTRY] %s\n", materials[j].mat[k].comment);
+          fprintf(fp, "[tex] %s\n", materials[j].mat[k].tex);
+          fprintf(fp, "[diff_rgb] %f %f %f\n", materials[j].mat[k].dif[0],
+                  materials[j].mat[k].dif[1], materials[j].mat[k].dif[2]);
+          fprintf(fp, "[spec_rgb] %f %f %f\n", materials[j].mat[k].spec[0],
+                  materials[j].mat[k].spec[1], materials[j].mat[k].spec[2]);
+          fprintf(fp, "[mirr_rgb] %f %f %f\n", materials[j].mat[k].mir[0],
+                  materials[j].mat[k].mir[1], materials[j].mat[k].mir[2]);
+          if (*materials[j].mat[k].toon_name != '\0') {
+            fprintf(fp, "[toon] %d %s\n", materials[j].mat[k].toon_num,
+                    materials[j].mat[k].toon_name);
+          }
+          if (*materials[j].mat[k].pic != '\0') {
+            fprintf(fp, "[pic] %s\n", materials[j].mat[k].pic);
+          }
+        }
+      }
+      printf("ãƒžãƒ†ãƒªã‚¢ãƒ«ãƒªã‚¹ãƒˆ '%s' ã‚’å¤‰æ›ã—ã¾ã—ãŸ\n", argv[i]);
+    }
+    fclose(fp);
+  }
+
+  /*
+  puts("\nè¨­å®šèª­ã¿è¾¼ã¿å®Œäº†");
+  printf("ãƒ‘ãƒ¼ãƒ„æ•°:%d\n", parts_max);
+  printf("è¨­å®šãƒžãƒ†ãƒªã‚¢ãƒ«æ•°:%d\n", materials_max);
+  printf("è¨­å®šãƒ†ã‚¯ã‚¹ãƒãƒ£æ•°:%d\n", textures_max);
+  printf("ãƒœãƒ¼ãƒ³ã‚»ãƒƒãƒˆæ•°:%d\n\n", bone_group_max);
+  */
+
+  return 0;
+}
