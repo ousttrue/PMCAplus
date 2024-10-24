@@ -143,8 +143,7 @@ class PmcaData:
 
         match parts_entry_p[sel].data:
             case None:  # Noneを選択した場合
-                assert False
-                # node = None
+                node.joint.connect(None)
 
             case "load":  # 外部モデル読み込み
                 assert False

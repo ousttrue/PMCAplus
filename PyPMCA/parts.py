@@ -12,15 +12,21 @@ class Joint:
     parts: Optional["PARTS"] = None
 
     def connect(self, child_parts: Optional["PARTS"]):
-        if child_parts:
-            if self.parts:
-                # copy child
-                # TODO: recursive
+        if child_parts and self.parts:
+            # copy child
+            # TODO: recursive ?
+            for dst in child_parts.child_joints:
+                src_parts: PARTS | None = None
                 for src in self.parts.child_joints:
-                    for dst in child_parts.child_joints:
-                        if src.joint_type == dst.joint_type:
-                            dst.parts = src.parts
-                            break
+                    if src.joint_type == dst.joint_type:
+                        src_parts = src.parts
+                        break
+                if src_parts:
+                    # print(f"{child_parts.name}.{dst} => {src_parts.name}")
+                    dst.parts = src_parts
+                else:
+                    # print(f"{child_parts.name}.{dst} not found")
+                    pass
 
         self.parts = child_parts
 
