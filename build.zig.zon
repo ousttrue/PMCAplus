@@ -3,14 +3,33 @@
     .version = "0.0.0",
     .dependencies = .{
         .sdl = .{
-            .path = "subprojects/SDL-1.2",
+            .path = "deps/SDL-1.2",
         },
         .stb = .{
-            .path = "subprojects/stb",
+            .path = "deps/stb",
         },
         .compile_commands = .{
             .url = "git+https://github.com/the-argus/zig-compile-commands.git#34ffa4290ca4fc060168e8eca9574ff11002fb0b",
             .hash = "12209264387a67972ccebb9ff53a08b2ee8519f5f9b93b9d400a144d849528136ead",
+        },
+        .sokol = .{
+            .url = "git+https://github.com/floooh/sokol-zig.git#7a1f685a29f7dbfe8ce0fe23871d01d5b29a6d0e",
+            .hash = "1220fd8800b4fe7a38d4778b8288f55eb451c8167b200c02e73068244d9ccefe3395",
+        },
+        .cimgui = .{
+            .path = "deps/cimgui",
+        },
+        .@"sokol-tools-bin" = .{
+            .url = "git+https://github.com/floooh/sokol-tools-bin.git#8cc8c257380c9a5e230a84aeebf09cd500903fbc",
+            .hash = "12200f5129c997728160ab584adcc939b9dbca6f802d7273f386dad777de85e80421",
+        },
+        .rowmath = .{
+            .url = "git+https://github.com/ousttrue/rowmath.git#5ec6007ce7969d31000b89280c16a997fed6c6bd",
+            .hash = "1220f1379331d08475352530d763a9cd249e6851e6d699a6bebafea8c2e6b925ea73",
+        },
+        .@"emsdk-zig" = .{
+            .url = "git+https://github.com/ousttrue/emsdk-zig.git#4b3df5dc7824514a3ef99c1dee77ee3087019050",
+            .hash = "122062b769fe74a24375a9409bce954bdd378f79b4b9fd2adf7a23360634cf5ad55c",
         },
     },
     .paths = .{""},
