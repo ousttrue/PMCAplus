@@ -5,6 +5,12 @@
 #define NAME_LEN 128
 #define COMMENT_LEN 256
 
+#ifdef PMCA_BUILD
+#define DLL __declspec(dllexport)
+#else
+#define DLL __declspec(dllimport)
+#endif
+
 struct HEADER { /*283byte*/
   char magic[4];
   float version;

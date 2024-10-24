@@ -1,8 +1,8 @@
 #include "PMCA_SDLMod.h"
 #include "PMCA_view.h"
 #include "dbg.h"
-#include "mlib_PMD_rw01.h"
 #include "mlib_PMD_edit01.h"
+#include "mlib_PMD_rw01.h"
 #include <SDL.h>
 #define PMCA_MODULE
 
@@ -22,7 +22,8 @@ PyMODINIT_FUNC PyInit_PMCA(void);
 
 /************************************************************/
 /*データ変換Utils*/
-static PyObject *Array_to_PyList_UShort(const unsigned short *input, int count) {
+static PyObject *Array_to_PyList_UShort(const unsigned short *input,
+                                        int count) {
   int i;
   PyObject *l, *x;
   l = PyList_New(0);
@@ -63,7 +64,8 @@ static int PyList_to_Array_Float(float *output, PyObject *List, int size) {
   return 0;
 }
 
-static int PyList_to_Array_UShort(unsigned short *output, PyObject *List, int size) {
+static int PyList_to_Array_UShort(unsigned short *output, PyObject *List,
+                                  int size) {
   int i;
   PyObject *tmp;
   if (size > PyList_Size(List))
@@ -77,7 +79,8 @@ static int PyList_to_Array_UShort(unsigned short *output, PyObject *List, int si
   return 0;
 }
 
-static int PyList_to_Array_Str(char **output, PyObject *List, int size, int val) {
+static int PyList_to_Array_Str(char **output, PyObject *List, int size,
+                               int val) {
   int i;
   Py_ssize_t maxlen;
   char *p;
@@ -1153,14 +1156,14 @@ static PyMethodDef PMCAMethods[] = {
     {"MODEL_LOCK", MODEL_LOCK, METH_VARARGS, "Lock/Unlock model"},
     {"getWHT", getWHT, METH_VARARGS, "get height, width, thickness from model"},
     /***********************************************************************/
-    {"CretateViewerThread", CreateViewerThread, METH_VARARGS,
-     "CretateViewerThread"},
-    {"WaitViewerThread", WaitViewerThread, METH_VARARGS, "WaitViewerThread"},
-    {"QuitViewerThread", QuitViewerThread, METH_VARARGS, "QuitViewerThread"},
-    {"KillViewerThread", KillViewerThread, METH_VARARGS, "KillViewerThread"},
-    {"GetViewerThreadState", GetViewerThreadState, METH_VARARGS,
+    {"CreateViewerThread", _CreateViewerThread, METH_VARARGS,
+     "CreateViewerThread"},
+    {"WaitViewerThread", _WaitViewerThread, METH_VARARGS, "WaitViewerThread"},
+    {"QuitViewerThread", _QuitViewerThread, METH_VARARGS, "QuitViewerThread"},
+    {"KillViewerThread", _KillViewerThread, METH_VARARGS, "KillViewerThread"},
+    {"GetViewerThreadState", _GetViewerThreadState, METH_VARARGS,
      "GetViewerThreadState"},
-    {"show3Dview", show3Dview, METH_VARARGS, "show3Dview"},
+    {"show3Dview", _show3Dview, METH_VARARGS, "show3Dview"},
     {NULL, NULL, 0, NULL}};
 
 static struct PyModuleDef PMCAmodule = {PyModuleDef_HEAD_INIT,

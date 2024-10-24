@@ -96,7 +96,7 @@ class PmcaData:
         self.cur_mat = 0
         self.settings = SETTINGS()
 
-        PMCA.CretateViewerThread()
+        PMCA.CreateViewerThread()
 
     def get_tree_node_list(self) -> list[TreeNode]:
         return [node for node in self.tree_root.traverse()]

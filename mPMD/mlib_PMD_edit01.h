@@ -1,7 +1,6 @@
 #pragma once
 #include "mPMD.h"
 #include <stddef.h>
-#define DLL
 
 DLL int translate(struct MODEL *model, struct LIST *list, short mode);
 

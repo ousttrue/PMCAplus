@@ -1,6 +1,6 @@
 # C-Pythonデータ変換関連
-from typing import Any
 import dataclasses
+from typing import Any
 
 
 @dataclasses.dataclass
@@ -143,10 +143,32 @@ class BONE_DISP:
         self.group = bone_group
 
 
+@dataclasses.dataclass
 class TOON:
-    def __init__(self):
-        self.name = None
-        self.path = None
+    name: tuple[str, str, str, str, str, str, str, str, str, str] = (
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+    )
+    path: tuple[str, str, str, str, str, str, str, str, str, str] = (
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+    )
 
 
 class RB:

@@ -1,6 +1,5 @@
 #pragma once
 #include "mPMD.h"
-#define DLL
 
 DLL int load_list(struct LIST *list, const char dir[]);
 DLL int delete_list(struct LIST *list);

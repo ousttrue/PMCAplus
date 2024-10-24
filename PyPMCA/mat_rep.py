@@ -1,6 +1,7 @@
 import dataclasses
 import logging
 import PMCA_ctypes as PMCA
+import ctypes
 from . import types
 from . import material
 from . import author_license
@@ -133,25 +134,28 @@ class MAT_REP:
                             x.mirr_col[j] = float(y)
 
                     elif k == "toon":
-                        toon = types.TOON()
-                        toon.path = PMCA.getToonPath(num)
-                        toon.name = PMCA.getToon(num)
+                        _toon = (ctypes.c_char_p * 10)()
+                        PMCA.getToonPath(num, _toon)
+                        _toon_path = (ctypes.c_char_p * 10)()
+                        PMCA.getToon(num, _toon_path)
+
+                        toon_name = [ctypes.string_at(p) for p in _toon]
+                        toon_path = [ctypes.string_at(p) for p in _toon_path]
+
                         # print("toon")
                         # print(toon.name)
                         # print(toon.path)
-                        tmp = v[-1].split(" ")
-                        tmp[0] = int(tmp[0])
-                        toon.path[tmp[0]] = ("toon/" + tmp[1]).encode(
-                            "cp932", "replace"
-                        )
-                        toon.name[tmp[0]] = tmp[1].encode("cp932", "replace")
+                        _index, name = v[-1].split(" ")
+                        index = int(_index)
+                        toon_path[index] = ("toon/" + name).encode("cp932", "replace")
+                        toon_name[index] = name.encode("cp932", "replace")
 
                         # print(toon.name)
                         # print(toon.path)
 
-                        PMCA.setToon(num, toon.name)
-                        PMCA.setToonPath(num, toon.path)
-                        x.toon = tmp[0]
+                        PMCA.setToon(num, (ctypes.c_char_p * 10)(*toon_name))
+                        PMCA.setToonPath(num, (ctypes.c_char_p * 10)(*toon_path))
+                        x.toon = index
                         # print(tmp)
                     elif k == "author":
                         for y in v[-1].split(" "):
@@ -173,10 +177,10 @@ class MAT_REP:
                     x.toon,
                     x.edge,
                     x.face_count,
-                    bytes(x.tex.encode("cp932", "replace")),
-                    bytes(x.sph.encode("cp932", "replace")),
-                    bytes(x.tex_path.encode("cp932", "replace")),
-                    bytes(x.sph_path.encode("cp932", "replace")),
+                    x.tex,
+                    x.sph,
+                    x.tex_path,
+                    x.sph_path,
                 )
 
     def list_to_text(self):

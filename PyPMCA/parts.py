@@ -4,6 +4,7 @@ import dataclasses
 import PMCA_ctypes as PMCA
 from .author_license import AuthorLicense
 from . import types
+import ctypes
 
 
 @dataclasses.dataclass
