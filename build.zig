@@ -3,9 +3,26 @@ const zcc = @import("compile_commands");
 
 pub fn build(b: *std.Build) void {
     var targets = std.ArrayList(*std.Build.Step.Compile).init(b.allocator);
-
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+
+    const lib = b.addStaticLibrary(.{
+        .target = target,
+        .optimize = optimize,
+        .name = "mPMD",
+        .link_libc = true,
+    });
+    lib.addCSourceFiles(.{
+        .root = b.path("mPMD"),
+        .files = &.{
+            "mlib_PMD_rw01.c",
+            "mlib_PMD_edit01.c",
+        },
+        .flags = &.{
+            "-std=c23",
+        },
+    });
+
     const dll = b.addSharedLibrary(.{
         .target = target,
         .optimize = optimize,
@@ -24,8 +41,6 @@ pub fn build(b: *std.Build) void {
             "PMCA_PyMod.c",
             "PMCA_SDLMod.c",
             "PMCA_view.c",
-            "mlib_PMD_rw01.c",
-            "mlib_PMD_edit01.c",
         },
         .flags = &.{
             "-std=c23",
@@ -34,6 +49,8 @@ pub fn build(b: *std.Build) void {
     dll.addIncludePath(.{ .cwd_relative = "C:/Python311/include" });
     dll.addLibraryPath(.{ .cwd_relative = "C:/Python311/libs" });
     dll.linkSystemLibrary("Python311");
+    dll.addIncludePath(b.path("mPMD"));
+    dll.linkLibrary(lib);
 
     const sdl_dep = b.dependency("sdl", .{
         .target = target,
