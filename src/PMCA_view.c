@@ -1,19 +1,60 @@
-#include "mlib_PMD_rw01.h"
+#include "PMCA_view.h"
 #include "dbg.h"
-#include <Windows.h>
-
+#include "mlib_PMD_rw01.h"
 #include <GL/GL.h>
 #include <GL/GLU.h>
-
-#include "PMCA.h"
 #include <SDL.h>
+#include <Windows.h>
 #include <math.h>
 #include <stb_image.h>
 
+#define SCALE (2.0 * 3.14159265358979323846)
 #define WM_TITLE "PMCA 3D View"
 
-FLAGS myflags;
-VIEW_STATE vs;
+struct DSP_MAT {
+  float col[4];
+  char texname[128];
+  int texsize[2];
+  unsigned char *texbits;
+};
+
+struct DSP_MODEL {
+  float *loc;
+  float *nor;
+  float *uv;
+  // unsigned int *index;
+  int mats_c;
+  struct DSP_MAT *mats;
+  unsigned int *texid;
+};
+
+struct FLAGS myflags;
+
+struct VIEW_STATE {
+  /* EBhE@ */
+  int width;
+  int height;
+
+  /*NbNJ[\W*/
+  int sx;
+  int sy;
+
+  /*fr[]*/
+  double rt[16];
+  double cq[4];
+  double tq[4];
+
+  /*s*/
+  double move[3];
+
+  /*TCY*/
+  double scale;
+
+  /*\*/
+  int show_axis;
+};
+
+struct VIEW_STATE vs;
 
 static int createwindow();
 static int setup_opengl(int width, int height);
@@ -29,7 +70,7 @@ int bpp = 0;
 int flags = 0;
 
 // int (SDLCALL *fn)(void *)
-int viewer_thread(void*) {
+int viewer_thread(void *) {
   SDL_Event event;
 
   myflags.model_lock = 0;
@@ -305,7 +346,7 @@ static void process_events(void) {
 /*描画用のモデルを管理する関数*/
 void *model_mgr(int flag, int num, void *p) {
   static struct MODEL model[16];
-  static DSP_MODEL dsp_model[16];
+  static struct DSP_MODEL dsp_model[16];
   static int init = 1;
 
   int i;
@@ -359,12 +400,12 @@ int render_model(int num) {
   int i, j;
   int index, c;
   struct MODEL *model;
-  DSP_MODEL *dsp_model;
+  struct DSP_MODEL *dsp_model;
 
   static float *loc;
   static float *nor;
   static float *uv;
-  static DSP_MAT *mats;
+  static struct DSP_MAT *mats;
 
   model = model_mgr(1, num, NULL);
   if (model == NULL)
@@ -396,7 +437,7 @@ int render_model(int num) {
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-      DSP_MAT *mat = &mats[i];
+      struct DSP_MAT *mat = &mats[i];
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mats[i].texsize[0],
                    mats[i].texsize[1], 0, GL_RGBA, GL_UNSIGNED_BYTE,
                    mats[i].texbits);
@@ -427,8 +468,8 @@ int render_model(int num) {
 }
 
 // テクスチャ読み込み
-int load_tex(struct MODEL *model, DSP_MODEL *dsp_model) {
-  DSP_MAT *mats;
+int load_tex(struct MODEL *model, struct DSP_MODEL *dsp_model) {
+  struct DSP_MAT *mats;
   int i, j;
   /*
   while(myflags.model_lock != 0){
@@ -511,12 +552,12 @@ int load_tex(struct MODEL *model, DSP_MODEL *dsp_model) {
   return 0;
 }
 
-int make_dsp_model(struct MODEL *model, DSP_MODEL *dsp_model) {
+int make_dsp_model(struct MODEL *model, struct DSP_MODEL *dsp_model) {
   int i, j;
   float *loc;
   float *nor;
   float *uv;
-  DSP_MAT *mats;
+  struct DSP_MAT *mats;
   GLuint *texid;
   // unsigned int index;
 
@@ -545,8 +586,8 @@ int make_dsp_model(struct MODEL *model, DSP_MODEL *dsp_model) {
   loc = MALLOC(model->vt_count * 3 * sizeof(float));
   nor = MALLOC(model->vt_count * 3 * sizeof(float));
   uv = MALLOC(model->vt_count * 2 * sizeof(float));
-  mats = MALLOC(model->mat_count * sizeof(DSP_MAT));
-  memset(mats, 0, model->mat_count * sizeof(DSP_MAT));
+  mats = MALLOC(model->mat_count * sizeof(struct DSP_MAT));
+  memset(mats, 0, model->mat_count * sizeof(struct DSP_MAT));
   texid = MALLOC(model->mat_count * sizeof(GLuint));
   if (loc == NULL || nor == NULL || uv == NULL || mats == NULL) {
     // myflags.model_lock=0;

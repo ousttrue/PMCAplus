@@ -1,5 +1,5 @@
 #include "PMCA_SDLMod.h"
-#include "PMCA.h"
+#include "PMCA_view.h"
 #include <SDL.h>
 
 struct MODEL g_model[MODEL_COUNT];

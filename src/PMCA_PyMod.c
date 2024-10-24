@@ -1,5 +1,5 @@
-#include "PMCA.h"
 #include "PMCA_SDLMod.h"
+#include "PMCA_view.h"
 #include "dbg.h"
 #include "mlib_PMD_rw01.h"
 #include "mlib_PMD_edit01.h"
@@ -22,7 +22,7 @@ PyMODINIT_FUNC PyInit_PMCA(void);
 
 /************************************************************/
 /*データ変換Utils*/
-PyObject *Array_to_PyList_UShort(const unsigned short *input, int count) {
+static PyObject *Array_to_PyList_UShort(const unsigned short *input, int count) {
   int i;
   PyObject *l, *x;
   l = PyList_New(0);
@@ -37,7 +37,7 @@ PyObject *Array_to_PyList_UShort(const unsigned short *input, int count) {
   return l;
 }
 
-PyObject *Array_to_PyList_Float(const float *input, int count) {
+static PyObject *Array_to_PyList_Float(const float *input, int count) {
   int i;
   PyObject *l, *x;
   l = PyList_New(0);
@@ -52,7 +52,7 @@ PyObject *Array_to_PyList_Float(const float *input, int count) {
   return l;
 }
 
-int PyList_to_Array_Float(float *output, PyObject *List, int size) {
+static int PyList_to_Array_Float(float *output, PyObject *List, int size) {
   int i;
   PyObject *tmp;
 
@@ -63,7 +63,7 @@ int PyList_to_Array_Float(float *output, PyObject *List, int size) {
   return 0;
 }
 
-int PyList_to_Array_UShort(unsigned short *output, PyObject *List, int size) {
+static int PyList_to_Array_UShort(unsigned short *output, PyObject *List, int size) {
   int i;
   PyObject *tmp;
   if (size > PyList_Size(List))
@@ -77,7 +77,7 @@ int PyList_to_Array_UShort(unsigned short *output, PyObject *List, int size) {
   return 0;
 }
 
-int PyList_to_Array_Str(char **output, PyObject *List, int size, int val) {
+static int PyList_to_Array_Str(char **output, PyObject *List, int size, int val) {
   int i;
   Py_ssize_t maxlen;
   char *p;
