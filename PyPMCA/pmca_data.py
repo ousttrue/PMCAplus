@@ -2,6 +2,7 @@ from typing import Callable, Literal, NamedTuple
 import logging
 import pathlib
 import dataclasses
+import ctypes
 
 import PMCA_ctypes as PMCA
 
@@ -301,6 +302,7 @@ class PmcaData:
             PMCA.Set_Name_Comment(
                 0,
                 self.modelinfo.name.encode("cp932", "replace"),
+                self.modelinfo.name_eng.encode("cp932", "replace"),
                 (
                     "%s\nAuthor:%s\nLicense:%s\n%s"
                     % (
@@ -310,7 +312,6 @@ class PmcaData:
                         self.modelinfo.comment,
                     )
                 ).encode("cp932", "replace"),
-                self.modelinfo.name_eng.encode("cp932", "replace"),
                 (
                     "%s\nAuthor:%s\nLicense:%s\n%s"
                     % (
@@ -323,13 +324,15 @@ class PmcaData:
             )
 
         if level < 3:
-            PMCA.PMD_view_set(0, "replace")  # テクスチャを変更しない
+            PMCA.PMD_view_set(0, b"replace")  # テクスチャを変更しない
         else:
-            PMCA.PMD_view_set(0, "replace")
+            PMCA.PMD_view_set(0, b"replace")
 
         PMCA.MODEL_LOCK(0)
 
-        w, h, t = PMCA.getWHT(0)
+        wht = (ctypes.c_float * 3)()
+        PMCA.getWHT(0, wht)
+        w, h, t = wht
         LOGGER.info("refreshed")
         for callback in self.on_refresh:
             callback(w, h, t)

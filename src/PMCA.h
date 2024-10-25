@@ -33,3 +33,14 @@ DLL void setToon(int num, const char **p);
 DLL void setToonPath(int num, const char **p);
 DLL bool getBone(int num, int i, const char **name, const char **name_eng,
                  int *parent, int *tail, int *type, int *IK, float *loc);
+DLL void Resize_Model(int num, float size);
+DLL void Resize_Bone(int num, const char *str, float len, float thi);
+DLL void Move_Bone(int num, const char *str, float x, float y, float z);
+DLL void Move_Model(int num, float x, float y, float z);
+DLL void Update_Skin(int num);
+DLL void Adjust_Joints(int num);
+DLL void Set_Name_Comment(int num, const char *name, const char *name_eng,
+                          const char *comment, const char *comment_eng);
+DLL void PMD_view_set(int num, const char *str);
+DLL void getWHT(int num, float *wht);
+DLL void QuitViewerThread() ;

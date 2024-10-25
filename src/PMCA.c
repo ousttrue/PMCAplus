@@ -5,6 +5,8 @@
 #include "mlib_PMD_edit01.h"
 #include "mlib_PMD_rw01.h"
 
+static void copy_str(char *dst, const char *src) {}
+
 void Init_PMD() {
   for (int i = 0; i < MODEL_COUNT; i++) {
     create_PMD(&g_model[i]);
@@ -29,8 +31,8 @@ void Set_List(int bone_count, const char **bn, const char **bne, int skin_count,
 
   /*ボーン*/
   for (int i = 0; i < list.bone_count; ++i, ++bn, ++bne) {
-    strncpy(list.bone[i], *bn, strlen(*bn));
-    strncpy(list.bone_eng[i], *bne, strlen(*bne));
+    strncpy(list.bone[i], *bn, NAME_LEN);
+    strncpy(list.bone_eng[i], *bne, NAME_LEN);
   }
 
   // /*表情*/
@@ -192,10 +194,10 @@ void setMat(int num, int i, const float *diff_col, float alpha, float spec,
   mat.mirror_col[0] = mirr_col[0];
   mat.mirror_col[1] = mirr_col[1];
   mat.mirror_col[2] = mirr_col[2];
-  strncpy(mat.tex, tex, strlen(tex));
-  strncpy(mat.sph, sph, strlen(sph));
-  strncpy(mat.tex_path, tex_path, strlen(tex_path));
-  strncpy(mat.sph_path, sph_path, strlen(sph_path));
+  strncpy(mat.tex, tex, NAME_LEN);
+  strncpy(mat.sph, sph, NAME_LEN);
+  strncpy(mat.tex_path, tex_path, PATH_LEN);
+  strncpy(mat.sph_path, sph_path, PATH_LEN);
   model->mat[i] = mat;
 }
 
@@ -230,18 +232,14 @@ void getToonPath(int num, char **toon_path) {
 void setToon(int num, const char **p) {
   auto model = &g_model[num];
   for (int i = 0; i < 10; i++) {
-    int len = strlen(p[i]);
-    memcpy(model->toon[i], p[i], len);
-    model->toon[i][len] = 0;
+    memcpy(model->toon[i], p[i], 100);
   }
 }
 
 void setToonPath(int num, const char **p) {
   auto model = &g_model[num];
   for (int i = 0; i < 10; i++) {
-    int len = strlen(p[i]);
-    memcpy(model->toon[i], p[i], len);
-    model->toon[i][len] = 0;
+    memcpy(model->toon[i], p[i], 100);
   }
 }
 
@@ -263,4 +261,80 @@ bool getBone(int num, int i, const char **name, const char **name_eng,
   loc[1] = bone->loc[1];
   loc[2] = bone->loc[2];
   return true;
+}
+
+void Resize_Model(int num, float size) { resize_model(&g_model[num], size); }
+
+void Resize_Bone(int num, const char *str, float len, float thi) {
+  int index = 0;
+  for (; index < g_model[num].bone_count; index++) {
+    if (strcmp(g_model[num].bone[index].name, str) == 0) {
+      break;
+    }
+  }
+  if (index == g_model[num].bone_count) {
+    return;
+  }
+  scale_bone(&g_model[num], index, thi, len, thi);
+}
+
+void Move_Bone(int num, const char *str, float x, float y, float z) {
+  int index = 0;
+  for (; index < g_model[num].bone_count; index++) {
+    if (strcmp(g_model[num].bone[index].name, str) == 0) {
+      break;
+    }
+  }
+  if (index == g_model[num].bone_count) {
+    return;
+  }
+  double pos[3] = {x, y, z};
+  move_bone(&g_model[num], index, pos);
+}
+
+void Move_Model(int num, float x, float y, float z) {
+  double s[3] = {x, y, z};
+  move_model(&g_model[num], s);
+}
+
+void Update_Skin(int num) { update_skin(&g_model[num]); }
+
+void Adjust_Joints(int num) { adjust_joint(&g_model[num]); }
+
+void Set_Name_Comment(int num, const char *name, const char *name_eng,
+                      const char *comment, const char *comment_eng) {
+  strncpy(g_model[num].header.name, name, NAME_LEN);
+  strncpy(g_model[num].header.name_eng, name_eng, NAME_LEN);
+  strncpy(g_model[num].header.comment, comment, COMMENT_LEN);
+  strncpy(g_model[num].header.comment_eng, comment_eng, COMMENT_LEN);
+}
+
+void PMD_view_set(int num, const char *str) {
+  if (strcmp(str, "replace") == 0) {
+    model_mgr(0, 0, &g_model[num]);
+  }
+}
+
+void getWHT(int num, float *wht) {
+  double min[3] = {0.0, 0.0, 0.0};
+  double max[3] = {0.0, 0.0, 0.0};
+
+  for (int i = 0; i < g_model[num].vt_count; i++) {
+    for (int j = 0; j < 3; j++) {
+      if (g_model[num].vt[i].loc[j] > max[j]) {
+        max[j] = g_model[num].vt[i].loc[j];
+      } else if (g_model[num].vt[i].loc[j] < min[j]) {
+        min[j] = g_model[num].vt[i].loc[j];
+      }
+    }
+  }
+
+  for (int i = 0; i < 3; i++) {
+    wht[i] = (max[i] - min[i]) * 8;
+  }
+}
+
+void QuitViewerThread() {
+  myflags.quit = 1;
+  SDL_WaitThread(viewer_th, NULL);
 }

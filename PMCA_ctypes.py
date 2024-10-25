@@ -198,7 +198,7 @@ def getBone(num: int, i: int) -> dict[str, Any]:
         "tail": tail[0],
         "type": type[0],
         "IK": IK[0],
-        "loc": loc[0],
+        "loc": loc,
     }
 
 
@@ -310,11 +310,15 @@ Set_List.argtypes = [
 ]
 Set_List.restype = None
 
-# /***********************************************************************/
-# {"Set_Name_Comment", Set_Name_Comment, METH_VARARGS,
-#  "Set Name and Comment"},
-# /***********************************************************************/
-# {"Init_PMD", Init_PMD, METH_VARARGS, "Initialize"},
+Set_Name_Comment = PMCA.Set_Name_Comment
+Set_Name_Comment.argtypes = [
+    ctypes.c_int,
+    ctypes.c_char_p,
+    ctypes.c_char_p,
+    ctypes.c_char_p,
+    ctypes.c_char_p,
+]
+Set_Name_Comment.restype = None
 
 Init_PMD = PMCA.Init_PMD
 Init_PMD.argtypes = []
@@ -346,23 +350,47 @@ Sort_PMD = PMCA.Sort_PMD
 Sort_PMD.argtypes = [ctypes.c_int]
 Sort_PMD.restype = ctypes.c_int
 
-# {"PMD_view_set", PMD_view_set, METH_VARARGS, "Set selected PMD to dispray"},
-# /***********************************************************************/
-# {"Resize_Model", Resize_Model, METH_VARARGS, "Resize_Model"},
-# {"Move_Model", Move_Model, METH_VARARGS, "Move_Model"},
-# {"Resize_Bone", Resize_Bone, METH_VARARGS, "Resize_Bone"},
-# {"Move_Bone", Move_Bone, METH_VARARGS, "Move_Bone"},
-# {"Update_Skin", Update_Skin, METH_VARARGS, "Update_Skin"},
-# {"Adjust_Joints", Adjust_Joints, METH_VARARGS, "Adjust_Joints"},
-#
-# /***********************************************************************/
+PMD_view_set = PMCA.PMD_view_set
+PMD_view_set.argtypes = [ctypes.c_int, ctypes.c_char_p]
+PMD_view_set.restype = None
+
+Resize_Model = PMCA.Resize_Model
+Resize_Model.argtypes = [ctypes.c_int, ctypes.c_float]
+Resize_Model.restype = None
+
+Move_Model = PMCA.Move_Model
+Move_Model.argtypes = [ctypes.c_int, ctypes.c_float, ctypes.c_float, ctypes.c_float]
+Move_Model.restype = None
+
+Resize_Bone = PMCA.Resize_Bone
+Resize_Bone.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_float, ctypes.c_float]
+Resize_Bone.restype = None
+
+Move_Bone = PMCA.Move_Bone
+Move_Bone.argtypes = [
+    ctypes.c_int,
+    ctypes.c_char_p,
+    ctypes.c_float,
+    ctypes.c_float,
+    ctypes.c_float,
+]
+Move_Bone.restype = None
+
+Update_Skin = PMCA.Update_Skin
+Update_Skin.argtypes = [ctypes.c_int]
+Update_Skin.restype = None
+
+Adjust_Joints = PMCA.Adjust_Joints
+Adjust_Joints.argtypes = [ctypes.c_int]
+Adjust_Joints.restype = None
 
 MODEL_LOCK = PMCA.MODEL_LOCK
 MODEL_LOCK.argtypes = [ctypes.c_int]
 MODEL_LOCK.restype = None
 
-# {"getWHT", getWHT, METH_VARARGS, "get height, width, thickness from model"},
-# /***********************************************************************/
+getWHT = PMCA.getWHT
+getWHT.argtypes = [ctypes.c_int, ctypes.POINTER(ctypes.c_float)]
+getWHT.restype = None
 
 CreateViewerThread = PMCA.CreateViewerThread
 CreateViewerThread.argtypes = []
@@ -370,7 +398,11 @@ CreateViewerThread.restype = None
 
 #  "CretateViewerThread"},
 # {"WaitViewerThread", WaitViewerThread, METH_VARARGS, "WaitViewerThread"},
-# {"QuitViewerThread", QuitViewerThread, METH_VARARGS, "QuitViewerThread"},
+
+QuitViewerThread = PMCA.QuitViewerThread
+QuitViewerThread.argtypes = []
+QuitViewerThread.restype = None
+
 # {"KillViewerThread", KillViewerThread, METH_VARARGS, "KillViewerThread"},
 # {"GetViewerThreadState", GetViewerThreadState, METH_VARARGS,
 #  "GetViewerThreadState"},
