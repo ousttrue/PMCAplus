@@ -4,6 +4,7 @@
 #include "dbg.h"
 #include "mlib_PMD_edit01.h"
 #include "mlib_PMD_rw01.h"
+#include <string.h>
 
 static void copy_str(char *dst, const char *src) {}
 
@@ -232,14 +233,14 @@ void getToonPath(int num, char **toon_path) {
 void setToon(int num, const char **p) {
   auto model = &g_model[num];
   for (int i = 0; i < 10; i++) {
-    memcpy(model->toon[i], p[i], 100);
+    strncpy(model->toon[i], p[i], 100);
   }
 }
 
 void setToonPath(int num, const char **p) {
   auto model = &g_model[num];
   for (int i = 0; i < 10; i++) {
-    memcpy(model->toon[i], p[i], 100);
+    strncpy(model->toon[i], p[i], 100);
   }
 }
 

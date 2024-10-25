@@ -29,6 +29,17 @@
             "program": "${workspaceFolder}/PMCA_pymain.py",
             "env": {},
             "console": "integratedTerminal"
-        }
+        },
+        {
+            "name": "zig",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/zig-out/bin/pmcaz.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "integratedTerminal"
+        },
     ]
 }
