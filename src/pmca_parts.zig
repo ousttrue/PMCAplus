@@ -17,23 +17,110 @@ const bom = [3]u8{
 //
 // NEXT
 
-const Parts = struct {
+pub const Parts = struct {
+    dir: []const u8,
+    name: []const u8,
+    comment: []const u8,
+    path: []const u8,
+    pic: []const u8,
+    parent_joints: []const []const u8,
+    child_joints: []const []const u8,
+    pre_scripts: []const []const u8,
+    post_scripts: []const []const u8,
+
+    pub fn deinit(self: *@This(), allocator: std.mem.Allocator) void {
+        allocator.free(self.parent_joints);
+        allocator.free(self.child_joints);
+        allocator.free(self.pre_scripts);
+        allocator.free(self.post_scripts);
+    }
+};
+
+const Builder = struct {
+    parent_joints: std.ArrayList([]const u8),
+    child_joints: std.ArrayList([]const u8),
+    pre_scripts: std.ArrayList([]const u8),
+    post_scripts: std.ArrayList([]const u8),
     dir: []const u8 = "",
     name: []const u8 = "",
+    comment: []const u8 = "",
+    path: []const u8 = "",
+    pic: []const u8 = "",
 
-    pub fn set(self: *@This(), key: []const u8, value: []const u8) void {
-        if (std.mem.eql(u8, "name", key)) {
-            self.name = std.mem.trim(u8, value, &std.ascii.whitespace);
+    fn init(allocator: std.mem.Allocator) @This() {
+        return .{
+            .parent_joints = std.ArrayList([]const u8).init(allocator),
+            .child_joints = std.ArrayList([]const u8).init(allocator),
+            .pre_scripts = std.ArrayList([]const u8).init(allocator),
+            .post_scripts = std.ArrayList([]const u8).init(allocator),
+        };
+    }
+
+    fn deinit(self: *@This()) void {
+        self.parent_joints.deinit();
+        self.child_joints.deinit();
+        self.pre_scripts.deinit();
+        self.post_scripts.deinit();
+    }
+
+    fn clear(self: *@This()) void {
+        self.name = "";
+        self.comment = "";
+        self.path = "";
+        self.pic = "";
+    }
+
+    fn commit(self: *@This()) !Parts {
+        std.debug.assert(self.parent_joints.items.len > 0);
+        defer self.clear();
+        return .{
+            .dir = self.dir,
+            .name = self.name,
+            .comment = self.comment,
+            .path = self.path,
+            .pic = self.pic,
+            .parent_joints = try self.parent_joints.toOwnedSlice(),
+            .child_joints = try self.child_joints.toOwnedSlice(),
+            .pre_scripts = try self.pre_scripts.toOwnedSlice(),
+            .post_scripts = try self.post_scripts.toOwnedSlice(),
+        };
+    }
+
+    fn isMatch(comptime prop: anytype, key: []const u8, value: []const u8) ?[]const u8 {
+        if (std.mem.eql(u8, prop, key)) {
+            return std.mem.trim(u8, value, &std.ascii.whitespace);
+        } else {
+            return null;
+        }
+    }
+
+    pub fn set(self: *@This(), key: []const u8, _value: []const u8) !void {
+        if (isMatch("name", key, _value)) |value| {
+            self.name = value;
+        } else if (isMatch("type", key, _value)) |value| {
+            try self.parent_joints.append(value);
+        } else if (isMatch("joint", key, _value)) |value| {
+            try self.child_joints.append(value);
+        } else if (isMatch("script_pre", key, _value)) |value| {
+            try self.pre_scripts.append(value);
+        } else if (isMatch("script_post", key, _value)) |value| {
+            try self.post_scripts.append(value);
+        } else if (isMatch("path", key, _value)) |value| {
+            self.path = value;
+        } else if (isMatch("pic", key, _value)) |value| {
+            self.pic = value;
+        } else if (isMatch("comment", key, _value)) |value| {
+            self.comment = value;
         } else {
             std.debug.print("unkonwn key: {s}\n", .{key});
-            unreachable;
+            @panic("unknown property");
         }
     }
 };
 
 const Parser = struct {};
 
-pub fn parse(_data: []const u8) !void {
+pub fn parse(allocator: std.mem.Allocator, _data: []const u8) ![]Parts {
     var data = _data;
 
     if (std.mem.startsWith(u8, data, &bom)) {
@@ -52,13 +139,17 @@ pub fn parse(_data: []const u8) !void {
     var s = std.io.fixedBufferStream(data);
     const r = s.reader();
 
+    var list = std.ArrayList(Parts).init(allocator);
     var line_buf: [1024]u8 = undefined;
-    var parts = Parts{};
+    var builder = Builder.init(allocator);
+    defer builder.deinit();
     while (r.readUntilDelimiterOrEof(&line_buf, '\n')) |_line| {
         const line = _line orelse {
             // last
-            std.debug.print("{}\n", .{parts});
-            break;
+            if (builder.parent_joints.items.len > 0) {
+                try list.append(try builder.commit());
+            }
+            return list.toOwnedSlice();
         };
 
         const trimed = std.mem.trim(u8, line, &std.ascii.whitespace);
@@ -67,14 +158,13 @@ pub fn parse(_data: []const u8) !void {
         }
 
         if (std.mem.startsWith(u8, trimed, setdir)) {
-            parts.dir = trimed[setdir.len..];
+            builder.dir = trimed[setdir.len..];
         } else if (std.mem.eql(u8, trimed, "NEXT")) {
-            // parts
-            std.debug.print("{}\n", .{parts});
-            parts = .{ .dir = parts.dir };
+            // commit
+            try list.append(try builder.commit());
         } else if (trimed[0] == '[') {
             if (std.mem.indexOf(u8, trimed, "]")) |close| {
-                parts.set(trimed[1..close], trimed[close + 1 ..]);
+                try builder.set(trimed[1..close], trimed[close + 1 ..]);
             }
         } else {
             unreachable;
