@@ -1,3 +1,15 @@
+//! PMCA Parts list v2.0
+//!
+//! SETDIR ./parts/
+//!
+//! [name] セーラー服上半身01(スカート,長袖)
+//! [comment] 普通の長袖セーラー服、縦リボン
+//! [type] root
+//! [path] ub_mt_slr001_l_sk.pmd
+//! [joint] head,hand,lb_sk,body_acce
+//! [pic] ub_mt_slr001_l_sk.png
+//!
+//! NEXT
 const std = @import("std");
 
 const header = "PMCA Parts list v2.0";
@@ -5,17 +17,6 @@ const setdir = "SETDIR ";
 const bom = [3]u8{
     0xEF, 0xBB, 0xBF,
 };
-
-// SETDIR ./parts/
-//
-// [name] セーラー服上半身01(スカート,長袖)
-// [comment] 普通の長袖セーラー服、縦リボン
-// [type] root
-// [path] ub_mt_slr001_l_sk.pmd
-// [joint] head,hand,lb_sk,body_acce
-// [pic] ub_mt_slr001_l_sk.png
-//
-// NEXT
 
 pub const Parts = struct {
     dir: []const u8,

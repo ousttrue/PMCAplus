@@ -6,11 +6,13 @@ const sokol = @import("sokol");
 const sg = sokol.gfx;
 const pmca_parts = @import("pmca_parts.zig");
 const pmca_material = @import("pmca_material.zig");
+const pmca_transform = @import("pmca_transform.zig");
 
 const state = struct {
     var allocator: std.mem.Allocator = undefined;
     var parts_list: []const pmca_parts.Parts = undefined;
     var material_list: []const pmca_material.Material = undefined;
+    var transform_list: []const pmca_transform.Transform = undefined;
 };
 
 var fetch_buffer: [1024 * 100]u8 = undefined;
@@ -49,10 +51,6 @@ export fn fetch_callback_parts(response: [*c]const sokol.fetch.Response) void {
         // const allocator = std.heap.c_allocator;
         if (pmca_parts.parse(state.allocator, buf)) |list| {
             std.debug.print("{} parts\n", .{list.len});
-            // for(list)|*parts|{
-            //     parts.deinit(state.allocator);
-            // }
-            // state.allocator.free(list);
             state.parts_list = list;
 
             _ = sokol.fetch.send(.{
@@ -76,9 +74,30 @@ export fn fetch_callback_materials(response: [*c]const sokol.fetch.Response) voi
             std.debug.print("{} materials\n", .{list.len});
             state.material_list = list;
 
-            // TODO: transform
+            _ = sokol.fetch.send(.{
+                .path = "list_transforms_basic.txt",
+                .callback = fetch_callback_transforms,
+                .buffer = sokol.fetch.asRange(&fetch_buffer),
+            });
         } else |_| {
             @panic("pmca_material.parse");
+        }
+    } else if (response.*.failed) {
+        @panic("fetch failed");
+    }
+}
+
+export fn fetch_callback_transforms(response: [*c]const sokol.fetch.Response) void {
+    if (response.*.fetched) {
+        const p: [*]const u8 = @ptrCast(response.*.data.ptr);
+        const buf = p[0..response.*.data.size];
+        if (pmca_transform.parse(state.allocator, buf)) |list| {
+            std.debug.print("{} transforms\n", .{list.len});
+            state.transform_list = list;
+
+            // TODO: cnl
+        } else |_| {
+            @panic("pmca_transform.parse");
         }
     } else if (response.*.failed) {
         @panic("fetch failed");

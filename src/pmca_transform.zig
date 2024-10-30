@@ -1,59 +1,40 @@
-//! PMCA Materials list v2.0
+//! PMCA Transform list v2.0
 //!
-//! SETDIR ./parts/
-//!
-//! [name] mt_hair
-//! [comment] 髪の色
-//!
-//! [ENTRY] 青色01
-//! [tex]	mt_hair_bl01.png
-//! [toon] 6 toon_mt_hair_bl01.bmp
-//! [diff_rgb] 0.80 0.80 0.80
-//! [spec_rgb] 0.08 0.22 0.37
-//! [mirr_rgb] 0.37 0.65 0.63
-//! [author] mato
-//!
-//! [ENTRY] グレー01
-//! [tex] mt_hair_gr01.png
-//! [diff_rgb] 0.800000 0.800000 0.800000
-//! [spec_rgb] 0.240000 0.240000 0.240000
-//! [mirr_rgb] 0.470000 0.470000 0.470000
-//! [author] mato
+//! [name] 全身スケール
+//! [range] 0.8 1.2
+//! [scale] 1.0
 //!
 //! NEXT
+//!
+//! [name] 胴体
+//! [range] 0.5 1.5
+//! [ENTRY] 上半身
+//! [length] 1.0
+//! [ENTRY] 下半身
+//! [length] 0.5
 const std = @import("std");
 
-const header = "PMCA Materials list v2.0";
-const setdir = "SETDIR ";
+const header = "PMCA Transform list v2.0";
 const bom = [3]u8{
     0xEF, 0xBB, 0xBF,
 };
 
-pub const ToonTexture = struct {
-    index: usize,
-    toon_texture: []const u8,
+const Entry = struct {
+    name: []const u8,
+    length: f32 = 0,
+    thick: f32 = 0,
 };
 
-pub const Entry = struct {
+pub const Transform = struct {
     name: []const u8,
-    tex: ?[]const u8 = null,
-    toon: ?ToonTexture = null,
-    diff_rgb: ?struct { f32, f32, f32 } = null,
-    spec_rgb: ?struct { f32, f32, f32 } = null,
-    mirr_rgb: ?struct { f32, f32, f32 } = null,
-    author: ?[]const u8 = null,
-};
-
-pub const Material = struct {
-    name: []const u8,
-    comment: []const u8,
+    // range: struct { f32, f32 },
+    // scale: f32,
     entries: []Entry,
 };
 
 const Builder = struct {
     entries: std.ArrayList(Entry),
     name: []const u8 = "",
-    comment: []const u8 = "",
     current_entry: ?Entry = null,
 
     fn init(allocator: std.mem.Allocator) @This() {
@@ -66,13 +47,11 @@ const Builder = struct {
         self.entries.deinit();
     }
 
-    fn commit(self: *@This()) !Material {
+    fn commit(self: *@This()) !Transform {
         defer self.current_entry = null;
         defer self.name = "";
-        defer self.comment = "";
-        return Material{
+        return Transform{
             .name = self.name,
-            .comment = self.comment,
             .entries = try self.entries.toOwnedSlice(),
         };
     }
@@ -87,18 +66,10 @@ const Builder = struct {
 
     pub fn set(self: *@This(), key: []const u8, _value: []const u8) !void {
         if (self.current_entry) |*entry| {
-            if (isMatch("tex", key, _value)) |value| {
-                entry.tex = value;
-            } else if (isMatch("toon", key, _value)) |value| {
-                _ = value;
-            } else if (isMatch("diff_rgb", key, _value)) |value| {
-                _ = value;
-            } else if (isMatch("spec_rgb", key, _value)) |value| {
-                _ = value;
-            } else if (isMatch("mirr_rgb", key, _value)) |value| {
-                _ = value;
-            } else if (isMatch("author", key, _value)) |value| {
-                _ = value;
+            if (isMatch("length", key, _value)) |value| {
+                entry.length = try std.fmt.parseFloat(f32, value);
+            } else if (isMatch("thick", key, _value)) |value| {
+                entry.thick = try std.fmt.parseFloat(f32, value);
             } else if (isMatch("ENTRY", key, _value)) |value| {
                 self.current_entry = Entry{
                     .name = value,
@@ -110,21 +81,27 @@ const Builder = struct {
         } else {
             if (isMatch("name", key, _value)) |value| {
                 self.name = value;
-            } else if (isMatch("comment", key, _value)) |value| {
-                self.comment = value;
+            } else if (isMatch("range", key, _value)) |value| {
+                _ = value;
+            } else if (isMatch("scale", key, _value)) |value| {
+                _ = value;
+            } else if (isMatch("default", key, _value)) |value| {
+                _ = value;
+            } else if (isMatch("pos", key, _value)) |value| {
+                _ = value;
             } else if (isMatch("ENTRY", key, _value)) |value| {
                 self.current_entry = Entry{
                     .name = value,
                 };
             } else {
-                std.debug.print("unkonwn material key: {s}\n", .{key});
-                @panic("unknown material property");
+                std.debug.print("unkonwn transform key: {s}\n", .{key});
+                @panic("unknown transform property");
             }
         }
     }
 };
 
-pub fn parse(allocator: std.mem.Allocator, _data: []const u8) ![]Material {
+pub fn parse(allocator: std.mem.Allocator, _data: []const u8) ![]Transform {
     var data = _data;
 
     if (std.mem.startsWith(u8, data, &bom)) {
@@ -143,7 +120,7 @@ pub fn parse(allocator: std.mem.Allocator, _data: []const u8) ![]Material {
     var s = std.io.fixedBufferStream(data);
     const r = s.reader();
 
-    var list = std.ArrayList(Material).init(allocator);
+    var list = std.ArrayList(Transform).init(allocator);
     var line_buf: [1024]u8 = undefined;
     var builder = Builder.init(allocator);
     defer builder.deinit();
@@ -155,16 +132,14 @@ pub fn parse(allocator: std.mem.Allocator, _data: []const u8) ![]Material {
             }
             return list.toOwnedSlice();
         };
-        // std.debug.print("{s}\n", .{line});
+        std.debug.print("{s}\n", .{line});
 
         const trimed = std.mem.trim(u8, line, &std.ascii.whitespace);
         if (trimed.len == 0) {
             continue;
         }
 
-        if (std.mem.startsWith(u8, trimed, setdir)) {
-            // builder.dir = trimed[setdir.len..];
-        } else if (std.mem.eql(u8, trimed, "NEXT")) {
+        if (std.mem.eql(u8, trimed, "NEXT")) {
             // commit
             try list.append(try builder.commit());
         } else if (trimed[0] == '[') {
@@ -180,3 +155,4 @@ pub fn parse(allocator: std.mem.Allocator, _data: []const u8) ![]Material {
 
     return try list.toOwnedSlice();
 }
+
