@@ -5,10 +5,12 @@ const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const pmca_parts = @import("pmca_parts.zig");
+const pmca_material = @import("pmca_material.zig");
 
 const state = struct {
     var allocator: std.mem.Allocator = undefined;
     var parts_list: []const pmca_parts.Parts = undefined;
+    var material_list: []const pmca_material.Material = undefined;
 };
 
 var fetch_buffer: [1024 * 100]u8 = undefined;
@@ -35,26 +37,48 @@ export fn init() void {
     // start loading the base gltf file...
     _ = sokol.fetch.send(.{
         .path = "list_parts_basic.txt",
-        .callback = parts_fetch_callback,
+        .callback = fetch_callback_parts,
         .buffer = sokol.fetch.asRange(&fetch_buffer),
     });
 }
 
-export fn parts_fetch_callback(response: [*c]const sokol.fetch.Response) void {
+export fn fetch_callback_parts(response: [*c]const sokol.fetch.Response) void {
     if (response.*.fetched) {
-        // file has been loaded, parse as GLTF
         const p: [*]const u8 = @ptrCast(response.*.data.ptr);
         const buf = p[0..response.*.data.size];
         // const allocator = std.heap.c_allocator;
-        if (pmca_parts.parse(state.allocator, buf)) |parts_list| {
-            std.debug.print("{} parts", .{parts_list.len});
-            // for(parts_list)|*parts|{
+        if (pmca_parts.parse(state.allocator, buf)) |list| {
+            std.debug.print("{} parts\n", .{list.len});
+            // for(list)|*parts|{
             //     parts.deinit(state.allocator);
             // }
-            // state.allocator.free(parts_list);
-            state.parts_list = parts_list;
+            // state.allocator.free(list);
+            state.parts_list = list;
+
+            _ = sokol.fetch.send(.{
+                .path = "list_materials_basic.txt",
+                .callback = fetch_callback_materials,
+                .buffer = sokol.fetch.asRange(&fetch_buffer),
+            });
         } else |_| {
-            @panic("parse");
+            @panic("pmca_parts.parse");
+        }
+    } else if (response.*.failed) {
+        @panic("fetch failed");
+    }
+}
+
+export fn fetch_callback_materials(response: [*c]const sokol.fetch.Response) void {
+    if (response.*.fetched) {
+        const p: [*]const u8 = @ptrCast(response.*.data.ptr);
+        const buf = p[0..response.*.data.size];
+        if (pmca_material.parse(state.allocator, buf)) |list| {
+            std.debug.print("{} materials\n", .{list.len});
+            state.material_list = list;
+
+            // TODO: transform
+        } else |_| {
+            @panic("pmca_material.parse");
         }
     } else if (response.*.failed) {
         @panic("fetch failed");
