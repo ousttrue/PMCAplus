@@ -23,11 +23,11 @@
 //! NEXT
 const std = @import("std");
 
-const header = "PMCA Materials list v2.0";
-const setdir = "SETDIR ";
 const bom = [3]u8{
     0xEF, 0xBB, 0xBF,
 };
+const header = "PMCA Materials list v2.0";
+const setdir = "SETDIR ";
 
 pub const ToonTexture = struct {
     index: usize,

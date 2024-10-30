@@ -7,12 +7,14 @@ const sg = sokol.gfx;
 const pmca_parts = @import("pmca_parts.zig");
 const pmca_material = @import("pmca_material.zig");
 const pmca_transform = @import("pmca_transform.zig");
+const pmca_assembler = @import("pmca_assembler.zig");
 
 const state = struct {
     var allocator: std.mem.Allocator = undefined;
     var parts_list: []const pmca_parts.Parts = undefined;
     var material_list: []const pmca_material.Material = undefined;
     var transform_list: []const pmca_transform.Transform = undefined;
+    var assembler: pmca_assembler.Assembler = undefined;
 };
 
 var fetch_buffer: [1024 * 100]u8 = undefined;
@@ -62,7 +64,7 @@ export fn fetch_callback_parts(response: [*c]const sokol.fetch.Response) void {
             @panic("pmca_parts.parse");
         }
     } else if (response.*.failed) {
-        @panic("fetch failed");
+        @panic("fetch parts failed");
     }
 }
 
@@ -83,7 +85,7 @@ export fn fetch_callback_materials(response: [*c]const sokol.fetch.Response) voi
             @panic("pmca_material.parse");
         }
     } else if (response.*.failed) {
-        @panic("fetch failed");
+        @panic("fetch material failed");
     }
 }
 
@@ -95,7 +97,28 @@ export fn fetch_callback_transforms(response: [*c]const sokol.fetch.Response) vo
             std.debug.print("{} transforms\n", .{list.len});
             state.transform_list = list;
 
-            // TODO: cnl
+            _ = sokol.fetch.send(.{
+                .path = "default.cnl",
+                .callback = fetch_callback_cnl,
+                .buffer = sokol.fetch.asRange(&fetch_buffer),
+            });
+        } else |_| {
+            @panic("pmca_transform.parse");
+        }
+    } else if (response.*.failed) {
+        @panic("fetch transform failed");
+    }
+}
+
+export fn fetch_callback_cnl(response: [*c]const sokol.fetch.Response) void {
+    if (response.*.fetched) {
+        const p: [*]const u8 = @ptrCast(response.*.data.ptr);
+        const buf = p[0..response.*.data.size];
+        if (pmca_assembler.parse(state.allocator, buf)) |assembler| {
+            // std.debug.print("{} transforms\n", .{list.len});
+            assembler.debug_print();
+
+            state.assembler = assembler;
         } else |_| {
             @panic("pmca_transform.parse");
         }

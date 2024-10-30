@@ -14,10 +14,10 @@
 //! [length] 0.5
 const std = @import("std");
 
-const header = "PMCA Transform list v2.0";
 const bom = [3]u8{
     0xEF, 0xBB, 0xBF,
 };
+const header = "PMCA Transform list v2.0";
 
 const Entry = struct {
     name: []const u8,
@@ -132,7 +132,7 @@ pub fn parse(allocator: std.mem.Allocator, _data: []const u8) ![]Transform {
             }
             return list.toOwnedSlice();
         };
-        std.debug.print("{s}\n", .{line});
+        // std.debug.print("{s}\n", .{line});
 
         const trimed = std.mem.trim(u8, line, &std.ascii.whitespace);
         if (trimed.len == 0) {
