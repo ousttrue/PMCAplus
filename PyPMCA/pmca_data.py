@@ -204,7 +204,60 @@ class PmcaData:
 
         if level < 1:
             PMCA.Create_PMD(0)
-            self.author_license = self.tree_root.assemble(0)
+
+            # PMCA.Create_PMD(num)
+            # sysenc = sys.getfilesystemencoding()
+            # PMCA.Load_PMD(num, self.path.encode(sysenc, "replace"))
+            # info_data = PMCA.getInfo(0)
+            # info = types.INFO.create(info_data)
+            # line = info.comment.split("\n")
+
+            author_license = AuthorLicense.create('')
+
+            # if "script_pre" in self.props:
+            #     for x in self.props["script_pre"]:
+            #         argv = x.split()
+            #         fp = open(argv[0], "r", encoding="utf-8-sig")
+            #         script = fp.read()
+            #         exec(script)
+            #         fp.close
+
+            # if "script_post" in self.props:
+            #     for x in self.props["script_post"]:
+            #         argv = x.split()
+            #         fp = open(argv[0], "r", encoding="utf-8-sig")
+            #         script = fp.read()
+            #         exec(script)
+            #         fp.close
+
+            # if "script_fin" in self.props:
+            #     author_license.script_fin.extend(self.props["script_fin"])
+
+            # for x in line:
+            #     tmp = x.split(":", 1)
+            #     if len(tmp) == 1:
+            #         tmp = x.split("：", 1)
+            #     if (
+            #         tmp[0] == "Author"
+            #         or tmp[0] == "author"
+            #         or tmp[0] == "Creator"
+            #         or tmp[0] == "creator"
+            #         or tmp[0] == "モデル制作"
+            #     ):
+            #         tmp[1] = tmp[1].replace("　", " ")
+            #         app.authors = tmp[1].split(" ")
+
+            #     elif tmp[0] == "License" or tmp[0] == "license" or tmp[0] == "ライセンス":
+            #         tmp[1] = tmp[1].replace("　", " ")
+            #         app.licenses = tmp[1].split(" ")
+            # for x in self.child_joints:
+            #     if x.parts != None:
+            #         x.parts.assemble_child(num, author_license)
+
+            self.tree_root.assemble(0, author_license)
+            author_license.execute_scripts()
+
+            PMCA.Sort_PMD(0)
             PMCA.Copy_PMD(0, 1)
         else:
             PMCA.Copy_PMD(1, 0)

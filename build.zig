@@ -123,6 +123,7 @@ pub fn build(b: *std.Build) void {
     sokol_dep.artifact("sokol_clib").addIncludePath(cimgui_root);
     sokol_dep.artifact("sokol_clib").addCSourceFile(.{ .file = b.path("deps/cimgui//custom_button_behaviour.cpp") });
     exe.root_module.addImport("cimgui", cimgui_dep.module("cimgui"));
+    exe.linkLibrary(dll);
 
     const rowmath_dep = b.dependency("rowmath", .{});
     const rowmath = rowmath_dep.module("rowmath");

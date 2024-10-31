@@ -4,7 +4,10 @@ import dataclasses
 import PMCA_ctypes as PMCA
 from .author_license import AuthorLicense
 from . import types
-import ctypes
+import logging
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
@@ -161,13 +164,13 @@ class PARTS:
                             x.parts = None
 
                     else:
-                        depc = 1
-                        while depc == 0:
-                            count += 1
-                            if lines[count] == "[Child]":
-                                depc += 1
-                            if lines[count] == "[Parent]":
-                                depc -= 1
+                        # depc = 1
+                        # while depc == 0:
+                        #     count += 1
+                        #     if lines[count] == "[Child]":
+                        #         depc += 1
+                        #     if lines[count] == "[Parent]":
+                        #         depc -= 1
                         parents.pop()
                         child_nums.pop()
                         child_nums[-1] += 1
@@ -193,137 +196,85 @@ class PARTS:
                 for node in joint.parts.traverse(level + 1):
                     yield node
 
-    def assemble(self, num: int) -> AuthorLicense:
-        PMCA.Create_PMD(num)
-        sysenc = sys.getfilesystemencoding()
-        PMCA.Load_PMD(num, self.path.encode(sysenc, "replace"))
-        info_data = PMCA.getInfo(0)
-        info = types.INFO.create(info_data)
-        line = info.comment.split("\n")
-        author_license = AuthorLicense.create(info.name)
+    def assemble(self, num: int, author_license: AuthorLicense) -> None:
+        LOGGER.debug(self.path)
+        if self.path:
+            PMCA.Create_PMD(4)
+            sysenc = sys.getfilesystemencoding()
+            PMCA.Load_PMD(4, self.path.encode(sysenc, "replace"))
 
-        if "script_pre" in self.props:
-            for x in self.props["script_pre"]:
-                argv = x.split()
-                fp = open(argv[0], "r", encoding="utf-8-sig")
-                script = fp.read()
-                exec(script)
-                fp.close
+            info_data = PMCA.getInfo(4)
+            info = types.INFO.create(info_data)
+            line = info.comment.split("\n")
+            flag_author = False
+            flag_license = False
+            for x in line:
+                tmp = x.split(":", 1)
+                if len(tmp) == 1:
+                    tmp = x.split("：", 1)
+                if (
+                    tmp[0] == "Author"
+                    or tmp[0] == "author"
+                    or tmp[0] == "Creator"
+                    or tmp[0] == "creator"
+                    or tmp[0] == "モデル制作"
+                ):
+                    if len(tmp) > 1:
+                        flag_author = True
+                        tmp[1] = tmp[1].replace("　", " ")
+                        for x in tmp[1].split(" "):
+                            author_license.append_author(x)
 
-        if "script_post" in self.props:
-            for x in self.props["script_post"]:
-                argv = x.split()
-                fp = open(argv[0], "r", encoding="utf-8-sig")
-                script = fp.read()
-                exec(script)
-                fp.close
+                elif (
+                    tmp[0] == "License" or tmp[0] == "license" or tmp[0] == "ライセンス"
+                ):
+                    if len(tmp) > 1:
+                        flag_license = True
+                        tmp[1] = tmp[1].replace("　", " ")
+                        for x in tmp[1].split(" "):
+                            author_license.append_license(x)
 
-        if "script_fin" in self.props:
-            author_license.script_fin.extend(self.props["script_fin"])
+            if info.name != "":
+                if flag_author == False:
+                    author_license.append_author("Unknown")
+                if flag_license == False:
+                    author_license.append_license("Nonfree")
 
-        for x in line:
-            tmp = x.split(":", 1)
-            if len(tmp) == 1:
-                tmp = x.split("：", 1)
-            if (
-                tmp[0] == "Author"
-                or tmp[0] == "author"
-                or tmp[0] == "Creator"
-                or tmp[0] == "creator"
-                or tmp[0] == "モデル制作"
-            ):
-                tmp[1] = tmp[1].replace("　", " ")
-                app.authors = tmp[1].split(" ")
+            if "script_pre" in self.props:
+                for x in self.props["script_pre"]:
+                    print("プレスクリプト実行")
+                    argv = x.split()
+                    fp = open(argv[0], "r", encoding="utf-8-sig")
+                    script = fp.read()
+                    exec(script)
+                    fp.close
 
-            elif tmp[0] == "License" or tmp[0] == "license" or tmp[0] == "ライセンス":
-                tmp[1] = tmp[1].replace("　", " ")
-                app.licenses = tmp[1].split(" ")
-        for x in self.child_joints:
-            if x.parts != None:
-                x.parts.assemble_child(num, author_license)
+            PMCA.Add_PMD(num, 4)
+            PMCA.Marge_PMD(num)
 
-        PMCA.Sort_PMD(num)
+            if "script_post" in self.props:
+                for x in self.props["script_post"]:
+                    argv = x.split()
+                    fp = open(argv[0], "r", encoding="utf-8-sig")
+                    script = fp.read()
+                    exec(script)
+                    fp.close
 
-        author_license.execute_scripts()
-
-        return author_license
-
-    def assemble_child(self, num: int, author_license: AuthorLicense) -> None:
-        sysenc = sys.getfilesystemencoding()
-
-        PMCA.Create_PMD(4)
-        PMCA.Load_PMD(4, self.path.encode(sysenc, "replace"))
-
-        info_data = PMCA.getInfo(4)
-        info = types.INFO.create(info_data)
-        line = info.comment.split("\n")
-        flag_author = False
-        flag_license = False
-        for x in line:
-            tmp = x.split(":", 1)
-            if len(tmp) == 1:
-                tmp = x.split("：", 1)
-            if (
-                tmp[0] == "Author"
-                or tmp[0] == "author"
-                or tmp[0] == "Creator"
-                or tmp[0] == "creator"
-                or tmp[0] == "モデル制作"
-            ):
-                if len(tmp) > 1:
-                    flag_author = True
-                    tmp[1] = tmp[1].replace("　", " ")
-                    for x in tmp[1].split(" "):
-                        author_license.append_author(x)
-
-            elif tmp[0] == "License" or tmp[0] == "license" or tmp[0] == "ライセンス":
-                if len(tmp) > 1:
-                    flag_license = True
-                    tmp[1] = tmp[1].replace("　", " ")
-                    for x in tmp[1].split(" "):
-                        author_license.append_license(x)
-
-        if info.name != "":
-            if flag_author == False:
-                author_license.append_author("Unknown")
-            if flag_license == False:
-                author_license.append_license("Nonfree")
-
-        if "script_pre" in self.props:
-            for x in self.props["script_pre"]:
-                print("プレスクリプト実行")
-                argv = x.split()
-                fp = open(argv[0], "r", encoding="utf-8-sig")
-                script = fp.read()
-                exec(script)
-                fp.close
-
-        PMCA.Add_PMD(num, 4)
-        PMCA.Marge_PMD(num)
-
-        if "script_post" in self.props:
-            for x in self.props["script_post"]:
-                argv = x.split()
-                fp = open(argv[0], "r", encoding="utf-8-sig")
-                script = fp.read()
-                exec(script)
-                fp.close
-        if "script_fin" in self.props:
-            author_license.script_fin.extend(self.props["script_fin"])
+            if "script_fin" in self.props:
+                author_license.script_fin.extend(self.props["script_fin"])
 
         for x in self.child_joints:
             if x.parts != None:
-                x.parts.assemble_child(num, author_license)
+                x.parts.assemble(num, author_license)
 
     def node_to_text(self):
-        lines = []
-        lines.append("[Name] %s" % (self.parts.name))
-        lines.append("[Path] %s" % (self.parts.path))
+        lines: list[str] = []
+        lines.append("[Name] %s" % (self.name))
+        lines.append("[Path] %s" % (self.path))
         lines.append("[Child]")
-        print(self.parts.path)
-        for x in self.child:
-            if x != None:
-                lines.extend(x.node_to_text())
+        for x in self.child_joints:
+            if x.parts != None:
+                lines.extend(x.parts.node_to_text())
             else:
                 lines.append("None")
         lines.append("[Parent]")

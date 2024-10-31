@@ -68,6 +68,7 @@
 //! [Pos] 0.000000 0.000000 0.000000
 //! [Rot] 0.000000 0.000000 0.000000
 const std = @import("std");
+const PMCA = @import("PMCA.zig");
 
 const bom = [3]u8{
     0xEF, 0xBB, 0xBF,
@@ -159,6 +160,152 @@ pub const Assembler = struct {
     }
 };
 
+pub fn refresh(level: usize, assembler: *Assembler) void {
+    PMCA.MODEL_LOCK(1);
+
+    if (level < 1) {
+        PMCA.Create_PMD(0);
+        // self.author_license =
+        assembler.assemble(0);
+        PMCA.Copy_PMD(0, 1);
+    } else {
+        PMCA.Copy_PMD(1, 0);
+    }
+
+    if (level < 2) {
+        // 材質関連
+        // self.mat_rep.Get(self.assets.mats_list);
+        // self.mat_rep.Set(self.author_license);
+        PMCA.Copy_PMD(0, 2);
+    } else {
+        PMCA.Copy_PMD(2, 0);
+    }
+
+    if (level < 3) {
+        // const info_data = PMCA.getInfo(0);
+        // info = PyPMCA.types.INFO.create(info_data)
+
+        //     tmpbone = []
+        //     for i in range(info_data["bone_count"]):
+        //         tmp = PMCA.getBone(0, i)
+        //         tmpbone.append(
+        //             types.BONE(
+        //                 tmp["name"],
+        //                 tmp["name_eng"],
+        //                 tmp["parent"],
+        //                 tmp["tail"],
+        //                 tmp["type"],
+        //                 tmp["IK"],
+        //                 tmp["loc"],
+        //             )
+        //         )
+        //     refbone = None
+        //     refbone_index = None
+        //     for i, x in enumerate(tmpbone):
+        //         if x.name == "右足首":
+        //             refbone = x
+        //             refbone_index = i
+        //             break
+        //
+        //     for y in self.transform_data:
+        //         PMCA.Resize_Model(0, y.scale)
+        //         for x in y.bones:
+        //             PMCA.Resize_Bone(
+        //                 0, x.name.encode("cp932", "replace"), x.length, x.thick
+        //             )
+        //             PMCA.Move_Bone(
+        //                 0,
+        //                 x.name.encode("cp932", "replace"),
+        //                 x.pos.x,
+        //                 x.pos.y,
+        //                 x.pos.z,
+        //             )
+        //             # print("resize_bone %f %f"%(x.length, x.thick))
+        //
+        //     if refbone != None:
+        //         newbone = None
+        //         tmp = PMCA.getBone(0, refbone_index)
+        //         newbone = types.BONE(
+        //             tmp["name"],
+        //             tmp["name_eng"],
+        //             tmp["parent"],
+        //             tmp["tail"],
+        //             tmp["type"],
+        //             tmp["IK"],
+        //             tmp["loc"],
+        //         )
+        //
+        //         dy = refbone.loc[1] - newbone.loc[1]
+        //         for x in tmpbone:
+        //             i = x.parent
+        //             count = 0
+        //             while (
+        //                 i < info_data["bone_count"] and count < info_data["bone_count"]
+        //             ):
+        //                 if tmpbone[i].name == "センター":
+        //                     PMCA.Move_Bone(
+        //                         0, x.name.encode("cp932", "replace"), 0, dy, 0
+        //                     )
+        //                     break
+        //                 i = tmpbone[i].parent
+        //                 count += 1
+        //
+        //         PMCA.Move_Bone(0, "センター".encode("cp932", "replace"), 0, dy, 0)
+        //         PMCA.Move_Bone(0, "+センター".encode("cp932", "replace"), 0, -dy, 0)
+        //
+        //     for y in self.transform_data:
+        //         PMCA.Move_Model(0, y.pos.x, y.pos.y, y.pos.z)
+        //
+        PMCA.Update_Skin(0);
+        PMCA.Adjust_Joints(0);
+        PMCA.Copy_PMD(0, 3);
+    } else {
+        PMCA.Copy_PMD(3, 0);
+    }
+
+    if (level < 4) {
+        //     PMCA.Set_Name_Comment(
+        //         0,
+        //         self.modelinfo.name.encode("cp932", "replace"),
+        //         self.modelinfo.name_eng.encode("cp932", "replace"),
+        //         (
+        //             "%s\nAuthor:%s\nLicense:%s\n%s"
+        //             % (
+        //                 self.modelinfo.name_l,
+        //                 self.author_license.get_authors(),
+        //                 self.author_license.get_licenses(),
+        //                 self.modelinfo.comment,
+        //             )
+        //         ).encode("cp932", "replace"),
+        //         (
+        //             "%s\nAuthor:%s\nLicense:%s\n%s"
+        //             % (
+        //                 self.modelinfo.name_l_eng,
+        //                 self.author_license.get_authors(),
+        //                 self.author_license.get_licenses(),
+        //                 self.modelinfo.comment_eng,
+        //             )
+        //         ).encode("cp932", "replace"),
+        //     )
+    }
+
+    if (level < 3) {
+        PMCA.PMD_view_set(0, "replace"); // # テクスチャを変更しない
+    } else {
+        PMCA.PMD_view_set(0, "replace");
+    }
+
+    PMCA.MODEL_LOCK(0);
+
+    // wht = (ctypes.c_float * 3)()
+    // PMCA.getWHT(0, wht)
+    // w, h, t = wht
+    // LOGGER.info("refreshed")
+    // for callback in self.on_refresh:
+    //     callback(w, h, t)
+    //
+    //
+}
 var line_buf: [1024]u8 = undefined;
 fn getLine(r: anytype) ?[]const u8 {
     while (r.readUntilDelimiterOrEof(&line_buf, '\n')) |_line| {

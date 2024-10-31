@@ -115,8 +115,9 @@ export fn fetch_callback_cnl(response: [*c]const sokol.fetch.Response) void {
         const p: [*]const u8 = @ptrCast(response.*.data.ptr);
         const buf = p[0..response.*.data.size];
         if (pmca_assembler.parse(state.allocator, buf)) |assembler| {
-            // std.debug.print("{} transforms\n", .{list.len});
             assembler.debug_print();
+
+            // assembler.assemble(0);
 
             state.assembler = assembler;
         } else |_| {
