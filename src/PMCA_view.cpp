@@ -1,18 +1,26 @@
+#define PMCA_BUILD
+
+extern "C" {
 #include "PMCA_view.h"
 #include "dbg.h"
 #include "mlib_PMD_rw01.h"
-#include <Windows.h>
+}
 
 #include <GL/GL.h>
 #include <GL/GLU.h>
-#include <SDL.h>
+#include <GLFW/glfw3.h>
+#include <Windows.h>
 #include <math.h>
 #include <stb_image.h>
+
+#include <mutex>
+#include <thread>
 
 #define SCALE (2.0 * 3.14159265358979323846)
 #define WM_TITLE "PMCA 3D View"
 
-static SDL_Thread *viewer_th = nullptr;
+std::thread viewer_th;
+std::mutex mtx_;
 
 /*
 ** クォータニオンの積 r <- p x q
@@ -72,17 +80,12 @@ struct FLAGS {
   int button1;
   int button2;
   int button3;
-  int model_lock;
   int quit;
 };
 
 struct FLAGS myflags;
 
 struct VIEW_STATE {
-  /* EBhE@ */
-  int width;
-  int height;
-
   /*NbNJ[\W*/
   int sx;
   int sy;
@@ -103,13 +106,6 @@ struct VIEW_STATE {
 };
 
 struct VIEW_STATE vs;
-
-/* 現在のビデオ設定についての情報 */
-const SDL_VideoInfo *info = NULL;
-/* ウィンドウの色のピクセル深度 */
-int bpp = 0;
-/* SDL_SetVideoMode に渡すフラグ */
-int flags = 0;
 
 static int setup_opengl(int width, int height) {
 
@@ -156,25 +152,15 @@ static int setup_opengl(int width, int height) {
 
 /*モデルデータを描画*/
 static int render_model(int num) {
-  int i, j;
-  int index, c;
-  struct MODEL *model;
-  struct DSP_MODEL *dsp_model;
-
-  static float *loc;
-  static float *nor;
-  static float *uv;
-  static struct DSP_MAT *mats;
-
-  model = model_mgr(1, num, NULL);
+  auto model = reinterpret_cast<MODEL *>(model_mgr(1, num, NULL));
   if (model == NULL)
     return -1;
-  dsp_model = model_mgr(2, num, NULL);
+  auto dsp_model = reinterpret_cast<DSP_MODEL *>(model_mgr(2, num, NULL));
 
-  loc = dsp_model->loc;
-  nor = dsp_model->nor;
-  uv = dsp_model->uv;
-  mats = dsp_model->mats;
+  auto loc = dsp_model->loc;
+  auto nor = dsp_model->nor;
+  auto uv = dsp_model->uv;
+  auto mats = dsp_model->mats;
 
   if (loc == NULL)
     return -1;
@@ -185,8 +171,8 @@ static int render_model(int num) {
   if (mats == NULL)
     return -1;
 
-  c = 0;
-  for (i = 0; i < model->mat_count; i++) {
+  int c = 0;
+  for (int i = 0; i < model->mat_count; i++) {
     if (mats[i].texbits != NULL) {
       glEnable(GL_TEXTURE_2D);
       // glBindTexture(GL_TEXTURE_2D , dsp_model->texid[i]);
@@ -204,8 +190,8 @@ static int render_model(int num) {
     glBegin(GL_TRIANGLES);
     glColor4fv(mats[i].col);
 
-    for (j = 0; j < model->mat[i].vt_index_count; j++) {
-      index = model->vt_index[c++];
+    for (int j = 0; j < model->mat[i].vt_index_count; j++) {
+      int index = model->vt_index[c++];
       glTexCoord2fv(uv + 2 * index);
       glVertex3fv(loc + 3 * index);
       /*
@@ -226,17 +212,14 @@ static int render_model(int num) {
   return 0;
 }
 
-static void draw_screen(void) {
-  double asp = (double)vs.width / (double)vs.height;
+static void draw_screen(int w, int h) {
+  double asp = (double)w / (double)h;
 
-  while (myflags.model_lock != 0) {
-    SDL_Delay(30);
-  }
-  myflags.model_lock = 1;
   /*座標軸表示*/
   vs.show_axis = 0x01 | 0x02 | 0x04;
 
   /* 色・デプスバッファを消去 */
+  glViewport(0, 0, w, h);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   /*ビュー設定*/
@@ -270,212 +253,173 @@ static void draw_screen(void) {
 
   render_model(0);
   glFinish();
-  myflags.model_lock = 0;
-  SDL_GL_SwapBuffers();
-  SDL_Delay(30);
+  // SDL_GL_SwapBuffers();
+  // SDL_Delay(30);
 }
 
-static void handle_key_down(SDL_keysym *keysym) {
-  switch (keysym->sym) {
-  case SDLK_ESCAPE:
-    myflags.quit = 1;
-    break;
-  default:
-    break;
-  }
-}
+// static void handle_key_down(SDL_keysym *keysym) {
+//   switch (keysym->sym) {
+//   case SDLK_ESCAPE:
+//     myflags.quit = 1;
+//     break;
+//   default:
+//     break;
+//   }
+// }
 
-static void process_events(void) {
-  /* SDL イベントの置き場 */
-  SDL_Event event;
-
-  /* すべてのイベントをキューからつかみ取る */
-  while (SDL_PollEvent(&event)) {
-
-    switch (event.type) {
-    case SDL_KEYDOWN:
-      /* キー押下を処理 */
-      handle_key_down(&event.key.keysym);
-      break;
-    case SDL_MOUSEBUTTONDOWN:
-      switch (event.button.button) {
-      case SDL_BUTTON_LEFT:
-        myflags.button1 = 1;
-        break;
-      case SDL_BUTTON_RIGHT:
-        myflags.button2 = 1;
-        break;
-      case SDL_BUTTON_MIDDLE:
-        myflags.button3 = 1;
-        break;
-      }
-      vs.sx = event.button.x;
-      vs.sy = event.button.y;
-      break;
-    case SDL_MOUSEBUTTONUP:
-      switch (event.button.button) {
-      case SDL_BUTTON_LEFT:
-        myflags.button1 = 0;
-        break;
-      case SDL_BUTTON_RIGHT:
-        myflags.button2 = 0;
-        break;
-      case SDL_BUTTON_MIDDLE:
-        myflags.button3 = 0;
-        break;
-      }
-      memcpy(vs.cq, vs.tq, 4 * sizeof(double));
-      break;
-    case SDL_MOUSEMOTION:
-      if (myflags.button1 == 1) {
-        double dx, dy;
-        double a;
-        dx = (event.motion.xrel) / 10.0;
-        dy = (event.motion.yrel) / 10.0;
-        a = sqrt(dx * dx + dy * dy);
-        if (a != 0.0) {
-          int i, j;
-          double tmp[3];
-          tmp[0] = dx;
-          tmp[1] = dy;
-          tmp[2] = 0.0;
-          // 変換行列から移動ベクトルを回転
-          for (i = 0; i < 3; i++) {
-            for (j = 0; j < 3; j++) {
-              if (i == 0) {
-                vs.move[i] += tmp[j] * vs.rt[j * 4 + i];
-              } else {
-                vs.move[i] -= tmp[j] * vs.rt[j * 4 + i];
-              }
-            }
-          }
-        }
-      }
-      if (myflags.button2 == 1) {
-        double dx, dy;
-        double a;
-
-        dx = (event.motion.x - vs.sx) / (double)vs.width;
-        dy = (event.motion.y - vs.sy) / (double)vs.height;
-        a = sqrt(dx * dx + dy * dy);
-        if (a != 0.0) {
-          // マウスのドラッグに伴う回転のクォータニオン dq を求める
-          double ar = a * SCALE * 0.5;
-          double as = sin(ar) / a;
-          double dq[4] = {cos(ar), dy * as, dx * as, 0.0};
-
-          // 回転の初期値 cq に dq を掛けて回転を合成
-          qmul(vs.tq, dq, vs.cq);
-
-          // クォータニオンから回転の変換行列を求める
-          qrot(vs.rt, vs.tq);
-        }
-      }
-      if (myflags.button3 == 1) {
-        vs.scale -= event.motion.yrel * 0.1;
-        if (vs.scale < 0) {
-          vs.scale = 0.001;
-        }
-      }
-      break;
-    case SDL_VIDEORESIZE:
-      vs.width = event.resize.w;
-      vs.height = event.resize.h;
-      if (SDL_SetVideoMode(vs.width, vs.height, bpp, flags) == 0) {
-        fprintf(stderr, "ビデオモードのセットに失敗しました: %s\n",
-                SDL_GetError());
-        SDL_Quit();
-        return;
-      }
-      setup_opengl(vs.width, vs.height);
-      break;
-    case SDL_QUIT:
-      /* 終了要求 (Ctrl-c など) を処理 */
-      myflags.quit = 1;
-
-      return;
-    }
-  }
-}
+// static void process_events(void) {
+//   /* SDL イベントの置き場 */
+//   SDL_Event event;
+//
+//   /* すべてのイベントをキューからつかみ取る */
+//   while (SDL_PollEvent(&event)) {
+//
+//     switch (event.type) {
+//     case SDL_KEYDOWN:
+//       /* キー押下を処理 */
+//       handle_key_down(&event.key.keysym);
+//       break;
+//     case SDL_MOUSEBUTTONDOWN:
+//       switch (event.button.button) {
+//       case SDL_BUTTON_LEFT:
+//         myflags.button1 = 1;
+//         break;
+//       case SDL_BUTTON_RIGHT:
+//         myflags.button2 = 1;
+//         break;
+//       case SDL_BUTTON_MIDDLE:
+//         myflags.button3 = 1;
+//         break;
+//       }
+//       vs.sx = event.button.x;
+//       vs.sy = event.button.y;
+//       break;
+//     case SDL_MOUSEBUTTONUP:
+//       switch (event.button.button) {
+//       case SDL_BUTTON_LEFT:
+//         myflags.button1 = 0;
+//         break;
+//       case SDL_BUTTON_RIGHT:
+//         myflags.button2 = 0;
+//         break;
+//       case SDL_BUTTON_MIDDLE:
+//         myflags.button3 = 0;
+//         break;
+//       }
+//       memcpy(vs.cq, vs.tq, 4 * sizeof(double));
+//       break;
+//     case SDL_MOUSEMOTION:
+//       if (myflags.button1 == 1) {
+//         double dx, dy;
+//         double a;
+//         dx = (event.motion.xrel) / 10.0;
+//         dy = (event.motion.yrel) / 10.0;
+//         a = sqrt(dx * dx + dy * dy);
+//         if (a != 0.0) {
+//           int i, j;
+//           double tmp[3];
+//           tmp[0] = dx;
+//           tmp[1] = dy;
+//           tmp[2] = 0.0;
+//           // 変換行列から移動ベクトルを回転
+//           for (i = 0; i < 3; i++) {
+//             for (j = 0; j < 3; j++) {
+//               if (i == 0) {
+//                 vs.move[i] += tmp[j] * vs.rt[j * 4 + i];
+//               } else {
+//                 vs.move[i] -= tmp[j] * vs.rt[j * 4 + i];
+//               }
+//             }
+//           }
+//         }
+//       }
+//       if (myflags.button2 == 1) {
+//         double dx, dy;
+//         double a;
+//
+//         dx = (event.motion.x - vs.sx) / (double)vs.width;
+//         dy = (event.motion.y - vs.sy) / (double)vs.height;
+//         a = sqrt(dx * dx + dy * dy);
+//         if (a != 0.0) {
+//           // マウスのドラッグに伴う回転のクォータニオン dq を求める
+//           double ar = a * SCALE * 0.5;
+//           double as = sin(ar) / a;
+//           double dq[4] = {cos(ar), dy * as, dx * as, 0.0};
+//
+//           // 回転の初期値 cq に dq を掛けて回転を合成
+//           qmul(vs.tq, dq, vs.cq);
+//
+//           // クォータニオンから回転の変換行列を求める
+//           qrot(vs.rt, vs.tq);
+//         }
+//       }
+//       if (myflags.button3 == 1) {
+//         vs.scale -= event.motion.yrel * 0.1;
+//         if (vs.scale < 0) {
+//           vs.scale = 0.001;
+//         }
+//       }
+//       break;
+//     case SDL_VIDEORESIZE:
+//       vs.width = event.resize.w;
+//       vs.height = event.resize.h;
+//       if (SDL_SetVideoMode(vs.width, vs.height, bpp, flags) == 0) {
+//         fprintf(stderr, "ビデオモードのセットに失敗しました: %s\n",
+//                 SDL_GetError());
+//         SDL_Quit();
+//         return;
+//       }
+//       setup_opengl(vs.width, vs.height);
+//       break;
+//     case SDL_QUIT:
+//       /* 終了要求 (Ctrl-c など) を処理 */
+//       myflags.quit = 1;
+//
+//       return;
+//     }
+//   }
+// }
 
 static int createwindow() {
-  if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-    fprintf(stderr, "ビデオの初期化に失敗しました: %s\n", SDL_GetError());
-    SDL_Quit();
-    return 1;
+  if (!glfwInit())
+    return -1;
+
+  auto window = glfwCreateWindow(640, 480, WM_TITLE, NULL, NULL);
+  if (!window) {
+    glfwTerminate();
+    return -1;
   }
 
-  info = SDL_GetVideoInfo();
+  glfwMakeContextCurrent(window);
 
-  if (!info) {
-    fprintf(stderr, "ビデオの問い合わせに失敗しました: %s\n", SDL_GetError());
-    SDL_Quit();
-    return 1;
+  int w, h;
+  glfwGetFramebufferSize(window, &w, &h);
+
+  setup_opengl(w, h);
+
+  while (myflags.quit != 1 && !glfwWindowShouldClose(window)) {
+    /* Poll for and process events */
+    glfwPollEvents();
+
+    glfwGetFramebufferSize(window, &w, &h);
+    // process_events();
+    draw_screen(w, h);
+    /* Swap front and back buffers */
+    glfwSwapBuffers(window);
   }
 
-  vs.width = 640;
-  vs.height = 480;
-  bpp = info->vfmt->BitsPerPixel;
-
-  SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
-  SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 5);
-  SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);
-  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
-  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-
-  flags = SDL_OPENGL | SDL_RESIZABLE;
-
-  if (SDL_SetVideoMode(vs.width, vs.height, bpp, flags) == 0) {
-    fprintf(stderr, "ビデオモードのセットに失敗しました: %s\n", SDL_GetError());
-    SDL_Quit();
-    return 1;
-  }
-
-  setup_opengl(vs.width, vs.height);
-  SDL_WM_SetCaption(WM_TITLE, NULL);
-
-  /*struct MODEL* model;
-  model = model_mgr(1,0,NULL);
-  load_texture(model, "");
-  */
-  while (myflags.quit != 1) {
-    process_events();
-    draw_screen();
-  }
-
+  glfwTerminate();
   return 0;
 }
 
 // int (SDLCALL *fn)(void *)
-static int viewer_thread(void *) {
-  SDL_Event event;
-
-  myflags.model_lock = 0;
-
-  createwindow();
-  SDL_Quit();
-  return 0;
-}
+static void viewer_thread() { createwindow(); }
 
 static int make_dsp_model(struct MODEL *model, struct DSP_MODEL *dsp_model) {
-  int i, j;
-  float *loc;
-  float *nor;
-  float *uv;
-  struct DSP_MAT *mats;
-  GLuint *texid;
-  // unsigned int index;
-
-  /*
-  while(myflags.model_lock != 0){
-          SDL_Delay(30);
-  }
-  myflags.model_lock=1;
-  */
   FREE(dsp_model->loc);
   FREE(dsp_model->nor);
   FREE(dsp_model->uv);
-  for (i = 0; i < dsp_model->mats_c; i++) {
+  for (int i = 0; i < dsp_model->mats_c; i++) {
     FREE(dsp_model->mats[i].texbits);
     dsp_model->mats[i].texbits = NULL;
     memset(dsp_model->mats[i].texsize, 0, 2 * sizeof(int));
@@ -488,12 +432,17 @@ static int make_dsp_model(struct MODEL *model, struct DSP_MODEL *dsp_model) {
   dsp_model->mats = NULL;
   dsp_model->texid = NULL;
 
-  loc = MALLOC(model->vt_count * 3 * sizeof(float));
-  nor = MALLOC(model->vt_count * 3 * sizeof(float));
-  uv = MALLOC(model->vt_count * 2 * sizeof(float));
-  mats = MALLOC(model->mat_count * sizeof(struct DSP_MAT));
+  auto loc =
+      reinterpret_cast<float *>(MALLOC(model->vt_count * 3 * sizeof(float)));
+  auto nor =
+      reinterpret_cast<float *>(MALLOC(model->vt_count * 3 * sizeof(float)));
+  auto uv =
+      reinterpret_cast<float *>(MALLOC(model->vt_count * 2 * sizeof(float)));
+  auto mats = reinterpret_cast<DSP_MAT *>(
+      MALLOC(model->mat_count * sizeof(struct DSP_MAT)));
   memset(mats, 0, model->mat_count * sizeof(struct DSP_MAT));
-  texid = MALLOC(model->mat_count * sizeof(GLuint));
+  auto texid =
+      reinterpret_cast<GLuint *>(MALLOC(model->mat_count * sizeof(GLuint)));
   if (loc == NULL || nor == NULL || uv == NULL || mats == NULL) {
     // myflags.model_lock=0;
     return -1;
@@ -505,7 +454,7 @@ static int make_dsp_model(struct MODEL *model, struct DSP_MODEL *dsp_model) {
   dsp_model->texid = texid;
   dsp_model->mats_c = model->mat_count;
 
-  for (i = 0; i < model->vt_count; i++) {
+  for (int i = 0; i < model->vt_count; i++) {
     memcpy(loc, model->vt[i].loc, 2 * sizeof(float));
     loc += 2;
     *loc = -model->vt[i].loc[2];
@@ -516,7 +465,7 @@ static int make_dsp_model(struct MODEL *model, struct DSP_MODEL *dsp_model) {
     uv += 2;
   }
 
-  for (i = 0; i < dsp_model->mats_c; i++) {
+  for (int i = 0; i < dsp_model->mats_c; i++) {
     dsp_model->mats[i].texbits = NULL;
     memset(dsp_model->mats[i].texsize, 0, 2 * sizeof(int));
   }
@@ -568,17 +517,16 @@ static int load_tex(struct MODEL *model, struct DSP_MODEL *dsp_model) {
         double log_w = log(mats[i].texsize[0]) / log(2);
         double log_h = log(mats[i].texsize[1]) / log(2);
         if (ceil(log_w) != floor(log_w) || ceil(log_h) != floor(log_h)) {
-          GLubyte *tmp_bits;
-          int w, h;
-          w = 2;
-          h = 2;
+          int w = 2;
+          int h = 2;
           for (j = 0; j < floor(log_w); j++) {
             w = w * 2;
           }
           for (j = 0; j < floor(log_h); j++) {
             h = h * 2;
           }
-          tmp_bits = MALLOC(h * w * sizeof(GLubyte) * 6);
+          GLubyte *tmp_bits =
+              reinterpret_cast<GLubyte *>(MALLOC(h * w * sizeof(GLubyte) * 6));
           if (tmp_bits == NULL)
             puts("メモリ確保失敗");
 
@@ -605,13 +553,13 @@ static int load_tex(struct MODEL *model, struct DSP_MODEL *dsp_model) {
     }
   }
 
-  // myflags.model_lock=0;
-
   return 0;
 }
 
 /*描画用のモデルを管理する関数*/
 void *model_mgr(int flag, int num, void *p) {
+  std::lock_guard<std::mutex> lock(mtx_);
+
   static struct MODEL model[16];
   static struct DSP_MODEL dsp_model[16];
   static int init = 1;
@@ -662,22 +610,17 @@ void *model_mgr(int flag, int num, void *p) {
   return 0;
 }
 
-void CreateViewerThread() {
-  viewer_th = SDL_CreateThread(&viewer_thread, NULL);
-}
+DLL void CreateViewerThread() { viewer_th = std::thread(&viewer_thread); }
 
-void QuitViewerThread() {
+DLL void QuitViewerThread() {
   myflags.quit = 1;
-  SDL_WaitThread(viewer_th, NULL);
+  viewer_th.join();
 }
 
-void MODEL_LOCK(int num) {
-  if (num == 1) {
-    while (myflags.model_lock != 0) {
-      SDL_Delay(30);
-    }
-    myflags.model_lock = 1;
-  } else {
-    myflags.model_lock = 0;
-  }
+DLL void MODEL_LOCK(int num) {
+  // if (num == 1) {
+  //   mtx_.lock(); // ロックを取得する
+  // } else {
+  //   mtx_.unlock(); // ロックを手放す
+  // }
 }

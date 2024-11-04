@@ -42,11 +42,20 @@ pub fn build(b: *std.Build) void {
     dll.addCSourceFiles(.{
         .root = b.path("src"),
         .files = &.{
-            "PMCA_view.c",
             "PMCA.c",
         },
         .flags = &FLAGS,
     });
+    dll.addCSourceFiles(.{
+        .root = b.path("src"),
+        .files = &.{
+            "PMCA_view.cpp",
+        },
+        .flags = &.{
+            "-std=c++17",
+        },
+    });
+    dll.linkLibCpp();
     dll.addIncludePath(.{ .cwd_relative = "C:/Python311/include" });
     dll.addLibraryPath(.{ .cwd_relative = "C:/Python311/libs" });
     dll.linkSystemLibrary("Python311");
@@ -57,8 +66,41 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
-    dll.linkLibrary(sdl_dep.artifact("SDL"));
-    dll.addIncludePath(sdl_dep.path("include"));
+    // dll.linkLibrary(sdl_dep.artifact("SDL"));
+    // dll.addIncludePath(sdl_dep.path("include"));
+
+    const glfw_dep = b.dependency("glfw", .{});
+    dll.addIncludePath(glfw_dep.path("include"));
+    dll.addCSourceFiles(.{
+        .root = glfw_dep.path("src"),
+        .files = &.{
+            "context.c",
+            "init.c",
+            "input.c",
+            "monitor.c",
+            "platform.c",
+            "vulkan.c",
+            "window.c",
+            "egl_context.c",
+            "osmesa_context.c",
+            "null_init.c",
+            "null_monitor.c",
+            "null_window.c",
+            "null_joystick.c",
+            // win32
+            "win32_module.c",
+            "win32_time.c",
+            "win32_thread.c",
+            "win32_init.c",
+            "win32_joystick.c",
+            "win32_monitor.c",
+            "win32_window.c",
+            "wgl_context.c",
+        },
+        .flags = &.{
+            "-D_GLFW_WIN32",
+        },
+    });
 
     const stb_dep = b.dependency("stb", .{
         .target = target,
