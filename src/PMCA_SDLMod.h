@@ -5,7 +5,7 @@
 #include <SDL.h>
 
 #define MODEL_COUNT 16
-extern struct MODEL g_model[16];
+extern struct MODEL g_model[MODEL_COUNT];
 extern struct LIST list;
 extern SDL_Thread *viewer_th;
 

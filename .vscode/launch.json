@@ -23,7 +23,7 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Python Debugger: Current File",
+            "name": "PMCA_pymain.py",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/PMCA_pymain.py",

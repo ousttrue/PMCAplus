@@ -42,7 +42,7 @@ pub fn build(b: *std.Build) void {
     dll.addCSourceFiles(.{
         .root = b.path("src"),
         .files = &.{
-            "PMCA_PyMod.c",
+            // "PMCA_PyMod.c",
             "PMCA_SDLMod.c",
             "PMCA_view.c",
             "PMCA.c",
