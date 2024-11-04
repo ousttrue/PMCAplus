@@ -1,10 +1,16 @@
 #include "PMCA.h"
-#include "PMCA_SDLMod.h"
+// #include "PMCA_SDLMod.h"
 #include "PMCA_view.h"
 #include "dbg.h"
 #include "mlib_PMD_edit01.h"
 #include "mlib_PMD_rw01.h"
+#include <SDL.h>
 #include <string.h>
+
+#define MODEL_COUNT 16
+struct MODEL g_model[MODEL_COUNT];
+struct LIST list;
+SDL_Thread *viewer_th;
 
 static void copy_str(char *dst, const char *src) {}
 
