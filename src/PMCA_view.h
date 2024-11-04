@@ -1,4 +1,6 @@
 #pragma once
+#include "mPMD.h"
+
 struct MODEL;
 struct DSP_MODEL;
 
@@ -9,7 +11,6 @@ struct FLAGS {
   int model_lock;
   int quit;
 };
-extern struct FLAGS myflags;
 
 int viewer_thread(void *);
 void quit(int code);
@@ -20,3 +21,7 @@ int render_model(int num);
 int load_texture(struct MODEL *model);
 int load_tex(struct MODEL *model, struct DSP_MODEL *dsp_model);
 int make_dsp_model(struct MODEL *model, struct DSP_MODEL *dsp_model);
+
+DLL void CreateViewerThread();
+DLL void QuitViewerThread();
+DLL void MODEL_LOCK(int num);

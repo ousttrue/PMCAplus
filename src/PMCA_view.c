@@ -10,6 +10,7 @@
 
 #define SCALE (2.0 * 3.14159265358979323846)
 #define WM_TITLE "PMCA 3D View"
+SDL_Thread *viewer_th;
 
 struct DSP_MAT {
   float col[4];
@@ -655,4 +656,24 @@ void qrot(double r[], double q[]) {
   r[10] = 1.0 - x2 - y2;
   r[3] = r[7] = r[11] = r[12] = r[13] = r[14] = 0.0;
   r[15] = 1.0;
+}
+
+void CreateViewerThread() {
+  viewer_th = SDL_CreateThread(&viewer_thread, NULL);
+}
+
+void QuitViewerThread() {
+  myflags.quit = 1;
+  SDL_WaitThread(viewer_th, NULL);
+}
+
+void MODEL_LOCK(int num) {
+  if (num == 1) {
+    while (myflags.model_lock != 0) {
+      SDL_Delay(30);
+    }
+    myflags.model_lock = 1;
+  } else {
+    myflags.model_lock = 0;
+  }
 }

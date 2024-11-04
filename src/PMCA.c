@@ -1,16 +1,13 @@
 #include "PMCA.h"
-// #include "PMCA_SDLMod.h"
 #include "PMCA_view.h"
 #include "dbg.h"
 #include "mlib_PMD_edit01.h"
 #include "mlib_PMD_rw01.h"
-#include <SDL.h>
 #include <string.h>
 
 #define MODEL_COUNT 16
 struct MODEL g_model[MODEL_COUNT];
 struct LIST list;
-SDL_Thread *viewer_th;
 
 static void copy_str(char *dst, const char *src) {}
 
@@ -67,21 +64,6 @@ void Set_List(int bone_count, const char **bn, const char **bne, int skin_count,
   //   PyBytes_AsStringAndSize(tmp, &p, &len);
   //   strncpy(list.disp_eng[i], p, NAME_LEN);
   // }
-}
-
-void CreateViewerThread() {
-  viewer_th = SDL_CreateThread(&viewer_thread, NULL);
-}
-
-void MODEL_LOCK(int num) {
-  if (num == 1) {
-    while (myflags.model_lock != 0) {
-      SDL_Delay(30);
-    }
-    myflags.model_lock = 1;
-  } else {
-    myflags.model_lock = 0;
-  }
 }
 
 void Create_PMD(int num) { delete_PMD(&g_model[num]); }
@@ -339,9 +321,4 @@ void getWHT(int num, float *wht) {
   for (int i = 0; i < 3; i++) {
     wht[i] = (max[i] - min[i]) * 8;
   }
-}
-
-void QuitViewerThread() {
-  myflags.quit = 1;
-  SDL_WaitThread(viewer_th, NULL);
 }

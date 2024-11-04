@@ -5,8 +5,6 @@ DLL void Init_PMD();
 DLL void Set_List(int bone_count, const char **bn, const char **bne,
                   int skin_count, const char **sn, const char **sne,
                   int bone_group_count, const char **gn, const char **gne);
-DLL void CreateViewerThread();
-DLL void MODEL_LOCK(int num);
 DLL void Create_PMD(int num);
 DLL void Load_PMD(int num, const char *str);
 DLL void getInfo(int num, const char **name, const char **name_eng,
@@ -43,4 +41,3 @@ DLL void Set_Name_Comment(int num, const char *name, const char *name_eng,
                           const char *comment, const char *comment_eng);
 DLL void PMD_view_set(int num, const char *str);
 DLL void getWHT(int num, float *wht);
-DLL void QuitViewerThread() ;
