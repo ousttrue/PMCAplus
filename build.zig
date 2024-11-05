@@ -32,6 +32,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
         .name = "PMCA",
         .link_libc = true,
+        .root_source_file = b.path("src/PMCA_view.zig"),
     });
     const install_dll = b.addInstallArtifact(dll, .{
         .dest_sub_path = "PMCA.pyd",
@@ -43,20 +44,20 @@ pub fn build(b: *std.Build) void {
         .root = b.path("src"),
         .files = &.{
             "PMCA.c",
-            "dsp.c",
-            "quat.c",
+            // "dsp.c",
+            // "quat.c",
         },
         .flags = &FLAGS,
     });
-    dll.addCSourceFiles(.{
-        .root = b.path("src"),
-        .files = &.{
-            "PMCA_view.cpp",
-        },
-        .flags = &.{
-            "-std=c++17",
-        },
-    });
+    // dll.addCSourceFiles(.{
+    //     .root = b.path("src"),
+    //     .files = &.{
+    //         "PMCA_view.cpp",
+    //     },
+    //     .flags = &.{
+    //         "-std=c++17",
+    //     },
+    // });
     dll.linkLibCpp();
     dll.addIncludePath(.{ .cwd_relative = "C:/Python311/include" });
     dll.addLibraryPath(.{ .cwd_relative = "C:/Python311/libs" });
@@ -104,6 +105,14 @@ pub fn build(b: *std.Build) void {
         },
     });
 
+    const sokol_dep = b.dependency("sokol", .{
+        .target = target,
+        .optimize = optimize,
+        // .with_sokol_imgui = true,
+        .gl = true,
+    });
+    dll.root_module.addImport("sokol", sokol_dep.module("sokol"));
+
     const stb_dep = b.dependency("stb", .{
         .target = target,
         .optimize = optimize,
@@ -149,11 +158,6 @@ pub fn build(b: *std.Build) void {
 
     b.step("run", "run pmcaz").dependOn(&run.step);
 
-    const sokol_dep = b.dependency("sokol", .{
-        .target = target,
-        .optimize = optimize,
-        .with_sokol_imgui = true,
-    });
     exe.root_module.addImport("sokol", sokol_dep.module("sokol"));
 
     const cimgui_dep = b.dependency("cimgui", .{
