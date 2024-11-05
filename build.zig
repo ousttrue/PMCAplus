@@ -43,6 +43,8 @@ pub fn build(b: *std.Build) void {
         .root = b.path("src"),
         .files = &.{
             "PMCA.c",
+            "dsp.c",
+            "quat.c",
         },
         .flags = &FLAGS,
     });

@@ -15,7 +15,7 @@ void Init_PMD() {
   for (int i = 0; i < MODEL_COUNT; i++) {
     create_PMD(&g_model[i]);
   }
-  model_mgr(-1, 0, NULL);
+  view_model_initialize();
 }
 
 void Set_List(int bone_count, const char **bn, const char **bne, int skin_count,
@@ -300,7 +300,7 @@ void Set_Name_Comment(int num, const char *name, const char *name_eng,
 
 void PMD_view_set(int num, const char *str) {
   if (strcmp(str, "replace") == 0) {
-    model_mgr(0, 0, &g_model[num]);
+    view_model_copy(&g_model[num]);
   }
 }
 
