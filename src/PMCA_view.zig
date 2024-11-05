@@ -1,17 +1,13 @@
 const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
-const shader = @import("PMCA_view.glsl.zig");
 const glfw = @import("glfw_glue.zig");
 const c = @cImport({
     @cInclude("mlib_PMD_rw01.h");
 });
+const Renderer = @import("Renderer.zig");
 const rowmath = @import("rowmath");
 const OrbitCamera = rowmath.OrbitCamera;
-
-pub const VsParams = extern struct {
-    mvp: [16]f32 align(16),
-};
 
 const Vertex = struct {
     loc: [3]f32,
@@ -145,25 +141,7 @@ fn view(state: *State) void {
     // cleanup
     defer sg.shutdown();
 
-    // a shader
-    const shd = sg.makeShader(shader.pmcaViewShaderDesc(sg.queryBackend()));
-
-    // a pipeline state object (default render states are fine for triangle)
-    var pipDesc = sg.PipelineDesc{
-        .shader = shd,
-        .index_type = .UINT16,
-        .depth = .{
-            .compare = .LESS,
-            .write_enabled = true,
-        },
-        .cull_mode = .BACK,
-    };
-    pipDesc.layout.buffers[0].stride = 20;
-    pipDesc.layout.attrs[0].format = .FLOAT3;
-    pipDesc.layout.attrs[0].buffer_index = 0;
-    pipDesc.layout.attrs[1].format = .FLOAT2;
-    pipDesc.layout.attrs[1].buffer_index = 0;
-    const pip = sg.makePipeline(pipDesc);
+    const renderer = Renderer.init();
 
     // draw loop
     while (state.running) {
@@ -172,29 +150,13 @@ fn view(state: *State) void {
         };
         state.orbit.frame(input.*);
         input.mouse_wheel = 0;
-
         const m = state.orbit.viewProjectionMatrix();
 
         state.update_dsp(std.heap.c_allocator) catch @panic("update_dsp");
 
-        var action = sg.PassAction{};
-        action.colors[0] = .{
-            .load_action = .CLEAR,
-            .clear_value = .{ .r = 0.1, .g = 0.1, .b = 0.1, .a = 1.0 },
-        };
-
         {
-            sg.beginPass(.{
-                .action = action,
-                .swapchain = glfw.swapchain(),
-            });
-            defer sg.endPass();
-
-            sg.applyPipeline(pip);
-            const vs_params = VsParams{
-                .mvp = m.m,
-            };
-            sg.applyUniforms(.VS, 0, sg.asRange(&vs_params));
+            renderer.begin(m);
+            defer renderer.end();
             state.render_dsp();
         }
 
