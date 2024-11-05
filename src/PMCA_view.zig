@@ -155,7 +155,7 @@ fn view(state: *State) void {
         state.update_dsp(std.heap.c_allocator) catch @panic("update_dsp");
 
         {
-            renderer.begin(m);
+            renderer.begin(glfw.swapchain(), m);
             defer renderer.end();
             state.render_dsp();
         }

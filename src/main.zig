@@ -4,10 +4,14 @@
 const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
+const rowmath = @import("rowmath");
+const InputState = rowmath.InputState;
+const OrbitCamera = rowmath.OrbitCamera;
 const pmca_parts = @import("pmca_parts.zig");
 const pmca_material = @import("pmca_material.zig");
 const pmca_transform = @import("pmca_transform.zig");
 const pmca_assembler = @import("pmca_assembler.zig");
+const Renderer = @import("Renderer.zig");
 
 const state = struct {
     var allocator: std.mem.Allocator = undefined;
@@ -15,6 +19,11 @@ const state = struct {
     var material_list: []const pmca_material.Material = undefined;
     var transform_list: []const pmca_transform.Transform = undefined;
     var assembler: pmca_assembler.Assembler = undefined;
+    var renderer: Renderer = undefined;
+    var input = InputState{};
+    var orbit: OrbitCamera = .{
+        .shift = .{ .x = 0, .y = 8, .z = 20 },
+    };
 };
 
 var fetch_buffer: [1024 * 100]u8 = undefined;
@@ -28,6 +37,8 @@ export fn init() void {
         .environment = sokol.glue.environment(),
         .logger = .{ .func = sokol.log.func },
     });
+
+    state.renderer = Renderer.init();
 
     // setup sokol-fetch with 2 channels and 6 lanes per channel,
     // we'll use one channel for mesh data and the other for textures
@@ -131,19 +142,58 @@ export fn fetch_callback_cnl(response: [*c]const sokol.fetch.Response) void {
 export fn frame() void {
     sokol.fetch.dowork();
 
-    var pass_action = sg.PassAction{};
-    pass_action.colors[0] = .{
-        .load_action = .CLEAR,
-        .clear_value = .{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 1.0 },
-    };
-    const g = pass_action.colors[0].clear_value.g + 0.01;
-    pass_action.colors[0].clear_value.g = if (g > 1.0) 0.0 else g;
-    sg.beginPass(.{
-        .action = pass_action,
-        .swapchain = sokol.glue.swapchain(),
-    });
-    sg.endPass();
+    state.input.screen_width = sokol.app.widthf();
+    state.input.screen_height = sokol.app.heightf();
+    state.orbit.frame(state.input);
+    state.input.mouse_wheel = 0;
+    const m = state.orbit.viewProjectionMatrix();
+
+    {
+        state.renderer.begin(sokol.glue.swapchain(), m);
+        defer state.renderer.end();
+    }
     sg.commit();
+}
+
+export fn event(e: [*c]const sokol.app.Event) void {
+    switch (e.*.type) {
+        .MOUSE_DOWN => {
+            switch (e.*.mouse_button) {
+                .LEFT => {
+                    state.input.mouse_left = true;
+                },
+                .RIGHT => {
+                    state.input.mouse_right = true;
+                },
+                .MIDDLE => {
+                    state.input.mouse_middle = true;
+                },
+                .INVALID => {},
+            }
+        },
+        .MOUSE_UP => {
+            switch (e.*.mouse_button) {
+                .LEFT => {
+                    state.input.mouse_left = false;
+                },
+                .RIGHT => {
+                    state.input.mouse_right = false;
+                },
+                .MIDDLE => {
+                    state.input.mouse_middle = false;
+                },
+                .INVALID => {},
+            }
+        },
+        .MOUSE_MOVE => {
+            state.input.mouse_x = e.*.mouse_x;
+            state.input.mouse_y = e.*.mouse_y;
+        },
+        .MOUSE_SCROLL => {
+            state.input.mouse_wheel = e.*.scroll_y;
+        },
+        else => {},
+    }
 }
 
 export fn cleanup() void {
@@ -156,7 +206,7 @@ pub fn main() void {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        // .event_cb = __dbgui_event,
+        .event_cb = event,
         .width = 400,
         .height = 300,
         .window_title = "Clear (sokol app)",

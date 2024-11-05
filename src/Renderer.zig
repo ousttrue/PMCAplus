@@ -3,9 +3,9 @@ const sg = sokol.gfx;
 pub const Renderer = @This();
 const shader = @import("PMCA_view.glsl.zig");
 const rowmath = @import("rowmath");
-const glfw = @import("glfw_glue.zig");
 
 pip: sg.Pipeline,
+pass: sg.Pass,
 
 pub fn init() @This() {
     // a shader
@@ -29,10 +29,23 @@ pub fn init() @This() {
 
     return .{
         .pip = sg.makePipeline(pipDesc),
+        .pass = sg.Pass{},
     };
 }
 
-pub fn begin(self: @This(), m: rowmath.Mat4) void {
+pub fn begin(
+    self: @This(),
+    swapchain: sg.Swapchain,
+    m: rowmath.Mat4,
+) void {
+    var pass_action = sg.PassAction{};
+    pass_action.colors[0] = .{
+        .load_action = .CLEAR,
+        .clear_value = .{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 1.0 },
+    };
+    const g = pass_action.colors[0].clear_value.g + 0.01;
+    pass_action.colors[0].clear_value.g = if (g > 1.0) 0.0 else g;
+
     var action = sg.PassAction{};
     action.colors[0] = .{
         .load_action = .CLEAR,
@@ -41,9 +54,8 @@ pub fn begin(self: @This(), m: rowmath.Mat4) void {
 
     sg.beginPass(.{
         .action = action,
-        .swapchain = glfw.swapchain(),
+        .swapchain = swapchain,
     });
-
     sg.applyPipeline(self.pip);
     const vs_params = shader.VsParams{
         .mvp = m.m,
