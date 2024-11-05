@@ -1,10 +1,17 @@
 const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
+const shader = @import("PMCA_view.glsl.zig");
 const glfw = @import("glfw_glue.zig");
 const c = @cImport({
     @cInclude("mlib_PMD_rw01.h");
 });
+const rowmath = @import("rowmath");
+const OrbitCamera = rowmath.OrbitCamera;
+
+pub const VsParams = extern struct {
+    mvp: [16]f32 align(16),
+};
 
 const Vertex = struct {
     loc: [3]f32,
@@ -44,6 +51,9 @@ const State = struct {
     model: c.MODEL = undefined,
     copy: u32 = 0,
     dsp: ?DspModel = null,
+    orbit: OrbitCamera = .{
+        .shift = .{ .x = 0, .y = 8, .z = 20 },
+    },
 
     fn copy_model(self: *@This(), src: *c.MODEL) void {
         self.mutex.lock();
@@ -124,7 +134,6 @@ fn view(state: *State) void {
         .title = "triangle-glfw.c",
         .width = 640,
         .height = 480,
-        .no_depth_buffer = true,
     });
     defer glfw.shutdown();
 
@@ -137,31 +146,17 @@ fn view(state: *State) void {
     defer sg.shutdown();
 
     // a shader
-    const shd = sg.makeShader(.{
-        .vs = .{ .source = 
-        \\#version 330
-        \\in vec3 aPosition;
-        \\in vec2 aUv;
-        \\out vec2 fUv;
-        \\void main() {
-        \\  gl_Position = vec4(aPosition, 1);
-        \\  fUv = aUv;
-        \\}
-        },
-        .fs = .{ .source = 
-        \\#version 330
-        \\in vec2 fUv;
-        \\out vec4 frag_color;
-        \\void main() {
-        \\  frag_color = vec4(fUv, 0, 1);
-        \\}
-        },
-    });
+    const shd = sg.makeShader(shader.pmcaViewShaderDesc(sg.queryBackend()));
 
     // a pipeline state object (default render states are fine for triangle)
     var pipDesc = sg.PipelineDesc{
         .shader = shd,
         .index_type = .UINT16,
+        .depth = .{
+            .compare = .LESS,
+            .write_enabled = true,
+        },
+        .cull_mode = .BACK,
     };
     pipDesc.layout.buffers[0].stride = 20;
     pipDesc.layout.attrs[0].format = .FLOAT3;
@@ -171,14 +166,35 @@ fn view(state: *State) void {
     const pip = sg.makePipeline(pipDesc);
 
     // draw loop
-    while (state.running and glfw.isRunning()) {
+    while (state.running) {
+        var input = glfw.isRunning() orelse {
+            break;
+        };
+        state.orbit.frame(input.*);
+        input.mouse_wheel = 0;
+
+        const m = state.orbit.viewProjectionMatrix();
+
         state.update_dsp(std.heap.c_allocator) catch @panic("update_dsp");
 
+        var action = sg.PassAction{};
+        action.colors[0] = .{
+            .load_action = .CLEAR,
+            .clear_value = .{ .r = 0.1, .g = 0.1, .b = 0.1, .a = 1.0 },
+        };
+
         {
-            sg.beginPass(.{ .swapchain = glfw.swapchain() });
+            sg.beginPass(.{
+                .action = action,
+                .swapchain = glfw.swapchain(),
+            });
             defer sg.endPass();
 
             sg.applyPipeline(pip);
+            const vs_params = VsParams{
+                .mvp = m.m,
+            };
+            sg.applyUniforms(.VS, 0, sg.asRange(&vs_params));
             state.render_dsp();
         }
 

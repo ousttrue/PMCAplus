@@ -1,4 +1,5 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const zcc = @import("compile_commands");
 
 const FLAGS = [_][]const u8{
@@ -39,6 +40,9 @@ pub fn build(b: *std.Build) void {
     });
     b.getInstallStep().dependOn(&install_dll.step);
     targets.append(dll) catch @panic("OOM");
+
+    const rowmath_dep = b.dependency("rowmath", .{});
+    const rowmath = rowmath_dep.module("rowmath");
 
     dll.addCSourceFiles(.{
         .root = b.path("src"),
@@ -112,6 +116,9 @@ pub fn build(b: *std.Build) void {
         .gl = true,
     });
     dll.root_module.addImport("sokol", sokol_dep.module("sokol"));
+    dll.root_module.addImport("rowmath", rowmath);
+
+    dll.step.dependOn(sokolShdc(b, target, "src/PMCA_view.glsl"));
 
     const stb_dep = b.dependency("stb", .{
         .target = target,
@@ -171,8 +178,6 @@ pub fn build(b: *std.Build) void {
     exe.root_module.addImport("cimgui", cimgui_dep.module("cimgui"));
     exe.linkLibrary(dll);
 
-    const rowmath_dep = b.dependency("rowmath", .{});
-    const rowmath = rowmath_dep.module("rowmath");
     exe.root_module.addImport("rowmath", rowmath);
 
     const stbi_dep = b.dependency("stb", .{
@@ -182,4 +187,33 @@ pub fn build(b: *std.Build) void {
     exe.root_module.addImport("stb", &stbi_dep.artifact("stb").root_module);
 
     zcc.createStep(b, "cdb", targets.toOwnedSlice() catch @panic("OOM"));
+}
+
+// a separate step to compile shaders
+pub fn sokolShdc(
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+    shader: []const u8,
+) *std.Build.Step {
+    const optional_shdc = comptime switch (builtin.os.tag) {
+        .windows => "win32/sokol-shdc.exe",
+        .linux => "linux/sokol-shdc",
+        .macos => if (builtin.cpu.arch.isX86()) "osx/sokol-shdc" else "osx_arm64/sokol-shdc",
+        else => @panic("unsupported host platform, skipping shader compiler step"),
+    };
+    const tools = b.dependency("sokol-tools-bin", .{});
+    const shdc_path = tools.path(b.pathJoin(&.{ "bin", optional_shdc })).getPath(b);
+    const glsl = if (target.result.isDarwin()) "glsl410" else "glsl430";
+    const slang = glsl ++ ":metal_macos:hlsl5:glsl300es:wgsl";
+    return &b.addSystemCommand(&.{
+        shdc_path,
+        "-i",
+        shader,
+        "-o",
+        b.fmt("{s}.zig", .{shader}),
+        "-l",
+        slang,
+        "-f",
+        "sokol_zig",
+    }).step;
 }
