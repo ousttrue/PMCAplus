@@ -316,6 +316,8 @@ void getWHT(int num, float *wht) {
   }
 }
 
+struct MODEL *Get_PMD(int num) { return &g_model[num]; }
+
 void PMD_view_set(int num, const char *str) {
   if (strcmp(str, "replace") == 0) {
     view_model_copy(&g_model[num]);

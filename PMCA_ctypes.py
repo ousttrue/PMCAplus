@@ -1,7 +1,7 @@
 from typing import Any
 import ctypes
 
-PMCA = ctypes.CDLL("zig-out/bin/PMCA.pyd")
+PMCA = ctypes.CDLL("zig-out/bin/PMCA.dll")
 
 # static PyMethodDef PMCAMethods[] = {
 _getInfo = PMCA.getInfo

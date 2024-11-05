@@ -40,6 +40,7 @@ DLL void Adjust_Joints(int num);
 DLL void Set_Name_Comment(int num, const char *name, const char *name_eng,
                           const char *comment, const char *comment_eng);
 DLL void getWHT(int num, float *wht);
+DLL struct MODEL *Get_PMD(int num);
 
 DLL void PMD_view_set(int num, const char *str);
 DLL void CreateViewerThread();

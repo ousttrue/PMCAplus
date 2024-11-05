@@ -1,6 +1,3 @@
-//------------------------------------------------------------------------------
-//  clear-sapp.c
-//------------------------------------------------------------------------------
 const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
@@ -125,10 +122,14 @@ export fn fetch_callback_cnl(response: [*c]const sokol.fetch.Response) void {
     if (response.*.fetched) {
         const p: [*]const u8 = @ptrCast(response.*.data.ptr);
         const buf = p[0..response.*.data.size];
-        if (pmca_assembler.parse(state.allocator, buf)) |assembler| {
+        if (pmca_assembler.parse(state.allocator, buf)) |_assembler| {
+            var assembler = _assembler;
+
             assembler.debug_print();
 
-            // assembler.assemble(0);
+            const pmd = pmca_assembler.refresh(0, &assembler);
+            state.renderer.loadModel(std.heap.c_allocator, @ptrCast(pmd)) catch
+                @panic("loadModel");
 
             state.assembler = assembler;
         } else |_| {
@@ -151,6 +152,9 @@ export fn frame() void {
     {
         state.renderer.begin(sokol.glue.swapchain(), m);
         defer state.renderer.end();
+        if (state.renderer.dsp) |dsp| {
+            dsp.render();
+        }
     }
     sg.commit();
 }
@@ -207,9 +211,9 @@ pub fn main() void {
         .frame_cb = frame,
         .cleanup_cb = cleanup,
         .event_cb = event,
-        .width = 400,
-        .height = 300,
-        .window_title = "Clear (sokol app)",
+        .width = 2000,
+        .height = 1200,
+        .window_title = "pmcaz",
         .icon = .{ .sokol_default = true },
         .logger = .{ .func = sokol.log.func },
     });

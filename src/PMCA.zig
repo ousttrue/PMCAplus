@@ -1,7 +1,3 @@
-pub extern fn MODEL_LOCK(level: u32) void;
-pub extern fn Create_PMD(index: u32) void;
-pub extern fn Load_PMD(index: u32, [*:0]const u8) void;
-
 pub extern fn getInfo(
     index: u32,
     name: *[*:0]const u8,
@@ -22,7 +18,13 @@ pub extern fn getInfo(
     skin_disp: *[*]u16,
 ) void;
 
+pub extern fn MODEL_LOCK(level: u32) void;
+pub extern fn Create_PMD(index: u32) void;
+pub extern fn Load_PMD(index: u32, [*:0]const u8) void;
 pub extern fn Copy_PMD(src: c_int, dst: u32) void;
 pub extern fn Update_Skin(index: u32) void;
 pub extern fn Adjust_Joints(index: u32) void;
 pub extern fn PMD_view_set(index: u32, [*:0]const u8) void;
+pub extern fn Add_PMD(num: c_int, add: c_int) void;
+pub extern fn Marge_PMD(num: c_int) void;
+pub extern fn Get_PMD(num: c_int) *anyopaque;

@@ -36,7 +36,7 @@ pub fn build(b: *std.Build) void {
         .root_source_file = b.path("src/PMCA_view.zig"),
     });
     const install_dll = b.addInstallArtifact(dll, .{
-        .dest_sub_path = "PMCA.pyd",
+        // .dest_sub_path = "PMCA.pyd",
     });
     b.getInstallStep().dependOn(&install_dll.step);
     targets.append(dll) catch @panic("OOM");
@@ -185,6 +185,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     exe.root_module.addImport("stb", &stbi_dep.artifact("stb").root_module);
+    exe.addIncludePath(b.path("mPMD"));
 
     zcc.createStep(b, "cdb", targets.toOwnedSlice() catch @panic("OOM"));
 }

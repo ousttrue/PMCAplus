@@ -69,14 +69,19 @@
 //! [Rot] 0.000000 0.000000 0.000000
 const std = @import("std");
 const PMCA = @import("PMCA.zig");
+const c = @cImport({
+    @cInclude("mPMD.h");
+});
 
 const bom = [3]u8{
     0xEF, 0xBB, 0xBF,
 };
 
+pub const AuthorLicense = struct {};
+
 pub const PartsNode = struct {
     name: []const u8,
-    path: []const u8 = "",
+    path: ?[:0]const u8 = null,
     children: std.ArrayList(?usize),
 
     fn init(
@@ -91,6 +96,25 @@ pub const PartsNode = struct {
 
     fn deinit(self: *@This()) void {
         self.children.deinit();
+    }
+
+    fn assemble(
+        self: *@This(),
+        nodes: []PartsNode,
+        num: c_int,
+        // author_license: *AuthorLicense,
+    ) void {
+        if (self.path) |path| {
+            PMCA.Create_PMD(4);
+            PMCA.Load_PMD(4, path);
+            PMCA.Add_PMD(num, 4);
+            PMCA.Marge_PMD(num);
+        }
+        for (self.children.items) |child| {
+            if (child) |child_index| {
+                nodes[child_index].assemble(nodes, num);
+            }
+        }
     }
 };
 
@@ -118,21 +142,21 @@ pub const Assembler = struct {
         const index = self.nodes.items.len;
         try self.nodes.append(try PartsNode.init(self.allocator, name));
 
-        const stack_top = self.node_stack.items[self.node_stack.items.len - 1];
-        const parent = &self.nodes.items[stack_top];
+        const stack_top_index = self.node_stack.items[self.node_stack.items.len - 1];
+        const parent = &self.nodes.items[stack_top_index];
         try parent.children.append(index);
         try self.node_stack.append(index);
     }
 
     fn setPath(self: *@This(), path: []const u8) !void {
-        const stack_top = self.node_stack.items[self.node_stack.items.len - 1];
-        const parent = &self.nodes.items[stack_top];
-        parent.path = try self.allocator.dupe(u8, path);
+        const stack_top_index = self.node_stack.items[self.node_stack.items.len - 1];
+        const stack_top = &self.nodes.items[stack_top_index];
+        stack_top.path = try self.allocator.dupeZ(u8, path);
     }
 
     fn none(self: *@This()) !void {
-        const stack_top = self.node_stack.items[self.node_stack.items.len - 1];
-        const parent = &self.nodes.items[stack_top];
+        const stack_top_index = self.node_stack.items[self.node_stack.items.len - 1];
+        const parent = &self.nodes.items[stack_top_index];
         try parent.children.append(null);
     }
 
@@ -146,7 +170,11 @@ pub const Assembler = struct {
         }
         if (_index) |index| {
             const node = self.nodes.items[index];
-            std.debug.print("{s}\n", .{node.name});
+            std.debug.print("{s}", .{node.name});
+            if (node.path) |path| {
+                std.debug.print(" => {s}", .{path});
+            }
+            std.debug.print("\n", .{});
             for (node.children.items) |child| {
                 self.debug_print_recursive(child, indent + 1);
             }
@@ -160,13 +188,15 @@ pub const Assembler = struct {
     }
 };
 
-pub fn refresh(level: usize, assembler: *Assembler) void {
+pub fn refresh(level: usize, assembler: *Assembler) *c.MODEL {
     PMCA.MODEL_LOCK(1);
 
     if (level < 1) {
         PMCA.Create_PMD(0);
-        // self.author_license =
-        assembler.assemble(0);
+
+        const root = &assembler.nodes.items[0];
+        root.assemble(assembler.nodes.items, 0);
+
         PMCA.Copy_PMD(0, 1);
     } else {
         PMCA.Copy_PMD(1, 0);
@@ -289,11 +319,11 @@ pub fn refresh(level: usize, assembler: *Assembler) void {
         //     )
     }
 
-    if (level < 3) {
-        PMCA.PMD_view_set(0, "replace"); // # テクスチャを変更しない
-    } else {
-        PMCA.PMD_view_set(0, "replace");
-    }
+    // if (level < 3) {
+    //     PMCA.PMD_view_set(0, "replace"); // # テクスチャを変更しない
+    // } else {
+    //     PMCA.PMD_view_set(0, "replace");
+    // }
 
     PMCA.MODEL_LOCK(0);
 
@@ -305,7 +335,10 @@ pub fn refresh(level: usize, assembler: *Assembler) void {
     //     callback(w, h, t)
     //
     //
+
+    return @ptrCast(@alignCast(PMCA.Get_PMD(0)));
 }
+
 var line_buf: [1024]u8 = undefined;
 fn getLine(r: anytype) ?[]const u8 {
     while (r.readUntilDelimiterOrEof(&line_buf, '\n')) |_line| {
