@@ -15,7 +15,6 @@ void Init_PMD() {
   for (int i = 0; i < MODEL_COUNT; i++) {
     create_PMD(&g_model[i]);
   }
-  view_model_initialize();
 }
 
 void Set_List(int bone_count, const char **bn, const char **bne, int skin_count,
@@ -298,12 +297,6 @@ void Set_Name_Comment(int num, const char *name, const char *name_eng,
   strncpy(g_model[num].header.comment_eng, comment_eng, COMMENT_LEN);
 }
 
-void PMD_view_set(int num, const char *str) {
-  if (strcmp(str, "replace") == 0) {
-    view_model_copy(&g_model[num]);
-  }
-}
-
 void getWHT(int num, float *wht) {
   double min[3] = {0.0, 0.0, 0.0};
   double max[3] = {0.0, 0.0, 0.0};
@@ -322,3 +315,12 @@ void getWHT(int num, float *wht) {
     wht[i] = (max[i] - min[i]) * 8;
   }
 }
+
+void PMD_view_set(int num, const char *str) {
+  if (strcmp(str, "replace") == 0) {
+    view_model_copy(&g_model[num]);
+  }
+}
+void CreateViewerThread() { view_begin(); }
+void QuitViewerThread() { view_end(); }
+void MODEL_LOCK(int num) {}

@@ -39,5 +39,9 @@ DLL void Update_Skin(int num);
 DLL void Adjust_Joints(int num);
 DLL void Set_Name_Comment(int num, const char *name, const char *name_eng,
                           const char *comment, const char *comment_eng);
-DLL void PMD_view_set(int num, const char *str);
 DLL void getWHT(int num, float *wht);
+
+DLL void PMD_view_set(int num, const char *str);
+DLL void CreateViewerThread();
+DLL void QuitViewerThread();
+DLL void MODEL_LOCK(int num);

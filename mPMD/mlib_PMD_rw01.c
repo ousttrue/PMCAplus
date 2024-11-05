@@ -562,7 +562,7 @@ int write_PMD(struct MODEL *model, const char file_name[]) {
     fwrite(&model->mat[i].vt_index_count, 4, 1, pmd);
 
     if (*model->mat[i].sph != '\0') {
-      sprintf(str, "%s*%s\0", model->mat[i].tex, model->mat[i].sph);
+      sprintf(str, "%s*%s", model->mat[i].tex, model->mat[i].sph);
       if (strlen(str) > 20) {
         ret = 2;
       }
@@ -922,8 +922,8 @@ int create_PMD(struct MODEL *model) {
     j = i + 1;
     //*model->toon[i] = '\0';
     //*model->toon_path[i] = '\0';
-    sprintf(model->toon[i], "toon%02d.bmp\0", j);
-    sprintf(model->toon_path[i], "toon%02d.bmp\0", j);
+    sprintf(model->toon[i], "toon%02d.bmp", j);
+    sprintf(model->toon_path[i], "toon%02d.bmp", j);
   }
 
   model->rbody_count = 0;
@@ -994,8 +994,8 @@ int delete_PMD(struct MODEL *model) {
     /**model->toon[i] = '\0';
      *model->toon_path[i] = '\0';
      */
-    sprintf(model->toon[i], "toon%02d.bmp\0", j);
-    sprintf(model->toon_path[i], "toon%02d.bmp\0", j);
+    sprintf(model->toon[i], "toon%02d.bmp", j);
+    sprintf(model->toon_path[i], "toon%02d.bmp", j);
   }
 
   FREE(model->rbody);
@@ -1010,9 +1010,8 @@ int delete_PMD(struct MODEL *model) {
 }
 
 int copy_PMD(struct MODEL *out, struct MODEL *model) {
-  int i;
-  size_t size;
-  int tmp[3];
+  // size_t size;
+  // int tmp[3];
 
   out->header = model->header;
 
@@ -1021,7 +1020,7 @@ int copy_PMD(struct MODEL *out, struct MODEL *model) {
       (struct VERTEX *)MALLOC((size_t)model->vt_count * sizeof(struct VERTEX));
   if (out->vt == NULL)
     return -1;
-  for (i = 0; i < model->vt_count; i++) {
+  for (int i = 0; i < model->vt_count; i++) {
     out->vt[i] = model->vt[i];
   }
   // 面頂点
@@ -1030,7 +1029,7 @@ int copy_PMD(struct MODEL *out, struct MODEL *model) {
                                            sizeof(unsigned short));
   if (out->vt_index == NULL)
     return -1;
-  for (i = 0; i < model->vt_index_count; i++) {
+  for (int i = 0; i < model->vt_index_count; i++) {
     out->vt_index[i] = model->vt_index[i];
   }
 
@@ -1040,7 +1039,7 @@ int copy_PMD(struct MODEL *out, struct MODEL *model) {
                                        sizeof(struct MATERIAL));
   if (out->mat == NULL)
     return -1;
-  for (i = 0; i < model->mat_count; i++) {
+  for (int i = 0; i < model->mat_count; i++) {
     out->mat[i] = model->mat[i];
   }
 
@@ -1050,7 +1049,7 @@ int copy_PMD(struct MODEL *out, struct MODEL *model) {
       (struct BONE *)MALLOC((size_t)model->bone_count * sizeof(struct BONE));
   if (out->bone == NULL)
     return -1;
-  for (i = 0; i < model->bone_count; i++) {
+  for (int i = 0; i < model->bone_count; i++) {
     out->bone[i] = model->bone[i];
   }
   // IKリスト
@@ -1059,9 +1058,9 @@ int copy_PMD(struct MODEL *out, struct MODEL *model) {
                                           sizeof(struct IK_LIST));
   if (out->IK_list == NULL)
     return -1;
-  for (i = 0; i < model->IK_count; i++) {
+  for (int i = 0; i < model->IK_count; i++) {
     out->IK_list[i] = model->IK_list[i];
-    size = (size_t)model->IK_list[i].IK_chain_len * sizeof(unsigned short);
+    auto size = (size_t)model->IK_list[i].IK_chain_len * sizeof(unsigned short);
     out->IK_list[i].IKCBone_index = (unsigned short *)MALLOC(size);
     if (out->IK_list[i].IKCBone_index == NULL)
       return -1;
@@ -1075,9 +1074,9 @@ int copy_PMD(struct MODEL *out, struct MODEL *model) {
       (struct SKIN *)MALLOC((size_t)model->skin_count * sizeof(struct SKIN));
   if (out->skin == NULL)
     return -1;
-  for (i = 0; i < model->skin_count; i++) {
+  for (int i = 0; i < model->skin_count; i++) {
     out->skin[i] = model->skin[i];
-    size = (size_t)out->skin[i].skin_vt_count * sizeof(struct SKIN_DATA);
+    auto size = (size_t)out->skin[i].skin_vt_count * sizeof(struct SKIN_DATA);
     out->skin[i].data = (struct SKIN_DATA *)MALLOC(size);
     if (out->skin[i].data == NULL)
       return -1;
@@ -1090,7 +1089,7 @@ int copy_PMD(struct MODEL *out, struct MODEL *model) {
                                              sizeof(unsigned short));
   if (out->skin_index == NULL)
     return -1;
-  for (i = 0; i < model->skin_disp_count; i++) {
+  for (int i = 0; i < model->skin_disp_count; i++) {
     out->skin_index[i] = model->skin_index[i];
   }
 
@@ -1100,12 +1099,12 @@ int copy_PMD(struct MODEL *out, struct MODEL *model) {
       (size_t)model->bone_group_count * sizeof(struct BONE_GROUP));
   if (out->bone_group == NULL)
     return -1;
-  for (i = 0; i < model->bone_group_count; i++) {
+  for (int i = 0; i < model->bone_group_count; i++) {
     out->bone_group[i] = model->bone_group[i];
   }
 
   // 表示ボーン
-  size = (size_t)model->bone_disp_count * sizeof(struct BONE_DISP);
+  auto size = (size_t)model->bone_disp_count * sizeof(struct BONE_DISP);
   out->bone_disp_count = model->bone_disp_count;
   out->bone_disp = (struct BONE_DISP *)MALLOC(size);
   if (out->bone_disp == NULL)
@@ -1129,7 +1128,7 @@ int copy_PMD(struct MODEL *out, struct MODEL *model) {
                                            sizeof(struct RIGID_BODY));
   if (out->rbody == NULL)
     return -1;
-  for (i = 0; i < model->rbody_count; i++) {
+  for (int i = 0; i < model->rbody_count; i++) {
     out->rbody[i] = model->rbody[i];
   }
   // ジョイント
@@ -1138,7 +1137,7 @@ int copy_PMD(struct MODEL *out, struct MODEL *model) {
       (struct JOINT *)MALLOC((size_t)model->joint_count * sizeof(struct JOINT));
   if (out->joint == NULL)
     return -1;
-  for (i = 0; i < model->joint_count; i++) {
+  for (int i = 0; i < model->joint_count; i++) {
     out->joint[i] = model->joint[i];
   }
 

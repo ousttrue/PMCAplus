@@ -5,6 +5,8 @@
 #include <string.h>
 
 void make_dsp_model(struct MODEL *model, struct DSP_MODEL *dsp_model) {
+  printf("make_dsp_model\n");
+
   FREE(dsp_model->loc);
   FREE(dsp_model->nor);
   FREE(dsp_model->uv);

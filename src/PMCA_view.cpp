@@ -18,29 +18,19 @@ extern "C" {
 #include <mutex>
 #include <thread>
 
-std::thread viewer_th;
-std::mutex mtx_;
-
+static std::mutex mtx_;
 static struct MODEL g_model;
-static struct DSP_MODEL g_dsp_model;
-
-static int init = 1;
-// -1:初期化
-void view_model_initialize() {
-  std::lock_guard<std::mutex> lock(mtx_);
-  create_PMD(&g_model);
-  make_dsp_model(&g_model, &g_dsp_model);
-  init = 1;
-}
-
-// 0:書き込み
+static int g_copy = 0;
 void view_model_copy(struct MODEL *src) {
   std::lock_guard<std::mutex> lock(mtx_);
   delete_PMD(&g_model);
   copy_PMD(&g_model, src);
-  make_dsp_model(&g_model, &g_dsp_model);
-  init = 1;
+  ++g_copy;
 }
+
+std::thread viewer_th;
+
+static struct DSP_MODEL g_dsp_model;
 
 #define SCALE (2.0 * 3.14159265358979323846)
 #define WM_TITLE "PMCA 3D View"
@@ -76,7 +66,7 @@ struct VIEW_STATE {
 
 struct VIEW_STATE vs;
 
-static int setup_opengl(int width, int height) {
+static int setup_opengl() {
 
   /* シェーディングモデルは Gouraud (なめらか) */
   // glShadeModel( GL_SMOOTH );
@@ -88,9 +78,6 @@ static int setup_opengl(int width, int height) {
 
   /* 消去時の色をセット */
   glClearColor(0, 0, 0, 0);
-
-  /* ビューポートを設定 */
-  glViewport(0, 0, width, height);
 
   /*
    * 射影行列を変更し、ビューボリュームにセット。
@@ -193,13 +180,13 @@ static int load_tex(struct MODEL *model, struct DSP_MODEL *dsp_model) {
 
 /*モデルデータを描画*/
 static void render_model() {
-  if (init == 1) {
+  if (g_copy) {
     std::lock_guard<std::mutex> lock(mtx_);
+    make_dsp_model(&g_model, &g_dsp_model);
     load_tex(&g_model, &g_dsp_model);
-    init = 0;
-  } else if (init == -1) {
-    return;
+    g_copy = 0;
   }
+
   auto model = &g_model;
   auto dsp = &g_dsp_model;
 
@@ -302,12 +289,11 @@ static void createwindow() {
   }
   glfwMakeContextCurrent(window);
 
-  // glfwGetFramebufferSize(window, &w, &h);
-  // setup_opengl(w, h);
+  setup_opengl();
 
   while (myflags.quit != 1 && !glfwWindowShouldClose(window)) {
     glfwPollEvents();
-  int w, h;
+    int w, h;
     glfwGetFramebufferSize(window, &w, &h);
     draw_screen(w, h);
     glfwSwapBuffers(window);
@@ -316,13 +302,13 @@ static void createwindow() {
   glfwTerminate();
 }
 
-static void viewer_thread() { createwindow(); }
+void view_begin() {
+  create_PMD(&g_model);
+  g_copy = 1;
+  viewer_th = std::thread(&createwindow);
+}
 
-DLL void CreateViewerThread() { viewer_th = std::thread(&viewer_thread); }
-
-DLL void QuitViewerThread() {
+void view_end() {
   myflags.quit = 1;
   viewer_th.join();
 }
-
-DLL void MODEL_LOCK(int num) {}
