@@ -12,20 +12,9 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const lib = b.addStaticLibrary(.{
+    const mpmd_dep = b.dependency("mPMD", .{
         .target = target,
         .optimize = optimize,
-        .name = "mPMD",
-        .link_libc = true,
-    });
-    lib.addCSourceFiles(.{
-        .root = b.path("mPMD"),
-        .files = &.{
-            "mlib_PMD_rw01.c",
-            "mlib_PMD_edit01.c",
-            "dbg.c",
-        },
-        .flags = &FLAGS,
     });
 
     const dll = b.addSharedLibrary(.{
@@ -66,8 +55,8 @@ pub fn build(b: *std.Build) void {
     dll.addIncludePath(.{ .cwd_relative = "C:/Python311/include" });
     dll.addLibraryPath(.{ .cwd_relative = "C:/Python311/libs" });
     dll.linkSystemLibrary("Python311");
-    dll.addIncludePath(b.path("mPMD"));
-    dll.linkLibrary(lib);
+    dll.addIncludePath(mpmd_dep.path(""));
+    dll.linkLibrary(mpmd_dep.artifact("mPMD"));
 
     const sdl_dep = b.dependency("sdl", .{
         .target = target,
@@ -149,7 +138,7 @@ pub fn build(b: *std.Build) void {
     b.installArtifact(converter);
     converter.linkLibrary(sdl_dep.artifact("SDL"));
     converter.addIncludePath(sdl_dep.path("include"));
-    converter.addIncludePath(b.path("mPMD"));
+    converter.addIncludePath(mpmd_dep.path(""));
 
     const exe = b.addExecutable(.{
         .target = target,
@@ -185,7 +174,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     exe.root_module.addImport("stb", &stbi_dep.artifact("stb").root_module);
-    exe.addIncludePath(b.path("mPMD"));
+    exe.addIncludePath(mpmd_dep.path(""));
 
     zcc.createStep(b, "cdb", targets.toOwnedSlice() catch @panic("OOM"));
 }

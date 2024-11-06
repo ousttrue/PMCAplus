@@ -2,6 +2,9 @@
     .name = "PMCA",
     .version = "0.0.0",
     .dependencies = .{
+        .mPMD = .{
+            .path = "deps/mPMD",
+        },
         .sdl = .{
             .path = "deps/SDL-1.2",
         },
