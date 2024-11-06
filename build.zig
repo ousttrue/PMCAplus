@@ -29,7 +29,7 @@ pub fn build(b: *std.Build) void {
     const sokol_dep = b.dependency("sokol", .{
         .target = target,
         .optimize = optimize,
-        // .with_sokol_imgui = true,
+        .with_sokol_imgui = true,
         .gl = true,
     });
     const cimgui_dep = b.dependency("cimgui", .{

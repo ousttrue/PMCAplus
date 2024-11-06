@@ -41,7 +41,7 @@ pub const DspModel = struct {
 };
 
 pip: sg.Pipeline,
-pass: sg.Pass,
+pass_action: sg.PassAction = .{},
 dsp: ?DspModel = null,
 
 pub fn init() @This() {
@@ -64,33 +64,23 @@ pub fn init() @This() {
     pipDesc.layout.attrs[1].format = .FLOAT2;
     pipDesc.layout.attrs[1].buffer_index = 0;
 
-    return .{
+    var renderer = Renderer{
         .pip = sg.makePipeline(pipDesc),
-        .pass = sg.Pass{},
     };
-}
-
-pub fn begin(
-    self: @This(),
-    swapchain: sg.Swapchain,
-    m: rowmath.Mat4,
-) void {
-    var pass_action = sg.PassAction{};
-    pass_action.colors[0] = .{
+    renderer.pass_action.colors[0] = .{
         .load_action = .CLEAR,
         .clear_value = .{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 1.0 },
     };
-    const g = pass_action.colors[0].clear_value.g + 0.01;
-    pass_action.colors[0].clear_value.g = if (g > 1.0) 0.0 else g;
+    return renderer;
+}
 
-    var action = sg.PassAction{};
-    action.colors[0] = .{
-        .load_action = .CLEAR,
-        .clear_value = .{ .r = 0.1, .g = 0.1, .b = 0.1, .a = 1.0 },
-    };
-
+pub fn begin(
+    self: *@This(),
+    swapchain: sg.Swapchain,
+    m: rowmath.Mat4,
+) void {
     sg.beginPass(.{
-        .action = action,
+        .action = self.pass_action,
         .swapchain = swapchain,
     });
     sg.applyPipeline(self.pip);

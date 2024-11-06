@@ -1,6 +1,7 @@
 const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
+const ig = @import("cimgui");
 const rowmath = @import("rowmath");
 const InputState = rowmath.InputState;
 const OrbitCamera = rowmath.OrbitCamera;
@@ -32,6 +33,9 @@ export fn init() void {
 
     sg.setup(.{
         .environment = sokol.glue.environment(),
+        .logger = .{ .func = sokol.log.func },
+    });
+    sokol.imgui.setup(.{
         .logger = .{ .func = sokol.log.func },
     });
 
@@ -143,6 +147,20 @@ export fn fetch_callback_cnl(response: [*c]const sokol.fetch.Response) void {
 export fn frame() void {
     sokol.fetch.dowork();
 
+    sokol.imgui.newFrame(.{
+        .width = sokol.app.width(),
+        .height = sokol.app.height(),
+        .delta_time = sokol.app.frameDuration(),
+        .dpi_scale = sokol.app.dpiScale(),
+    });
+    //=== UI CODE STARTS HERE
+    ig.igSetNextWindowPos(.{ .x = 10, .y = 10 }, ig.ImGuiCond_Once, .{ .x = 0, .y = 0 });
+    ig.igSetNextWindowSize(.{ .x = 400, .y = 100 }, ig.ImGuiCond_Once);
+    _ = ig.igBegin("Hello Dear ImGui!", 0, ig.ImGuiWindowFlags_None);
+    _ = ig.igColorEdit3("Background", &state.renderer.pass_action.colors[0].clear_value.r, ig.ImGuiColorEditFlags_None);
+    ig.igEnd();
+    //=== UI CODE ENDS HERE
+
     state.input.screen_width = sokol.app.widthf();
     state.input.screen_height = sokol.app.heightf();
     state.orbit.frame(state.input);
@@ -155,11 +173,15 @@ export fn frame() void {
         if (state.renderer.dsp) |dsp| {
             dsp.render();
         }
+        sokol.imgui.render();
     }
     sg.commit();
 }
 
 export fn event(e: [*c]const sokol.app.Event) void {
+    if (sokol.imgui.handleEvent(e.*)) {
+        return;
+    }
     switch (e.*.type) {
         .MOUSE_DOWN => {
             switch (e.*.mouse_button) {
@@ -202,6 +224,7 @@ export fn event(e: [*c]const sokol.app.Event) void {
 
 export fn cleanup() void {
     sokol.fetch.shutdown();
+    sokol.imgui.shutdown();
     sg.shutdown();
 }
 
