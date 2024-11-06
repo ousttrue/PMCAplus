@@ -1,6 +1,6 @@
 const std = @import("std");
-const builtin = @import("builtin");
 const zcc = @import("compile_commands");
+const sokolShdc = @import("build_shdc.zig").sokolShdc;
 
 const FLAGS = [_][]const u8{
     "-std=c23",
@@ -12,90 +12,18 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    // dependencies
     const mpmd_dep = b.dependency("mPMD", .{
         .target = target,
         .optimize = optimize,
     });
 
-    const dll = b.addSharedLibrary(.{
-        .target = target,
-        .optimize = optimize,
-        .name = "PMCA",
-        .link_libc = true,
-        .root_source_file = b.path("src/PMCA_view.zig"),
-    });
-    const install_dll = b.addInstallArtifact(dll, .{
-        // .dest_sub_path = "PMCA.pyd",
-    });
-    b.getInstallStep().dependOn(&install_dll.step);
-    targets.append(dll) catch @panic("OOM");
-
     const rowmath_dep = b.dependency("rowmath", .{});
     const rowmath = rowmath_dep.module("rowmath");
 
-    dll.addCSourceFiles(.{
-        .root = b.path("src"),
-        .files = &.{
-            "PMCA.c",
-            // "dsp.c",
-            // "quat.c",
-        },
-        .flags = &FLAGS,
-    });
-    // dll.addCSourceFiles(.{
-    //     .root = b.path("src"),
-    //     .files = &.{
-    //         "PMCA_view.cpp",
-    //     },
-    //     .flags = &.{
-    //         "-std=c++17",
-    //     },
-    // });
-    dll.linkLibCpp();
-    dll.addIncludePath(.{ .cwd_relative = "C:/Python311/include" });
-    dll.addLibraryPath(.{ .cwd_relative = "C:/Python311/libs" });
-    dll.linkSystemLibrary("Python311");
-    dll.addIncludePath(mpmd_dep.path(""));
-    dll.linkLibrary(mpmd_dep.artifact("mPMD"));
-
-    const sdl_dep = b.dependency("sdl", .{
+    const glfw_dep = b.dependency("glfw", .{
         .target = target,
         .optimize = optimize,
-    });
-    // dll.linkLibrary(sdl_dep.artifact("SDL"));
-    // dll.addIncludePath(sdl_dep.path("include"));
-
-    const glfw_dep = b.dependency("glfw", .{});
-    dll.addIncludePath(glfw_dep.path("include"));
-    dll.addCSourceFiles(.{
-        .root = glfw_dep.path("src"),
-        .files = &.{
-            "context.c",
-            "init.c",
-            "input.c",
-            "monitor.c",
-            "platform.c",
-            "vulkan.c",
-            "window.c",
-            "egl_context.c",
-            "osmesa_context.c",
-            "null_init.c",
-            "null_monitor.c",
-            "null_window.c",
-            "null_joystick.c",
-            // win32
-            "win32_module.c",
-            "win32_time.c",
-            "win32_thread.c",
-            "win32_init.c",
-            "win32_joystick.c",
-            "win32_monitor.c",
-            "win32_window.c",
-            "wgl_context.c",
-        },
-        .flags = &.{
-            "-D_GLFW_WIN32",
-        },
     });
 
     const sokol_dep = b.dependency("sokol", .{
@@ -104,58 +32,6 @@ pub fn build(b: *std.Build) void {
         // .with_sokol_imgui = true,
         .gl = true,
     });
-    dll.root_module.addImport("sokol", sokol_dep.module("sokol"));
-    dll.root_module.addImport("rowmath", rowmath);
-
-    dll.step.dependOn(sokolShdc(b, target, "src/PMCA_view.glsl"));
-
-    const stb_dep = b.dependency("stb", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    dll.linkLibrary(stb_dep.artifact("stb"));
-    dll.addIncludePath(stb_dep.path(""));
-
-    dll.linkSystemLibrary("GDI32");
-    dll.linkSystemLibrary("WINMM");
-    dll.linkSystemLibrary("OPENGL32");
-    dll.linkSystemLibrary("GLU32");
-
-    const converter = b.addExecutable(.{
-        .target = target,
-        .optimize = optimize,
-        .name = "converter",
-        .link_libc = true,
-    });
-    converter.addCSourceFiles(.{
-        .root = b.path("converter"),
-        .files = &.{
-            "PMCA_main.c",
-            "PMCA_loadconf.c",
-        },
-        .flags = &FLAGS,
-    });
-    b.installArtifact(converter);
-    converter.linkLibrary(sdl_dep.artifact("SDL"));
-    converter.addIncludePath(sdl_dep.path("include"));
-    converter.addIncludePath(mpmd_dep.path(""));
-
-    const exe = b.addExecutable(.{
-        .target = target,
-        .optimize = optimize,
-        .name = "pmcaz",
-        .root_source_file = b.path("src/main.zig"),
-    });
-    const install_exe = b.addInstallArtifact(exe, .{});
-    b.getInstallStep().dependOn(&install_exe.step);
-
-    const run = b.addRunArtifact(exe);
-    run.step.dependOn(&install_exe.step);
-
-    b.step("run", "run pmcaz").dependOn(&run.step);
-
-    exe.root_module.addImport("sokol", sokol_dep.module("sokol"));
-
     const cimgui_dep = b.dependency("cimgui", .{
         .target = target,
         .optimize = optimize,
@@ -164,46 +40,93 @@ pub fn build(b: *std.Build) void {
     const cimgui_root = cimgui_dep.namedWriteFiles("cimgui").getDirectory();
     sokol_dep.artifact("sokol_clib").addIncludePath(cimgui_root);
     sokol_dep.artifact("sokol_clib").addCSourceFile(.{ .file = b.path("deps/cimgui//custom_button_behaviour.cpp") });
-    exe.root_module.addImport("cimgui", cimgui_dep.module("cimgui"));
-    exe.linkLibrary(dll);
 
-    exe.root_module.addImport("rowmath", rowmath);
-
-    const stbi_dep = b.dependency("stb", .{
+    const stb_dep = b.dependency("stb", .{
         .target = target,
         .optimize = optimize,
     });
-    exe.root_module.addImport("stb", &stbi_dep.artifact("stb").root_module);
-    exe.addIncludePath(mpmd_dep.path(""));
+
+    const dll = blk: {
+        const dll = b.addSharedLibrary(.{
+            .target = target,
+            .optimize = optimize,
+            .name = "PMCA",
+            .link_libc = true,
+            .root_source_file = b.path("src/PMCA_view.zig"),
+        });
+        const install_dll = b.addInstallArtifact(dll, .{
+            // .dest_sub_path = "PMCA.pyd",
+        });
+        b.getInstallStep().dependOn(&install_dll.step);
+        targets.append(dll) catch @panic("OOM");
+        dll.addCSourceFiles(.{
+            .root = b.path("src"),
+            .files = &.{
+                "PMCA.c",
+                // "dsp.c",
+                // "quat.c",
+            },
+            .flags = &FLAGS,
+        });
+        dll.step.dependOn(sokolShdc(b, target, "src/PMCA_view.glsl"));
+        // dll.linkLibCpp();
+        dll.addIncludePath(.{ .cwd_relative = "C:/Python311/include" });
+        dll.addLibraryPath(.{ .cwd_relative = "C:/Python311/libs" });
+        dll.linkSystemLibrary("Python311");
+        dll.addIncludePath(mpmd_dep.path(""));
+        dll.linkLibrary(mpmd_dep.artifact("mPMD"));
+        dll.addIncludePath(glfw_dep.builder.dependency("glfw", .{}).path("include"));
+        dll.linkLibrary(glfw_dep.artifact("glfw"));
+        dll.root_module.addImport("sokol", sokol_dep.module("sokol"));
+        dll.root_module.addImport("rowmath", rowmath);
+        dll.linkLibrary(stb_dep.artifact("stb"));
+        dll.addIncludePath(stb_dep.path(""));
+        dll.linkSystemLibrary("GDI32");
+        dll.linkSystemLibrary("WINMM");
+        dll.linkSystemLibrary("OPENGL32");
+        dll.linkSystemLibrary("GLU32");
+        break :blk dll;
+    };
+
+    {
+        const converter = b.addExecutable(.{
+            .target = target,
+            .optimize = optimize,
+            .name = "converter",
+            .link_libc = true,
+        });
+        converter.addCSourceFiles(.{
+            .root = b.path("converter"),
+            .files = &.{
+                "PMCA_main.c",
+                "PMCA_loadconf.c",
+            },
+            .flags = &FLAGS,
+        });
+        b.installArtifact(converter);
+        converter.addIncludePath(mpmd_dep.path(""));
+    }
+
+    {
+        const exe = b.addExecutable(.{
+            .target = target,
+            .optimize = optimize,
+            .name = "pmcaz",
+            .root_source_file = b.path("src/main.zig"),
+        });
+        const install_exe = b.addInstallArtifact(exe, .{});
+        b.getInstallStep().dependOn(&install_exe.step);
+        exe.root_module.addImport("sokol", sokol_dep.module("sokol"));
+        exe.root_module.addImport("cimgui", cimgui_dep.module("cimgui"));
+        exe.linkLibrary(dll);
+        exe.root_module.addImport("rowmath", rowmath);
+        exe.root_module.addImport("stb", &stb_dep.artifact("stb").root_module);
+        exe.addIncludePath(mpmd_dep.path(""));
+
+        const run = b.addRunArtifact(exe);
+        run.step.dependOn(&install_exe.step);
+        b.step("run", "run pmcaz").dependOn(&run.step);
+    }
 
     zcc.createStep(b, "cdb", targets.toOwnedSlice() catch @panic("OOM"));
-}
-
-// a separate step to compile shaders
-pub fn sokolShdc(
-    b: *std.Build,
-    target: std.Build.ResolvedTarget,
-    shader: []const u8,
-) *std.Build.Step {
-    const optional_shdc = comptime switch (builtin.os.tag) {
-        .windows => "win32/sokol-shdc.exe",
-        .linux => "linux/sokol-shdc",
-        .macos => if (builtin.cpu.arch.isX86()) "osx/sokol-shdc" else "osx_arm64/sokol-shdc",
-        else => @panic("unsupported host platform, skipping shader compiler step"),
-    };
-    const tools = b.dependency("sokol-tools-bin", .{});
-    const shdc_path = tools.path(b.pathJoin(&.{ "bin", optional_shdc })).getPath(b);
-    const glsl = if (target.result.isDarwin()) "glsl410" else "glsl430";
-    const slang = glsl ++ ":metal_macos:hlsl5:glsl300es:wgsl";
-    return &b.addSystemCommand(&.{
-        shdc_path,
-        "-i",
-        shader,
-        "-o",
-        b.fmt("{s}.zig", .{shader}),
-        "-l",
-        slang,
-        "-f",
-        "sokol_zig",
-    }).step;
 }

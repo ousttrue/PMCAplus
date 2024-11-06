@@ -6,8 +6,7 @@ PMDモブキャラクタアセンブラ
 #include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <SDL.h>
+#include <string.h>
 
 #include "PMCA.h"
 #include "mPMD.h"

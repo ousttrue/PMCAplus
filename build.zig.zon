@@ -5,6 +5,9 @@
         .mPMD = .{
             .path = "deps/mPMD",
         },
+        .glfw = .{
+            .path = "deps/glfw",
+        },
         .sdl = .{
             .path = "deps/SDL-1.2",
         },
@@ -37,10 +40,6 @@
         .glew = .{
             .url = "git+https://github.com/edoren/glew.git#5b995cab14f97231b48bc86b447be5e23b899626",
             .hash = "1220379fc1ecdd0bb15a0bbffc8b619fb071dae5a3de500ab5a4b1d73c7f4a627058",
-        },
-        .glfw = .{
-            .url = "git+https://github.com/glfw/glfw.git#b35641f4a3c62aa86a0b3c983d163bc0fe36026d",
-            .hash = "1220f703401bea1d52d240a9d217406aec89c687e8af2b2eed8dbb4d4ef653edbd96",
         },
     },
     .paths = .{""},
