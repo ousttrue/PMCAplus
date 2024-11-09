@@ -144,6 +144,23 @@ export fn fetch_callback_cnl(response: [*c]const sokol.fetch.Response) void {
     }
 }
 
+pub fn inputFromScreen() InputState {
+    const io = ig.igGetIO().*;
+    var input = InputState{
+        .screen_width = io.DisplaySize.x,
+        .screen_height = io.DisplaySize.y,
+        .mouse_x = io.MousePos.x,
+        .mouse_y = io.MousePos.y,
+    };
+    if (!io.WantCaptureMouse) {
+        input.mouse_left = io.MouseDown[ig.ImGuiMouseButton_Left];
+        input.mouse_right = io.MouseDown[ig.ImGuiMouseButton_Right];
+        input.mouse_middle = io.MouseDown[ig.ImGuiMouseButton_Middle];
+        input.mouse_wheel = io.MouseWheel;
+    }
+    return input;
+}
+
 export fn frame() void {
     sokol.fetch.dowork();
 
@@ -153,6 +170,7 @@ export fn frame() void {
         .delta_time = sokol.app.frameDuration(),
         .dpi_scale = sokol.app.dpiScale(),
     });
+
     //=== UI CODE STARTS HERE
     ig.igSetNextWindowPos(.{ .x = 10, .y = 10 }, ig.ImGuiCond_Once, .{ .x = 0, .y = 0 });
     ig.igSetNextWindowSize(.{ .x = 400, .y = 100 }, ig.ImGuiCond_Once);
@@ -161,8 +179,7 @@ export fn frame() void {
     ig.igEnd();
     //=== UI CODE ENDS HERE
 
-    state.input.screen_width = sokol.app.widthf();
-    state.input.screen_height = sokol.app.heightf();
+    state.input = inputFromScreen();
     state.orbit.frame(state.input);
     state.input.mouse_wheel = 0;
     const m = state.orbit.viewProjectionMatrix();
@@ -179,47 +196,7 @@ export fn frame() void {
 }
 
 export fn event(e: [*c]const sokol.app.Event) void {
-    if (sokol.imgui.handleEvent(e.*)) {
-        return;
-    }
-    switch (e.*.type) {
-        .MOUSE_DOWN => {
-            switch (e.*.mouse_button) {
-                .LEFT => {
-                    state.input.mouse_left = true;
-                },
-                .RIGHT => {
-                    state.input.mouse_right = true;
-                },
-                .MIDDLE => {
-                    state.input.mouse_middle = true;
-                },
-                .INVALID => {},
-            }
-        },
-        .MOUSE_UP => {
-            switch (e.*.mouse_button) {
-                .LEFT => {
-                    state.input.mouse_left = false;
-                },
-                .RIGHT => {
-                    state.input.mouse_right = false;
-                },
-                .MIDDLE => {
-                    state.input.mouse_middle = false;
-                },
-                .INVALID => {},
-            }
-        },
-        .MOUSE_MOVE => {
-            state.input.mouse_x = e.*.mouse_x;
-            state.input.mouse_y = e.*.mouse_y;
-        },
-        .MOUSE_SCROLL => {
-            state.input.mouse_wheel = e.*.scroll_y;
-        },
-        else => {},
-    }
+    _ = sokol.imgui.handleEvent(e.*);
 }
 
 export fn cleanup() void {
