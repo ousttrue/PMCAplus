@@ -90,7 +90,7 @@ pub const PartsNode = struct {
         name: []const u8,
     ) !@This() {
         return .{
-            .name = try allocator.dupe(u8, name),
+            .name = try allocator.dupeZ(u8, name),
             .children = std.ArrayList(?usize).init(allocator),
         };
     }

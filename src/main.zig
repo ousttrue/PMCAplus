@@ -83,8 +83,30 @@ export fn init() void {
         .logger = .{ .func = sokol.log.func },
     });
     sokol.imgui.setup(.{
-        .logger = .{ .func = sokol.log.func },
+        .logger = .{
+            .func = sokol.log.func,
+        },
+        .no_default_font = true,
     });
+
+    const io = ig.igGetIO();
+    const config = ig.ImFontConfig_ImFontConfig();
+    defer ig.ImFontConfig_destroy(config);
+    config.*.FontDataOwnedByAtlas = false;
+    config.*.OversampleH = 2;
+    config.*.OversampleV = 2;
+    config.*.RasterizerMultiply = 2;
+    // _ = ig.ImFontAtlas_AddFontDefault(io.*.Fonts, null);
+    // config.*.MergeMode = true;
+    _ = ig.ImFontAtlas_AddFontFromFileTTF(
+        io.*.Fonts,
+        "C:/Windows/Fonts/MSGothic.ttc",
+        18,
+        null,
+        ig.ImFontAtlas_GetGlyphRangesJapanese(io.*.Fonts),
+    );
+    // https://github.com/floooh/sokol-samples/pull/135/files
+    sokol.imgui.createFontsTexture(.{});
 
     state.renderer = Renderer.init();
 
