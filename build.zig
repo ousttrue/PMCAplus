@@ -118,7 +118,6 @@ pub fn build(b: *std.Build) void {
         b.getInstallStep().dependOn(&install_exe.step);
         exe.root_module.addImport("sokol", sokol_dep.module("sokol"));
         exe.root_module.addImport("cimgui", cimgui_dep.module("cimgui"));
-        exe.linkLibrary(dll);
         exe.root_module.addImport("rowmath", rowmath);
         exe.root_module.addImport("stb", &stb_dep.artifact("stb").root_module);
         exe.addIncludePath(mpmd_dep.path(""));
@@ -126,6 +125,19 @@ pub fn build(b: *std.Build) void {
         const run = b.addRunArtifact(exe);
         run.step.dependOn(&install_exe.step);
         b.step("run", "run pmcaz").dependOn(&run.step);
+
+        {
+            const install_docs = b.addInstallDirectory(.{
+                .source_dir = cimgui_dep.artifact("cimgui_clib").getEmittedDocs(),
+                .install_dir = .prefix,
+                .install_subdir = "docs",
+            });
+
+            const docs_step = b.step("docs", "Copy documentation artifacts to prefix path");
+            docs_step.dependOn(&install_docs.step);
+        }
+
+        exe.linkLibrary(dll);
     }
 
     zcc.createStep(b, "cdb", targets.toOwnedSlice() catch @panic("OOM"));

@@ -6,6 +6,16 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     const dep_cimgui = b.dependency("cimgui", .{});
+    // the Emscripten SDK include path into the translate-C step when building for WASM
+    const cimgui_h = dep_cimgui.path("cimgui.h");
+    const translateC = b.addTranslateC(.{
+        .root_source_file = cimgui_h,
+        .target = b.host,
+        .optimize = optimize,
+    });
+    translateC.defineCMacroRaw("CIMGUI_DEFINE_ENUMS_AND_STRUCTS=\"\"");
+    const entrypoint = translateC.getOutput();
+
     const dep_imgui = b.dependency("imgui", .{});
 
     // create file tree for cimgui and imgui
@@ -20,6 +30,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
         .link_libc = true,
+        .root_source_file = entrypoint,
     });
     lib_cimgui.linkLibCpp();
     lib_cimgui.addCSourceFiles(.{
@@ -44,16 +55,6 @@ pub fn build(b: *std.Build) void {
 
     // translate-c the cimgui.h file
     // NOTE: always run this with the host target, that way we don't need to inject
-    // the Emscripten SDK include path into the translate-C step when building for WASM
-    const cimgui_h = dep_cimgui.path("cimgui.h");
-    const translateC = b.addTranslateC(.{
-        .root_source_file = cimgui_h,
-        .target = b.host,
-        .optimize = optimize,
-    });
-    translateC.defineCMacroRaw("CIMGUI_DEFINE_ENUMS_AND_STRUCTS=\"\"");
-    const entrypoint = translateC.getOutput();
-
     // build cimgui as a module with the header file as the entrypoint
     const mod_cimgui = b.addModule("cimgui", .{
         .root_source_file = entrypoint,
