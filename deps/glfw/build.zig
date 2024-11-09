@@ -43,4 +43,7 @@ pub fn build(b: *std.Build) void {
             "-D_GLFW_WIN32",
         },
     });
+    lib.linkSystemLibrary("GDI32");
+    lib.linkSystemLibrary("OPENGL32");
+    lib.linkSystemLibrary("GLU32");
 }

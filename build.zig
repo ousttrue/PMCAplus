@@ -39,7 +39,7 @@ pub fn build(b: *std.Build) void {
     // inject the cimgui header search path into the sokol C library compile step
     const cimgui_root = cimgui_dep.namedWriteFiles("cimgui").getDirectory();
     sokol_dep.artifact("sokol_clib").addIncludePath(cimgui_root);
-    sokol_dep.artifact("sokol_clib").addCSourceFile(.{ .file = b.path("deps/cimgui//custom_button_behaviour.cpp") });
+    sokol_dep.artifact("sokol_clib").addCSourceFile(.{ .file = b.path("deps/cimgui/custom_button_behaviour.cpp") });
 
     const stb_dep = b.dependency("stb", .{
         .target = target,
@@ -81,10 +81,7 @@ pub fn build(b: *std.Build) void {
         dll.root_module.addImport("rowmath", rowmath);
         dll.linkLibrary(stb_dep.artifact("stb"));
         dll.addIncludePath(stb_dep.path(""));
-        dll.linkSystemLibrary("GDI32");
         dll.linkSystemLibrary("WINMM");
-        dll.linkSystemLibrary("OPENGL32");
-        dll.linkSystemLibrary("GLU32");
         break :blk dll;
     };
 
@@ -138,6 +135,44 @@ pub fn build(b: *std.Build) void {
         }
 
         exe.linkLibrary(dll);
+    }
+
+    {
+        const exe = b.addExecutable(.{
+            .name = "imgui_hello",
+            .target = target,
+            .optimize = optimize,
+        });
+        exe.addCSourceFiles(.{
+            .files = &.{
+                "src/imgui_hello.cpp",
+            },
+        });
+        const install = b.addInstallArtifact(exe, .{});
+        b.getInstallStep().dependOn(&install.step);
+        const run = b.addRunArtifact(exe);
+        run.step.dependOn(&install.step);
+        b.step("imgui_hello", "build imgui_hello").dependOn(&run.step);
+        targets.append(exe) catch @panic("OOM");
+        exe.step.dependOn(&dll.step);
+        exe.linkLibCpp();
+        const imgui_dep = cimgui_dep.builder.dependency("imgui", .{});
+        exe.addIncludePath(imgui_dep.path(""));
+        exe.addIncludePath(imgui_dep.path("backends"));
+        exe.addIncludePath(glfw_dep.builder.dependency("glfw", .{}).path("include"));
+        exe.linkLibrary(glfw_dep.artifact("glfw"));
+        exe.addCSourceFiles(.{
+            .root = imgui_dep.path(""),
+            .files = &.{
+                "imgui.cpp",
+                "imgui_draw.cpp",
+                "imgui_widgets.cpp",
+                "imgui_tables.cpp",
+                "imgui_demo.cpp",
+                "backends/imgui_impl_glfw.cpp",
+                "backends/imgui_impl_opengl3.cpp",
+            },
+        });
     }
 
     zcc.createStep(b, "cdb", targets.toOwnedSlice() catch @panic("OOM"));
