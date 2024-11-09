@@ -172,11 +172,20 @@ export fn frame() void {
     });
 
     //=== UI CODE STARTS HERE
-    ig.igSetNextWindowPos(.{ .x = 10, .y = 10 }, ig.ImGuiCond_Once, .{ .x = 0, .y = 0 });
-    ig.igSetNextWindowSize(.{ .x = 400, .y = 100 }, ig.ImGuiCond_Once);
-    _ = ig.igBegin("Hello Dear ImGui!", 0, ig.ImGuiWindowFlags_None);
-    _ = ig.igColorEdit3("Background", &state.renderer.pass_action.colors[0].clear_value.r, ig.ImGuiColorEditFlags_None);
-    ig.igEnd();
+    _ = ig.igShowDemoWindow(null);
+
+    {
+        ig.igSetNextWindowPos(.{ .x = 10, .y = 10 }, ig.ImGuiCond_Once, .{ .x = 0, .y = 0 });
+        ig.igSetNextWindowSize(.{ .x = 400, .y = 100 }, ig.ImGuiCond_Once);
+        _ = ig.igBegin("PMCA", 0, ig.ImGuiWindowFlags_None);
+        defer ig.igEnd();
+
+        _ = ig.igColorEdit3(
+            "Background",
+            &state.renderer.pass_action.colors[0].clear_value.r,
+            ig.ImGuiColorEditFlags_None,
+        );
+    }
     //=== UI CODE ENDS HERE
 
     state.input = inputFromScreen();
