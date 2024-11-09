@@ -87,7 +87,7 @@ pub fn begin(
     const vs_params = shader.VsParams{
         .mvp = m.m,
     };
-    sg.applyUniforms(.VS, 0, sg.asRange(&vs_params));
+    sg.applyUniforms(0, sg.asRange(&vs_params));
 }
 
 pub fn end(_: @This()) void {

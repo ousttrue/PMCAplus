@@ -19,15 +19,15 @@
             .hash = "12209264387a67972ccebb9ff53a08b2ee8519f5f9b93b9d400a144d849528136ead",
         },
         .sokol = .{
-            .url = "git+https://github.com/floooh/sokol-zig.git#7a1f685a29f7dbfe8ce0fe23871d01d5b29a6d0e",
-            .hash = "1220fd8800b4fe7a38d4778b8288f55eb451c8167b200c02e73068244d9ccefe3395",
+            .url = "git+https://github.com/floooh/sokol-zig.git#c8b8e189582afd6eee9f9eaac0e80dde57652bae",
+            .hash = "12201f3ef67ed16b7ef2860ba9b9edb526beef6a16e5f04b536ec6fa124b809539f1",
         },
         .cimgui = .{
             .path = "deps/cimgui",
         },
         .@"sokol-tools-bin" = .{
-            .url = "git+https://github.com/floooh/sokol-tools-bin.git#8cc8c257380c9a5e230a84aeebf09cd500903fbc",
-            .hash = "12200f5129c997728160ab584adcc939b9dbca6f802d7273f386dad777de85e80421",
+            .url = "git+https://github.com/floooh/sokol-tools-bin.git#39d4b1c87b8d9cb8e8b780beae6ce5d0a8fc36f6",
+            .hash = "1220d709f70f7d0de422ed6e7f2559271c893bb74d13490b051c2b189f2f50096f10",
         },
         .rowmath = .{
             .url = "git+https://github.com/ousttrue/rowmath.git#5ec6007ce7969d31000b89280c16a997fed6c6bd",

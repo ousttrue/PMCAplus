@@ -1,4 +1,5 @@
 const sg = @import("sokol").gfx;
+const std = @import("std");
 //
 //    #version:1# (machine generated, don't edit!)
 //
@@ -11,18 +12,19 @@ const sg = @import("sokol").gfx;
 //    =========
 //    Shader program: 'PMCA_view':
 //        Get shader desc: shd.pmcaViewShaderDesc(sg.queryBackend());
-//        Vertex shader: vs
-//            Attributes:
-//                ATTR_vs_aPosition => 0
-//                ATTR_vs_aUv => 1
-//            Uniform block 'vs_params':
-//                Zig struct: VsParams
-//                Bind slot: SLOT_vs_params => 0
-//        Fragment shader: fs
+//        Vertex Shader: vs
+//        Fragment Shader: fs
+//        Attributes:
+//            ATTR_PMCA_view_aPosition => 0
+//            ATTR_PMCA_view_aUv => 1
+//    Bindings:
+//        Uniform block 'vs_params':
+//            Zig struct: VsParams
+//            Bind slot: UB_vs_params => 0
 //
-pub const ATTR_vs_aPosition = 0;
-pub const ATTR_vs_aUv = 1;
-pub const SLOT_vs_params = 0;
+pub const ATTR_PMCA_view_aPosition = 0;
+pub const ATTR_PMCA_view_aUv = 1;
+pub const UB_vs_params = 0;
 pub const VsParams = extern struct {
     mvp: [16]f32 align(16),
 };
@@ -561,60 +563,68 @@ pub fn pmcaViewShaderDesc(backend: sg.Backend) sg.ShaderDesc {
     desc.label = "PMCA_view_shader";
     switch (backend) {
         .GLCORE => {
-            desc.attrs[0].name = "aPosition";
-            desc.attrs[1].name = "aUv";
-            desc.vs.source = &vs_source_glsl430;
-            desc.vs.entry = "main";
-            desc.vs.uniform_blocks[0].size = 64;
-            desc.vs.uniform_blocks[0].layout = .STD140;
-            desc.vs.uniform_blocks[0].uniforms[0].name = "vs_params";
-            desc.vs.uniform_blocks[0].uniforms[0].type = .FLOAT4;
-            desc.vs.uniform_blocks[0].uniforms[0].array_count = 4;
-            desc.fs.source = &fs_source_glsl430;
-            desc.fs.entry = "main";
+            desc.vertex_func.source = &vs_source_glsl430;
+            desc.vertex_func.entry = "main";
+            desc.fragment_func.source = &fs_source_glsl430;
+            desc.fragment_func.entry = "main";
+            desc.attrs[0].glsl_name = "aPosition";
+            desc.attrs[1].glsl_name = "aUv";
+            desc.uniform_blocks[0].stage = .VERTEX;
+            desc.uniform_blocks[0].layout = .STD140;
+            desc.uniform_blocks[0].size = 64;
+            desc.uniform_blocks[0].glsl_uniforms[0].type = .FLOAT4;
+            desc.uniform_blocks[0].glsl_uniforms[0].array_count = 4;
+            desc.uniform_blocks[0].glsl_uniforms[0].glsl_name = "vs_params";
         },
         .GLES3 => {
-            desc.attrs[0].name = "aPosition";
-            desc.attrs[1].name = "aUv";
-            desc.vs.source = &vs_source_glsl300es;
-            desc.vs.entry = "main";
-            desc.vs.uniform_blocks[0].size = 64;
-            desc.vs.uniform_blocks[0].layout = .STD140;
-            desc.vs.uniform_blocks[0].uniforms[0].name = "vs_params";
-            desc.vs.uniform_blocks[0].uniforms[0].type = .FLOAT4;
-            desc.vs.uniform_blocks[0].uniforms[0].array_count = 4;
-            desc.fs.source = &fs_source_glsl300es;
-            desc.fs.entry = "main";
+            desc.vertex_func.source = &vs_source_glsl300es;
+            desc.vertex_func.entry = "main";
+            desc.fragment_func.source = &fs_source_glsl300es;
+            desc.fragment_func.entry = "main";
+            desc.attrs[0].glsl_name = "aPosition";
+            desc.attrs[1].glsl_name = "aUv";
+            desc.uniform_blocks[0].stage = .VERTEX;
+            desc.uniform_blocks[0].layout = .STD140;
+            desc.uniform_blocks[0].size = 64;
+            desc.uniform_blocks[0].glsl_uniforms[0].type = .FLOAT4;
+            desc.uniform_blocks[0].glsl_uniforms[0].array_count = 4;
+            desc.uniform_blocks[0].glsl_uniforms[0].glsl_name = "vs_params";
         },
         .D3D11 => {
-            desc.attrs[0].sem_name = "TEXCOORD";
-            desc.attrs[0].sem_index = 0;
-            desc.attrs[1].sem_name = "TEXCOORD";
-            desc.attrs[1].sem_index = 1;
-            desc.vs.source = &vs_source_hlsl5;
-            desc.vs.d3d11_target = "vs_5_0";
-            desc.vs.entry = "main";
-            desc.vs.uniform_blocks[0].size = 64;
-            desc.vs.uniform_blocks[0].layout = .STD140;
-            desc.fs.source = &fs_source_hlsl5;
-            desc.fs.d3d11_target = "ps_5_0";
-            desc.fs.entry = "main";
+            desc.vertex_func.source = &vs_source_hlsl5;
+            desc.vertex_func.d3d11_target = "vs_5_0";
+            desc.vertex_func.entry = "main";
+            desc.fragment_func.source = &fs_source_hlsl5;
+            desc.fragment_func.d3d11_target = "ps_5_0";
+            desc.fragment_func.entry = "main";
+            desc.attrs[0].hlsl_sem_name = "TEXCOORD";
+            desc.attrs[0].hlsl_sem_index = 0;
+            desc.attrs[1].hlsl_sem_name = "TEXCOORD";
+            desc.attrs[1].hlsl_sem_index = 1;
+            desc.uniform_blocks[0].stage = .VERTEX;
+            desc.uniform_blocks[0].layout = .STD140;
+            desc.uniform_blocks[0].size = 64;
+            desc.uniform_blocks[0].hlsl_register_b_n = 0;
         },
         .METAL_MACOS => {
-            desc.vs.source = &vs_source_metal_macos;
-            desc.vs.entry = "main0";
-            desc.vs.uniform_blocks[0].size = 64;
-            desc.vs.uniform_blocks[0].layout = .STD140;
-            desc.fs.source = &fs_source_metal_macos;
-            desc.fs.entry = "main0";
+            desc.vertex_func.source = &vs_source_metal_macos;
+            desc.vertex_func.entry = "main0";
+            desc.fragment_func.source = &fs_source_metal_macos;
+            desc.fragment_func.entry = "main0";
+            desc.uniform_blocks[0].stage = .VERTEX;
+            desc.uniform_blocks[0].layout = .STD140;
+            desc.uniform_blocks[0].size = 64;
+            desc.uniform_blocks[0].msl_buffer_n = 0;
         },
         .WGPU => {
-            desc.vs.source = &vs_source_wgsl;
-            desc.vs.entry = "main";
-            desc.vs.uniform_blocks[0].size = 64;
-            desc.vs.uniform_blocks[0].layout = .STD140;
-            desc.fs.source = &fs_source_wgsl;
-            desc.fs.entry = "main";
+            desc.vertex_func.source = &vs_source_wgsl;
+            desc.vertex_func.entry = "main";
+            desc.fragment_func.source = &fs_source_wgsl;
+            desc.fragment_func.entry = "main";
+            desc.uniform_blocks[0].stage = .VERTEX;
+            desc.uniform_blocks[0].layout = .STD140;
+            desc.uniform_blocks[0].size = 64;
+            desc.uniform_blocks[0].wgsl_group0_binding_n = 0;
         },
         else => {},
     }

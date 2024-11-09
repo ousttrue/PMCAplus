@@ -3,7 +3,7 @@ in vec3 aPosition;
 in vec2 aUv;
 out vec2 fUv;
 
-uniform vs_params {
+layout(binding=0)uniform vs_params {
   mat4 mvp;
 };
 

@@ -72,6 +72,7 @@ const PMCA = @import("PMCA.zig");
 const c = @cImport({
     @cInclude("mPMD.h");
 });
+const ig = @import("cimgui");
 
 const bom = [3]u8{
     0xEF, 0xBB, 0xBF,
@@ -435,4 +436,44 @@ pub fn parse(allocator: std.mem.Allocator, _data: []const u8) !Assembler {
     }
 
     return assembler;
+}
+
+var flags = ig.ImGuiTableFlags_BordersV | ig.ImGuiTableFlags_BordersOuterH | ig.ImGuiTableFlags_Resizable | ig.ImGuiTableFlags_RowBg | ig.ImGuiTableFlags_NoBordersInBody;
+
+pub fn beginTable(TEXT_BASE_WIDTH: f32) void {
+    _ = ig.igBeginTable("parts", 2, flags, .{}, 0);
+    // The first column will use the default _WidthStretch when ScrollX is Off and _WidthFixed when ScrollX is On
+    ig.igTableSetupColumn("Name", ig.ImGuiTableColumnFlags_NoHide, 0, 0);
+    ig.igTableSetupColumn("Path", ig.ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_WIDTH * 12.0, 0);
+    //         ig.igTableSetupColumn("Type", ig.ImGuiTableColumnFlags_WidthFixed, TEXT_BASE.x * 18.0, 0);
+    ig.igTableHeadersRow();
+}
+
+var tree_node_flags = ig.ImGuiTreeNodeFlags_SpanAllColumns;
+
+pub fn displayNode(nodes: []PartsNode, _node_index: ?usize) void {
+    ig.igTableNextRow(0, 0);
+    _ = ig.igTableNextColumn();
+    if (_node_index) |node_index| {
+        const node = &nodes[node_index];
+
+        const open = ig.igTreeNodeEx_Str(&node.name[0], 0);
+        _ = ig.igTableNextColumn();
+        // ig.igTextDisabled("--");
+        // _ = ig.igTableNextColumn();
+        ig.igTextUnformatted(if (node.path) |path| &path[0] else null, 0);
+        if (open) {
+            for (node.children.items) |child_index| {
+                displayNode(nodes, child_index);
+            }
+            ig.igTreePop();
+        }
+    } else {
+        // leaf
+        _ = ig.igTreeNodeEx_Str("None", ig.ImGuiTreeNodeFlags_Leaf | ig.ImGuiTreeNodeFlags_Bullet | ig.ImGuiTreeNodeFlags_NoTreePushOnOpen);
+        // _ = ig.igTableNextColumn();
+        // ig.igText("%d", node.Size);
+        _ = ig.igTableNextColumn();
+        ig.igTextUnformatted("--", 0);
+    }
 }
