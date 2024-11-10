@@ -279,7 +279,10 @@ export fn frame() void {
         pmca_assembler.beginTable(TEXT_BASE.x);
         defer ig.igEndTable();
 
-        pmca_assembler.displayNode(assembler.nodes.items, 0);
+        pmca_assembler.displayNode(.{
+            .nodes = assembler.nodes.items,
+            .node_path = pmca_assembler.NodePath.init(),
+        }, 0);
     }
     //=== UI CODE ENDS HERE
 

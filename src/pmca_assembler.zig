@@ -441,38 +441,108 @@ pub fn parse(allocator: std.mem.Allocator, _data: []const u8) !Assembler {
 var flags = ig.ImGuiTableFlags_BordersV | ig.ImGuiTableFlags_BordersOuterH | ig.ImGuiTableFlags_Resizable | ig.ImGuiTableFlags_RowBg | ig.ImGuiTableFlags_NoBordersInBody;
 
 pub fn beginTable(TEXT_BASE_WIDTH: f32) void {
-    _ = ig.igBeginTable("parts", 2, flags, .{}, 0);
+    _ = ig.igBeginTable("parts", 3, flags, .{}, 0);
     // The first column will use the default _WidthStretch when ScrollX is Off and _WidthFixed when ScrollX is On
     ig.igTableSetupColumn("Name", ig.ImGuiTableColumnFlags_NoHide, 0, 0);
-    ig.igTableSetupColumn("Path", ig.ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_WIDTH * 12.0, 0);
+    ig.igTableSetupColumn(
+        "Path",
+        ig.ImGuiTableColumnFlags_NoHide,
+        0,
+        0,
+    );
+    ig.igTableSetupColumn(
+        "PartsPath",
+        ig.ImGuiTableColumnFlags_WidthFixed,
+        TEXT_BASE_WIDTH * 6.0,
+        0,
+    );
     //         ig.igTableSetupColumn("Type", ig.ImGuiTableColumnFlags_WidthFixed, TEXT_BASE.x * 18.0, 0);
     ig.igTableHeadersRow();
 }
 
 var tree_node_flags = ig.ImGuiTreeNodeFlags_SpanAllColumns;
 
-pub fn displayNode(nodes: []PartsNode, _node_index: ?usize) void {
-    ig.igTableNextRow(0, 0);
-    _ = ig.igTableNextColumn();
-    if (_node_index) |node_index| {
-        const node = &nodes[node_index];
+pub const NodePath = struct {
+    array: [32]u8 = [1]u8{0} ** 32,
+    len: usize = 0,
 
-        const open = ig.igTreeNodeEx_Str(&node.name[0], 0);
+    pub fn init() @This() {
+        var path = NodePath{};
+        path.push(0);
+        return path;
+    }
+
+    fn str(self: @This()) []const u8 {
+        return self.array[0 .. self.len * 2];
+    }
+    fn push(self: *@This(), i: u8) void {
+        const begin = self.len * 2;
+        _ = std.fmt.bufPrint(
+            self.array[begin .. begin + 2],
+            "{X:0>2}",
+            .{i},
+        ) catch @panic("bufPrint");
+        self.len += 1;
+    }
+};
+
+test "NodePath" {
+    {
+        var np = NodePath{};
+        np.push(1);
+        try std.testing.expectEqualStrings("01", np.str());
+    }
+    {
+        var np = NodePath{};
+        np.push(1);
+        np.push(2);
+        try std.testing.expectEqualStrings("0102", np.str());
+    }
+}
+
+const Context = struct {
+    nodes: []PartsNode,
+    node_path: NodePath = .{},
+
+    fn push(self: @This(), i: u8) @This() {
+        var context = self;
+        context.node_path.push(i);
+        return context;
+    }
+};
+
+pub fn displayNode(context: Context, _node_index: ?usize) void {
+    ig.igTableNextRow(0, 0);
+    const node_path = context.node_path.str();
+    ig.igPushID_Str(&node_path[0]);
+    defer ig.igPopID();
+    if (_node_index) |node_index| {
+        const node = &context.nodes[node_index];
+
         _ = ig.igTableNextColumn();
-        // ig.igTextDisabled("--");
-        // _ = ig.igTableNextColumn();
-        ig.igTextUnformatted(if (node.path) |path| &path[0] else null, 0);
+        const open = ig.igTreeNodeEx_Str(&node.name[0], 0);
+
+        _ = ig.igTableNextColumn();
+        ig.igTextUnformatted(&node_path[0], null);
+
+        _ = ig.igTableNextColumn();
+        ig.igTextUnformatted(if (node.path) |parts_path| &parts_path[0] else null, 0);
+
         if (open) {
-            for (node.children.items) |child_index| {
-                displayNode(nodes, child_index);
+            for (node.children.items, 0..) |child_index, i| {
+                const child_context = context.push(@intCast(i));
+                displayNode(child_context, child_index);
             }
             ig.igTreePop();
         }
     } else {
         // leaf
+        _ = ig.igTableNextColumn();
         _ = ig.igTreeNodeEx_Str("None", ig.ImGuiTreeNodeFlags_Leaf | ig.ImGuiTreeNodeFlags_Bullet | ig.ImGuiTreeNodeFlags_NoTreePushOnOpen);
-        // _ = ig.igTableNextColumn();
-        // ig.igText("%d", node.Size);
+
+        _ = ig.igTableNextColumn();
+        ig.igTextUnformatted(&node_path[0], null);
+
         _ = ig.igTableNextColumn();
         ig.igTextUnformatted("--", 0);
     }

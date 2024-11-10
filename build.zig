@@ -157,6 +157,17 @@ pub fn build(b: *std.Build) !void {
     }
 
     {
+        const exe = b.addTest(.{
+            .name = "pmcaz_test",
+            .target = target,
+            .optimize = optimize,
+            .root_source_file = b.path("src//pmca_assembler.zig"),
+        });
+        const run = b.addRunArtifact(exe);
+        b.step("test", "test").dependOn(&run.step);
+    }
+
+    {
         const exe = b.addExecutable(.{
             .name = "imgui_hello",
             .target = target,
