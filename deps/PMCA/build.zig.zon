@@ -1,0 +1,31 @@
+.{
+    .name = "PMCA",
+    .version = "0.0.0",
+    .paths = .{""},
+    .dependencies = .{
+        .glfw = .{
+            .path = "../glfw",
+        },
+        .mPMD = .{
+            .path = "../mPMD",
+        },
+        .stb = .{
+            .path = "../stb",
+        },
+        .sokol = .{
+            .url = "git+https://github.com/floooh/sokol-zig.git#c8b8e189582afd6eee9f9eaac0e80dde57652bae",
+            .hash = "12201f3ef67ed16b7ef2860ba9b9edb526beef6a16e5f04b536ec6fa124b809539f1",
+        },
+        .cimgui = .{
+            .path = "../cimgui",
+        },
+        .rowmath = .{
+            .url = "git+https://github.com/ousttrue/rowmath.git#5ec6007ce7969d31000b89280c16a997fed6c6bd",
+            .hash = "1220f1379331d08475352530d763a9cd249e6851e6d699a6bebafea8c2e6b925ea73",
+        },
+        .@"sokol-tools-bin" = .{
+            .url = "git+https://github.com/floooh/sokol-tools-bin.git#39d4b1c87b8d9cb8e8b780beae6ce5d0a8fc36f6",
+            .hash = "1220d709f70f7d0de422ed6e7f2559271c893bb74d13490b051c2b189f2f50096f10",
+        },
+    },
+}

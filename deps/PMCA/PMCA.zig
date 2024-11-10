@@ -1,3 +1,6 @@
+pub const Renderer = @import("Renderer.zig");
+pub usingnamespace @import("PMCA_view.zig");
+
 pub extern fn getInfo(
     index: u32,
     name: *[*:0]const u8,

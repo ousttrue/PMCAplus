@@ -68,7 +68,7 @@
 //! [Pos] 0.000000 0.000000 0.000000
 //! [Rot] 0.000000 0.000000 0.000000
 const std = @import("std");
-const PMCA = @import("PMCA.zig");
+const PMCA = @import("PMCA");
 const c = @cImport({
     @cInclude("mPMD.h");
 });

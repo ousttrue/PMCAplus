@@ -9,7 +9,7 @@ const pmca_parts = @import("pmca_parts.zig");
 const pmca_material = @import("pmca_material.zig");
 const pmca_transform = @import("pmca_transform.zig");
 const pmca_assembler = @import("pmca_assembler.zig");
-const Renderer = @import("Renderer.zig");
+const Renderer = @import("PMCA").Renderer;
 const font = @import("config").font;
 
 const state = struct {

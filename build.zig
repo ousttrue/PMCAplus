@@ -1,6 +1,5 @@
 const std = @import("std");
 const zcc = @import("compile_commands");
-const sokolShdc = @import("build_shdc.zig").sokolShdc;
 
 const FLAGS = [_][]const u8{
     "-std=c23",
@@ -8,166 +7,44 @@ const FLAGS = [_][]const u8{
 };
 
 pub fn build(b: *std.Build) !void {
-    var arena_state = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer arena_state.deinit();
-    const arena = arena_state.allocator();
-
     var targets = std.ArrayList(*std.Build.Step.Compile).init(b.allocator);
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    // dependencies
-    const mpmd_dep = b.dependency("mPMD", .{
-        .target = target,
-        .optimize = optimize,
-    });
-
-    const rowmath_dep = b.dependency("rowmath", .{});
-    const rowmath = rowmath_dep.module("rowmath");
-
-    const glfw_dep = b.dependency("glfw", .{
-        .target = target,
-        .optimize = optimize,
-    });
-
-    const sokol_dep = b.dependency("sokol", .{
-        .target = target,
-        .optimize = optimize,
-        .with_sokol_imgui = true,
-        .gl = true,
-    });
-    const cimgui_dep = b.dependency("cimgui", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    // inject the cimgui header search path into the sokol C library compile step
-    const cimgui_root = cimgui_dep.namedWriteFiles("cimgui").getDirectory();
-    sokol_dep.artifact("sokol_clib").addIncludePath(cimgui_root);
-    sokol_dep.artifact("sokol_clib").addCSourceFile(.{ .file = b.path("deps/cimgui/custom_button_behaviour.cpp") });
-
-    const stb_dep = b.dependency("stb", .{
-        .target = target,
-        .optimize = optimize,
-    });
-
-    const font_dep = b.dependency("hackgen", .{});
-
-    const dll = blk: {
-        const dll = b.addSharedLibrary(.{
-            .target = target,
-            .optimize = optimize,
-            .name = "PMCA",
-            .link_libc = true,
-            .root_source_file = b.path("src/PMCA_view.zig"),
-        });
-        const install_dll = b.addInstallArtifact(dll, .{
-            // .dest_sub_path = "PMCA.pyd",
-        });
-        b.getInstallStep().dependOn(&install_dll.step);
-        targets.append(dll) catch @panic("OOM");
-        dll.addCSourceFiles(.{
-            .root = b.path("src"),
-            .files = &.{
-                "PMCA.c",
-                // "dsp.c",
-                // "quat.c",
-            },
-            .flags = &FLAGS,
-        });
-        dll.step.dependOn(sokolShdc(b, target, "src/PMCA_view.glsl"));
-        // dll.linkLibCpp();
-        dll.addIncludePath(.{ .cwd_relative = "C:/Python311/include" });
-        dll.addLibraryPath(.{ .cwd_relative = "C:/Python311/libs" });
-        dll.linkSystemLibrary("Python311");
-        dll.addIncludePath(mpmd_dep.path(""));
-        dll.linkLibrary(mpmd_dep.artifact("mPMD"));
-        dll.addIncludePath(glfw_dep.builder.dependency("glfw", .{}).path("include"));
-        dll.linkLibrary(glfw_dep.artifact("glfw"));
-        dll.root_module.addImport("sokol", sokol_dep.module("sokol"));
-        dll.root_module.addImport("rowmath", rowmath);
-        dll.linkLibrary(stb_dep.artifact("stb"));
-        dll.addIncludePath(stb_dep.path(""));
-        dll.linkSystemLibrary("WINMM");
-        break :blk dll;
-    };
-
     {
-        const converter = b.addExecutable(.{
+        const PMCA_dep = b.dependency("PMCA", .{
             .target = target,
             .optimize = optimize,
-            .name = "converter",
-            .link_libc = true,
         });
-        converter.addCSourceFiles(.{
-            .root = b.path("converter"),
-            .files = &.{
-                "PMCA_main.c",
-                "PMCA_loadconf.c",
-            },
-            .flags = &FLAGS,
-        });
-        b.installArtifact(converter);
-        converter.addIncludePath(mpmd_dep.path(""));
+        b.installArtifact(PMCA_dep.artifact("PMCA"));
     }
 
     {
-        const exe = b.addExecutable(.{
+        const pmcaz_dep = b.dependency("pmcaz", .{
             .target = target,
             .optimize = optimize,
-            .name = "pmcaz",
-            .root_source_file = b.path("src/main.zig"),
         });
-        const install_exe = b.addInstallArtifact(exe, .{});
-        b.getInstallStep().dependOn(&install_exe.step);
-        exe.root_module.addImport("sokol", sokol_dep.module("sokol"));
-        exe.root_module.addImport("cimgui", cimgui_dep.module("cimgui"));
-        exe.root_module.addImport("rowmath", rowmath);
-        exe.root_module.addImport("stb", &stb_dep.artifact("stb").root_module);
-        exe.addIncludePath(mpmd_dep.path(""));
+        const artifact = pmcaz_dep.artifact("pmcaz");
+        const install = b.addInstallArtifact(artifact, .{});
+        b.getInstallStep().dependOn(&install.step);
 
-        const run = b.addRunArtifact(exe);
-        run.step.dependOn(&install_exe.step);
+        const run = b.addRunArtifact(artifact);
+        run.step.dependOn(&install.step);
+
         b.step("run", "run pmcaz").dependOn(&run.step);
-
-        {
-            const install_docs = b.addInstallDirectory(.{
-                .source_dir = cimgui_dep.artifact("cimgui_clib").getEmittedDocs(),
-                .install_dir = .prefix,
-                .install_subdir = "docs",
-            });
-
-            const docs_step = b.step("docs", "Copy documentation artifacts to prefix path");
-            docs_step.dependOn(&install_docs.step);
-        }
-
-        exe.linkLibrary(dll);
-
-        const options = b.addOptions();
-        var self_exe_dir = try std.fs.cwd().openDir(font_dep.path("").getPath(b), .{});
-        defer self_exe_dir.close();
-
-        const font = try self_exe_dir.readFileAlloc(
-            arena,
-            "HackGenConsoleNF-Regular.ttf",
-            1024 * 1024 * 15,
-        );
-        // std.fs.read
-        options.addOption([]const u8, "font", font);
-        exe.root_module.addOptions("config", options);
     }
 
     {
-        const exe = b.addTest(.{
-            .name = "pmcaz_test",
+        const glfw_dep = b.dependency("glfw", .{
             .target = target,
             .optimize = optimize,
-            .root_source_file = b.path("src//pmca_assembler.zig"),
         });
-        const run = b.addRunArtifact(exe);
-        b.step("test", "test").dependOn(&run.step);
-    }
 
-    {
+        const cimgui_dep = b.dependency("cimgui", .{
+            .target = target,
+            .optimize = optimize,
+        });
+
         const exe = b.addExecutable(.{
             .name = "imgui_hello",
             .target = target,
@@ -184,7 +61,6 @@ pub fn build(b: *std.Build) !void {
         run.step.dependOn(&install.step);
         b.step("imgui_hello", "build imgui_hello").dependOn(&run.step);
         targets.append(exe) catch @panic("OOM");
-        exe.step.dependOn(&dll.step);
         exe.linkLibCpp();
         const imgui_dep = cimgui_dep.builder.dependency("imgui", .{});
         exe.addIncludePath(imgui_dep.path(""));
