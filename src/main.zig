@@ -10,6 +10,7 @@ const pmca_material = @import("pmca_material.zig");
 const pmca_transform = @import("pmca_transform.zig");
 const pmca_assembler = @import("pmca_assembler.zig");
 const Renderer = @import("Renderer.zig");
+const font = @import("config").font;
 
 const state = struct {
     var allocator: std.mem.Allocator = undefined;
@@ -98,9 +99,17 @@ export fn init() void {
     config.*.RasterizerMultiply = 2;
     // _ = ig.ImFontAtlas_AddFontDefault(io.*.Fonts, null);
     // config.*.MergeMode = true;
-    _ = ig.ImFontAtlas_AddFontFromFileTTF(
+    // _ = ig.ImFontAtlas_AddFontFromFileTTF(
+    //     io.*.Fonts,
+    //     "C:/Windows/Fonts/MSGothic.ttc",
+    //     18,
+    //     null,
+    //     ig.ImFontAtlas_GetGlyphRangesJapanese(io.*.Fonts),
+    // );
+    _ = ig.ImFontAtlas_AddFontFromMemoryTTF(
         io.*.Fonts,
-        "C:/Windows/Fonts/MSGothic.ttc",
+        @ptrCast(@constCast(&font[0])),
+        font.len,
         18,
         null,
         ig.ImFontAtlas_GetGlyphRangesJapanese(io.*.Fonts),

@@ -7,7 +7,11 @@ const FLAGS = [_][]const u8{
     "-DPMCA_BUILD",
 };
 
-pub fn build(b: *std.Build) void {
+pub fn build(b: *std.Build) !void {
+    var arena_state = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena_state.deinit();
+    const arena = arena_state.allocator();
+
     var targets = std.ArrayList(*std.Build.Step.Compile).init(b.allocator);
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -45,6 +49,8 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+
+    const font_dep = b.dependency("hackgen", .{});
 
     const dll = blk: {
         const dll = b.addSharedLibrary(.{
@@ -135,6 +141,19 @@ pub fn build(b: *std.Build) void {
         }
 
         exe.linkLibrary(dll);
+
+        const options = b.addOptions();
+        var self_exe_dir = try std.fs.cwd().openDir(font_dep.path("").getPath(b), .{});
+        defer self_exe_dir.close();
+
+        const font = try self_exe_dir.readFileAlloc(
+            arena,
+            "HackGenConsoleNF-Regular.ttf",
+            1024 * 1024 * 15,
+        );
+        // std.fs.read
+        options.addOption([]const u8, "font", font);
+        exe.root_module.addOptions("config", options);
     }
 
     {
